@@ -1,0 +1,318 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma-v4"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum InquiryType {
+  FOREIGNER_VISA
+  IMMIGRATION_STAY
+  APOSTILLE_CONSULAR
+  TRANSLATION_NOTARY
+  GENERAL_ADMIN_CIVIL
+  CORPORATE_REQUEST
+  UNKNOWN
+}
+
+enum InquiryStatus {
+  NEW
+  PRE_DIAGNOSED
+  CONSULTATION_REQUIRED
+  QUOTE_DRAFTED
+  QUOTE_PENDING
+  ON_HOLD
+  IN_REVIEW
+  WAITING_CONSULTATION
+  QUOTE_SENT
+  WON
+  CLOSED
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum LanguageCode {
+  KO
+  EN
+  AR
+}
+
+enum PricingOptionType {
+  FLAT
+  PERCENT
+}
+
+enum PricingRuleType {
+  URGENCY
+  CONSULT
+  PAYMENT
+  POLICY
+}
+
+enum QuoteStatus {
+  DRAFT
+  READY_TO_SEND
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum QuoteLineKind {
+  SERVICE
+  URGENCY
+  MANUAL
+}
+
+enum PaymentStageKind {
+  RETAINER
+  MIDTERM
+  SUCCESS
+}
+
+enum ContractDraftStatus {
+  DRAFT
+  FINALIZED
+  VOID
+}
+
+enum CaseStage {
+  CONTRACT_PREPARATION
+  ACTIVE
+  ON_HOLD
+  CLOSED
+}
+
+model Inquiry {
+  id                       String          @id @default(cuid())
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+  status                   InquiryStatus   @default(NEW)
+  inquiryType              InquiryType     @default(UNKNOWN)
+  urgencyLevel             UrgencyLevel    @default(MEDIUM)
+  classificationConfidence Float           @default(0)
+  qualificationScore       Int             @default(0)
+  preferredLanguage        LanguageCode    @default(KO)
+  clientType               ClientType      @default(INDIVIDUAL)
+  contactName              String
+  organizationName         String?
+  email                    String
+  phone                    String?
+  title                    String
+  description              String
+  nationality              String?
+  currentStatus            String?
+  requestedOutcome         String?
+  requestedInquiryType     InquiryType?
+  declaredUrgency          UrgencyLevel?
+  documentCountry          String?
+  targetAgency             String?
+  hasPreparedDocuments     Boolean         @default(false)
+  needsTranslation         Boolean         @default(false)
+  isCorporateRequest       Boolean         @default(false)
+  dueDate                  DateTime?
+  assignee                 String?
+  internalMemo             String?
+  consultationRequired     Boolean         @default(false)
+  riskComplexityHint       String?
+  precheckRecommendedDocs  String          @default("[]")
+  wantsCallback            Boolean         @default(false)
+  consentToPrivacy         Boolean         @default(false)
+  intakeSource             String          @default("website")
+  generatedSummary         String
+  generatedGuidance        String
+  generatedReceiptMessage  String
+  classificationReason     String
+  recommendedNextStep      String
+  serviceTags              String          @default("[]")
+  quotes                   Quote[]
+  contractDrafts           ContractDraft[]
+  cases                    CaseRecord[]
+}
+
+model ServiceType {
+  id             String          @id @default(cuid())
+  legacyId       String          @unique
+  name           String
+  category       String
+  minPrice       Int
+  maxPrice       Int
+  isAppeal       Boolean         @default(false)
+  isActive       Boolean         @default(true)
+  source         String          @default("legacy-admin-suite")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  quoteLineItems QuoteLineItem[]
+}
+
+model PricingOption {
+  id               String            @id @default(cuid())
+  legacyId         String            @unique
+  name             String
+  description      String
+  optionType       PricingOptionType
+  flatAmount       Int?
+  percentRate      Int?
+  unitLabel        String?
+  isVat            Boolean           @default(false)
+  isActive         Boolean           @default(true)
+  source           String            @default("legacy-admin-suite")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  quoteAdjustments QuoteAdjustment[]
+}
+
+model PricingRule {
+  id           String          @id @default(cuid())
+  code         String          @unique
+  ruleType     PricingRuleType
+  label        String
+  description  String?
+  numericValue Int?
+  percentValue Int?
+  jsonValue    String?
+  isDefault    Boolean         @default(false)
+  isActive     Boolean         @default(true)
+  source       String          @default("legacy-admin-suite")
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model Quote {
+  id                       String            @id @default(cuid())
+  inquiryId                String
+  inquiry                  Inquiry           @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  status                   QuoteStatus       @default(DRAFT)
+  selectedServiceLegacyIds String            @default("[]")
+  selectedOptionLegacyIds  String            @default("[]")
+  urgencyRuleCode          String
+  consultRuleCode          String
+  paymentRuleCode          String            @default("PAYMENT_STANDARD")
+  rangeMode                Boolean           @default(true)
+  serviceBaseMin           Int               @default(0)
+  serviceBaseMax           Int               @default(0)
+  subtotalMin              Int               @default(0)
+  subtotalMax              Int               @default(0)
+  vatAmountMin             Int               @default(0)
+  vatAmountMax             Int               @default(0)
+  totalMin                 Int               @default(0)
+  totalMax                 Int               @default(0)
+  consultFee               Int               @default(0)
+  successFeeRestricted     Boolean           @default(false)
+  draftNotes               String?
+  calculationSummary       String?
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  lineItems                QuoteLineItem[]
+  adjustments              QuoteAdjustment[]
+  paymentPlans             PaymentPlan[]
+  contractDraft            ContractDraft?
+  caseRecord               CaseRecord?
+}
+
+model QuoteLineItem {
+  id            String        @id @default(cuid())
+  quoteId       String
+  quote         Quote         @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  serviceTypeId String?
+  serviceType   ServiceType?  @relation(fields: [serviceTypeId], references: [id], onDelete: SetNull)
+  kind          QuoteLineKind
+  label         String
+  description   String?
+  amountMin     Int
+  amountMax     Int
+  sortOrder     Int           @default(0)
+  isManual      Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model QuoteAdjustment {
+  id              String            @id @default(cuid())
+  quoteId         String
+  quote           Quote             @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  pricingOptionId String?
+  pricingOption   PricingOption?    @relation(fields: [pricingOptionId], references: [id], onDelete: SetNull)
+  label           String
+  description     String?
+  optionType      PricingOptionType
+  flatAmount      Int?
+  percentRate     Int?
+  computedMin     Int
+  computedMax     Int
+  isVat           Boolean           @default(false)
+  sortOrder       Int               @default(0)
+  isManual        Boolean           @default(false)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model PaymentPlan {
+  id         String           @id @default(cuid())
+  quoteId    String
+  quote      Quote            @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  stageKind  PaymentStageKind
+  percentage Int
+  dueText    String
+  amountMin  Int
+  amountMax  Int
+  sortOrder  Int              @default(0)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+}
+
+model ContractDraft {
+  id                   String              @id @default(cuid())
+  inquiryId            String
+  inquiry              Inquiry             @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  quoteId              String              @unique
+  quote                Quote               @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  status               ContractDraftStatus @default(DRAFT)
+  title                String
+  bodyText             String
+  scopeText            String?
+  paymentSummary       String?
+  successFeeRestricted Boolean             @default(false)
+  specialTerms         String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  caseRecord           CaseRecord?
+}
+
+model CaseRecord {
+  id              String         @id @default(cuid())
+  caseNumber      String         @unique
+  inquiryId       String
+  quoteId         String         @unique
+  contractDraftId String?        @unique
+  currentStage    CaseStage      @default(CONTRACT_PREPARATION)
+  dueDate         DateTime?
+  internalMemo    String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  inquiry         Inquiry        @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  quote           Quote          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  contractDraft   ContractDraft? @relation(fields: [contractDraftId], references: [id], onDelete: SetNull)
+}
+
+model LegacyImportLog {
+  id           String   @id @default(cuid())
+  source       String
+  version      String
+  payloadJson  String?
+  importedAt   DateTime @default(now())
+  createdCount Int      @default(0)
+}

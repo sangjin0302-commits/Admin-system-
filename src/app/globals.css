@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --color-canvas: 244 246 248;
+  --color-surface: 255 255 255;
+  --color-surface-muted: 247 249 251;
+  --color-surface-raised: 255 255 255;
+  --color-line: 218 224 230;
+  --color-line-strong: 197 206 214;
+  --color-text-strong: 22 33 43;
+  --color-text: 58 71 82;
+  --color-text-muted: 103 118 130;
+  --color-primary: 24 72 109;
+  --color-primary-soft: 231 240 247;
+  --color-success: 40 112 76;
+  --color-warning: 161 104 36;
+  --color-danger: 166 63 63;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --shadow-panel: 0 10px 28px rgba(16, 24, 32, 0.06);
+  --shadow-floating: 0 18px 40px rgba(16, 24, 32, 0.1);
+}
+
+body {
+  @apply min-h-screen bg-canvas font-sans text-text antialiased;
+}
+
+* {
+  @apply border-line;
+}
+
+a {
+  @apply text-inherit no-underline;
+}
+
+::selection {
+  @apply bg-primary-soft text-text-strong;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-text-strong;
+  }
+
+  p {
+    @apply leading-6;
+  }
+}
+
+@layer components {
+  .ui-shell {
+    @apply mx-auto min-h-screen max-w-[1280px] px-4 pb-12 pt-5 sm:px-6 lg:px-8;
+  }
+
+  .ui-card {
+    @apply rounded-lg border border-line bg-surface shadow-panel;
+  }
+
+  .ui-card-muted {
+    @apply rounded-lg border border-line bg-surface-muted;
+  }
+
+  .ui-card-compact {
+    @apply rounded-md border border-line bg-surface shadow-panel;
+  }
+
+  .ui-input,
+  .ui-select,
+  .ui-textarea {
+    @apply w-full rounded-md border border-line bg-surface-raised px-3.5 text-sm text-text-strong outline-none transition placeholder:text-text-muted focus:border-primary focus:ring-4 focus:ring-primary/10;
+  }
+
+  .ui-input,
+  .ui-select {
+    @apply h-11;
+  }
+
+  .ui-textarea {
+    @apply min-h-[120px] py-3;
+  }
+
+  .ui-label {
+    @apply mb-2 block text-sm font-semibold text-text-strong;
+  }
+
+  .ui-helper {
+    @apply text-sm text-text-muted;
+  }
+
+  .ui-table {
+    @apply min-w-full border-separate border-spacing-0;
+  }
+
+  .ui-table thead th {
+    @apply border-b border-line bg-surface-muted px-4 py-3 text-left text-xs font-semibold text-text-muted;
+  }
+
+  .ui-table tbody td {
+    @apply border-b border-line px-4 py-4 align-top text-sm text-text;
+  }
+
+  .ui-table tbody tr:hover {
+    @apply bg-surface-muted/70;
+  }
+
+  .ui-kicker {
+    @apply text-xs font-semibold tracking-[0.14em] text-text-muted;
+  }
+
+  .ui-page-title {
+    @apply text-3xl font-semibold tracking-[-0.02em] text-text-strong;
+  }
+
+  .ui-section-title {
+    @apply text-xl font-semibold text-text-strong;
+  }
+}

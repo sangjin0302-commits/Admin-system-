@@ -1,0 +1,13 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/admin/inquiries/[id]/quotes/route": "app/api/admin/inquiries/[id]/quotes/route.js",
+  "/api/admin/inquiries/[id]/status/route": "app/api/admin/inquiries/[id]/status/route.js",
+  "/api/admin/quotes/[id]/contract-draft/route": "app/api/admin/quotes/[id]/contract-draft/route.js",
+  "/api/admin/inquiries/[id]/route": "app/api/admin/inquiries/[id]/route.js",
+  "/api/admin/quotes/[id]/route": "app/api/admin/quotes/[id]/route.js",
+  "/api/inquiries/route": "app/api/inquiries/route.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/inquiries/page": "app/admin/inquiries/page.js",
+  "/admin/inquiries/[id]/page": "app/admin/inquiries/[id]/page.js",
+  "/page": "app/page.js"
+}

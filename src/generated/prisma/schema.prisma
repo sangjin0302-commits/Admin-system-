@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum InquiryType {
+  FOREIGNER_VISA
+  IMMIGRATION_STAY
+  APOSTILLE_CONSULAR
+  TRANSLATION_NOTARY
+  GENERAL_ADMIN_CIVIL
+  CORPORATE_REQUEST
+  UNKNOWN
+}
+
+enum InquiryStatus {
+  NEW
+  IN_REVIEW
+  WAITING_CONSULTATION
+  QUOTE_SENT
+  WON
+  CLOSED
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum LanguageCode {
+  KO
+  EN
+  AR
+}
+
+model Inquiry {
+  id                       String        @id @default(cuid())
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+  status                   InquiryStatus @default(NEW)
+  inquiryType              InquiryType   @default(UNKNOWN)
+  urgencyLevel             UrgencyLevel  @default(MEDIUM)
+  classificationConfidence Float         @default(0)
+  qualificationScore       Int           @default(0)
+  preferredLanguage        LanguageCode  @default(KO)
+  clientType               ClientType    @default(INDIVIDUAL)
+  contactName              String
+  organizationName         String?
+  email                    String
+  phone                    String?
+  title                    String
+  description              String
+  nationality              String?
+  currentStatus            String?
+  documentCountry          String?
+  targetAgency             String?
+  dueDate                  DateTime?
+  assignee                 String?
+  internalMemo             String?
+  wantsCallback            Boolean       @default(false)
+  consentToPrivacy         Boolean       @default(false)
+  intakeSource             String        @default("website")
+  generatedSummary         String
+  generatedGuidance        String
+  generatedReceiptMessage  String
+  classificationReason     String
+  recommendedNextStep      String
+  serviceTags              String        @default("[]")
+}

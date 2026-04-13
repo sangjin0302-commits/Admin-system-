@@ -1,0 +1,714 @@
+import type {
+  PaymentStageKind,
+  Prisma,
+  QuoteStatus
+} from "@generated/prisma-v4";
+
+import { prisma } from "@/lib/prisma/client";
+import {
+  buildContractDraftText,
+  buildManualSummary,
+  computeQuoteDraft
+} from "@/lib/quote-engine/engine";
+import {
+  mapUrgencyLevelToRuleCode,
+  selectDefaultRuleCode,
+  suggestServiceLegacyIds
+} from "@/lib/quote-engine/legacy-mapping";
+import type {
+  PricingOptionMaster,
+  PricingRuleMaster,
+  QuoteComputationResult,
+  QuoteInquirySnapshot,
+  QuoteSummarySnapshot,
+  QuoteWorkspace,
+  ServiceTypeMaster
+} from "@/lib/quote-engine/types";
+
+type InquiryRecord = Prisma.InquiryGetPayload<Record<string, never>>;
+type QuoteWithRelations = Prisma.QuoteGetPayload<{
+  include: {
+    lineItems: true;
+    adjustments: true;
+    paymentPlans: true;
+    contractDraft: true;
+  };
+}>;
+
+function parseStringArray(value: string) {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map((entry) => String(entry)) : [];
+  } catch {
+    return [];
+  }
+}
+
+function serializeInquiryForQuote(inquiry: InquiryRecord): QuoteWorkspace["inquiry"] {
+  return {
+    id: inquiry.id,
+    title: inquiry.title,
+    description: inquiry.description,
+    inquiryType: inquiry.inquiryType,
+    urgencyLevel: inquiry.urgencyLevel,
+    preferredLanguage: inquiry.preferredLanguage,
+    contactName: inquiry.contactName,
+    organizationName: inquiry.organizationName,
+    email: inquiry.email,
+    phone: inquiry.phone,
+    classificationReason: inquiry.classificationReason,
+    serviceTags: parseStringArray(inquiry.serviceTags),
+    hasPreparedDocuments: inquiry.hasPreparedDocuments,
+    needsTranslation: inquiry.needsTranslation,
+    isCorporateRequest: inquiry.isCorporateRequest,
+    consultationRequired: inquiry.consultationRequired,
+    createdAt: inquiry.createdAt.toISOString(),
+    updatedAt: inquiry.updatedAt.toISOString()
+  };
+}
+
+function suggestInitialOptionLegacyIds(inquiry: QuoteInquirySnapshot, options: PricingOptionMaster[]) {
+  const available = new Set(options.filter((option) => option.isActive).map((option) => option.legacyId));
+  const selected = new Set<string>();
+
+  if (inquiry.isCorporateRequest && available.has("multi")) {
+    selected.add("multi");
+  }
+
+  if ((inquiry.needsTranslation || !inquiry.hasPreparedDocuments) && available.has("docs")) {
+    selected.add("docs");
+  }
+
+  if (available.has("vat")) {
+    selected.add("vat");
+  }
+
+  return Array.from(selected);
+}
+
+function serializeQuote(quote: QuoteWithRelations) {
+  return {
+    id: quote.id,
+    status: quote.status,
+    selectedServiceLegacyIds: parseStringArray(quote.selectedServiceLegacyIds),
+    selectedOptionLegacyIds: parseStringArray(quote.selectedOptionLegacyIds),
+    urgencyRuleCode: quote.urgencyRuleCode,
+    consultRuleCode: quote.consultRuleCode,
+    paymentRuleCode: quote.paymentRuleCode,
+    rangeMode: quote.rangeMode,
+    serviceBaseMin: quote.serviceBaseMin,
+    serviceBaseMax: quote.serviceBaseMax,
+    subtotalMin: quote.subtotalMin,
+    subtotalMax: quote.subtotalMax,
+    vatAmountMin: quote.vatAmountMin,
+    vatAmountMax: quote.vatAmountMax,
+    totalMin: quote.totalMin,
+    totalMax: quote.totalMax,
+    consultFee: quote.consultFee,
+    successFeeRestricted: quote.successFeeRestricted,
+    draftNotes: quote.draftNotes,
+    calculationSummary: quote.calculationSummary,
+    createdAt: quote.createdAt.toISOString(),
+    updatedAt: quote.updatedAt.toISOString(),
+    lineItems: quote.lineItems
+      .sort((left, right) => left.sortOrder - right.sortOrder)
+      .map((line) => ({
+        id: line.id,
+        kind: line.kind,
+        label: line.label,
+        description: line.description,
+        amountMin: line.amountMin,
+        amountMax: line.amountMax,
+        sortOrder: line.sortOrder,
+        serviceTypeId: line.serviceTypeId,
+        isManual: line.isManual
+      })),
+    adjustments: quote.adjustments
+      .sort((left, right) => left.sortOrder - right.sortOrder)
+      .map((adjustment) => ({
+        id: adjustment.id,
+        label: adjustment.label,
+        description: adjustment.description,
+        optionType: adjustment.optionType,
+        flatAmount: adjustment.flatAmount,
+        percentRate: adjustment.percentRate,
+        computedMin: adjustment.computedMin,
+        computedMax: adjustment.computedMax,
+        isVat: adjustment.isVat,
+        sortOrder: adjustment.sortOrder,
+        pricingOptionId: adjustment.pricingOptionId,
+        isManual: adjustment.isManual
+      })),
+    paymentPlans: quote.paymentPlans
+      .sort((left, right) => left.sortOrder - right.sortOrder)
+      .map((plan) => ({
+        id: plan.id,
+        stageKind: plan.stageKind,
+        percentage: plan.percentage,
+        dueText: plan.dueText,
+        amountMin: plan.amountMin,
+        amountMax: plan.amountMax,
+        sortOrder: plan.sortOrder
+      })),
+    contractDraft: quote.contractDraft
+      ? {
+          id: quote.contractDraft.id,
+          status: quote.contractDraft.status,
+          title: quote.contractDraft.title,
+          bodyText: quote.contractDraft.bodyText,
+          paymentSummary: quote.contractDraft.paymentSummary,
+          scopeText: quote.contractDraft.scopeText,
+          successFeeRestricted: quote.contractDraft.successFeeRestricted,
+          specialTerms: quote.contractDraft.specialTerms,
+          updatedAt: quote.contractDraft.updatedAt.toISOString()
+        }
+      : null
+  } satisfies QuoteSummarySnapshot;
+}
+
+async function loadQuoteMasters() {
+  const [serviceTypes, pricingOptions, pricingRules] = await Promise.all([
+    prisma.serviceType.findMany({ where: { isActive: true }, orderBy: [{ category: "asc" }, { minPrice: "asc" }] }),
+    prisma.pricingOption.findMany({ where: { isActive: true }, orderBy: { createdAt: "asc" } }),
+    prisma.pricingRule.findMany({ where: { isActive: true }, orderBy: { createdAt: "asc" } })
+  ]);
+
+  return {
+    serviceTypes: serviceTypes.map<ServiceTypeMaster>((serviceType) => ({
+      id: serviceType.id,
+      legacyId: serviceType.legacyId,
+      name: serviceType.name,
+      category: serviceType.category,
+      minPrice: serviceType.minPrice,
+      maxPrice: serviceType.maxPrice,
+      isAppeal: serviceType.isAppeal,
+      isActive: serviceType.isActive
+    })),
+    pricingOptions: pricingOptions.map<PricingOptionMaster>((option) => ({
+      id: option.id,
+      legacyId: option.legacyId,
+      name: option.name,
+      description: option.description,
+      optionType: option.optionType,
+      flatAmount: option.flatAmount,
+      percentRate: option.percentRate,
+      unitLabel: option.unitLabel,
+      isVat: option.isVat,
+      isActive: option.isActive
+    })),
+    pricingRules: pricingRules.map<PricingRuleMaster>((rule) => ({
+      id: rule.id,
+      code: rule.code,
+      ruleType: rule.ruleType,
+      label: rule.label,
+      description: rule.description,
+      numericValue: rule.numericValue,
+      percentValue: rule.percentValue,
+      jsonValue: rule.jsonValue,
+      isDefault: rule.isDefault,
+      isActive: rule.isActive
+    }))
+  };
+}
+
+function toQuoteComputationInput(
+  inquiry: QuoteInquirySnapshot,
+  masters: Awaited<ReturnType<typeof loadQuoteMasters>>,
+  input: {
+    selectedServiceLegacyIds?: string[];
+    selectedOptionLegacyIds?: string[];
+    urgencyRuleCode?: string;
+    consultRuleCode?: string;
+    paymentRuleCode?: string;
+    rangeMode?: boolean;
+    stageOverrides?: Partial<Record<PaymentStageKind, { percentage?: number; dueText?: string }>>;
+    draftNotes?: string | null;
+  }
+) {
+  return {
+    inquiry,
+    masters,
+    selectedServiceLegacyIds:
+      input.selectedServiceLegacyIds ??
+      suggestServiceLegacyIds(inquiry, masters.serviceTypes),
+    selectedOptionLegacyIds: input.selectedOptionLegacyIds ?? [],
+    urgencyRuleCode:
+      input.urgencyRuleCode ??
+      mapUrgencyLevelToRuleCode(inquiry.urgencyLevel) ??
+      selectDefaultRuleCode(masters.pricingRules, "URGENCY", "URGENCY_STANDARD"),
+    consultRuleCode:
+      input.consultRuleCode ??
+      selectDefaultRuleCode(masters.pricingRules, "CONSULT", "CONSULT_NONE"),
+    paymentRuleCode:
+      input.paymentRuleCode ??
+      selectDefaultRuleCode(masters.pricingRules, "PAYMENT", "PAYMENT_STANDARD"),
+    rangeMode: input.rangeMode ?? true,
+    stageOverrides: input.stageOverrides,
+    draftNotes: input.draftNotes
+  };
+}
+
+async function persistQuoteComputation(
+  inquiryId: string,
+  computation: QuoteComputationResult,
+  input: {
+    quoteId?: string;
+    status?: QuoteStatus;
+    draftNotes?: string | null;
+  } = {}
+) {
+  const payload = {
+    status: input.status ?? "DRAFT",
+    selectedServiceLegacyIds: JSON.stringify(computation.selectedServiceLegacyIds),
+    selectedOptionLegacyIds: JSON.stringify(computation.selectedOptionLegacyIds),
+    urgencyRuleCode: computation.urgencyRuleCode,
+    consultRuleCode: computation.consultRuleCode,
+    paymentRuleCode: computation.paymentRuleCode,
+    rangeMode: computation.rangeMode,
+    serviceBaseMin: computation.serviceBaseMin,
+    serviceBaseMax: computation.serviceBaseMax,
+    subtotalMin: computation.subtotalMin,
+    subtotalMax: computation.subtotalMax,
+    vatAmountMin: computation.vatAmountMin,
+    vatAmountMax: computation.vatAmountMax,
+    totalMin: computation.totalMin,
+    totalMax: computation.totalMax,
+    consultFee: computation.consultFee,
+    successFeeRestricted: computation.successFeeRestricted,
+    draftNotes: input.draftNotes ?? null,
+    calculationSummary: computation.calculationSummary
+  };
+
+  if (input.quoteId) {
+    await prisma.$transaction([
+      prisma.quoteLineItem.deleteMany({ where: { quoteId: input.quoteId } }),
+      prisma.quoteAdjustment.deleteMany({ where: { quoteId: input.quoteId } }),
+      prisma.paymentPlan.deleteMany({ where: { quoteId: input.quoteId } }),
+      prisma.quote.update({
+        where: { id: input.quoteId },
+        data: {
+          ...payload,
+          lineItems: {
+            create: computation.lineItems.map((line) => ({
+              serviceTypeId: line.serviceTypeId,
+              kind: line.kind,
+              label: line.label,
+              description: line.description,
+              amountMin: line.amountMin,
+              amountMax: line.amountMax,
+              sortOrder: line.sortOrder,
+              isManual: line.isManual ?? false
+            }))
+          },
+          adjustments: {
+            create: computation.adjustments.map((adjustment) => ({
+              pricingOptionId: adjustment.pricingOptionId,
+              label: adjustment.label,
+              description: adjustment.description,
+              optionType: adjustment.optionType,
+              flatAmount: adjustment.flatAmount,
+              percentRate: adjustment.percentRate,
+              computedMin: adjustment.computedMin,
+              computedMax: adjustment.computedMax,
+              isVat: adjustment.isVat,
+              sortOrder: adjustment.sortOrder,
+              isManual: adjustment.isManual ?? false
+            }))
+          },
+          paymentPlans: {
+            create: computation.paymentPlans.map((plan) => ({
+              stageKind: plan.stageKind,
+              percentage: plan.percentage,
+              dueText: plan.dueText,
+              amountMin: plan.amountMin,
+              amountMax: plan.amountMax,
+              sortOrder: plan.sortOrder
+            }))
+          }
+        }
+      })
+    ]);
+
+    return getQuoteByIdOrThrow(input.quoteId);
+  }
+
+  const quote = await prisma.quote.create({
+    data: {
+      inquiryId,
+      ...payload,
+      lineItems: {
+        create: computation.lineItems.map((line) => ({
+          serviceTypeId: line.serviceTypeId,
+          kind: line.kind,
+          label: line.label,
+          description: line.description,
+          amountMin: line.amountMin,
+          amountMax: line.amountMax,
+          sortOrder: line.sortOrder,
+          isManual: line.isManual ?? false
+        }))
+      },
+      adjustments: {
+        create: computation.adjustments.map((adjustment) => ({
+          pricingOptionId: adjustment.pricingOptionId,
+          label: adjustment.label,
+          description: adjustment.description,
+          optionType: adjustment.optionType,
+          flatAmount: adjustment.flatAmount,
+          percentRate: adjustment.percentRate,
+          computedMin: adjustment.computedMin,
+          computedMax: adjustment.computedMax,
+          isVat: adjustment.isVat,
+          sortOrder: adjustment.sortOrder,
+          isManual: adjustment.isManual ?? false
+        }))
+      },
+      paymentPlans: {
+        create: computation.paymentPlans.map((plan) => ({
+          stageKind: plan.stageKind,
+          percentage: plan.percentage,
+          dueText: plan.dueText,
+          amountMin: plan.amountMin,
+          amountMax: plan.amountMax,
+          sortOrder: plan.sortOrder
+        }))
+      }
+    },
+    include: {
+      lineItems: true,
+      adjustments: true,
+      paymentPlans: true,
+      contractDraft: true
+    }
+  });
+
+  return quote;
+}
+
+async function getQuoteByIdOrThrow(quoteId: string) {
+  return prisma.quote.findUniqueOrThrow({
+    where: { id: quoteId },
+    include: {
+      lineItems: true,
+      adjustments: true,
+      paymentPlans: true,
+      contractDraft: true
+    }
+  });
+}
+
+export async function getQuoteWorkspaceForInquiry(inquiryId: string): Promise<QuoteWorkspace> {
+  const [inquiry, masters, latestQuote] = await Promise.all([
+    prisma.inquiry.findUniqueOrThrow({ where: { id: inquiryId } }),
+    loadQuoteMasters(),
+    prisma.quote.findFirst({
+      where: { inquiryId },
+      orderBy: [{ updatedAt: "desc" }],
+      include: {
+        lineItems: true,
+        adjustments: true,
+        paymentPlans: true,
+        contractDraft: true
+      }
+    })
+  ]);
+
+  const inquirySnapshot = serializeInquiryForQuote(inquiry);
+  const suggestedServiceLegacyIds = suggestServiceLegacyIds(inquirySnapshot, masters.serviceTypes);
+
+  return {
+    inquiry: inquirySnapshot,
+    masters: {
+      serviceTypes: masters.serviceTypes,
+      pricingOptions: masters.pricingOptions,
+      urgencyRules: masters.pricingRules.filter((rule) => rule.ruleType === "URGENCY"),
+      consultRules: masters.pricingRules.filter((rule) => rule.ruleType === "CONSULT"),
+      paymentRules: masters.pricingRules.filter((rule) => rule.ruleType === "PAYMENT"),
+      policyRules: masters.pricingRules.filter((rule) => rule.ruleType === "POLICY")
+    },
+    suggestedServiceLegacyIds,
+    suggestedUrgencyRuleCode: mapUrgencyLevelToRuleCode(inquiry.urgencyLevel),
+    latestQuote: latestQuote ? serializeQuote(latestQuote) : null
+  };
+}
+
+export async function createQuoteDraftForInquiry(inquiryId: string) {
+  const inquiry = await prisma.inquiry.findUniqueOrThrow({ where: { id: inquiryId } });
+  const masters = await loadQuoteMasters();
+  const inquirySnapshot = serializeInquiryForQuote(inquiry);
+  const selectedServiceLegacyIds = suggestServiceLegacyIds(inquirySnapshot, masters.serviceTypes);
+  const selectedOptionLegacyIds = suggestInitialOptionLegacyIds(inquirySnapshot, masters.pricingOptions);
+
+  const computation = computeQuoteDraft(
+    toQuoteComputationInput(inquirySnapshot, masters, {
+      selectedServiceLegacyIds,
+      selectedOptionLegacyIds,
+      urgencyRuleCode: mapUrgencyLevelToRuleCode(inquiry.urgencyLevel),
+      consultRuleCode: selectDefaultRuleCode(masters.pricingRules, "CONSULT", "CONSULT_NONE"),
+      paymentRuleCode: selectDefaultRuleCode(masters.pricingRules, "PAYMENT", "PAYMENT_STANDARD"),
+      rangeMode: true
+    })
+  );
+
+  const quote = await persistQuoteComputation(inquiryId, computation);
+  await prisma.inquiry.update({
+    where: { id: inquiryId },
+    data: { status: "QUOTE_DRAFTED" }
+  });
+  return serializeQuote(quote);
+}
+
+export async function recalculateQuoteDraft(
+  quoteId: string,
+  input: {
+    selectedServiceLegacyIds: string[];
+    selectedOptionLegacyIds: string[];
+    urgencyRuleCode: string;
+    consultRuleCode: string;
+    paymentRuleCode: string;
+    rangeMode: boolean;
+    stageOverrides: Partial<Record<PaymentStageKind, { percentage?: number; dueText?: string }>>;
+    draftNotes?: string | null;
+  }
+) {
+  const quote = await prisma.quote.findUniqueOrThrow({
+    where: { id: quoteId },
+    include: { inquiry: true }
+  });
+  const masters = await loadQuoteMasters();
+  const inquirySnapshot = serializeInquiryForQuote(quote.inquiry);
+
+  const computation = computeQuoteDraft(
+    toQuoteComputationInput(inquirySnapshot, masters, {
+      ...input,
+      draftNotes: input.draftNotes
+    })
+  );
+
+  const updated = await persistQuoteComputation(quote.inquiryId, computation, {
+    quoteId,
+    status: quote.status,
+    draftNotes: input.draftNotes
+  });
+
+  return serializeQuote(updated);
+}
+
+export async function saveQuoteManualEdits(
+  quoteId: string,
+  input: {
+    draftNotes?: string | null;
+    lineItems: Array<{
+      id: string;
+      label: string;
+      description?: string | null;
+      amountMin: number;
+      amountMax: number;
+      sortOrder: number;
+    }>;
+    adjustments: Array<{
+      id: string;
+      label: string;
+      description?: string | null;
+      computedMin: number;
+      computedMax: number;
+      sortOrder: number;
+    }>;
+    paymentPlans: Array<{
+      id: string;
+      percentage: number;
+      dueText: string;
+      sortOrder: number;
+      stageKind: PaymentStageKind;
+    }>;
+  }
+) {
+  await getQuoteByIdOrThrow(quoteId);
+
+  await prisma.$transaction([
+    prisma.quote.update({
+      where: { id: quoteId },
+      data: { draftNotes: input.draftNotes ?? null }
+    }),
+    ...input.lineItems.map((line) =>
+      prisma.quoteLineItem.update({
+        where: { id: line.id },
+        data: {
+          label: line.label,
+          description: line.description ?? null,
+          amountMin: line.amountMin,
+          amountMax: line.amountMax,
+          sortOrder: line.sortOrder,
+          isManual: true
+        }
+      })
+    ),
+    ...input.adjustments.map((adjustment) =>
+      prisma.quoteAdjustment.update({
+        where: { id: adjustment.id },
+        data: {
+          label: adjustment.label,
+          description: adjustment.description ?? null,
+          computedMin: adjustment.computedMin,
+          computedMax: adjustment.computedMax,
+          sortOrder: adjustment.sortOrder,
+          isManual: true
+        }
+      })
+    ),
+    ...input.paymentPlans.map((plan) =>
+      prisma.paymentPlan.update({
+        where: { id: plan.id },
+        data: {
+          percentage: plan.percentage,
+          dueText: plan.dueText,
+          sortOrder: plan.sortOrder
+        }
+      })
+    )
+  ]);
+
+  const refreshed = await getQuoteByIdOrThrow(quoteId);
+  const lineItems = refreshed.lineItems.sort((left, right) => left.sortOrder - right.sortOrder);
+  const adjustments = refreshed.adjustments.sort((left, right) => left.sortOrder - right.sortOrder);
+  const serviceBaseMin = lineItems
+    .filter((line) => line.kind === "SERVICE")
+    .reduce((sum, line) => sum + line.amountMin, 0);
+  const serviceBaseMax = lineItems
+    .filter((line) => line.kind === "SERVICE")
+    .reduce((sum, line) => sum + line.amountMax, 0);
+  const subtotalMin =
+    lineItems.reduce((sum, line) => sum + line.amountMin, 0) +
+    adjustments.filter((adjustment) => !adjustment.isVat).reduce((sum, adjustment) => sum + adjustment.computedMin, 0);
+  const subtotalMax =
+    lineItems.reduce((sum, line) => sum + line.amountMax, 0) +
+    adjustments.filter((adjustment) => !adjustment.isVat).reduce((sum, adjustment) => sum + adjustment.computedMax, 0);
+  const vatAmountMin = adjustments
+    .filter((adjustment) => adjustment.isVat)
+    .reduce((sum, adjustment) => sum + adjustment.computedMin, 0);
+  const vatAmountMax = adjustments
+    .filter((adjustment) => adjustment.isVat)
+    .reduce((sum, adjustment) => sum + adjustment.computedMax, 0);
+  const totalMin = subtotalMin + vatAmountMin;
+  const totalMax = subtotalMax + vatAmountMax;
+
+  await prisma.$transaction([
+    prisma.quote.update({
+      where: { id: quoteId },
+      data: {
+        serviceBaseMin,
+        serviceBaseMax,
+        subtotalMin,
+        subtotalMax,
+        vatAmountMin,
+        vatAmountMax,
+        totalMin,
+        totalMax,
+        calculationSummary: buildManualSummary({
+          lineItems: lineItems.map((line) => ({
+            label: line.label,
+            amountMin: line.amountMin,
+            amountMax: line.amountMax
+          })),
+          adjustments: adjustments.map((adjustment) => ({
+            label: adjustment.label,
+            computedMin: adjustment.computedMin,
+            computedMax: adjustment.computedMax,
+            isVat: adjustment.isVat
+          })),
+          consultFee: refreshed.consultFee,
+          successFeeRestricted: refreshed.successFeeRestricted
+        })
+      }
+    }),
+    ...refreshed.paymentPlans.map((plan) => {
+      const incoming = input.paymentPlans.find((entry) => entry.id === plan.id);
+      const percentage = incoming?.percentage ?? plan.percentage;
+
+      return prisma.paymentPlan.update({
+        where: { id: plan.id },
+        data: {
+          percentage,
+          amountMin: Math.round(totalMin * (percentage / 100)),
+          amountMax: Math.round(totalMax * (percentage / 100))
+        }
+      });
+    })
+  ]);
+
+  return serializeQuote(await getQuoteByIdOrThrow(quoteId));
+}
+
+export async function createContractDraftFromQuote(quoteId: string) {
+  const quote = await prisma.quote.findUniqueOrThrow({
+    where: { id: quoteId },
+    include: {
+      inquiry: true,
+      lineItems: true,
+      adjustments: true,
+      paymentPlans: true,
+      contractDraft: true
+    }
+  });
+
+  const warning = quote.successFeeRestricted
+    ? ["행정심판/이의신청 계열 업무는 성공보수를 포함하지 않도록 제한됩니다."]
+    : [];
+  const draft = buildContractDraftText({
+    inquiry: serializeInquiryForQuote(quote.inquiry),
+    lineItems: quote.lineItems.sort((left, right) => left.sortOrder - right.sortOrder),
+    paymentPlans: quote.paymentPlans.sort((left, right) => left.sortOrder - right.sortOrder),
+    totalMin: quote.totalMin,
+    totalMax: quote.totalMax,
+    vatAmountMin: quote.vatAmountMin,
+    vatAmountMax: quote.vatAmountMax,
+    consultFee: quote.consultFee,
+    successFeeRestricted: quote.successFeeRestricted,
+    warnings: warning,
+    draftNotes: quote.draftNotes
+  });
+
+  const contractDraft = quote.contractDraft
+    ? await prisma.contractDraft.update({
+        where: { id: quote.contractDraft.id },
+        data: {
+          title: draft.title,
+          bodyText: draft.bodyText,
+          scopeText: draft.scopeText,
+          paymentSummary: draft.paymentSummary,
+          successFeeRestricted: quote.successFeeRestricted
+        }
+      })
+    : await prisma.contractDraft.create({
+        data: {
+          inquiryId: quote.inquiryId,
+          quoteId: quote.id,
+          title: draft.title,
+          bodyText: draft.bodyText,
+          scopeText: draft.scopeText,
+          paymentSummary: draft.paymentSummary,
+          successFeeRestricted: quote.successFeeRestricted
+        }
+      });
+
+  await prisma.quote.update({
+    where: { id: quoteId },
+    data: { status: "CONTRACT_DRAFTED" }
+  });
+  await prisma.inquiry.update({
+    where: { id: quote.inquiryId },
+    data: { status: "QUOTE_PENDING" }
+  });
+
+  return {
+    id: contractDraft.id,
+    status: contractDraft.status,
+    title: contractDraft.title,
+    bodyText: contractDraft.bodyText,
+    paymentSummary: contractDraft.paymentSummary,
+    scopeText: contractDraft.scopeText,
+    successFeeRestricted: contractDraft.successFeeRestricted,
+    specialTerms: contractDraft.specialTerms,
+    updatedAt: contractDraft.updatedAt.toISOString()
+  };
+}

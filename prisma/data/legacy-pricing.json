@@ -1,0 +1,43 @@
+{
+  "version": "admin-suite-legacy-2026-04",
+  "source": "admin_suite.html",
+  "serviceTypes": [
+    { "legacyId": "visa_inv", "name": "초청 비자 신청", "category": "출입국", "minPrice": 300000, "maxPrice": 1500000, "isAppeal": false },
+    { "legacyId": "stay_reg", "name": "등록·연장", "category": "출입국", "minPrice": 80000, "maxPrice": 200000, "isAppeal": false },
+    { "legacyId": "stay_chg", "name": "자격변경", "category": "출입국", "minPrice": 200000, "maxPrice": 400000, "isAppeal": false },
+    { "legacyId": "deportation", "name": "사범심사", "category": "출입국", "minPrice": 1000000, "maxPrice": 5000000, "isAppeal": true },
+    { "legacyId": "adm_drink", "name": "음주운전 행정심판", "category": "행정심판", "minPrice": 500000, "maxPrice": 1500000, "isAppeal": true },
+    { "legacyId": "adm_biz", "name": "영업정지 취소심판", "category": "행정심판", "minPrice": 500000, "maxPrice": 1000000, "isAppeal": true },
+    { "legacyId": "adm_school", "name": "학교폭력 행정심판", "category": "행정심판", "minPrice": 300000, "maxPrice": 1000000, "isAppeal": true },
+    { "legacyId": "adm_fine", "name": "과태료 이의신청", "category": "행정심판", "minPrice": 30000, "maxPrice": 100000, "isAppeal": true },
+    { "legacyId": "npo_basic", "name": "비영리단체 고유번호", "category": "비영리단체", "minPrice": 300000, "maxPrice": 500000, "isAppeal": false },
+    { "legacyId": "npo_reg", "name": "비영리법인 인가", "category": "비영리단체", "minPrice": 1000000, "maxPrice": 5000000, "isAppeal": false },
+    { "legacyId": "npo_minutes", "name": "정관·회의록 작성", "category": "비영리단체", "minPrice": 200000, "maxPrice": 500000, "isAppeal": false },
+    { "legacyId": "doc_cert", "name": "내용증명 작성", "category": "서류작성", "minPrice": 100000, "maxPrice": 300000, "isAppeal": false },
+    { "legacyId": "doc_petition", "name": "진정서·탄원서", "category": "서류작성", "minPrice": 100000, "maxPrice": 200000, "isAppeal": false },
+    { "legacyId": "biz_license", "name": "영업허가 신청", "category": "행정업무", "minPrice": 150000, "maxPrice": 250000, "isAppeal": false },
+    { "legacyId": "construct", "name": "건축·개발행위 허가", "category": "행정업무", "minPrice": 300000, "maxPrice": 600000, "isAppeal": false },
+    { "legacyId": "food", "name": "식품위생 허가/신고", "category": "행정업무", "minPrice": 120000, "maxPrice": 200000, "isAppeal": false },
+    { "legacyId": "rdev_comp", "name": "지장물 보상(재개발)", "category": "재개발·보상", "minPrice": 1000000, "maxPrice": 5000000, "isAppeal": false },
+    { "legacyId": "law_interp", "name": "유권해석 신청", "category": "재개발·보상", "minPrice": 500000, "maxPrice": 1000000, "isAppeal": false }
+  ],
+  "pricingOptions": [
+    { "legacyId": "multi", "name": "복수 기관 협의", "description": "2개 이상 기관 협의", "optionType": "FLAT", "flatAmount": 50000, "percentRate": null, "unitLabel": "+5만원", "isVat": false },
+    { "legacyId": "field", "name": "현장 조사 동반", "description": "실사·확인", "optionType": "FLAT", "flatAmount": 80000, "percentRate": null, "unitLabel": "+8만원", "isVat": false },
+    { "legacyId": "local", "name": "관할 관청 출장", "description": "30km 이내", "optionType": "FLAT", "flatAmount": 50000, "percentRate": null, "unitLabel": "+5만원", "isVat": false },
+    { "legacyId": "far", "name": "원거리 출장", "description": "30km 초과", "optionType": "FLAT", "flatAmount": 130000, "percentRate": null, "unitLabel": "+13만원", "isVat": false },
+    { "legacyId": "docs", "name": "서류 수집 대행", "description": "서류 취합", "optionType": "PERCENT", "flatAmount": null, "percentRate": 20, "unitLabel": "+20%", "isVat": false },
+    { "legacyId": "vat", "name": "부가세 포함", "description": "VAT 10%", "optionType": "PERCENT", "flatAmount": null, "percentRate": 10, "unitLabel": "+10%", "isVat": true }
+  ],
+  "pricingRules": [
+    { "code": "URGENCY_STANDARD", "ruleType": "URGENCY", "label": "일반", "description": "가산 없음", "numericValue": null, "percentValue": 0, "jsonValue": null, "isDefault": true },
+    { "code": "URGENCY_EXPRESS", "ruleType": "URGENCY", "label": "빠른처리", "description": "기본 수수료의 30% 가산", "numericValue": null, "percentValue": 30, "jsonValue": null, "isDefault": false },
+    { "code": "URGENCY_SAME_DAY", "ruleType": "URGENCY", "label": "당일처리", "description": "기본 수수료의 50% 가산", "numericValue": null, "percentValue": 50, "jsonValue": null, "isDefault": false },
+    { "code": "CONSULT_NONE", "ruleType": "CONSULT", "label": "미적용", "description": "상담료 미적용", "numericValue": 0, "percentValue": null, "jsonValue": null, "isDefault": true },
+    { "code": "CONSULT_30M", "ruleType": "CONSULT", "label": "30분 상담", "description": "상담료 5만원 (수임 시 면제)", "numericValue": 50000, "percentValue": null, "jsonValue": null, "isDefault": false },
+    { "code": "CONSULT_1H", "ruleType": "CONSULT", "label": "1시간 상담", "description": "상담료 10만원 (수임 시 면제)", "numericValue": 100000, "percentValue": null, "jsonValue": null, "isDefault": false },
+    { "code": "CONSULT_2H", "ruleType": "CONSULT", "label": "2시간 상담", "description": "상담료 15만원 (수임 시 면제)", "numericValue": 150000, "percentValue": null, "jsonValue": null, "isDefault": false },
+    { "code": "PAYMENT_STANDARD", "ruleType": "PAYMENT", "label": "표준 납입 구조", "description": "착수금 50 / 중도금 50 / 성공보수 0", "numericValue": null, "percentValue": null, "jsonValue": "{\"stages\":[{\"stageKind\":\"RETAINER\",\"percentage\":50,\"dueText\":\"계약 체결 시\"},{\"stageKind\":\"MIDTERM\",\"percentage\":50,\"dueText\":\"서류 접수 시\"},{\"stageKind\":\"SUCCESS\",\"percentage\":0,\"dueText\":\"허가 완료 시\"}]}", "isDefault": true },
+    { "code": "POLICY_APPEAL_SUCCESS_RESTRICT", "ruleType": "POLICY", "label": "행정심판 성공보수 제한", "description": "행정심판·이의신청 등 appeal 업무는 성공보수를 자동 제한합니다.", "numericValue": null, "percentValue": null, "jsonValue": "{\"restrictedWhenAppeal\":true,\"message\":\"행정심판/이의신청 계열 업무는 결과 연동 성공보수를 견적·계약 초안에 포함하지 않습니다.\"}", "isDefault": true }
+  ]
+}
