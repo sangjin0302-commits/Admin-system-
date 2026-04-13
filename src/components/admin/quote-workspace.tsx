@@ -32,7 +32,11 @@ const quoteStatusLabels = {
 
 const caseStageLabels = {
   CONTRACT_PREPARATION: "계약 준비",
-  ACTIVE: "진행중",
+  DOCUMENT_COLLECTION: "서류 수집",
+  UNDER_REVIEW: "검토중",
+  SUBMITTED: "제출 완료",
+  SUPPLEMENT_REQUESTED: "보완 요청",
+  COMPLETED: "완료",
   ON_HOLD: "보류",
   CLOSED: "종결"
 } as const;

@@ -1,11 +1,22 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
+
 import {
   PrismaClient,
+  type CaseStage,
   type PricingOptionType,
   type PricingRuleType
 } from "../generated/prisma-v4";
 import legacyPricing from "./data/legacy-pricing.json";
 
 const prisma = new PrismaClient();
+const uploadRoot = path.resolve(process.cwd(), process.env.DOCUMENT_UPLOAD_DIR?.trim() || "uploads");
+
+async function writeSeedUploadFile(storagePath: string, content: string) {
+  const absolutePath = path.resolve(uploadRoot, storagePath);
+  await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+  await fs.writeFile(absolutePath, content, "utf8");
+}
 
 async function seedLegacyPricing() {
   await prisma.legacyImportLog.create({
@@ -247,6 +258,13 @@ function sumRange(items: Array<{ min: number; max: number }>) {
   );
 }
 
+function dateFromToday(days: number, hour = 9, minute = 0) {
+  const target = new Date();
+  target.setHours(hour, minute, 0, 0);
+  target.setDate(target.getDate() + days);
+  return target;
+}
+
 async function seedQuoteFlow() {
   const [serviceTypes, pricingOptions] = await Promise.all([
     prisma.serviceType.findMany(),
@@ -262,8 +280,11 @@ async function seedQuoteFlow() {
   const corporateInquiry = await prisma.inquiry.findFirst({
     where: { email: "ops@hanbitmedical.co.kr" }
   });
+  const lailaInquiry = await prisma.inquiry.findFirst({
+    where: { email: "laila.hassan@example.com" }
+  });
 
-  if (!visaInquiry || !corporateInquiry) return;
+  if (!visaInquiry || !corporateInquiry || !lailaInquiry) return;
 
   const corpServices = ["npo_reg", "npo_minutes"]
     .map((legacyId) => serviceByLegacy.get(legacyId))
@@ -314,6 +335,8 @@ async function seedQuoteFlow() {
       successFeeRestricted: false,
       draftNotes: "기업 일괄 의뢰 기준 발송된 견적입니다.",
       calculationSummary: "기업 일괄 의뢰 / 빠른처리 / 서류 수집 대행 + VAT",
+      createdAt: dateFromToday(-6, 10),
+      updatedAt: dateFromToday(-6, 10),
       lineItems: {
         create: [
           ...corpServices.map((service, index) => ({
@@ -521,25 +544,282 @@ async function seedQuoteFlow() {
     }
   });
 
-  await prisma.caseRecord.create({
+  const caseRecord = await prisma.caseRecord.create({
     data: {
       caseNumber: "CASE-20260413-001",
       inquiryId: visaInquiry.id,
       quoteId: acceptedQuote.id,
       contractDraftId: contractDraft.id,
       currentStage: "CONTRACT_PREPARATION" as const,
-      dueDate: new Date("2026-04-25T09:00:00.000Z"),
+      dueDate: dateFromToday(1, 17),
+      filingDeadline: dateFromToday(-1, 17),
+      supplementDeadline: dateFromToday(0, 17),
+      stayExpirationDate: dateFromToday(2, 12),
+      internalDeadline: dateFromToday(-2, 18),
       internalMemo: "수락 완료. 계약 특약 정리 후 착수금 안내 예정."
     }
+  });
+
+  await prisma.caseDocumentItem.createMany({
+    data: [
+      {
+        caseId: caseRecord.id,
+        documentType: "passport_copy",
+        label: "여권 사본",
+        isRequired: true,
+        isReceived: true,
+        receivedAt: new Date("2026-04-13T11:00:00.000Z"),
+        sortOrder: 0,
+        note: "스캔본 수령"
+      },
+      {
+        caseId: caseRecord.id,
+        documentType: "arc_copy",
+        label: "외국인등록증 사본",
+        isRequired: true,
+        isReceived: false,
+        sortOrder: 1,
+        note: "미제출"
+      },
+      {
+        caseId: caseRecord.id,
+        documentType: "application_form",
+        label: "신청서 초안",
+        isRequired: true,
+        isReceived: false,
+        sortOrder: 2,
+        note: "작성 대기"
+      }
+    ]
+  });
+
+  const seededItems = await prisma.caseDocumentItem.findMany({
+    where: { caseId: caseRecord.id }
+  });
+  const passportItem = seededItems.find((item) => item.documentType === "passport_copy");
+
+  if (passportItem) {
+    const version1Path = `cases/${caseRecord.id}/${passportItem.id}/sample-passport-v1.txt`;
+    const version2Path = `cases/${caseRecord.id}/${passportItem.id}/sample-passport-v2.txt`;
+    await writeSeedUploadFile(version1Path, "seed sample passport file v1");
+    await writeSeedUploadFile(version2Path, "seed sample passport file v2");
+
+    await prisma.caseDocumentFile.createMany({
+      data: [
+        {
+          caseId: caseRecord.id,
+          caseDocumentItemId: passportItem.id,
+          originalFilename: "passport-copy-v1.txt",
+          storedFilename: "sample-passport-v1.txt",
+          storagePath: version1Path,
+          mimeType: "text/plain",
+          size: Buffer.byteLength("seed sample passport file v1"),
+          note: "초기 수령본",
+          isCurrentVersion: false,
+          versionNumber: 1,
+          uploadedAt: new Date("2026-04-13T11:00:00.000Z")
+        },
+        {
+          caseId: caseRecord.id,
+          caseDocumentItemId: passportItem.id,
+          originalFilename: "passport-copy-v2.txt",
+          storedFilename: "sample-passport-v2.txt",
+          storagePath: version2Path,
+          mimeType: "text/plain",
+          size: Buffer.byteLength("seed sample passport file v2"),
+          note: "보완본(최신)",
+          isCurrentVersion: true,
+          versionNumber: 2,
+          uploadedAt: new Date("2026-04-13T15:00:00.000Z")
+        }
+      ]
+    });
+  }
+
+  if (passportItem) {
+    const latestPassportFile = await prisma.caseDocumentFile.findFirst({
+      where: {
+        caseId: caseRecord.id,
+        caseDocumentItemId: passportItem.id,
+        isCurrentVersion: true
+      }
+    });
+
+    if (latestPassportFile) {
+      const submissionPackage = await prisma.submissionPackage.create({
+        data: {
+          caseId: caseRecord.id,
+          packageNumber: `${caseRecord.caseNumber}-SUB-001`,
+          packageLabel: "1차 제출본",
+          submittedTo: "서울출입국청",
+          submittedAt: dateFromToday(-2, 9, 30),
+          status: "SUBMITTED",
+          note: "초기 제출 패키지",
+          items: {
+            create: [
+              {
+                caseDocumentItemId: passportItem.id,
+                caseDocumentFileId: latestPassportFile.id,
+                labelSnapshot: passportItem.label,
+                versionNumberSnapshot: latestPassportFile.versionNumber,
+                documentTypeSnapshot: passportItem.documentType,
+                filenameSnapshot: latestPassportFile.originalFilename
+              }
+            ]
+          }
+        }
+      });
+
+      await prisma.supplementRequest.create({
+        data: {
+          caseId: caseRecord.id,
+          submissionPackageId: submissionPackage.id,
+          requestedAt: dateFromToday(-1, 8),
+          dueDate: dateFromToday(0, 18),
+          requestedBy: "서울출입국청 심사관",
+          summary: "체류목적 입증자료 추가 제출 요청",
+          status: "IN_PROGRESS",
+          note: "고용사유서 및 추가 확인서류 준비중",
+          items: {
+            create: [
+              {
+                caseDocumentItemId: passportItem.id,
+                labelSnapshot: passportItem.label,
+                sortOrder: 0
+              }
+            ]
+          }
+        }
+      });
+    }
+  }
+
+  await prisma.caseStageLog.createMany({
+    data: [
+      {
+        caseId: caseRecord.id,
+        fromStage: null,
+        toStage: "CONTRACT_PREPARATION" as CaseStage,
+        note: "초기 사건 생성"
+      }
+    ]
   });
 
   await prisma.inquiry.update({
     where: { id: visaInquiry.id },
     data: { status: "WON" }
   });
+
+  const lailaService = serviceByLegacy.get("stay_ext");
+  const lailaBase = {
+    min: lailaService?.minPrice ?? 180000,
+    max: lailaService?.maxPrice ?? 320000
+  };
+  const lailaSubtotal = {
+    min: lailaBase.min,
+    max: lailaBase.max
+  };
+  const lailaVat = {
+    min: Math.round(lailaSubtotal.min * 0.1),
+    max: Math.round(lailaSubtotal.max * 0.1)
+  };
+  const lailaTotal = {
+    min: lailaSubtotal.min + lailaVat.min,
+    max: lailaSubtotal.max + lailaVat.max
+  };
+
+  await prisma.quote.create({
+    data: {
+      inquiryId: lailaInquiry.id,
+      status: "ACCEPTED",
+      selectedServiceLegacyIds: JSON.stringify([lailaService?.legacyId ?? "stay_ext"]),
+      selectedOptionLegacyIds: JSON.stringify(["vat"]),
+      urgencyRuleCode: "URGENCY_STANDARD",
+      consultRuleCode: "CONSULT_NONE",
+      paymentRuleCode: "PAYMENT_STANDARD",
+      rangeMode: true,
+      serviceBaseMin: lailaBase.min,
+      serviceBaseMax: lailaBase.max,
+      subtotalMin: lailaSubtotal.min,
+      subtotalMax: lailaSubtotal.max,
+      vatAmountMin: lailaVat.min,
+      vatAmountMax: lailaVat.max,
+      totalMin: lailaTotal.min,
+      totalMax: lailaTotal.max,
+      consultFee: 0,
+      successFeeRestricted: false,
+      draftNotes: "수락되었으나 계약/사건 후속조치 미생성 상태 샘플",
+      calculationSummary: "체류연장 기본 견적 (후속조치 대기)",
+      createdAt: dateFromToday(-2, 9),
+      updatedAt: dateFromToday(-2, 9),
+      lineItems: {
+        create: [
+          {
+            serviceTypeId: lailaService?.id,
+            kind: "SERVICE" as const,
+            label: lailaService?.name ?? "체류 연장",
+            description: "체류 연장 기본 범위",
+            amountMin: lailaBase.min,
+            amountMax: lailaBase.max,
+            sortOrder: 0
+          }
+        ]
+      },
+      adjustments: {
+        create: [
+          {
+            pricingOptionId: optionByLegacy.get("vat")?.id,
+            label: "부가세 포함",
+            description: "VAT 10%",
+            optionType: "PERCENT" as const,
+            percentRate: 10,
+            computedMin: lailaVat.min,
+            computedMax: lailaVat.max,
+            isVat: true,
+            sortOrder: 0
+          }
+        ]
+      },
+      paymentPlans: {
+        create: [
+          {
+            stageKind: "RETAINER" as const,
+            percentage: 50,
+            dueText: "계약 체결 시",
+            amountMin: Math.round(lailaTotal.min * 0.5),
+            amountMax: Math.round(lailaTotal.max * 0.5),
+            sortOrder: 0
+          },
+          {
+            stageKind: "MIDTERM" as const,
+            percentage: 50,
+            dueText: "접수 전",
+            amountMin: Math.round(lailaTotal.min * 0.5),
+            amountMax: Math.round(lailaTotal.max * 0.5),
+            sortOrder: 1
+          },
+          {
+            stageKind: "SUCCESS" as const,
+            percentage: 0,
+            dueText: "완료 시",
+            amountMin: 0,
+            amountMax: 0,
+            sortOrder: 2
+          }
+        ]
+      }
+    }
+  });
 }
 
 async function main() {
+  await prisma.supplementRequestItem.deleteMany();
+  await prisma.supplementRequest.deleteMany();
+  await prisma.submissionPackageItem.deleteMany();
+  await prisma.submissionPackage.deleteMany();
+  await prisma.caseStageLog.deleteMany();
+  await prisma.caseDocumentFile.deleteMany();
+  await prisma.caseDocumentItem.deleteMany();
   await prisma.caseRecord.deleteMany();
   await prisma.contractDraft.deleteMany();
   await prisma.paymentPlan.deleteMany();

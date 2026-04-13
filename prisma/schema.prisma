@@ -91,9 +91,27 @@ enum ContractDraftStatus {
 
 enum CaseStage {
   CONTRACT_PREPARATION
-  ACTIVE
+  DOCUMENT_COLLECTION
+  UNDER_REVIEW
+  SUBMITTED
+  SUPPLEMENT_REQUESTED
+  COMPLETED
   ON_HOLD
   CLOSED
+}
+
+enum SubmissionPackageStatus {
+  DRAFT
+  SUBMITTED
+  SUPPLEMENT_REQUESTED
+  RESUBMITTED
+  CLOSED
+}
+
+enum SupplementRequestStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
 }
 
 model Inquiry {
@@ -300,12 +318,143 @@ model CaseRecord {
   contractDraftId String?   @unique
   currentStage    CaseStage @default(CONTRACT_PREPARATION)
   dueDate         DateTime?
+  filingDeadline  DateTime?
+  supplementDeadline DateTime?
+  stayExpirationDate DateTime?
+  internalDeadline DateTime?
   internalMemo    String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   inquiry         Inquiry   @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
   quote           Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   contractDraft   ContractDraft? @relation(fields: [contractDraftId], references: [id], onDelete: SetNull)
+  documents       CaseDocumentItem[]
+  documentFiles   CaseDocumentFile[]
+  submissionPackages SubmissionPackage[]
+  supplementRequests SupplementRequest[]
+  stageLogs       CaseStageLog[]
+}
+
+model CaseDocumentItem {
+  id           String   @id @default(cuid())
+  caseId        String
+  case          CaseRecord @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  documentType  String
+  label         String
+  isRequired    Boolean  @default(true)
+  isReceived    Boolean  @default(false)
+  receivedAt    DateTime?
+  note          String?
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  files         CaseDocumentFile[]
+  submissionItems SubmissionPackageItem[]
+  supplementItems SupplementRequestItem[]
+
+  @@unique([caseId, documentType])
+}
+
+model CaseStageLog {
+  id         String    @id @default(cuid())
+  caseId     String
+  case       CaseRecord @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fromStage  CaseStage?
+  toStage    CaseStage
+  note       String?
+  createdAt  DateTime @default(now())
+}
+
+model CaseDocumentFile {
+  id                 String            @id @default(cuid())
+  caseId             String
+  case               CaseRecord        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  caseDocumentItemId String?
+  caseDocumentItem   CaseDocumentItem? @relation(fields: [caseDocumentItemId], references: [id], onDelete: SetNull)
+  originalFilename   String
+  storedFilename     String
+  storagePath        String
+  mimeType           String
+  size               Int
+  uploadedAt         DateTime          @default(now())
+  note               String?
+  isCurrentVersion   Boolean           @default(true)
+  versionNumber      Int               @default(1)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  submissionItems    SubmissionPackageItem[]
+
+  @@index([caseId, uploadedAt])
+  @@index([caseDocumentItemId, versionNumber])
+}
+
+model SubmissionPackage {
+  id            String                  @id @default(cuid())
+  caseId         String
+  case           CaseRecord             @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  packageNumber  String
+  packageLabel   String?
+  submittedTo    String?
+  submittedAt    DateTime?
+  status         SubmissionPackageStatus @default(DRAFT)
+  note           String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  items          SubmissionPackageItem[]
+  supplementRequests SupplementRequest[]
+
+  @@index([caseId, createdAt])
+  @@unique([caseId, packageNumber])
+}
+
+model SubmissionPackageItem {
+  id                  String            @id @default(cuid())
+  submissionPackageId String
+  submissionPackage   SubmissionPackage @relation(fields: [submissionPackageId], references: [id], onDelete: Cascade)
+  caseDocumentItemId  String
+  caseDocumentItem    CaseDocumentItem  @relation(fields: [caseDocumentItemId], references: [id])
+  caseDocumentFileId  String
+  caseDocumentFile    CaseDocumentFile  @relation(fields: [caseDocumentFileId], references: [id])
+  labelSnapshot       String
+  versionNumberSnapshot Int
+  documentTypeSnapshot String
+  filenameSnapshot    String
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([submissionPackageId, caseDocumentItemId])
+}
+
+model SupplementRequest {
+  id                 String                 @id @default(cuid())
+  caseId              String
+  case                CaseRecord            @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  submissionPackageId String?
+  submissionPackage   SubmissionPackage?    @relation(fields: [submissionPackageId], references: [id], onDelete: SetNull)
+  requestedAt         DateTime              @default(now())
+  dueDate             DateTime?
+  requestedBy         String?
+  summary             String
+  status              SupplementRequestStatus @default(OPEN)
+  note                String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  items               SupplementRequestItem[]
+
+  @@index([caseId, requestedAt])
+}
+
+model SupplementRequestItem {
+  id                  String            @id @default(cuid())
+  supplementRequestId String
+  supplementRequest   SupplementRequest @relation(fields: [supplementRequestId], references: [id], onDelete: Cascade)
+  caseDocumentItemId  String
+  caseDocumentItem    CaseDocumentItem  @relation(fields: [caseDocumentItemId], references: [id])
+  labelSnapshot       String
+  sortOrder           Int               @default(0)
+  createdAt           DateTime          @default(now())
+
+  @@index([supplementRequestId, sortOrder])
 }
 
 model LegacyImportLog {

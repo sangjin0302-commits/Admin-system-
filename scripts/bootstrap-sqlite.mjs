@@ -259,6 +259,10 @@ CREATE TABLE IF NOT EXISTS "CaseRecord" (
   "contractDraftId" TEXT UNIQUE,
   "currentStage" TEXT NOT NULL DEFAULT 'CONTRACT_PREPARATION',
   "dueDate" DATETIME,
+  "filingDeadline" DATETIME,
+  "supplementDeadline" DATETIME,
+  "stayExpirationDate" DATETIME,
+  "internalDeadline" DATETIME,
   "internalMemo" TEXT,
   "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -266,6 +270,161 @@ CREATE TABLE IF NOT EXISTS "CaseRecord" (
   FOREIGN KEY ("quoteId") REFERENCES "Quote"("id") ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY ("contractDraftId") REFERENCES "ContractDraft"("id") ON DELETE SET NULL ON UPDATE CASCADE
 )
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "CaseDocumentItem" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "caseId" TEXT NOT NULL,
+  "documentType" TEXT NOT NULL,
+  "label" TEXT NOT NULL,
+  "isRequired" BOOLEAN NOT NULL DEFAULT 1,
+  "isReceived" BOOLEAN NOT NULL DEFAULT 0,
+  "receivedAt" DATETIME,
+  "note" TEXT,
+  "sortOrder" INTEGER NOT NULL DEFAULT 0,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE
+)
+`);
+
+db.exec(`
+CREATE UNIQUE INDEX IF NOT EXISTS "CaseDocumentItem_caseId_documentType_key"
+ON "CaseDocumentItem"("caseId", "documentType")
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "CaseStageLog" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "caseId" TEXT NOT NULL,
+  "fromStage" TEXT,
+  "toStage" TEXT NOT NULL,
+  "note" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE
+)
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "CaseDocumentFile" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "caseId" TEXT NOT NULL,
+  "caseDocumentItemId" TEXT,
+  "originalFilename" TEXT NOT NULL,
+  "storedFilename" TEXT NOT NULL,
+  "storagePath" TEXT NOT NULL,
+  "mimeType" TEXT NOT NULL,
+  "size" INTEGER NOT NULL,
+  "uploadedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "note" TEXT,
+  "isCurrentVersion" BOOLEAN NOT NULL DEFAULT 1,
+  "versionNumber" INTEGER NOT NULL DEFAULT 1,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY ("caseDocumentItemId") REFERENCES "CaseDocumentItem"("id") ON DELETE SET NULL ON UPDATE CASCADE
+)
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "CaseDocumentFile_caseId_uploadedAt_idx"
+ON "CaseDocumentFile"("caseId", "uploadedAt")
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "CaseDocumentFile_caseDocumentItemId_versionNumber_idx"
+ON "CaseDocumentFile"("caseDocumentItemId", "versionNumber")
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "SubmissionPackage" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "caseId" TEXT NOT NULL,
+  "packageNumber" TEXT NOT NULL,
+  "packageLabel" TEXT,
+  "submittedTo" TEXT,
+  "submittedAt" DATETIME,
+  "status" TEXT NOT NULL DEFAULT 'DRAFT',
+  "note" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE
+)
+`);
+
+db.exec(`
+CREATE UNIQUE INDEX IF NOT EXISTS "SubmissionPackage_caseId_packageNumber_key"
+ON "SubmissionPackage"("caseId", "packageNumber")
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "SubmissionPackage_caseId_createdAt_idx"
+ON "SubmissionPackage"("caseId", "createdAt")
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "SubmissionPackageItem" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "submissionPackageId" TEXT NOT NULL,
+  "caseDocumentItemId" TEXT NOT NULL,
+  "caseDocumentFileId" TEXT NOT NULL,
+  "labelSnapshot" TEXT NOT NULL,
+  "versionNumberSnapshot" INTEGER NOT NULL,
+  "documentTypeSnapshot" TEXT NOT NULL,
+  "filenameSnapshot" TEXT NOT NULL,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("submissionPackageId") REFERENCES "SubmissionPackage"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY ("caseDocumentItemId") REFERENCES "CaseDocumentItem"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+  FOREIGN KEY ("caseDocumentFileId") REFERENCES "CaseDocumentFile"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+)
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "SubmissionPackageItem_submissionPackageId_caseDocumentItemId_idx"
+ON "SubmissionPackageItem"("submissionPackageId", "caseDocumentItemId")
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "SupplementRequest" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "caseId" TEXT NOT NULL,
+  "submissionPackageId" TEXT,
+  "requestedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "dueDate" DATETIME,
+  "requestedBy" TEXT,
+  "summary" TEXT NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'OPEN',
+  "note" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY ("submissionPackageId") REFERENCES "SubmissionPackage"("id") ON DELETE SET NULL ON UPDATE CASCADE
+)
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "SupplementRequest_caseId_requestedAt_idx"
+ON "SupplementRequest"("caseId", "requestedAt")
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "SupplementRequestItem" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "supplementRequestId" TEXT NOT NULL,
+  "caseDocumentItemId" TEXT NOT NULL,
+  "labelSnapshot" TEXT NOT NULL,
+  "sortOrder" INTEGER NOT NULL DEFAULT 0,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("supplementRequestId") REFERENCES "SupplementRequest"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY ("caseDocumentItemId") REFERENCES "CaseDocumentItem"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+)
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "SupplementRequestItem_supplementRequestId_sortOrder_idx"
+ON "SupplementRequestItem"("supplementRequestId", "sortOrder")
 `);
 
 db.exec(`
@@ -335,6 +494,27 @@ const quoteColumns = db
 
 if (quoteColumns.length > 0 && !quoteColumns.includes("paymentRuleCode")) {
   db.exec(`ALTER TABLE "Quote" ADD COLUMN "paymentRuleCode" TEXT NOT NULL DEFAULT 'PAYMENT_STANDARD'`);
+}
+
+const caseColumns = db
+  .prepare(`PRAGMA table_info("CaseRecord")`)
+  .all()
+  .map((column) => column.name);
+
+if (caseColumns.length > 0 && !caseColumns.includes("filingDeadline")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "filingDeadline" DATETIME`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("supplementDeadline")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "supplementDeadline" DATETIME`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("stayExpirationDate")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "stayExpirationDate" DATETIME`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("internalDeadline")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "internalDeadline" DATETIME`);
 }
 
 db.close();

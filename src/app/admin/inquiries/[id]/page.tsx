@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { InquiryManagementForm } from "@/components/admin/inquiry-management-form";
 import { InquiryMessagePreview } from "@/components/admin/inquiry-message-preview";
 import { QuoteWorkspacePanel } from "@/components/admin/quote-workspace";
+import { CaseWorkflowPanel } from "@/components/admin/case-workflow-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatDateTime, parseJsonArray } from "@/lib/utils";
@@ -10,6 +11,7 @@ import {
   getInquiryById,
   getInquiryMessagePreviewSet,
 } from "@/lib/services/inquiry-service";
+import { getCaseWorkspaceForInquiry } from "@/lib/services/case-service";
 import { getQuoteWorkspaceForInquiry } from "@/lib/services/quote-service";
 import {
   clientTypeLabels,
@@ -33,7 +35,10 @@ export default async function AdminInquiryDetailPage({
     notFound();
   }
 
-  const quoteWorkspace = await getQuoteWorkspaceForInquiry(id);
+  const [quoteWorkspace, caseWorkspace] = await Promise.all([
+    getQuoteWorkspaceForInquiry(id),
+    getCaseWorkspaceForInquiry(id)
+  ]);
   const tags = parseJsonArray(inquiry.serviceTags);
   const precheckDocs = parseJsonArray(inquiry.precheckRecommendedDocs).map((entry) => String(entry));
   const previews = getInquiryMessagePreviewSet(inquiry);
@@ -180,6 +185,7 @@ export default async function AdminInquiryDetailPage({
       </div>
 
       <QuoteWorkspacePanel inquiryId={inquiry.id} workspace={quoteWorkspace} />
+      <CaseWorkflowPanel initialCaseWorkspace={caseWorkspace} />
     </div>
   );
 }

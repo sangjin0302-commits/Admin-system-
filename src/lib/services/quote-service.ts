@@ -1,10 +1,12 @@
 import type {
+  CaseStage,
   InquiryStatus,
   PaymentStageKind,
   Prisma,
   QuoteStatus
 } from "@generated/prisma-v4";
 
+import { ensureCaseDocumentChecklist } from "@/lib/case-documents/service";
 import { generateCaseNumber } from "@/lib/case-utils/case-number";
 import {
   buildAcceptedNoticeDraftEn,
@@ -796,13 +798,13 @@ async function ensureCaseRecordForQuote(
   quote: QuoteWithRelations,
   input: {
     contractDraftId?: string | null;
-    currentStage: "CONTRACT_PREPARATION" | "ACTIVE" | "ON_HOLD" | "CLOSED";
+    currentStage: CaseStage;
     dueDate?: Date | null;
     internalMemo?: string | null;
   }
 ) {
   if (quote.caseRecord) {
-    return db.caseRecord.update({
+    const updated = await db.caseRecord.update({
       where: { id: quote.caseRecord.id },
       data: {
         contractDraftId: input.contractDraftId ?? quote.caseRecord.contractDraftId,
@@ -811,9 +813,12 @@ async function ensureCaseRecordForQuote(
         internalMemo: input.internalMemo ?? quote.caseRecord.internalMemo
       }
     });
+
+    await ensureCaseDocumentChecklist(db, updated.id, quote.inquiry.inquiryType);
+    return updated;
   }
 
-  return db.caseRecord.create({
+  const created = await db.caseRecord.create({
     data: {
       caseNumber: await generateCaseNumber(),
       inquiryId: quote.inquiryId,
@@ -824,6 +829,9 @@ async function ensureCaseRecordForQuote(
       internalMemo: input.internalMemo ?? quote.draftNotes
     }
   });
+
+  await ensureCaseDocumentChecklist(db, created.id, quote.inquiry.inquiryType);
+  return created;
 }
 
 export async function transitionQuoteStatus(

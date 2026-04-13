@@ -1,13 +1,13 @@
-import Link from "next/link";
-
 import { InquiryCardList } from "@/components/admin/inquiry-card-list";
 import { InquiryDashboardSummary } from "@/components/admin/inquiry-dashboard-summary";
 import { InquiryFilters } from "@/components/admin/inquiry-filters";
 import { InquiryTable } from "@/components/admin/inquiry-table";
+import { WorkQueuePanel } from "@/components/admin/work-queue-panel";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
 import { parseAdminInquiryQuery } from "@/lib/validation/admin";
 import { listInquiries } from "@/lib/services/inquiry-service";
+import { getWorkQueueSnapshot } from "@/lib/work-queue/service";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +18,10 @@ export default async function AdminInquiryListPage({
 }) {
   const rawParams = await searchParams;
   const filters = parseAdminInquiryQuery(rawParams);
-  const [allInquiries, inquiries] = await Promise.all([
+  const [allInquiries, inquiries, workQueue] = await Promise.all([
     listInquiries(),
-    listInquiries(filters)
+    listInquiries(filters),
+    getWorkQueueSnapshot()
   ]);
 
   return (
@@ -48,6 +49,8 @@ export default async function AdminInquiryListPage({
         }
         assignedCount={allInquiries.filter((item) => Boolean(item.assignee)).length}
       />
+
+      <WorkQueuePanel snapshot={workQueue} />
 
       <InquiryFilters filters={filters} />
 
