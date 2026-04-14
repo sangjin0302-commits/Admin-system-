@@ -508,6 +508,125 @@ CREATE TABLE IF NOT EXISTS "AuditLog" (
 )
 `);
 
+db.exec(`
+CREATE TABLE IF NOT EXISTS "ExternalIndicatorObservation" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "observationDate" DATETIME NOT NULL,
+  "indicatorKey" TEXT NOT NULL,
+  "category" TEXT,
+  "numericValue" REAL NOT NULL,
+  "source" TEXT NOT NULL,
+  "note" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+`);
+
+db.exec(`
+CREATE UNIQUE INDEX IF NOT EXISTS "ExternalIndicatorObservation_observationDate_indicatorKey_category_key"
+ON "ExternalIndicatorObservation"("observationDate", "indicatorKey", "category")
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "ExternalIndicatorObservation_indicatorKey_observationDate_idx"
+ON "ExternalIndicatorObservation"("indicatorKey", "observationDate")
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "ForecastEventFlag" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "eventDate" DATETIME NOT NULL,
+  "eventType" TEXT NOT NULL,
+  "eventName" TEXT NOT NULL,
+  "category" TEXT,
+  "impactFlag" BOOLEAN NOT NULL DEFAULT 1,
+  "memo" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "ForecastEventFlag_category_eventDate_idx"
+ON "ForecastEventFlag"("category", "eventDate")
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "WeeklyForecastDataset" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "weekStartDate" DATETIME NOT NULL,
+  "category" TEXT NOT NULL,
+  "channel" TEXT,
+  "inquiryCount" INTEGER NOT NULL DEFAULT 0,
+  "contractCount" INTEGER NOT NULL DEFAULT 0,
+  "avgProcessingDays" REAL,
+  "revisionRequestCount" INTEGER NOT NULL DEFAULT 0,
+  "externalIndicatorsJson" TEXT NOT NULL DEFAULT '{}',
+  "eventFlagsJson" TEXT NOT NULL DEFAULT '[]',
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+`);
+
+db.exec(`
+CREATE UNIQUE INDEX IF NOT EXISTS "WeeklyForecastDataset_weekStartDate_category_channel_key"
+ON "WeeklyForecastDataset"("weekStartDate", "category", "channel")
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "WeeklyForecastDataset_category_weekStartDate_idx"
+ON "WeeklyForecastDataset"("category", "weekStartDate")
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "DemandForecastRun" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "targetMetric" TEXT NOT NULL,
+  "targetCategory" TEXT NOT NULL,
+  "targetChannel" TEXT,
+  "horizonWeeks" INTEGER NOT NULL,
+  "modelName" TEXT NOT NULL,
+  "modelVersion" TEXT,
+  "sourceWindowWeeks" INTEGER NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'PENDING',
+  "contextJson" TEXT,
+  "note" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "completedAt" DATETIME,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "DemandForecastRun_targetMetric_targetCategory_createdAt_idx"
+ON "DemandForecastRun"("targetMetric", "targetCategory", "createdAt")
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "DemandForecastPoint" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "runId" TEXT NOT NULL,
+  "targetWeekStart" DATETIME NOT NULL,
+  "predictedValue" REAL NOT NULL,
+  "lowerBound" REAL,
+  "upperBound" REAL,
+  "actualValue" REAL,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("runId") REFERENCES "DemandForecastRun"("id") ON DELETE CASCADE ON UPDATE CASCADE
+)
+`);
+
+db.exec(`
+CREATE UNIQUE INDEX IF NOT EXISTS "DemandForecastPoint_runId_targetWeekStart_key"
+ON "DemandForecastPoint"("runId", "targetWeekStart")
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "DemandForecastPoint_targetWeekStart_idx"
+ON "DemandForecastPoint"("targetWeekStart")
+`);
+
 const columns = db
   .prepare(`PRAGMA table_info("Inquiry")`)
   .all()

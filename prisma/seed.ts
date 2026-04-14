@@ -1091,7 +1091,111 @@ async function seedRelationshipFlow() {
   });
 }
 
+async function seedForecastingPilot() {
+  const today = new Date();
+  const monday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  const dayOfWeek = monday.getUTCDay();
+  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  monday.setUTCDate(monday.getUTCDate() + diff);
+  monday.setUTCHours(0, 0, 0, 0);
+
+  const weeklyOffsets = [-35, -28, -21, -14, -7, 0];
+
+  await prisma.externalIndicatorObservation.createMany({
+    data: weeklyOffsets.flatMap((offset, index) => {
+      const observationDate = new Date(monday);
+      observationDate.setUTCDate(observationDate.getUTCDate() + offset);
+
+      return [
+        {
+          observationDate,
+          indicatorKey: "search_trend_visa",
+          category: "FOREIGNER_VISA",
+          numericValue: 54 + index * 3,
+          source: "manual-seed",
+          note: "TimesFM pilot sample"
+        },
+        {
+          observationDate,
+          indicatorKey: "foreign_resident_index",
+          category: "FOREIGNER_VISA",
+          numericValue: 101.2 + index * 0.4,
+          source: "manual-seed",
+          note: "TimesFM pilot sample"
+        },
+        {
+          observationDate,
+          indicatorKey: "is_holiday_week",
+          category: null,
+          numericValue: index === 3 ? 1 : 0,
+          source: "manual-seed",
+          note: "TimesFM pilot sample"
+        }
+      ];
+    })
+  });
+
+  await prisma.forecastEventFlag.createMany({
+    data: [
+      {
+        eventDate: new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() - 21)),
+        eventType: "policy",
+        eventName: "visa_document_rule_change",
+        category: "FOREIGNER_VISA",
+        impactFlag: true,
+        memo: "체류자격 서류 보완 요건이 강화된 주간"
+      },
+      {
+        eventDate: new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() - 7)),
+        eventType: "seasonal",
+        eventName: "spring_recruitment_wave",
+        category: "FOREIGNER_VISA",
+        impactFlag: true,
+        memo: "채용 시즌 유입 증가"
+      }
+    ]
+  });
+
+  const forecastRun = await prisma.demandForecastRun.create({
+    data: {
+      targetMetric: "INQUIRY_COUNT",
+      targetCategory: "FOREIGNER_VISA",
+      horizonWeeks: 4,
+      modelName: "TimesFM",
+      modelVersion: "google/timesfm-2.5-200m-pytorch",
+      sourceWindowWeeks: 12,
+      status: "COMPLETED",
+      contextJson: JSON.stringify({
+        note: "Seeded pilot forecast preview",
+        targetMetric: "INQUIRY_COUNT"
+      }),
+      note: "초기 관리자 화면 확인용 샘플 예측",
+      completedAt: new Date(),
+      points: {
+        create: [1, 2, 3, 4].map((step, index) => {
+          const targetWeekStart = new Date(monday);
+          targetWeekStart.setUTCDate(targetWeekStart.getUTCDate() + 7 * step);
+
+          return {
+            targetWeekStart,
+            predictedValue: 10 + index * 2,
+            lowerBound: 8 + index,
+            upperBound: 13 + index * 2
+          };
+        })
+      }
+    }
+  });
+
+  console.log(`Seeded forecast run ${forecastRun.id}`);
+}
+
 async function main() {
+  await prisma.demandForecastPoint.deleteMany();
+  await prisma.demandForecastRun.deleteMany();
+  await prisma.weeklyForecastDataset.deleteMany();
+  await prisma.forecastEventFlag.deleteMany();
+  await prisma.externalIndicatorObservation.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.userSession.deleteMany();
   await prisma.user.deleteMany();
@@ -1120,6 +1224,7 @@ async function main() {
   await seedInquiries();
   await seedQuoteFlow();
   await seedRelationshipFlow();
+  await seedForecastingPilot();
 }
 
 main()

@@ -12,7 +12,10 @@
     "db:init": "node scripts/bootstrap-sqlite.mjs",
     "db:setup": "npm run db:init && npm run db:seed",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "forecast:sync": "tsx scripts/sync-forecast-dataset.ts",
+    "forecast:import": "tsx scripts/import-forecast-run.ts",
+    "forecast:timesfm": "python scripts/timesfm_forecast.py"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1030.0",

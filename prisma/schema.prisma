@@ -162,6 +162,18 @@ enum SupplementRequestStatus {
   RESOLVED
 }
 
+enum ForecastMetric {
+  INQUIRY_COUNT
+  CONTRACT_COUNT
+  REVISION_REQUEST_COUNT
+}
+
+enum ForecastRunStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 model Inquiry {
   id                       String        @id @default(cuid())
   createdAt                DateTime      @default(now())
@@ -577,4 +589,87 @@ model AuditLog {
   summary     String
   metadataJson String?
   createdAt   DateTime        @default(now())
+}
+
+model ExternalIndicatorObservation {
+  id              String   @id @default(cuid())
+  observationDate DateTime
+  indicatorKey    String
+  category        String?
+  numericValue    Float
+  source          String
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([observationDate, indicatorKey, category])
+  @@index([indicatorKey, observationDate])
+}
+
+model ForecastEventFlag {
+  id        String   @id @default(cuid())
+  eventDate DateTime
+  eventType String
+  eventName String
+  category  String?
+  impactFlag Boolean @default(true)
+  memo      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category, eventDate])
+}
+
+model WeeklyForecastDataset {
+  id                     String   @id @default(cuid())
+  weekStartDate          DateTime
+  category               String
+  channel                String?
+  inquiryCount           Int      @default(0)
+  contractCount          Int      @default(0)
+  avgProcessingDays      Float?
+  revisionRequestCount   Int      @default(0)
+  externalIndicatorsJson String   @default("{}")
+  eventFlagsJson         String   @default("[]")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@unique([weekStartDate, category, channel])
+  @@index([category, weekStartDate])
+}
+
+model DemandForecastRun {
+  id                String             @id @default(cuid())
+  targetMetric      ForecastMetric
+  targetCategory    String
+  targetChannel     String?
+  horizonWeeks      Int
+  modelName         String
+  modelVersion      String?
+  sourceWindowWeeks Int
+  status            ForecastRunStatus  @default(PENDING)
+  contextJson       String?
+  note              String?
+  createdAt         DateTime           @default(now())
+  completedAt       DateTime?
+  updatedAt         DateTime           @updatedAt
+  points            DemandForecastPoint[]
+
+  @@index([targetMetric, targetCategory, createdAt])
+}
+
+model DemandForecastPoint {
+  id              String            @id @default(cuid())
+  runId           String
+  run             DemandForecastRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  targetWeekStart DateTime
+  predictedValue  Float
+  lowerBound      Float?
+  upperBound      Float?
+  actualValue     Float?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([runId, targetWeekStart])
+  @@index([targetWeekStart])
 }
