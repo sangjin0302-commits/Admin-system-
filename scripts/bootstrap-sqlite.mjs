@@ -39,6 +39,10 @@ function resolveSqlitePath(databaseUrl) {
 
 loadEnvFile(path.join(process.cwd(), ".env"));
 
+if ((process.env.DATABASE_PROVIDER || "").trim() === "postgresql") {
+  throw new Error("db:init only supports local SQLite. Use SQLite env values for local development.");
+}
+
 const dbPath = resolveSqlitePath(process.env.DATABASE_URL);
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
@@ -428,6 +432,28 @@ ON "SupplementRequestItem"("supplementRequestId", "sortOrder")
 `);
 
 db.exec(`
+CREATE TABLE IF NOT EXISTS "FollowUpAction" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "caseId" TEXT NOT NULL,
+  "type" TEXT NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'PENDING',
+  "title" TEXT NOT NULL,
+  "note" TEXT,
+  "dueDate" DATETIME,
+  "messageDraft" TEXT NOT NULL,
+  "completedAt" DATETIME,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE
+)
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "FollowUpAction_caseId_status_dueDate_idx"
+ON "FollowUpAction"("caseId", "status", "dueDate")
+`);
+
+db.exec(`
 CREATE TABLE IF NOT EXISTS "LegacyImportLog" (
   "id" TEXT NOT NULL PRIMARY KEY,
   "source" TEXT NOT NULL,
@@ -435,6 +461,50 @@ CREATE TABLE IF NOT EXISTS "LegacyImportLog" (
   "payloadJson" TEXT,
   "importedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "createdCount" INTEGER NOT NULL DEFAULT 0
+)
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "User" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "email" TEXT NOT NULL UNIQUE,
+  "name" TEXT NOT NULL,
+  "role" TEXT NOT NULL,
+  "passwordHash" TEXT NOT NULL,
+  "isActive" BOOLEAN NOT NULL DEFAULT 1,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "UserSession" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "userId" TEXT NOT NULL,
+  "sessionToken" TEXT NOT NULL UNIQUE,
+  "expiresAt" DATETIME NOT NULL,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
+)
+`);
+
+db.exec(`
+CREATE INDEX IF NOT EXISTS "UserSession_userId_expiresAt_idx"
+ON "UserSession"("userId", "expiresAt")
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS "AuditLog" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "actorUserId" TEXT,
+  "actionType" TEXT NOT NULL,
+  "entityType" TEXT NOT NULL,
+  "entityId" TEXT NOT NULL,
+  "summary" TEXT NOT NULL,
+  "metadataJson" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("actorUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE
 )
 `);
 
@@ -515,6 +585,46 @@ if (caseColumns.length > 0 && !caseColumns.includes("stayExpirationDate")) {
 
 if (caseColumns.length > 0 && !caseColumns.includes("internalDeadline")) {
   db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "internalDeadline" DATETIME`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("closedAt")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "closedAt" DATETIME`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("closeReason")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "closeReason" TEXT`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("outcomeSummary")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "outcomeSummary" TEXT`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("nextFollowUpDate")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "nextFollowUpDate" DATETIME`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("clientRelationshipStatus")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "clientRelationshipStatus" TEXT NOT NULL DEFAULT 'NEUTRAL'`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("reviewRequestedAt")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "reviewRequestedAt" DATETIME`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("reviewCompletedAt")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "reviewCompletedAt" DATETIME`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("referralEligible")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "referralEligible" BOOLEAN NOT NULL DEFAULT 0`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("reengagementEligible")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "reengagementEligible" BOOLEAN NOT NULL DEFAULT 0`);
+}
+
+if (caseColumns.length > 0 && !caseColumns.includes("lastFollowUpAt")) {
+  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "lastFollowUpAt" DATETIME`);
 }
 
 db.close();

@@ -4,7 +4,10 @@ export const workQueueTypeValues = [
   "SUPPLEMENT_PENDING",
   "MISSING_DOCUMENTS",
   "QUOTE_FOLLOW_UP",
-  "CONTRACT_PENDING"
+  "CONTRACT_PENDING",
+  "REVIEW_REQUEST",
+  "REFERRAL_CHECK",
+  "REENGAGEMENT"
 ] as const;
 
 export type WorkQueueType = (typeof workQueueTypeValues)[number];
@@ -45,13 +48,19 @@ export type WorkQueueSnapshot = {
   };
 };
 
-export const workQueueTypeLabels: Record<WorkQueueType, string> = {
+export const workQueueTypeLabels = {
   DEADLINE_DUE_SOON: "기한 임박",
   DEADLINE_OVERDUE: "기한 경과",
   SUPPLEMENT_PENDING: "보완 진행",
   MISSING_DOCUMENTS: "필수서류 누락",
   QUOTE_FOLLOW_UP: "견적 후속조치",
   CONTRACT_PENDING: "계약/사건 후속조치"
+};
+
+export const workQueueTypeLabelOverrides: Partial<Record<WorkQueueType, string>> = {
+  REVIEW_REQUEST: "후기 요청",
+  REFERRAL_CHECK: "추천 확인",
+  REENGAGEMENT: "재의뢰 안부"
 };
 
 export const workQueueSeverityLabels: Record<WorkQueueSeverity, string> = {

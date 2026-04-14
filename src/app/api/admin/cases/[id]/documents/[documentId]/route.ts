@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { authErrorResponse } from "@/lib/auth/api";
+import { requireAdminApiSession } from "@/lib/auth/session";
 import { updateCaseDocumentItem } from "@/lib/services/case-service";
 import { updateCaseDocumentSchema } from "@/lib/validation/case";
 
@@ -11,6 +13,7 @@ export async function PATCH(
   const { id, documentId } = await context.params;
 
   try {
+    await requireAdminApiSession("ADMIN");
     const payload = updateCaseDocumentSchema.parse(await request.json());
     const caseWorkspace = await updateCaseDocumentItem(id, documentId, payload);
     return NextResponse.json({ caseWorkspace });
@@ -22,9 +25,6 @@ export async function PATCH(
       );
     }
 
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to update document item." },
-      { status: 400 }
-    );
+    return authErrorResponse(error, "Failed to update document item.");
   }
 }

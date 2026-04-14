@@ -3,7 +3,7 @@ import type {
   Prisma,
   SubmissionPackageStatus,
   SupplementRequestStatus
-} from "@generated/prisma-v4";
+} from "@generated/prisma-client/client";
 
 import {
   buildDeadlineInternalAlertKo,

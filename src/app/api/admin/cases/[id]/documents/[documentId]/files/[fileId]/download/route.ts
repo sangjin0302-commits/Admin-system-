@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { authErrorResponse } from "@/lib/auth/api";
+import { requireAdminApiSession } from "@/lib/auth/session";
 import { readCaseDocumentFile } from "@/lib/services/case-service";
 
 export async function GET(
@@ -9,10 +11,15 @@ export async function GET(
   const { id, documentId, fileId } = await context.params;
 
   try {
+    await requireAdminApiSession("STAFF");
     const file = await readCaseDocumentFile(id, documentId, fileId);
     const encodedFilename = encodeURIComponent(file.originalFilename);
+    const fileBytes = Uint8Array.from(file.fileBuffer);
+    const fileBlob = new Blob([fileBytes], {
+      type: file.mimeType || "application/octet-stream"
+    });
 
-    return new NextResponse(new Uint8Array(file.fileBuffer), {
+    return new NextResponse(fileBlob, {
       headers: {
         "Content-Type": file.mimeType || "application/octet-stream",
         "Content-Length": String(file.fileBuffer.byteLength),
@@ -21,9 +28,6 @@ export async function GET(
       }
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to read case document file." },
-      { status: 404 }
-    );
+    return authErrorResponse(error, "Failed to read case document file.");
   }
 }

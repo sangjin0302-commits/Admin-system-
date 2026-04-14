@@ -13,7 +13,8 @@ function sanitizeFilename(filename: string) {
 }
 
 function getUploadRoot() {
-  const configured = process.env.DOCUMENT_UPLOAD_DIR?.trim();
+  const configured =
+    process.env.LOCAL_DOCUMENT_UPLOAD_DIR?.trim() || process.env.DOCUMENT_UPLOAD_DIR?.trim();
   return configured && configured.length > 0 ? configured : "uploads";
 }
 

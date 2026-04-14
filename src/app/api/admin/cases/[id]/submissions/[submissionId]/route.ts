@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { createAuditLog } from "@/lib/audit/service";
+import { authErrorResponse } from "@/lib/auth/api";
+import { requireAdminApiSession } from "@/lib/auth/session";
+import { prisma } from "@/lib/prisma/client";
 import { updateSubmissionPackage } from "@/lib/services/submission-service";
 import { updateSubmissionPackageSchema } from "@/lib/validation/submission";
 
@@ -11,6 +15,7 @@ export async function PATCH(
   const { id, submissionId } = await context.params;
 
   try {
+    const session = await requireAdminApiSession("ADMIN");
     const payload = updateSubmissionPackageSchema.parse(await request.json());
     const submissionWorkspace = await updateSubmissionPackage(id, submissionId, {
       status: payload.status,
@@ -24,6 +29,17 @@ export async function PATCH(
           : undefined,
       note: payload.note
     });
+    await createAuditLog(prisma, {
+      actor: {
+        userId: session.user.id,
+        email: session.user.email,
+        role: session.user.role
+      },
+      actionType: "SUBMISSION_STATUS_UPDATED",
+      entityType: "SUBMISSION",
+      entityId: submissionId,
+      summary: `제출 패키지 상태를 ${payload.status ?? "updated"}로 변경`
+    });
 
     return NextResponse.json({ submissionWorkspace });
   } catch (error) {
@@ -34,9 +50,6 @@ export async function PATCH(
       );
     }
 
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to update submission package." },
-      { status: 400 }
-    );
+    return authErrorResponse(error, "Failed to update submission package.");
   }
 }

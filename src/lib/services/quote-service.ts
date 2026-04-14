@@ -4,7 +4,7 @@ import type {
   PaymentStageKind,
   Prisma,
   QuoteStatus
-} from "@generated/prisma-v4";
+} from "@generated/prisma-client/client";
 
 import { ensureCaseDocumentChecklist } from "@/lib/case-documents/service";
 import { generateCaseNumber } from "@/lib/case-utils/case-number";

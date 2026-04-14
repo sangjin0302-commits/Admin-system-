@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@generated/prisma-v4";
+import type { Prisma, PrismaClient } from "@generated/prisma-client/client";
 import type { InquiryType } from "@/types/inquiry";
 
 import { getDefaultCaseDocumentTemplates } from "@/lib/case-documents/templates";

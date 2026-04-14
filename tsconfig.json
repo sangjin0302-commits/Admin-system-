@@ -28,22 +28,24 @@
         "./src/*"
       ],
       "@generated/*": [
-        "./generated/*"
+        "../admin-office-mvp-generated/*"
       ]
     }
   },
   "include": [
-    ".next/types/**/*.ts",
-    "generated/**/*.ts",
+    "../admin-office-mvp-generated/prisma-client/**/*.ts",
+    ".next-prod/types/**/*.ts",
     "next-env.d.ts",
     "prisma/**/*.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
-    ".next-prod/types/**/*.ts"
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "src/generated/prisma",
-    "src/generated/prisma-client"
+    ".next",
+    ".next-prod",
+    "generated/prisma-v4",
+    "src/generated"
   ]
 }

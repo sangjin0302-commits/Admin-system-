@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { authErrorResponse } from "@/lib/auth/api";
+import { requireAdminApiSession } from "@/lib/auth/session";
 import {
   deleteCaseDocumentFile,
   setCurrentCaseDocumentFile,
@@ -15,6 +17,7 @@ export async function PATCH(
   const { id, documentId, fileId } = await context.params;
 
   try {
+    await requireAdminApiSession("ADMIN");
     const payload = updateCaseDocumentFileSchema.parse(await request.json());
     const caseWorkspace =
       payload.mode === "setCurrent"
@@ -30,10 +33,7 @@ export async function PATCH(
       );
     }
 
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to update case document file." },
-      { status: 400 }
-    );
+    return authErrorResponse(error, "Failed to update case document file.");
   }
 }
 
@@ -44,12 +44,10 @@ export async function DELETE(
   const { id, documentId, fileId } = await context.params;
 
   try {
+    await requireAdminApiSession("ADMIN");
     const caseWorkspace = await deleteCaseDocumentFile(id, documentId, fileId);
     return NextResponse.json({ caseWorkspace });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to delete case document file." },
-      { status: 400 }
-    );
+    return authErrorResponse(error, "Failed to delete case document file.");
   }
 }

@@ -1,3 +1,4 @@
+﻿import { AdminSessionBanner } from "@/components/admin/admin-session-banner";
 import { InquiryCardList } from "@/components/admin/inquiry-card-list";
 import { InquiryDashboardSummary } from "@/components/admin/inquiry-dashboard-summary";
 import { InquiryFilters } from "@/components/admin/inquiry-filters";
@@ -5,8 +6,9 @@ import { InquiryTable } from "@/components/admin/inquiry-table";
 import { WorkQueuePanel } from "@/components/admin/work-queue-panel";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
-import { parseAdminInquiryQuery } from "@/lib/validation/admin";
+import { requireAdminPageSession } from "@/lib/auth/session";
 import { listInquiries } from "@/lib/services/inquiry-service";
+import { parseAdminInquiryQuery } from "@/lib/validation/admin";
 import { getWorkQueueSnapshot } from "@/lib/work-queue/service";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +18,7 @@ export default async function AdminInquiryListPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const session = await requireAdminPageSession("/admin/inquiries", "STAFF");
   const rawParams = await searchParams;
   const filters = parseAdminInquiryQuery(rawParams);
   const [allInquiries, inquiries, workQueue] = await Promise.all([
@@ -26,6 +29,8 @@ export default async function AdminInquiryListPage({
 
   return (
     <div className="space-y-6">
+      <AdminSessionBanner session={session} />
+
       <Card className="p-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>

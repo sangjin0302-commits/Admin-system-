@@ -1,4 +1,4 @@
-import type { Prisma } from "@generated/prisma-v4";
+import type { Prisma } from "@generated/prisma-client/client";
 
 import { prisma } from "@/lib/prisma/client";
 import { getIntakeEvaluator } from "@/lib/intake-evaluator";

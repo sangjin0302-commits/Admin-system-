@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { authErrorResponse } from "@/lib/auth/api";
+import { requireAdminApiSession } from "@/lib/auth/session";
 import { uploadCaseDocumentFile } from "@/lib/services/case-service";
 import { uploadCaseDocumentFileMetaSchema } from "@/lib/validation/case-file";
 
@@ -11,6 +13,7 @@ export async function POST(
   const { id, documentId } = await context.params;
 
   try {
+    await requireAdminApiSession("ADMIN");
     const formData = await request.formData();
     const fileEntry = formData.get("file");
     const noteEntry = formData.get("note");
@@ -37,9 +40,6 @@ export async function POST(
       );
     }
 
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to upload case document file." },
-      { status: 400 }
-    );
+    return authErrorResponse(error, "Failed to upload case document file.");
   }
 }

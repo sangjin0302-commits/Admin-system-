@@ -1,4 +1,4 @@
-import type { PaymentStageKind } from "@generated/prisma-v4";
+import type { PaymentStageKind } from "@generated/prisma-client/client";
 
 import type { PricingRuleMaster, StageTemplate } from "@/lib/quote-engine/types";
 

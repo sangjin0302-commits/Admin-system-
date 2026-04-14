@@ -1,4 +1,4 @@
-import type { PricingOptionType } from "@generated/prisma-v4";
+import type { PricingOptionType } from "@generated/prisma-client/client";
 
 import { mapUrgencyLevelToRuleCode, selectDefaultRuleCode, suggestServiceLegacyIds } from "@/lib/quote-engine/legacy-mapping";
 import type {

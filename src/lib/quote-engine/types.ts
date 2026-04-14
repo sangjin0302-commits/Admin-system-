@@ -6,7 +6,7 @@ import type {
   PricingRuleType,
   QuoteLineKind,
   QuoteStatus
-} from "@generated/prisma-v4";
+} from "@generated/prisma-client/client";
 import type { InquiryType, LanguageCode, UrgencyLevel } from "@/types/inquiry";
 
 export type QuoteInquirySnapshot = {

@@ -1,14 +1,17 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
+import { AdminSessionBanner } from "@/components/admin/admin-session-banner";
 import { WorkQueuePanel } from "@/components/admin/work-queue-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { requireAdminPageSession } from "@/lib/auth/session";
 import { listInquiries } from "@/lib/services/inquiry-service";
 import { getWorkQueueSnapshot } from "@/lib/work-queue/service";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminIndexPage() {
+  const session = await requireAdminPageSession("/admin", "STAFF");
   const [inquiries, workQueue] = await Promise.all([listInquiries(), getWorkQueueSnapshot()]);
 
   const total = inquiries.length;
@@ -22,13 +25,16 @@ export default async function AdminIndexPage() {
 
   return (
     <div className="space-y-6">
+      <AdminSessionBanner session={session} />
+
       <Card className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="ui-kicker">Admin Home</p>
             <h2 className="mt-2 ui-page-title">운영 대시보드</h2>
             <p className="mt-2 text-sm text-text-muted">
-              상담/견적/사건/보완/기한 상태를 기준으로 오늘 처리할 작업을 한 번에 확인할 수 있습니다.
+              상담, 견적, 사건, 보완, 기한 상태를 기준으로 오늘 처리할 작업을 한 번에 확인할 수
+              있습니다.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

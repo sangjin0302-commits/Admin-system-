@@ -8,7 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState, StateInline } from "@/components/ui/state-panel";
 import type { WorkQueueItem, WorkQueueSnapshot } from "@/lib/work-queue/types";
-import { workQueueSeverityLabels, workQueueTypeLabels } from "@/lib/work-queue/types";
+import {
+  workQueueSeverityLabels,
+  workQueueTypeLabelOverrides,
+  workQueueTypeLabels
+} from "@/lib/work-queue/types";
 
 const severityStyles: Record<WorkQueueItem["severity"], string> = {
   LOW: "border-slate-200 bg-slate-100 text-slate-700",
@@ -134,7 +138,11 @@ function QueueSection({
                 <Badge className={severityStyles[item.severity]}>
                   {workQueueSeverityLabels[item.severity]}
                 </Badge>
-                <Badge>{workQueueTypeLabels[item.type]}</Badge>
+                <Badge>
+                  {workQueueTypeLabelOverrides[item.type] ??
+                    workQueueTypeLabels[item.type as keyof typeof workQueueTypeLabels] ??
+                    item.type}
+                </Badge>
                 {item.dueDate ? (
                   <span className="text-xs text-text-muted">
                     기한: {new Date(item.dueDate).toLocaleDateString("ko-KR")}

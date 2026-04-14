@@ -1,15 +1,56 @@
+import fsSync from "node:fs";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
+import { PrismaBetterSQLite3 } from "@prisma/adapter-better-sqlite3";
 import {
   PrismaClient,
   type CaseStage,
   type PricingOptionType,
   type PricingRuleType
-} from "../generated/prisma-v4";
+} from "@generated/prisma-client/client";
+import { hashPassword } from "../src/lib/auth/password";
 import legacyPricing from "./data/legacy-pricing.json";
 
-const prisma = new PrismaClient();
+function loadEnvFile(filePath: string) {
+  if (!fsSync.existsSync(filePath)) return;
+
+  const content = fsSync.readFileSync(filePath, "utf8");
+
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+
+    const separatorIndex = line.indexOf("=");
+    if (separatorIndex === -1) continue;
+
+    const key = line.slice(0, separatorIndex).trim();
+    const value = line.slice(separatorIndex + 1).trim().replace(/^['"]|['"]$/g, "");
+
+    if (!(key in process.env)) {
+      process.env[key] = value;
+    }
+  }
+}
+
+loadEnvFile(path.join(process.cwd(), ".env"));
+
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is not configured.");
+}
+
+const adapter = new PrismaBetterSQLite3(
+  {
+    url: databaseUrl
+  },
+  {
+    timestampFormat: "unixepoch-ms"
+  }
+);
+
+const prisma = new PrismaClient({ adapter });
 const uploadRoot = path.resolve(process.cwd(), process.env.DOCUMENT_UPLOAD_DIR?.trim() || "uploads");
 
 async function writeSeedUploadFile(storagePath: string, content: string) {
@@ -51,6 +92,32 @@ async function seedLegacyPricing() {
       }
     });
   }
+}
+
+async function seedAdminUsers() {
+  const [adminPasswordHash, staffPasswordHash] = await Promise.all([
+    hashPassword("Admin1234!"),
+    hashPassword("Staff1234!")
+  ]);
+
+  await prisma.user.createMany({
+    data: [
+      {
+        email: "admin@admin-office.local",
+        name: "Local Admin",
+        role: "ADMIN",
+        passwordHash: adminPasswordHash,
+        isActive: true
+      },
+      {
+        email: "staff@admin-office.local",
+        name: "Local Staff",
+        role: "STAFF",
+        passwordHash: staffPasswordHash,
+        isActive: true
+      }
+    ]
+  });
 }
 
 async function seedInquiries() {
@@ -812,7 +879,223 @@ async function seedQuoteFlow() {
   });
 }
 
+async function seedRelationshipFlow() {
+  const serviceType = await prisma.serviceType.findFirst({
+    where: { isActive: true },
+    orderBy: { minPrice: "asc" }
+  });
+  const vatOption = await prisma.pricingOption.findFirst({
+    where: { legacyId: "vat" }
+  });
+
+  if (!serviceType) return;
+
+  const inquiry = await prisma.inquiry.create({
+    data: {
+      contactName: "박서윤",
+      email: "seoyun.review@example.com",
+      phone: "010-5555-2222",
+      preferredLanguage: "KO",
+      clientType: "INDIVIDUAL",
+      title: "사건 종결 이후 후기와 재의뢰 관리 샘플",
+      description: "종결 처리와 후기 요청, 추천 가능 고객 관리 흐름을 점검하기 위한 샘플 사건입니다.",
+      requestedOutcome: "종결 처리 후 고객 관계 상태 관리",
+      requestedInquiryType: "GENERAL_ADMIN_CIVIL",
+      declaredUrgency: "LOW",
+      hasPreparedDocuments: true,
+      needsTranslation: false,
+      isCorporateRequest: false,
+      dueDate: dateFromToday(-20, 10),
+      wantsCallback: false,
+      consentToPrivacy: true,
+      status: "WON",
+      inquiryType: "GENERAL_ADMIN_CIVIL",
+      urgencyLevel: "LOW",
+      consultationRequired: false,
+      classificationConfidence: 0.9,
+      qualificationScore: 78,
+      generatedSummary: "종결 이후 고객 관계 관리가 필요한 일반 행정 사건 샘플입니다.",
+      generatedGuidance: "1. 종결 요약 확인\n2. 후기 요청 여부 확인\n3. 재의뢰 가능성 검토",
+      generatedReceiptMessage: "샘플 문의가 등록되었습니다.",
+      classificationReason: "운영 샘플 데이터",
+      recommendedNextStep: "종결 후 후기 요청과 후속 일정 등록",
+      precheckRecommendedDocs: JSON.stringify(["신분증", "기존 처리 결과", "후속 문의 메모"]),
+      serviceTags: JSON.stringify(["closed-case", "review-request", "dashboard"]),
+      assignee: "운영관리",
+      internalMemo: "종결 후 관계 관리 샘플"
+    }
+  });
+
+  const baseMin = serviceType.minPrice;
+  const baseMax = serviceType.maxPrice;
+  const subtotalMin = baseMin;
+  const subtotalMax = baseMax;
+  const vatAmountMin = vatOption ? Math.round(subtotalMin * 0.1) : 0;
+  const vatAmountMax = vatOption ? Math.round(subtotalMax * 0.1) : 0;
+  const totalMin = subtotalMin + vatAmountMin;
+  const totalMax = subtotalMax + vatAmountMax;
+
+  const quote = await prisma.quote.create({
+    data: {
+      inquiryId: inquiry.id,
+      status: "ACCEPTED",
+      selectedServiceLegacyIds: JSON.stringify([serviceType.legacyId]),
+      selectedOptionLegacyIds: JSON.stringify(vatOption ? ["vat"] : []),
+      urgencyRuleCode: "URGENCY_STANDARD",
+      consultRuleCode: "CONSULT_NONE",
+      paymentRuleCode: "PAYMENT_STANDARD",
+      rangeMode: true,
+      serviceBaseMin: baseMin,
+      serviceBaseMax: baseMax,
+      subtotalMin,
+      subtotalMax,
+      vatAmountMin,
+      vatAmountMax,
+      totalMin,
+      totalMax,
+      consultFee: 0,
+      successFeeRestricted: false,
+      draftNotes: "종결 처리와 후속 관리 샘플용 견적",
+      calculationSummary: "운영 샘플 견적",
+      lineItems: {
+        create: [
+          {
+            serviceTypeId: serviceType.id,
+            kind: "SERVICE" as const,
+            label: serviceType.name,
+            description: "종결 처리 샘플",
+            amountMin: baseMin,
+            amountMax: baseMax,
+            sortOrder: 0
+          }
+        ]
+      },
+      adjustments: vatOption
+        ? {
+            create: [
+              {
+                pricingOptionId: vatOption.id,
+                label: "VAT",
+                description: "VAT 10%",
+                optionType: "PERCENT" as const,
+                percentRate: 10,
+                computedMin: vatAmountMin,
+                computedMax: vatAmountMax,
+                isVat: true,
+                sortOrder: 0
+              }
+            ]
+          }
+        : undefined,
+      paymentPlans: {
+        create: [
+          {
+            stageKind: "RETAINER" as const,
+            percentage: 50,
+            dueText: "계약 시",
+            amountMin: Math.round(totalMin * 0.5),
+            amountMax: Math.round(totalMax * 0.5),
+            sortOrder: 0
+          },
+          {
+            stageKind: "MIDTERM" as const,
+            percentage: 50,
+            dueText: "종결 시",
+            amountMin: Math.round(totalMin * 0.5),
+            amountMax: Math.round(totalMax * 0.5),
+            sortOrder: 1
+          }
+        ]
+      }
+    }
+  });
+
+  const contractDraft = await prisma.contractDraft.create({
+    data: {
+      inquiryId: inquiry.id,
+      quoteId: quote.id,
+      title: "종결 관리 샘플 계약 초안",
+      bodyText: "운영 샘플 계약 초안입니다.",
+      scopeText: "종결 후 안내 및 후속 관리",
+      paymentSummary: "선금 50% / 종결 시 50%",
+      successFeeRestricted: false
+    }
+  });
+
+  const caseRecord = await prisma.caseRecord.create({
+    data: {
+      caseNumber: "CASE-20260413-REL-001",
+      inquiryId: inquiry.id,
+      quoteId: quote.id,
+      contractDraftId: contractDraft.id,
+      currentStage: "CLOSED",
+      dueDate: dateFromToday(-10, 10),
+      internalMemo: "종결 후 후기 요청과 재의뢰 관리 샘플",
+      closedAt: dateFromToday(-3, 15),
+      closeReason: "업무 완료 및 결과 안내 종료",
+      outcomeSummary: "필요 서류 정리와 제출 확인이 마무리되어 종결 처리함.",
+      nextFollowUpDate: dateFromToday(4, 10),
+      clientRelationshipStatus: "REVIEW_REQUESTED",
+      reviewRequestedAt: dateFromToday(-2, 11),
+      referralEligible: true,
+      reengagementEligible: true,
+      lastFollowUpAt: dateFromToday(-2, 11)
+    }
+  });
+
+  await prisma.caseStageLog.createMany({
+    data: [
+      {
+        caseId: caseRecord.id,
+        fromStage: null,
+        toStage: "CONTRACT_PREPARATION",
+        note: "샘플 사건 생성"
+      },
+      {
+        caseId: caseRecord.id,
+        fromStage: "CONTRACT_PREPARATION",
+        toStage: "COMPLETED",
+        note: "업무 완료"
+      },
+      {
+        caseId: caseRecord.id,
+        fromStage: "COMPLETED",
+        toStage: "CLOSED",
+        note: "종결 처리"
+      }
+    ]
+  });
+
+  await prisma.followUpAction.createMany({
+    data: [
+      {
+        caseId: caseRecord.id,
+        type: "REVIEW_REQUEST",
+        status: "PENDING",
+        title: "후기 요청 발송 확인",
+        note: "리뷰 링크 안내 후 회신 여부 확인",
+        dueDate: dateFromToday(4, 10),
+        messageDraft: "사건이 잘 마무리되었는지 확인드리며, 가능하시면 간단한 후기를 부탁드립니다."
+      },
+      {
+        caseId: caseRecord.id,
+        type: "REFERRAL_CHECK",
+        status: "COMPLETED",
+        title: "추천 가능 고객 체크",
+        note: "소개 의향 확인 완료",
+        dueDate: dateFromToday(-1, 10),
+        completedAt: dateFromToday(-1, 12),
+        messageDraft: "비슷한 업무가 필요한 지인이 있다면 편하게 소개 부탁드립니다."
+      }
+    ]
+  });
+}
+
 async function main() {
+  await prisma.auditLog.deleteMany();
+  await prisma.userSession.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.followUpAction.deleteMany();
   await prisma.supplementRequestItem.deleteMany();
   await prisma.supplementRequest.deleteMany();
   await prisma.submissionPackageItem.deleteMany();
@@ -832,9 +1115,11 @@ async function main() {
   await prisma.serviceType.deleteMany();
   await prisma.inquiry.deleteMany();
 
+  await seedAdminUsers();
   await seedLegacyPricing();
   await seedInquiries();
   await seedQuoteFlow();
+  await seedRelationshipFlow();
 }
 
 main()

@@ -1,4 +1,4 @@
-import type { PricingRuleType } from "@generated/prisma-v4";
+import type { PricingRuleType } from "@generated/prisma-client/client";
 
 import type {
   PricingRuleMaster,

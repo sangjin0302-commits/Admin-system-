@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { authErrorResponse } from "@/lib/auth/api";
+import { requireAdminApiSession } from "@/lib/auth/session";
 import { createQuoteDraftForInquiry } from "@/lib/services/quote-service";
 import { createQuoteDraftSchema } from "@/lib/validation/quote";
 
@@ -11,6 +13,7 @@ export async function POST(
   const { id } = await context.params;
 
   try {
+    await requireAdminApiSession("STAFF");
     createQuoteDraftSchema.parse(await request.json().catch(() => ({})));
     const quote = await createQuoteDraftForInquiry(id);
     return NextResponse.json({ quote });
@@ -22,9 +25,6 @@ export async function POST(
       );
     }
 
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create quote draft." },
-      { status: 400 }
-    );
+    return authErrorResponse(error, "Failed to create quote draft.");
   }
 }

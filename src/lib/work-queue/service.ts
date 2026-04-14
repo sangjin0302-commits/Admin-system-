@@ -1,4 +1,4 @@
-import type { CaseStage } from "@generated/prisma-v4";
+import type { CaseStage } from "@generated/prisma-client/client";
 
 import { buildWorkQueueMessageDraft } from "@/lib/message-templates/work-queue";
 import { prisma } from "@/lib/prisma/client";
@@ -88,6 +88,10 @@ export async function getWorkQueueSnapshot(): Promise<WorkQueueSnapshot> {
             }
           },
           orderBy: [{ requestedAt: "desc" }]
+        },
+        followUpActions: {
+          where: { status: "PENDING" },
+          orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }]
         }
       }
     }),
@@ -217,6 +221,35 @@ export async function getWorkQueueSnapshot(): Promise<WorkQueueSnapshot> {
           supplementSummary: supplement.summary,
           dueDate: dueDateIso ?? undefined
         }),
+        href: `/admin/inquiries/${record.inquiryId}`
+      });
+    }
+
+    for (const action of record.followUpActions) {
+      const type = action.type;
+      const severity =
+        type === "REVIEW_REQUEST"
+          ? "MEDIUM"
+          : type === "REFERRAL_CHECK"
+            ? "LOW"
+            : "MEDIUM";
+
+      items.push({
+        id: `${type}:${action.id}`,
+        type,
+        title: action.title,
+        severity,
+        relatedEntityType: "CASE",
+        relatedEntityId: record.id,
+        relatedInquiryId: record.inquiryId,
+        dueDate: action.dueDate ? action.dueDate.toISOString() : null,
+        recommendedAction:
+          type === "REVIEW_REQUEST"
+            ? "사건 종결 후 후기 요청 메시지를 복사하고 회신 여부를 확인해 주세요."
+            : type === "REFERRAL_CHECK"
+              ? "추천 가능 고객인지 확인하고 소개 요청 문구를 검토해 주세요."
+              : "재의뢰 가능성이 있는 고객에게 안부 메시지를 보내고 후속 일정을 확인해 주세요.",
+        messageDraft: action.messageDraft,
         href: `/admin/inquiries/${record.inquiryId}`
       });
     }

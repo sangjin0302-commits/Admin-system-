@@ -1,4 +1,4 @@
-import type { CaseStage, Prisma } from "@generated/prisma-v4";
+import type { CaseStage, ClientRelationshipStatus, Prisma } from "@generated/prisma-client/client";
 
 import { ensureCaseDocumentChecklist } from "@/lib/case-documents/service";
 import { documentStorage } from "@/lib/document-storage";
@@ -253,20 +253,37 @@ export async function updateCaseStage(
   caseId: string,
   input: {
     stage: CaseStage;
-    dueDate?: Date;
-    filingDeadline?: Date;
-    supplementDeadline?: Date;
-    stayExpirationDate?: Date;
-    internalDeadline?: Date;
+    dueDate?: Date | null;
+    filingDeadline?: Date | null;
+    supplementDeadline?: Date | null;
+    stayExpirationDate?: Date | null;
+    internalDeadline?: Date | null;
     internalMemo?: string;
+    closedAt?: Date | null;
+    closeReason?: string;
+    outcomeSummary?: string;
+    nextFollowUpDate?: Date | null;
+    clientRelationshipStatus?: ClientRelationshipStatus;
+    reviewRequested?: boolean;
+    reviewCompleted?: boolean;
+    referralEligible?: boolean;
+    reengagementEligible?: boolean;
+    lastFollowUpAt?: Date | null;
     logNote?: string;
   }
 ) {
   await prisma.$transaction(async (tx) => {
     const current = await tx.caseRecord.findUniqueOrThrow({
       where: { id: caseId },
-      select: { currentStage: true }
+      select: {
+        currentStage: true,
+        closedAt: true,
+        reviewRequestedAt: true,
+        reviewCompletedAt: true
+      }
     });
+
+    const isClosingStage = input.stage === "COMPLETED" || input.stage === "CLOSED";
 
     await tx.caseRecord.update({
       where: { id: caseId },
@@ -277,7 +294,36 @@ export async function updateCaseStage(
         supplementDeadline: input.supplementDeadline ?? null,
         stayExpirationDate: input.stayExpirationDate ?? null,
         internalDeadline: input.internalDeadline ?? null,
-        internalMemo: input.internalMemo ?? null
+        internalMemo: input.internalMemo ?? null,
+        closedAt:
+          input.closedAt !== undefined
+            ? input.closedAt
+            : isClosingStage
+              ? current.closedAt ?? new Date()
+              : current.closedAt,
+        closeReason: input.closeReason !== undefined ? input.closeReason || null : undefined,
+        outcomeSummary: input.outcomeSummary !== undefined ? input.outcomeSummary || null : undefined,
+        nextFollowUpDate:
+          input.nextFollowUpDate !== undefined ? input.nextFollowUpDate : undefined,
+        clientRelationshipStatus: input.clientRelationshipStatus ?? undefined,
+        reviewRequestedAt:
+          input.reviewRequested === undefined
+            ? undefined
+            : input.reviewRequested
+              ? current.reviewRequestedAt ?? new Date()
+              : null,
+        reviewCompletedAt:
+          input.reviewCompleted === undefined
+            ? undefined
+            : input.reviewCompleted
+              ? current.reviewCompletedAt ?? new Date()
+              : null,
+        referralEligible:
+          input.referralEligible !== undefined ? input.referralEligible : undefined,
+        reengagementEligible:
+          input.reengagementEligible !== undefined ? input.reengagementEligible : undefined,
+        lastFollowUpAt:
+          input.lastFollowUpAt !== undefined ? input.lastFollowUpAt : undefined
       }
     });
 
