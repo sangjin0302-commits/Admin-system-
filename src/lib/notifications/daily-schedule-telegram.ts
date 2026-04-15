@@ -162,6 +162,14 @@ export async function sendDailyScheduleTelegramBriefing() {
 
   entries.sort((left, right) => left.date.getTime() - right.date.getTime());
 
+  if (entries.length === 0) {
+    return {
+      sent: false,
+      reason: "no_entries" as const,
+      count: 0
+    };
+  }
+
   await sendTelegramMessage(buildScheduleMessage(entries, config.adminAppUrl));
 
   return {
