@@ -23,6 +23,10 @@ type CaseRecordWithRelations = Prisma.CaseRecordGetPayload<{
   };
 }>;
 
+type CaseDocumentRecord = CaseRecordWithRelations["documents"][number];
+type CaseDocumentFileRecord = CaseDocumentRecord["files"][number];
+type CaseStageLogRecord = CaseRecordWithRelations["stageLogs"][number];
+
 export type CaseWorkspaceSnapshot = {
   id: string;
   caseNumber: string;
@@ -110,12 +114,17 @@ function getDeadlineStatus(value: Date | null) {
 }
 
 function serializeCaseWorkspace(record: CaseRecordWithRelations) {
-  const documents = record.documents.sort((a, b) => a.sortOrder - b.sortOrder);
-  const documentSnapshots = documents.map((doc) => {
+  const documents = record.documents.sort(
+    (a: CaseDocumentRecord, b: CaseDocumentRecord) => a.sortOrder - b.sortOrder
+  );
+  const documentSnapshots = documents.map((doc: CaseDocumentRecord) => {
     const files = doc.files
       .slice()
-      .sort((a, b) => b.versionNumber - a.versionNumber || b.uploadedAt.getTime() - a.uploadedAt.getTime())
-      .map((file) => ({
+      .sort(
+        (a: CaseDocumentFileRecord, b: CaseDocumentFileRecord) =>
+          b.versionNumber - a.versionNumber || b.uploadedAt.getTime() - a.uploadedAt.getTime()
+      )
+      .map((file: CaseDocumentFileRecord) => ({
         id: file.id,
         originalFilename: file.originalFilename,
         storedFilename: file.storedFilename,
@@ -127,7 +136,7 @@ function serializeCaseWorkspace(record: CaseRecordWithRelations) {
         versionNumber: file.versionNumber
       }));
 
-    const hasCurrentFile = files.some((file) => file.isCurrentVersion);
+    const hasCurrentFile = files.some((file: { isCurrentVersion: boolean }) => file.isCurrentVersion);
     return {
       id: doc.id,
       documentType: doc.documentType,
@@ -142,9 +151,11 @@ function serializeCaseWorkspace(record: CaseRecordWithRelations) {
       files
     };
   });
-  const required = documentSnapshots.filter((doc) => doc.isRequired);
-  const receivedRequired = required.filter((doc) => doc.isReceived);
-  const missingDocuments = required.filter((doc) => !doc.isReceived).map((doc) => doc.label);
+  const required = documentSnapshots.filter((doc: (typeof documentSnapshots)[number]) => doc.isRequired);
+  const receivedRequired = required.filter((doc: (typeof required)[number]) => doc.isReceived);
+  const missingDocuments = required
+    .filter((doc: (typeof required)[number]) => !doc.isReceived)
+    .map((doc: (typeof required)[number]) => doc.label);
 
   const messageInput = {
     contactName: record.inquiry.contactName,
@@ -186,9 +197,9 @@ function serializeCaseWorkspace(record: CaseRecordWithRelations) {
     }),
     documents: documentSnapshots,
     stageLogs: record.stageLogs
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .sort((a: CaseStageLogRecord, b: CaseStageLogRecord) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, 12)
-      .map((log) => ({
+      .map((log: CaseStageLogRecord) => ({
         id: log.id,
         fromStage: log.fromStage,
         toStage: log.toStage,
