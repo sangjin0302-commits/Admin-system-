@@ -291,7 +291,7 @@ export async function updateCaseFollowUpAction(
   }
 ) {
   const record = await getCaseRelationshipRecord(caseId);
-  const action = record.followUpActions.find((item) => item.id === followUpId);
+  const action = record.followUpActions.find((item: FollowUpActionRecord) => item.id === followUpId);
 
   if (!action) {
     throw new Error("해당 후속조치를 찾을 수 없습니다.");
