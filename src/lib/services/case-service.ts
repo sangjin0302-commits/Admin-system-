@@ -3,6 +3,7 @@ import type { CaseStage, ClientRelationshipStatus, Prisma, PrismaClient } from "
 import { ensureCaseDocumentChecklist } from "@/lib/case-documents/service";
 import { documentStorage } from "@/lib/document-storage";
 import { syncCaseCalendarEvents } from "@/lib/integrations/google-calendar";
+import { syncCaseToNotion } from "@/lib/integrations/notion";
 import {
   buildCaseStatusUpdateKo,
   buildContractDocumentGuideKo,
@@ -252,6 +253,17 @@ async function getCaseRecordByIdOrThrow(caseId: string) {
   });
 }
 
+async function syncCaseWorkspaceToExternalSystems(caseId: string) {
+  await Promise.allSettled([
+    syncCaseCalendarEvents(caseId).catch((error) => {
+      console.error("Failed to sync case calendar events.", error);
+    }),
+    syncCaseToNotion(caseId).catch((error) => {
+      console.error("Failed to sync case to Notion.", error);
+    })
+  ]);
+}
+
 export async function getCaseWorkspaceForInquiry(inquiryId: string) {
   const record = await prisma.caseRecord.findFirst({
     where: { inquiryId },
@@ -367,10 +379,9 @@ export async function updateCaseStage(
     }
   });
 
-  await syncCaseCalendarEvents(caseId).catch((error) => {
-    console.error("Failed to sync case calendar events.", error);
-  });
+  await syncCaseWorkspaceToExternalSystems(caseId);
 
+  await syncCaseWorkspaceToExternalSystems(caseId);
   return serializeCaseWorkspace(await getCaseRecordByIdOrThrow(caseId));
 }
 
@@ -401,6 +412,7 @@ export async function updateCaseDocumentItem(
     }
   });
 
+  await syncCaseWorkspaceToExternalSystems(caseId);
   return serializeCaseWorkspace(await getCaseRecordByIdOrThrow(caseId));
 }
 
@@ -492,6 +504,7 @@ export async function uploadCaseDocumentFile(
     throw error;
   }
 
+  await syncCaseWorkspaceToExternalSystems(caseId);
   return serializeCaseWorkspace(await getCaseRecordByIdOrThrow(caseId));
 }
 
@@ -551,6 +564,7 @@ export async function attachCaseDocumentExternalLink(
     });
   });
 
+  await syncCaseWorkspaceToExternalSystems(caseId);
   return serializeCaseWorkspace(await getCaseRecordByIdOrThrow(caseId));
 }
 
@@ -613,6 +627,7 @@ export async function deleteCaseDocumentFile(caseId: string, itemId: string, fil
   if (!target.externalUrl) {
     await documentStorage.remove(target.storagePath).catch(() => undefined);
   }
+  await syncCaseWorkspaceToExternalSystems(caseId);
   return serializeCaseWorkspace(await getCaseRecordByIdOrThrow(caseId));
 }
 
@@ -651,6 +666,7 @@ export async function setCurrentCaseDocumentFile(caseId: string, itemId: string,
     });
   });
 
+  await syncCaseWorkspaceToExternalSystems(caseId);
   return serializeCaseWorkspace(await getCaseRecordByIdOrThrow(caseId));
 }
 

@@ -9,6 +9,7 @@ import type {
 
 import { ensureCaseDocumentChecklist } from "@/lib/case-documents/service";
 import { generateCaseNumber } from "@/lib/case-utils/case-number";
+import { syncCaseToNotion } from "@/lib/integrations/notion";
 import {
   buildAcceptedNoticeDraftEn,
   buildAcceptedNoticeDraftKo,
@@ -934,7 +935,14 @@ export async function transitionQuoteStatus(
     }
   });
 
-  return serializeQuote(await getQuoteByIdOrThrow(quoteId));
+  const refreshed = await getQuoteByIdOrThrow(quoteId);
+  if (refreshed.caseRecord?.id) {
+    await syncCaseToNotion(refreshed.caseRecord.id).catch((error) => {
+      console.error("Failed to sync case to Notion after quote transition.", error);
+    });
+  }
+
+  return serializeQuote(refreshed);
 }
 
 export async function createContractDraftFromQuote(quoteId: string) {
@@ -964,7 +972,14 @@ export async function createContractDraftFromQuote(quoteId: string) {
     });
   });
 
-  return serializeQuote(await getQuoteByIdOrThrow(quoteId));
+  const refreshed = await getQuoteByIdOrThrow(quoteId);
+  if (refreshed.caseRecord?.id) {
+    await syncCaseToNotion(refreshed.caseRecord.id).catch((error) => {
+      console.error("Failed to sync case to Notion after contract draft creation.", error);
+    });
+  }
+
+  return serializeQuote(refreshed);
 }
 
 export async function updateContractPaymentAutomation(
@@ -1053,5 +1068,12 @@ export async function updateContractPaymentAutomation(
     }
   });
 
-  return serializeQuote(await getQuoteByIdOrThrow(quoteId));
+  const refreshed = await getQuoteByIdOrThrow(quoteId);
+  if (refreshed.caseRecord?.id) {
+    await syncCaseToNotion(refreshed.caseRecord.id).catch((error) => {
+      console.error("Failed to sync case to Notion after payment automation update.", error);
+    });
+  }
+
+  return serializeQuote(refreshed);
 }

@@ -1,6 +1,7 @@
 ﻿import type { Prisma } from "@generated/prisma-client/client";
 
 import { classifyInquiryWithOpenAI } from "@/lib/classification/openai-intake-classifier";
+import { syncInquiryToNotion } from "@/lib/integrations/notion";
 import { prisma } from "@/lib/prisma/client";
 import { deriveIntakeEvaluation, getIntakeEvaluator } from "@/lib/intake-evaluator";
 import {
@@ -212,6 +213,9 @@ export async function createInquiry(payload: unknown) {
       inquiryType: updated.inquiryType as InquiryType,
       urgencyLevel: updated.urgencyLevel as UrgencyLevel,
       preferredLanguage: updated.preferredLanguage as LanguageCode
+    }),
+    syncInquiryToNotion(updated.id).catch((error) => {
+      console.error("Failed to sync inquiry to Notion.", error);
     })
   ]);
 
