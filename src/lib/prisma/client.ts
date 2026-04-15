@@ -11,6 +11,19 @@ declare global {
 const databaseProvider = getDatabaseProvider();
 const databaseUrl = getDatabaseUrl();
 
+function normalizePostgresConnectionString(databaseUrlValue: string) {
+  try {
+    const url = new URL(databaseUrlValue);
+    url.searchParams.delete("sslmode");
+    url.searchParams.delete("sslcert");
+    url.searchParams.delete("sslkey");
+    url.searchParams.delete("sslrootcert");
+    return url.toString();
+  } catch {
+    return databaseUrlValue;
+  }
+}
+
 function shouldRejectUnauthorized(databaseUrlValue: string) {
   const configured = process.env.PGSSL_REJECT_UNAUTHORIZED?.trim().toLowerCase();
   if (configured === "true") return true;
@@ -45,7 +58,7 @@ function createPrismaAdapter() {
   }
 
   const pool = new Pool({
-    connectionString: databaseUrl,
+    connectionString: normalizePostgresConnectionString(databaseUrl),
     ssl: {
       rejectUnauthorized: shouldRejectUnauthorized(databaseUrl)
     }
