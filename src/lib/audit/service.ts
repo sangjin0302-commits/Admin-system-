@@ -1,6 +1,10 @@
-import type { AuditActionType, AuditEntityType, Prisma, PrismaClient } from "@generated/prisma-client/client";
+import type { AuditActionType, AuditEntityType, Prisma } from "@generated/prisma-client/client";
 
-type AuditDb = Prisma.TransactionClient | PrismaClient;
+type AuditDb = {
+  auditLog: {
+    create(args: Prisma.AuditLogCreateArgs): Promise<unknown>;
+  };
+};
 
 export type AuditActor = {
   userId: string;
