@@ -136,7 +136,7 @@ export default async function AdminInquiryDetailPage({
         <Card className="p-6">
           <h3 className="ui-section-title">Precheck Snapshot</h3>
           <div className="mt-5 grid gap-3">
-            <InfoItem label="Type" value={inquiryTypeLabels[inquiry.inquiryType].ko} />
+            <InfoItem label="Type" value={inquiryTypeLabels[inquiryType].ko} />
             <InfoItem label="Urgency" value={urgencyLabels[urgencyLevel].ko} />
             <InfoItem
               label="Consultation"
