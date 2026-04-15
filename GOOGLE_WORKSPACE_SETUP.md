@@ -1,31 +1,31 @@
-# Google Workspace Setup
+﻿# Google Workspace Setup
 
-이 문서는 `admin-office-mvp`에서 Google Drive 링크 저장과 Google Calendar 자동 생성 기능을 켜는 최소 설정 메모입니다.
+이 문서는 `admin-office-mvp`에서 Google Drive 링크 저장과 Google Calendar 일정 연동을 켜는 최소 설정 메모입니다.
 
 ## 1. Google Drive 링크 저장
 
-현재 구조는 파일을 앱 서버에 업로드하는 대신, 사건 문서 항목에 `Google Drive 링크`를 저장하는 방식입니다.
+현재 구조는 파일 자체를 서버로 업로드하는 대신, 사건 문서 항목에 `Google Drive 링크`를 저장하는 방식입니다.
 
 동작 방식:
 - 관리자 `사건 관리` 화면에서 문서 항목을 선택
 - Google Drive 링크를 붙여넣고 저장
-- 저장된 링크는 기존 파일 목록에 버전처럼 기록됨
-- 다운로드 버튼을 누르면 Drive 링크로 리디렉션됨
+- 저장된 링크가 기존 파일 목록처럼 기록됨
+- 다운로드 버튼을 누르면 Drive 링크로 이동
 
 장점:
 - 별도 S3/R2 비용이 없음
-- 고객이 메일이나 메신저로 보낸 Drive 링크를 바로 사건 문서에 묶을 수 있음
-- 내부 정리용으로 사용하기 쉬움
+- 고객이 메일이나 메신저로 보낸 Drive 링크를 바로 사건 문서에 연결할 수 있음
+- 개인 정리용으로 쓰기 쉬움
 
 주의:
 - 앱이 Drive 파일 자체를 업로드하지는 않음
 - 접근 권한은 Google Drive 쪽 공유 설정을 따름
 
-## 2. Google Calendar 자동 생성
+## 2. Google Calendar 일정 연동
 
 현재 앱은 사건/후속조치 저장 시 Google Calendar webhook을 호출하는 구조입니다.
 
-자동 생성 대상:
+연동 생성 대상:
 - 사건 일반 일정
 - 제출 마감
 - 보완 마감
@@ -34,7 +34,7 @@
 - 다음 후속 일정
 - 개별 후속조치 마감일
 
-앱에서 필요한 env:
+앱에 필요한 env:
 - `GOOGLE_CALENDAR_SYNC_ENABLED=true`
 - `GOOGLE_CALENDAR_WEBHOOK_URL`
 - `GOOGLE_CALENDAR_WEBHOOK_TOKEN`
@@ -45,13 +45,13 @@
 혼자 운영하는 경우 가장 가벼운 방식은 Google Apps Script Webhook입니다.
 
 순서:
-1. [script.google.com](https://script.google.com) 에서 새 Apps Script 생성
+1. [script.google.com](https://script.google.com)에서 새 Apps Script 생성
 2. 아래 예시 코드를 붙여넣기
-3. `CALENDAR_ID` 와 `WEBHOOK_TOKEN` 수정
+3. `CALENDAR_ID`와 `WEBHOOK_TOKEN` 설정
 4. `Deploy > New deployment > Web app`
 5. `Execute as: Me`
 6. `Who has access: Anyone`
-7. 배포 후 나온 Web app URL을 `GOOGLE_CALENDAR_WEBHOOK_URL`로 사용
+7. 배포 후 받은 Web app URL을 `GOOGLE_CALENDAR_WEBHOOK_URL`로 사용
 
 예시 Apps Script:
 
@@ -60,12 +60,8 @@ const CALENDAR_ID = "primary";
 const WEBHOOK_TOKEN = "replace-with-your-secret";
 
 function doPost(e) {
-  const auth = e.parameter.token || (e.postData && JSON.parse(e.postData.contents || "{}").token);
-  const header = e?.postData ? null : null;
-
   const request = JSON.parse(e.postData.contents || "{}");
-  const bearer = (e && e.headers && (e.headers.Authorization || e.headers.authorization)) || "";
-  const token = bearer.replace(/^Bearer\s+/i, "").trim();
+  const token = String(request.token || "").trim();
 
   if (token !== WEBHOOK_TOKEN) {
     return ContentService.createTextOutput(JSON.stringify({ error: "unauthorized" }))
@@ -90,16 +86,16 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  const date = new Date(request.date);
-  const end = new Date(date.getTime() + 60 * 60 * 1000);
+  const start = new Date(request.date);
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
 
   let event = request.eventId ? calendar.getEventById(request.eventId) : null;
   if (event) {
     event.setTitle(request.title);
     event.setDescription(request.description || "");
-    event.setTime(date, end);
+    event.setTime(start, end);
   } else {
-    event = calendar.createEvent(request.title, date, end, {
+    event = calendar.createEvent(request.title, start, end, {
       description: request.description || ""
     });
   }
@@ -131,9 +127,9 @@ npm run prisma:generate:postgres
 npx prisma db push --schema .codex-tmp/schema.postgresql.prisma
 ```
 
-## 6. 텔레그램 일정 브리핑은 나중에 어떻게 켜나
+## 6. 텔레그램 일정 브리핑은 어떻게 켜나
 
-필요할 때 아래 env만 넣으면 됩니다.
+필요한 env만 넣으면 됩니다.
 
 ```text
 TELEGRAM_BOT_TOKEN=123456789:AA...

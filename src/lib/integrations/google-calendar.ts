@@ -37,7 +37,8 @@ async function postCalendarWebhook(payload: CalendarWebhookPayload) {
   const response = await fetch(config.webhookUrl, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json; charset=utf-8",
+      Accept: "application/json"
     },
     body: JSON.stringify({
       ...payload,
