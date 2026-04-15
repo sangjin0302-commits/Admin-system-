@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { createAuditLog } from "@/lib/audit/service";
 import { authErrorResponse } from "@/lib/auth/api";
 import { requireAdminApiSession } from "@/lib/auth/session";
+import { syncFollowUpCalendarEvent } from "@/lib/integrations/google-calendar";
 import { prisma } from "@/lib/prisma/client";
 import { updateCaseFollowUpAction } from "@/lib/services/client-relationship-service";
 import { updateFollowUpActionSchema } from "@/lib/validation/case";
@@ -28,6 +29,9 @@ export async function PATCH(
       dueDate: parseDate(payload.dueDate),
       note: payload.note,
       title: payload.title
+    });
+    await syncFollowUpCalendarEvent(followUpId).catch((error) => {
+      console.error("Failed to sync Google Calendar follow-up event.", error);
     });
     await createAuditLog(prisma, {
       actor: {

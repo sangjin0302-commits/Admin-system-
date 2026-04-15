@@ -76,6 +76,10 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
   const [supplementSummary, setSupplementSummary] = useState("");
   const [supplementNote, setSupplementNote] = useState("");
   const [selectedSupplementDocumentIds, setSelectedSupplementDocumentIds] = useState<string[]>([]);
+  const [driveDocumentItemId, setDriveDocumentItemId] = useState("");
+  const [driveLinkLabel, setDriveLinkLabel] = useState("");
+  const [driveLinkUrl, setDriveLinkUrl] = useState("");
+  const [driveLinkNote, setDriveLinkNote] = useState("");
 
   useEffect(() => {
     if (!caseWorkspace?.id) {
@@ -234,6 +238,41 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
         setFeedback("파일을 업로드했습니다. 최신본으로 반영되었습니다.", "success");
       } catch {
         setFeedback("파일 업로드 중 오류가 발생했습니다.", "error");
+      }
+    });
+  }
+
+  async function handleAttachDriveLink(itemId: string, externalUrl: string, label: string, note: string) {
+    if (!caseWorkspace) return;
+    const currentCaseId = caseWorkspace.id;
+
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.append("externalUrl", externalUrl);
+        if (label.trim()) {
+          formData.append("label", label.trim());
+        }
+        if (note.trim()) {
+          formData.append("note", note.trim());
+        }
+
+        const response = await fetch(`/api/admin/cases/${currentCaseId}/documents/${itemId}/files`, {
+          method: "POST",
+          body: formData
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          setFeedback(payload.error ?? "Google Drive 링크를 등록하지 못했습니다.", "error");
+          return;
+        }
+
+        setCaseWorkspace(payload.caseWorkspace);
+        await refreshSubmissionWorkspace(currentCaseId);
+        setFeedback("Google Drive 링크를 등록했습니다.", "success");
+      } catch {
+        setFeedback("Google Drive 링크 등록 중 오류가 발생했습니다.", "error");
       }
     });
   }
@@ -610,6 +649,67 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
 
       <Card className="p-6">
         <h3 className="ui-section-title">서류 체크리스트</h3>
+        <Card muted className="ui-stat-card mt-4 p-4">
+          <p className="text-sm font-semibold text-text-strong">Google Drive 링크 저장</p>
+          <p className="mt-1 text-xs text-text-muted">
+            파일 자체를 업로드하지 않고, Drive 링크만 사건 문서에 연결합니다.
+          </p>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <Field label="연결할 서류">
+              <Select value={driveDocumentItemId} onChange={(event) => setDriveDocumentItemId(event.target.value)}>
+                <option value="">서류를 선택하세요</option>
+                {caseWorkspace.documents.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="링크 라벨">
+              <Input
+                value={driveLinkLabel}
+                onChange={(event) => setDriveLinkLabel(event.target.value)}
+                placeholder="예: 여권 사본 Drive 링크"
+              />
+            </Field>
+            <Field label="Google Drive 링크" className="md:col-span-2">
+              <Input
+                value={driveLinkUrl}
+                onChange={(event) => setDriveLinkUrl(event.target.value)}
+                placeholder="https://drive.google.com/..."
+              />
+            </Field>
+            <Field label="메모" className="md:col-span-2">
+              <Textarea
+                rows={2}
+                value={driveLinkNote}
+                onChange={(event) => setDriveLinkNote(event.target.value)}
+                placeholder="예: 고객이 4월 15일 공유한 원본 폴더"
+              />
+            </Field>
+          </div>
+          <div className="mt-3">
+            <Button
+              variant="secondary"
+              disabled={isPending || !driveDocumentItemId || !driveLinkUrl.trim()}
+              onClick={async () => {
+                if (!driveDocumentItemId || !driveLinkUrl.trim()) return;
+                await handleAttachDriveLink(
+                  driveDocumentItemId,
+                  driveLinkUrl.trim(),
+                  driveLinkLabel.trim(),
+                  driveLinkNote.trim()
+                );
+                setDriveDocumentItemId("");
+                setDriveLinkLabel("");
+                setDriveLinkUrl("");
+                setDriveLinkNote("");
+              }}
+            >
+              Google Drive 링크 저장
+            </Button>
+          </div>
+        </Card>
         <TableContainer className="mt-4">
           <Table>
             <thead>
@@ -629,6 +729,7 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
                   item={item}
                   onSave={handleUpdateDocument}
                   onUploadFile={handleUploadDocumentFile}
+                  onAttachDriveLink={handleAttachDriveLink}
                   onSetCurrentFile={handleSetCurrentFile}
                   onUpdateFileNote={handleUpdateFileNote}
                   onDeleteFile={handleDeleteFile}
@@ -999,6 +1100,7 @@ function CaseDocumentRow({
   item,
   onSave,
   onUploadFile,
+  onAttachDriveLink,
   onSetCurrentFile,
   onUpdateFileNote,
   onDeleteFile,
@@ -1008,6 +1110,7 @@ function CaseDocumentRow({
   item: CaseWorkspaceSnapshot["documents"][number];
   onSave: (id: string, isReceived: boolean, note: string) => Promise<void>;
   onUploadFile: (id: string, file: File, note: string) => Promise<void>;
+  onAttachDriveLink: (id: string, externalUrl: string, label: string, note: string) => Promise<void>;
   onSetCurrentFile: (id: string, fileId: string) => Promise<void>;
   onUpdateFileNote: (id: string, fileId: string, note: string) => Promise<void>;
   onDeleteFile: (id: string, fileId: string) => Promise<void>;
@@ -1016,6 +1119,8 @@ function CaseDocumentRow({
   const [isReceived, setIsReceived] = useState(item.isReceived);
   const [note, setNote] = useState(item.note ?? "");
   const [uploadNote, setUploadNote] = useState("");
+  const [driveLabel, setDriveLabel] = useState("");
+  const [driveLink, setDriveLink] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 

@@ -2,6 +2,7 @@ import type { CaseStage, ClientRelationshipStatus, Prisma, PrismaClient } from "
 
 import { ensureCaseDocumentChecklist } from "@/lib/case-documents/service";
 import { documentStorage } from "@/lib/document-storage";
+import { syncCaseCalendarEvents } from "@/lib/integrations/google-calendar";
 import {
   buildCaseStatusUpdateKo,
   buildContractDocumentGuideKo,
@@ -67,6 +68,8 @@ export type CaseWorkspaceSnapshot = {
       id: string;
       originalFilename: string;
       storedFilename: string;
+      externalUrl: string | null;
+      externalProvider: string | null;
       mimeType: string;
       size: number;
       uploadedAt: string;
@@ -139,6 +142,8 @@ function serializeCaseWorkspace(record: CaseRecordWithRelations) {
         id: file.id,
         originalFilename: file.originalFilename,
         storedFilename: file.storedFilename,
+        externalUrl: file.externalUrl,
+        externalProvider: file.externalProvider,
         mimeType: file.mimeType,
         size: file.size,
         uploadedAt: file.uploadedAt.toISOString(),
@@ -362,6 +367,10 @@ export async function updateCaseStage(
     }
   });
 
+  await syncCaseCalendarEvents(caseId).catch((error) => {
+    console.error("Failed to sync case calendar events.", error);
+  });
+
   return serializeCaseWorkspace(await getCaseRecordByIdOrThrow(caseId));
 }
 
@@ -486,6 +495,65 @@ export async function uploadCaseDocumentFile(
   return serializeCaseWorkspace(await getCaseRecordByIdOrThrow(caseId));
 }
 
+export async function attachCaseDocumentExternalLink(
+  caseId: string,
+  itemId: string,
+  input: {
+    externalUrl: string;
+    label?: string;
+    note?: string;
+  }
+) {
+  const item = await prisma.caseDocumentItem.findUniqueOrThrow({
+    where: { id: itemId }
+  });
+
+  if (item.caseId !== caseId) {
+    throw new Error("문서 항목과 사건 정보가 일치하지 않습니다.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const db = tx as unknown as CaseDocumentFileTxDb;
+    const currentMax = await db.caseDocumentFile.aggregate({
+      where: { caseDocumentItemId: itemId },
+      _max: { versionNumber: true }
+    });
+    const nextVersion = (currentMax._max.versionNumber ?? 0) + 1;
+
+    await db.caseDocumentFile.updateMany({
+      where: { caseDocumentItemId: itemId, isCurrentVersion: true },
+      data: { isCurrentVersion: false }
+    });
+
+    await db.caseDocumentFile.create({
+      data: {
+        caseId,
+        caseDocumentItemId: itemId,
+        originalFilename: input.label?.trim() || "Google Drive 링크",
+        storedFilename: input.label?.trim() || "Google Drive 링크",
+        storagePath: input.externalUrl.trim(),
+        externalUrl: input.externalUrl.trim(),
+        externalProvider: "google-drive",
+        mimeType: "application/vnd.google-apps.file",
+        size: 0,
+        note: input.note?.trim() || null,
+        isCurrentVersion: true,
+        versionNumber: nextVersion
+      }
+    });
+
+    await db.caseDocumentItem.update({
+      where: { id: itemId },
+      data: {
+        isReceived: true,
+        receivedAt: new Date()
+      }
+    });
+  });
+
+  return serializeCaseWorkspace(await getCaseRecordByIdOrThrow(caseId));
+}
+
 export async function deleteCaseDocumentFile(caseId: string, itemId: string, fileId: string) {
   const target = await prisma.caseDocumentFile.findUniqueOrThrow({
     where: { id: fileId },
@@ -494,6 +562,7 @@ export async function deleteCaseDocumentFile(caseId: string, itemId: string, fil
       caseId: true,
       caseDocumentItemId: true,
       storagePath: true,
+      externalUrl: true,
       isCurrentVersion: true
     }
   });
@@ -541,7 +610,9 @@ export async function deleteCaseDocumentFile(caseId: string, itemId: string, fil
     }
   });
 
-  await documentStorage.remove(target.storagePath).catch(() => undefined);
+  if (!target.externalUrl) {
+    await documentStorage.remove(target.storagePath).catch(() => undefined);
+  }
   return serializeCaseWorkspace(await getCaseRecordByIdOrThrow(caseId));
 }
 
@@ -619,7 +690,8 @@ export async function readCaseDocumentFile(caseId: string, itemId: string, fileI
       caseDocumentItemId: true,
       originalFilename: true,
       mimeType: true,
-      storagePath: true
+      storagePath: true,
+      externalUrl: true
     }
   });
 
@@ -627,10 +699,20 @@ export async function readCaseDocumentFile(caseId: string, itemId: string, fileI
     throw new Error("파일 정보와 사건/문서 항목이 일치하지 않습니다.");
   }
 
+  if (target.externalUrl) {
+    return {
+      originalFilename: target.originalFilename,
+      mimeType: target.mimeType,
+      externalUrl: target.externalUrl,
+      fileBuffer: null
+    };
+  }
+
   const fileBuffer = await documentStorage.read(target.storagePath);
   return {
     originalFilename: target.originalFilename,
     mimeType: target.mimeType,
+    externalUrl: null,
     fileBuffer
   };
 }

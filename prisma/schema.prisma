@@ -399,6 +399,12 @@ model CaseRecord {
   supplementDeadline DateTime?
   stayExpirationDate DateTime?
   internalDeadline DateTime?
+  googleCalendarDueEventId String?
+  googleCalendarFilingEventId String?
+  googleCalendarSupplementEventId String?
+  googleCalendarStayExpirationEventId String?
+  googleCalendarInternalDeadlineEventId String?
+  googleCalendarNextFollowUpEventId String?
   internalMemo    String?
   closedAt        DateTime?
   closeReason     String?
@@ -432,6 +438,7 @@ model FollowUpAction {
   title        String
   note         String?
   dueDate      DateTime?
+  googleCalendarEventId String?
   messageDraft String
   completedAt  DateTime?
   createdAt    DateTime           @default(now())
@@ -479,6 +486,8 @@ model CaseDocumentFile {
   originalFilename   String
   storedFilename     String
   storagePath        String
+  externalUrl        String?
+  externalProvider   String?
   mimeType           String
   size               Int
   uploadedAt         DateTime          @default(now())
