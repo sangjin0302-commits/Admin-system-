@@ -340,10 +340,10 @@ async function seedQuoteFlow() {
   type ServiceTypeRecord = (typeof serviceTypes)[number];
   type PricingOptionRecord = (typeof pricingOptions)[number];
 
-  const serviceByLegacy = new Map(
+  const serviceByLegacy: Map<string, ServiceTypeRecord> = new Map(
     serviceTypes.map((item: ServiceTypeRecord) => [item.legacyId, item] as const)
   );
-  const optionByLegacy = new Map(
+  const optionByLegacy: Map<string, PricingOptionRecord> = new Map(
     pricingOptions.map((item: PricingOptionRecord) => [item.legacyId, item] as const)
   );
 
@@ -373,6 +373,8 @@ async function seedQuoteFlow() {
     min: Math.round((corpBase.min + corpUrgency.min) * 0.2),
     max: Math.round((corpBase.max + corpUrgency.max) * 0.2)
   };
+  const docsOption = optionByLegacy.get("docs");
+  const vatOption = optionByLegacy.get("vat");
   const corpSubtotal = {
     min: corpBase.min + corpUrgency.min + corpDocs.min,
     max: corpBase.max + corpUrgency.max + corpDocs.max
@@ -434,7 +436,7 @@ async function seedQuoteFlow() {
       adjustments: {
         create: [
           {
-            pricingOptionId: optionByLegacy.get("docs")?.id,
+            pricingOptionId: docsOption?.id,
             label: "서류 수집 대행",
             description: "서류 취합",
             optionType: "PERCENT" as const,
@@ -445,7 +447,7 @@ async function seedQuoteFlow() {
             sortOrder: 0
           },
           {
-            pricingOptionId: optionByLegacy.get("vat")?.id,
+            pricingOptionId: vatOption?.id,
             label: "부가세 포함",
             description: "VAT 10%",
             optionType: "PERCENT" as const,
@@ -561,7 +563,7 @@ async function seedQuoteFlow() {
       adjustments: {
         create: [
           {
-            pricingOptionId: optionByLegacy.get("vat")?.id,
+            pricingOptionId: vatOption?.id,
             label: "부가세 포함",
             description: "VAT 10%",
             optionType: "PERCENT" as const,
@@ -841,7 +843,7 @@ async function seedQuoteFlow() {
       adjustments: {
         create: [
           {
-            pricingOptionId: optionByLegacy.get("vat")?.id,
+            pricingOptionId: vatOption?.id,
             label: "부가세 포함",
             description: "VAT 10%",
             optionType: "PERCENT" as const,
