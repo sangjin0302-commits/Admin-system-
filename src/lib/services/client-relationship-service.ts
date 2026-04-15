@@ -2,7 +2,8 @@ import type {
   ClientRelationshipStatus,
   FollowUpActionStatus,
   FollowUpActionType,
-  Prisma
+  Prisma,
+  PrismaClient
 } from "@generated/prisma-client/client";
 
 import {
@@ -22,6 +23,10 @@ type CaseRelationshipRecord = Prisma.CaseRecordGetPayload<{
 }>;
 
 type FollowUpActionRecord = CaseRelationshipRecord["followUpActions"][number];
+type ClientRelationshipTxDb = {
+  followUpAction: Pick<PrismaClient["followUpAction"], "create" | "update">;
+  caseRecord: Pick<PrismaClient["caseRecord"], "update">;
+};
 
 export type ClientRelationshipWorkspace = {
   caseId: string;
@@ -241,7 +246,8 @@ export async function createCaseFollowUpAction(
   });
 
   await prisma.$transaction(async (tx) => {
-    await tx.followUpAction.create({
+    const db = tx as unknown as ClientRelationshipTxDb;
+    await db.followUpAction.create({
       data: {
         caseId,
         type: input.type,
@@ -252,7 +258,7 @@ export async function createCaseFollowUpAction(
       }
     });
 
-    await tx.caseRecord.update({
+    await db.caseRecord.update({
       where: { id: caseId },
       data: {
         nextFollowUpDate:
@@ -292,7 +298,8 @@ export async function updateCaseFollowUpAction(
   }
 
   await prisma.$transaction(async (tx) => {
-    await tx.followUpAction.update({
+    const db = tx as unknown as ClientRelationshipTxDb;
+    await db.followUpAction.update({
       where: { id: followUpId },
       data: {
         status: input.status ?? undefined,
@@ -309,7 +316,7 @@ export async function updateCaseFollowUpAction(
     });
 
     if (input.status === "COMPLETED") {
-      await tx.caseRecord.update({
+      await db.caseRecord.update({
         where: { id: caseId },
         data: {
           lastFollowUpAt: new Date(),
@@ -322,7 +329,7 @@ export async function updateCaseFollowUpAction(
     }
 
     if (input.dueDate !== undefined) {
-      await tx.caseRecord.update({
+      await db.caseRecord.update({
         where: { id: caseId },
         data: { nextFollowUpDate: input.dueDate }
       });
