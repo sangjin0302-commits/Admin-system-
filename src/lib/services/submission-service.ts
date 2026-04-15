@@ -194,7 +194,7 @@ function serializeWorkspace(record: CaseWithSubmissionRelations): SubmissionWork
       left.label.localeCompare(right.label, "ko-KR")
     );
 
-  const required = record.documents.filter((doc) => doc.isRequired);
+  const required = record.documents.filter((doc: SubmissionDocumentRecord) => doc.isRequired);
   const receivedRequired = required.filter(
     (doc: SubmissionDocumentRecord) =>
       doc.isReceived || doc.files.some((file: SubmissionDocumentFileRecord) => file.isCurrentVersion)
