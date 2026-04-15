@@ -1,4 +1,4 @@
-import type { CaseStage, ClientRelationshipStatus, Prisma } from "@generated/prisma-client/client";
+import type { CaseStage, ClientRelationshipStatus, Prisma, PrismaClient } from "@generated/prisma-client/client";
 
 import { ensureCaseDocumentChecklist } from "@/lib/case-documents/service";
 import { documentStorage } from "@/lib/document-storage";
@@ -26,6 +26,17 @@ type CaseRecordWithRelations = Prisma.CaseRecordGetPayload<{
 type CaseDocumentRecord = CaseRecordWithRelations["documents"][number];
 type CaseDocumentFileRecord = CaseDocumentRecord["files"][number];
 type CaseStageLogRecord = CaseRecordWithRelations["stageLogs"][number];
+type CaseStageTxDb = {
+  caseRecord: Pick<PrismaClient["caseRecord"], "findUniqueOrThrow" | "update">;
+  caseStageLog: Pick<PrismaClient["caseStageLog"], "create">;
+};
+type CaseDocumentFileTxDb = {
+  caseDocumentFile: Pick<
+    PrismaClient["caseDocumentFile"],
+    "aggregate" | "updateMany" | "create" | "delete" | "findFirst" | "update"
+  >;
+  caseDocumentItem: Pick<PrismaClient["caseDocumentItem"], "update">;
+};
 
 export type CaseWorkspaceSnapshot = {
   id: string;
@@ -284,7 +295,8 @@ export async function updateCaseStage(
   }
 ) {
   await prisma.$transaction(async (tx) => {
-    const current = await tx.caseRecord.findUniqueOrThrow({
+    const db = tx as unknown as CaseStageTxDb;
+    const current = await db.caseRecord.findUniqueOrThrow({
       where: { id: caseId },
       select: {
         currentStage: true,
@@ -296,7 +308,7 @@ export async function updateCaseStage(
 
     const isClosingStage = input.stage === "COMPLETED" || input.stage === "CLOSED";
 
-    await tx.caseRecord.update({
+    await db.caseRecord.update({
       where: { id: caseId },
       data: {
         currentStage: input.stage,
@@ -339,7 +351,7 @@ export async function updateCaseStage(
     });
 
     if (current.currentStage !== input.stage || input.logNote?.trim()) {
-      await tx.caseStageLog.create({
+      await db.caseStageLog.create({
         data: {
           caseId,
           fromStage: current.currentStage,
@@ -431,18 +443,19 @@ export async function uploadCaseDocumentFile(
 
   try {
     await prisma.$transaction(async (tx) => {
-      const currentMax = await tx.caseDocumentFile.aggregate({
+      const db = tx as unknown as CaseDocumentFileTxDb;
+      const currentMax = await db.caseDocumentFile.aggregate({
         where: { caseDocumentItemId: itemId },
         _max: { versionNumber: true }
       });
       const nextVersion = (currentMax._max.versionNumber ?? 0) + 1;
 
-      await tx.caseDocumentFile.updateMany({
+      await db.caseDocumentFile.updateMany({
         where: { caseDocumentItemId: itemId, isCurrentVersion: true },
         data: { isCurrentVersion: false }
       });
 
-      await tx.caseDocumentFile.create({
+      await db.caseDocumentFile.create({
         data: {
           caseId,
           caseDocumentItemId: itemId,
@@ -457,7 +470,7 @@ export async function uploadCaseDocumentFile(
         }
       });
 
-      await tx.caseDocumentItem.update({
+      await db.caseDocumentItem.update({
         where: { id: itemId },
         data: {
           isReceived: true,
@@ -498,25 +511,26 @@ export async function deleteCaseDocumentFile(caseId: string, itemId: string, fil
   }
 
   await prisma.$transaction(async (tx) => {
-    await tx.caseDocumentFile.delete({ where: { id: fileId } });
+    const db = tx as unknown as CaseDocumentFileTxDb;
+    await db.caseDocumentFile.delete({ where: { id: fileId } });
 
     if (target.isCurrentVersion) {
-      const latest = await tx.caseDocumentFile.findFirst({
+      const latest = await db.caseDocumentFile.findFirst({
         where: { caseDocumentItemId: itemId },
         orderBy: [{ versionNumber: "desc" }, { uploadedAt: "desc" }]
       });
 
       if (latest) {
-        await tx.caseDocumentFile.update({
+        await db.caseDocumentFile.update({
           where: { id: latest.id },
           data: { isCurrentVersion: true }
         });
-        await tx.caseDocumentItem.update({
+        await db.caseDocumentItem.update({
           where: { id: itemId },
           data: { isReceived: true }
         });
       } else {
-        await tx.caseDocumentItem.update({
+        await db.caseDocumentItem.update({
           where: { id: itemId },
           data: {
             isReceived: false,
@@ -546,17 +560,18 @@ export async function setCurrentCaseDocumentFile(caseId: string, itemId: string,
   }
 
   await prisma.$transaction(async (tx) => {
-    await tx.caseDocumentFile.updateMany({
+    const db = tx as unknown as CaseDocumentFileTxDb;
+    await db.caseDocumentFile.updateMany({
       where: { caseDocumentItemId: itemId, isCurrentVersion: true },
       data: { isCurrentVersion: false }
     });
 
-    await tx.caseDocumentFile.update({
+    await db.caseDocumentFile.update({
       where: { id: fileId },
       data: { isCurrentVersion: true }
     });
 
-    await tx.caseDocumentItem.update({
+    await db.caseDocumentItem.update({
       where: { id: itemId },
       data: {
         isReceived: true,
