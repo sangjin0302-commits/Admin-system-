@@ -19,7 +19,7 @@ export async function ensureCaseDocumentChecklist(
     select: { documentType: true }
   });
 
-  const existingTypes = new Set(existing.map((item) => item.documentType));
+  const existingTypes = new Set(existing.map((item: { documentType: string }) => item.documentType));
   const missing = templates
     .filter((template) => !existingTypes.has(template.documentType))
     .map((template) => ({
