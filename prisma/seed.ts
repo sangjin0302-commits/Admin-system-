@@ -671,7 +671,10 @@ async function seedQuoteFlow() {
   const seededItems = await prisma.caseDocumentItem.findMany({
     where: { caseId: caseRecord.id }
   });
-  const passportItem = seededItems.find((item) => item.documentType === "passport_copy");
+  type SeededCaseDocumentItem = (typeof seededItems)[number];
+  const passportItem = seededItems.find(
+    (item: SeededCaseDocumentItem) => item.documentType === "passport_copy"
+  );
 
   if (passportItem) {
     const version1Path = `cases/${caseRecord.id}/${passportItem.id}/sample-passport-v1.txt`;
