@@ -14,7 +14,10 @@ import {
   inquiryTypeLabels,
   languageCodeLabels,
   urgencyLabels,
+  type ClientType,
+  type InquiryType,
   type InquiryStatus,
+  type LanguageCode,
   type UrgencyLevel
 } from "@/types/inquiry";
 
@@ -35,8 +38,11 @@ export default async function AdminInquiryDetailPage({
 
   const tags = parseJsonArray(inquiry.serviceTags);
   const precheckDocs = parseJsonArray(inquiry.precheckRecommendedDocs).map((entry) => String(entry));
+  const inquiryType = inquiry.inquiryType as InquiryType;
   const inquiryStatus = inquiry.status as InquiryStatus;
   const urgencyLevel = inquiry.urgencyLevel as UrgencyLevel;
+  const preferredLanguage = inquiry.preferredLanguage as LanguageCode;
+  const clientType = inquiry.clientType as ClientType;
 
   return (
     <div className="space-y-6">
@@ -52,9 +58,9 @@ export default async function AdminInquiryDetailPage({
               <Badge tone="urgency" urgency={urgencyLevel}>
                 {urgencyLabels[urgencyLevel].ko}
               </Badge>
-              <Badge>{inquiryTypeLabels[inquiry.inquiryType].ko}</Badge>
-              <Badge tone="language" language={inquiry.preferredLanguage}>
-                {languageCodeLabels[inquiry.preferredLanguage].ko}
+              <Badge>{inquiryTypeLabels[inquiryType].ko}</Badge>
+              <Badge tone="language" language={preferredLanguage}>
+                {languageCodeLabels[preferredLanguage].ko}
               </Badge>
             </div>
 
@@ -71,7 +77,7 @@ export default async function AdminInquiryDetailPage({
               <p>Contact: {inquiry.contactName}</p>
               <p>Email: {inquiry.email}</p>
               <p>Phone: {inquiry.phone || "-"}</p>
-              <p>Client: {clientTypeLabels[inquiry.clientType].ko}</p>
+              <p>Client: {clientTypeLabels[clientType].ko}</p>
               <p>Corporate: {inquiry.isCorporateRequest ? "Yes" : "No"}</p>
               <p>Assignee: {inquiry.assignee || "-"}</p>
             </div>
