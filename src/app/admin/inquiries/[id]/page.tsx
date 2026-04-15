@@ -13,7 +13,9 @@ import {
   inquiryStatusLabels,
   inquiryTypeLabels,
   languageCodeLabels,
-  urgencyLabels
+  urgencyLabels,
+  type InquiryStatus,
+  type UrgencyLevel
 } from "@/types/inquiry";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +35,8 @@ export default async function AdminInquiryDetailPage({
 
   const tags = parseJsonArray(inquiry.serviceTags);
   const precheckDocs = parseJsonArray(inquiry.precheckRecommendedDocs).map((entry) => String(entry));
+  const inquiryStatus = inquiry.status as InquiryStatus;
+  const urgencyLevel = inquiry.urgencyLevel as UrgencyLevel;
 
   return (
     <div className="space-y-6">
@@ -42,11 +46,11 @@ export default async function AdminInquiryDetailPage({
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="status" status={inquiry.status}>
-                {inquiryStatusLabels[inquiry.status].ko}
+              <Badge tone="status" status={inquiryStatus}>
+                {inquiryStatusLabels[inquiryStatus].ko}
               </Badge>
-              <Badge tone="urgency" urgency={inquiry.urgencyLevel}>
-                {urgencyLabels[inquiry.urgencyLevel].ko}
+              <Badge tone="urgency" urgency={urgencyLevel}>
+                {urgencyLabels[urgencyLevel].ko}
               </Badge>
               <Badge>{inquiryTypeLabels[inquiry.inquiryType].ko}</Badge>
               <Badge tone="language" language={inquiry.preferredLanguage}>
@@ -125,7 +129,7 @@ export default async function AdminInquiryDetailPage({
           <h3 className="ui-section-title">Precheck Snapshot</h3>
           <div className="mt-5 grid gap-3">
             <InfoItem label="Type" value={inquiryTypeLabels[inquiry.inquiryType].ko} />
-            <InfoItem label="Urgency" value={urgencyLabels[inquiry.urgencyLevel].ko} />
+            <InfoItem label="Urgency" value={urgencyLabels[urgencyLevel].ko} />
             <InfoItem
               label="Consultation"
               value={inquiry.consultationRequired ? "Required" : "Guidance first"}

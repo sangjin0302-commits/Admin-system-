@@ -7,7 +7,11 @@ import {
   inquiryStatusLabels,
   inquiryTypeLabels,
   languageCodeLabels,
-  urgencyLabels
+  urgencyLabels,
+  type InquiryStatus,
+  type InquiryType,
+  type LanguageCode,
+  type UrgencyLevel
 } from "@/types/inquiry";
 
 type InquiryItem = {
@@ -16,10 +20,10 @@ type InquiryItem = {
   contactName: string;
   organizationName: string | null;
   email: string;
-  inquiryType: keyof typeof inquiryTypeLabels;
-  status: keyof typeof inquiryStatusLabels;
-  urgencyLevel: keyof typeof urgencyLabels;
-  preferredLanguage: keyof typeof languageCodeLabels;
+  inquiryType: InquiryType;
+  status: InquiryStatus;
+  urgencyLevel: UrgencyLevel;
+  preferredLanguage: LanguageCode;
   assignee: string | null;
   createdAt: Date;
   updatedAt: Date;
