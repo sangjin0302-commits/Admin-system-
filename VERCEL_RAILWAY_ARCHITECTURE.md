@@ -21,6 +21,7 @@
 
 - `DATABASE_PROVIDER=postgresql`
 - `DATABASE_URL=postgresql://postgres:password@roundhouse.proxy.rlwy.net:5432/railway?sslmode=require`
+- `PGSSL_REJECT_UNAUTHORIZED=false`
 - `DOCUMENT_STORAGE_DRIVER=r2`
 - `S3_BUCKET=<r2-bucket-name>`
 - `S3_REGION=auto`
@@ -35,6 +36,7 @@
 - The `prebuild` hook runs `scripts/prepare-prisma-client.mjs`.
 - When `DATABASE_PROVIDER=postgresql`, the project generates the PostgreSQL Prisma client before the Next.js build starts.
 - Runtime Prisma connections use `@prisma/adapter-pg` with the Railway PostgreSQL `DATABASE_URL`.
+- Railway Public/TCP Proxy certificates may require `PGSSL_REJECT_UNAUTHORIZED=false` unless you provide a trusted CA chain.
 
 ## Preview deployment checklist
 

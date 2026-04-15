@@ -11,6 +11,26 @@ declare global {
 const databaseProvider = getDatabaseProvider();
 const databaseUrl = getDatabaseUrl();
 
+function shouldRejectUnauthorized(databaseUrlValue: string) {
+  const configured = process.env.PGSSL_REJECT_UNAUTHORIZED?.trim().toLowerCase();
+  if (configured === "true") return true;
+  if (configured === "false") return false;
+
+  const hostname = (() => {
+    try {
+      return new URL(databaseUrlValue).hostname.toLowerCase();
+    } catch {
+      return "";
+    }
+  })();
+
+  if (hostname.endsWith(".rlwy.net") || hostname === "postgres.railway.internal") {
+    return false;
+  }
+
+  return true;
+}
+
 function createPrismaAdapter() {
   if (databaseProvider === "sqlite") {
     return new PrismaBetterSQLite3(
@@ -25,7 +45,10 @@ function createPrismaAdapter() {
   }
 
   const pool = new Pool({
-    connectionString: databaseUrl
+    connectionString: databaseUrl,
+    ssl: {
+      rejectUnauthorized: shouldRejectUnauthorized(databaseUrl)
+    }
   });
 
   return new PrismaPg(pool);
