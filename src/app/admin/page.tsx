@@ -11,6 +11,8 @@ import { getWorkQueueSnapshot } from "@/lib/work-queue/service";
 
 export const dynamic = "force-dynamic";
 type DashboardInquiryItem = Awaited<ReturnType<typeof listInquiries>>[number];
+type DemandForecastSummary = Awaited<ReturnType<typeof getLatestDemandForecastSummary>>;
+type DemandForecastPoint = NonNullable<DemandForecastSummary["latestRun"]>["points"][number];
 
 export default async function AdminIndexPage() {
   const session = await requireAdminPageSession("/admin", "STAFF");
@@ -100,7 +102,7 @@ export default async function AdminIndexPage() {
 
           {forecastSummary.latestRun ? (
             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-              {forecastSummary.latestRun.points.map((point) => (
+              {forecastSummary.latestRun.points.map((point: DemandForecastPoint) => (
                 <div key={point.id} className="ui-stat-card bg-surface-muted">
                   <p className="text-xs text-text-muted">
                     {point.targetWeekStart.toISOString().slice(0, 10)}
