@@ -338,8 +338,12 @@ async function seedQuoteFlow() {
     prisma.pricingOption.findMany()
   ]);
 
-  const serviceByLegacy = new Map(serviceTypes.map((item) => [item.legacyId, item]));
-  const optionByLegacy = new Map(pricingOptions.map((item) => [item.legacyId, item]));
+  const serviceByLegacy = new Map(
+    serviceTypes.map((item: (typeof serviceTypes)[number]) => [item.legacyId, item] as const)
+  );
+  const optionByLegacy = new Map(
+    pricingOptions.map((item: (typeof pricingOptions)[number]) => [item.legacyId, item] as const)
+  );
 
   const visaInquiry = await prisma.inquiry.findFirst({
     where: { email: "minji@example.com" }
