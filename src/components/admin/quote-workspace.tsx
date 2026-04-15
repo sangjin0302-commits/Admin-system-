@@ -30,6 +30,15 @@ const quoteStatusLabels = {
   EXPIRED: "만료"
 } as const;
 
+const paymentCollectionStatusLabels = {
+  NOT_REQUESTED: "결제 요청 전",
+  REQUESTED: "결제 요청됨",
+  PAID: "입금 확인",
+  CANCELLED: "결제 취소"
+} as const;
+
+type PaymentCollectionStatusValue = keyof typeof paymentCollectionStatusLabels;
+
 const caseStageLabels = {
   CONTRACT_PREPARATION: "계약 준비",
   DOCUMENT_COLLECTION: "서류 수집",
@@ -69,6 +78,24 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
   const [tone, setTone] = useState<"default" | "success" | "error">("default");
   const [aiDraft, setAiDraft] = useState<QuoteAiDraft | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [contractShareUrl, setContractShareUrl] = useState(
+    workspace.latestQuote?.contractDraft?.contractShareUrl ?? ""
+  );
+  const [paymentLinkUrl, setPaymentLinkUrl] = useState(
+    workspace.latestQuote?.contractDraft?.paymentLinkUrl ?? ""
+  );
+  const [paymentProvider, setPaymentProvider] = useState(
+    workspace.latestQuote?.contractDraft?.paymentProvider ?? ""
+  );
+  const [paymentStatus, setPaymentStatus] = useState<PaymentCollectionStatusValue>(
+    workspace.latestQuote?.contractDraft?.paymentStatus ?? "NOT_REQUESTED"
+  );
+  const [paymentReference, setPaymentReference] = useState(
+    workspace.latestQuote?.contractDraft?.paymentReference ?? ""
+  );
+  const [paymentMemo, setPaymentMemo] = useState(
+    workspace.latestQuote?.contractDraft?.paymentMemo ?? ""
+  );
 
   const groupedServices = useMemo(() => {
     const bucket = new Map<string, typeof workspace.masters.serviceTypes>();
@@ -129,6 +156,12 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
     setLineItems(nextQuote.lineItems);
     setAdjustments(nextQuote.adjustments);
     setPaymentPlans(nextQuote.paymentPlans);
+    setContractShareUrl(nextQuote.contractDraft?.contractShareUrl ?? "");
+    setPaymentLinkUrl(nextQuote.contractDraft?.paymentLinkUrl ?? "");
+    setPaymentProvider(nextQuote.contractDraft?.paymentProvider ?? "");
+    setPaymentStatus(nextQuote.contractDraft?.paymentStatus ?? "NOT_REQUESTED");
+    setPaymentReference(nextQuote.contractDraft?.paymentReference ?? "");
+    setPaymentMemo(nextQuote.contractDraft?.paymentMemo ?? "");
   }
 
   function setFeedback(nextMessage: string, nextTone: "default" | "success" | "error") {
@@ -346,6 +379,47 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
 
       setAiDraft(payload.draft);
       setFeedback("AI 제안서 초안을 생성했습니다.", "success");
+    });
+  }
+
+  async function handleContractPaymentAutomation(action: "sendContract" | "markSigned" | "sendPayment" | "savePayment" | "markPaid") {
+    if (!quote) return;
+
+    setFeedback("", "default");
+
+    startTransition(async () => {
+      const response = await fetch(`/api/admin/quotes/${quote.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "contractPayment",
+          contractShareUrl,
+          sendContractNow: action === "sendContract",
+          markContractSigned: action === "markSigned",
+          paymentLinkUrl,
+          paymentProvider,
+          sendPaymentNow: action === "sendPayment",
+          paymentStatus: action === "markPaid" ? "PAID" : paymentStatus,
+          paymentReference,
+          paymentMemo
+        })
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        setFeedback(payload.error ?? "계약/결제 자동화 상태를 반영하지 못했습니다.", "error");
+        return;
+      }
+
+      applyQuote(payload.quote);
+      setFeedback(
+        action === "markPaid"
+          ? "입금 확인과 사건 전환 상태를 반영했습니다."
+          : "계약/결제 상태를 반영했습니다.",
+        "success"
+      );
+      router.refresh();
     });
   }
 
@@ -964,15 +1038,105 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
                   견적 수락 시 계약 초안과 사건 레코드가 자동 연결됩니다.
                 </p>
                 {quote.contractDraft ? (
-                  <Card muted className="ui-stat-card mt-5 p-5">
-                    <p className="text-sm font-semibold text-text-strong">{quote.contractDraft.title}</p>
-                    <p className="mt-2 text-xs text-text-muted">
-                      마지막 업데이트: {new Date(quote.contractDraft.updatedAt).toLocaleString("ko-KR")}
-                    </p>
-                    <pre className="mt-4 whitespace-pre-wrap text-sm text-text">
-                      {quote.contractDraft.bodyText}
-                    </pre>
-                  </Card>
+                  <div className="mt-5 space-y-4">
+                    <Card muted className="ui-stat-card p-5">
+                      <p className="text-sm font-semibold text-text-strong">{quote.contractDraft.title}</p>
+                      <p className="mt-2 text-xs text-text-muted">
+                        마지막 업데이트: {new Date(quote.contractDraft.updatedAt).toLocaleString("ko-KR")}
+                      </p>
+                      <pre className="mt-4 whitespace-pre-wrap text-sm text-text">
+                        {quote.contractDraft.bodyText}
+                      </pre>
+                    </Card>
+
+                    <Card muted className="ui-stat-card p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-text-strong">계약 / 결제 자동화</p>
+                          <p className="mt-1 text-xs text-text-muted">
+                            외부 전자계약·PG를 아직 안 붙여도 계약 링크와 결제 링크를 관리하면서 수임 전환 흐름을 이어갈 수 있습니다.
+                          </p>
+                        </div>
+                        <Badge>{paymentCollectionStatusLabels[quote.contractDraft.paymentStatus]}</Badge>
+                      </div>
+
+                      <FieldGroup className="mt-4">
+                        <Field label="계약 링크">
+                          <Input
+                            value={contractShareUrl}
+                            onChange={(event) => setContractShareUrl(event.target.value)}
+                            placeholder="예: 전자계약 또는 PDF 공유 링크"
+                          />
+                        </Field>
+                        <Field label="결제 링크">
+                          <Input
+                            value={paymentLinkUrl}
+                            onChange={(event) => setPaymentLinkUrl(event.target.value)}
+                            placeholder="예: Toss / Stripe / 계좌안내 링크"
+                          />
+                        </Field>
+                        <Field label="결제 수단 / 제공사">
+                          <Input
+                            value={paymentProvider}
+                            onChange={(event) => setPaymentProvider(event.target.value)}
+                            placeholder="예: Toss Payments, Stripe, 수기 계좌이체"
+                          />
+                        </Field>
+                        <Field label="결제 상태">
+                          <Select
+                            value={paymentStatus}
+                            onChange={(event) => setPaymentStatus(event.target.value as PaymentCollectionStatusValue)}
+                          >
+                            {Object.entries(paymentCollectionStatusLabels).map(([value, label]) => (
+                              <option key={value} value={value}>
+                                {label}
+                              </option>
+                            ))}
+                          </Select>
+                        </Field>
+                        <Field label="입금 확인 / 거래 참고번호">
+                          <Input
+                            value={paymentReference}
+                            onChange={(event) => setPaymentReference(event.target.value)}
+                            placeholder="예: 입금자명, 거래번호, 내부 확인 메모"
+                          />
+                        </Field>
+                        <Field label="계약/결제 메모">
+                          <Textarea
+                            rows={3}
+                            value={paymentMemo}
+                            onChange={(event) => setPaymentMemo(event.target.value)}
+                            placeholder="예: 계약 링크 발송일, 유선 안내 내용, 결제 확인 메모"
+                          />
+                        </Field>
+                      </FieldGroup>
+
+                      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+                        <Button variant="secondary" disabled={isPending} onClick={() => handleContractPaymentAutomation("sendContract")}>
+                          계약 링크 발송 기록
+                        </Button>
+                        <Button variant="secondary" disabled={isPending} onClick={() => handleContractPaymentAutomation("markSigned")}>
+                          계약 체결 처리
+                        </Button>
+                        <Button variant="secondary" disabled={isPending} onClick={() => handleContractPaymentAutomation("sendPayment")}>
+                          결제 링크 발송 기록
+                        </Button>
+                        <Button variant="secondary" disabled={isPending} onClick={() => handleContractPaymentAutomation("savePayment")}>
+                          결제 정보 저장
+                        </Button>
+                        <Button disabled={isPending} onClick={() => handleContractPaymentAutomation("markPaid")}>
+                          입금 확인 후 사건 전환
+                        </Button>
+                      </div>
+
+                      <div className="mt-4 grid gap-2 text-xs text-text-muted sm:grid-cols-2">
+                        <p>계약 발송: {quote.contractDraft.contractSentAt ? new Date(quote.contractDraft.contractSentAt).toLocaleString("ko-KR") : "-"}</p>
+                        <p>계약 체결: {quote.contractDraft.contractSignedAt ? new Date(quote.contractDraft.contractSignedAt).toLocaleString("ko-KR") : "-"}</p>
+                        <p>결제 요청: {quote.contractDraft.paymentRequestedAt ? new Date(quote.contractDraft.paymentRequestedAt).toLocaleString("ko-KR") : "-"}</p>
+                        <p>입금 확인: {quote.contractDraft.paidAt ? new Date(quote.contractDraft.paidAt).toLocaleString("ko-KR") : "-"}</p>
+                      </div>
+                    </Card>
+                  </div>
                 ) : (
                   <EmptyState
                     title="계약 초안이 아직 없습니다."

@@ -8,11 +8,13 @@ import { prisma } from "@/lib/prisma/client";
 import {
   recalculateQuoteDraft,
   saveQuoteManualEdits,
-  transitionQuoteStatus
+  transitionQuoteStatus,
+  updateContractPaymentAutomation
 } from "@/lib/services/quote-service";
 import {
   recalculateQuoteSchema,
   saveQuoteManualEditsSchema,
+  updateContractPaymentAutomationSchema,
   updateQuoteStatusSchema
 } from "@/lib/validation/quote";
 
@@ -51,6 +53,12 @@ export async function PATCH(
         entityId: quote.id,
         summary: `견적 상태를 ${payload.status}로 변경`
       });
+      return NextResponse.json({ quote });
+    }
+
+    if (body?.mode === "contractPayment") {
+      const payload = updateContractPaymentAutomationSchema.parse(body);
+      const quote = await updateContractPaymentAutomation(id, payload);
       return NextResponse.json({ quote });
     }
 

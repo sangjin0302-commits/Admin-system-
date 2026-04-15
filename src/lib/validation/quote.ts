@@ -86,3 +86,16 @@ export const updateQuoteStatusSchema = z.object({
   caseDueDate: z.string().trim().optional().or(z.literal("")),
   caseInternalMemo: z.string().trim().max(4000).optional()
 });
+
+export const updateContractPaymentAutomationSchema = z.object({
+  mode: z.literal("contractPayment"),
+  contractShareUrl: z.string().trim().url().optional().or(z.literal("")).transform((value) => value || undefined),
+  sendContractNow: z.boolean().optional().default(false),
+  markContractSigned: z.boolean().optional().default(false),
+  paymentLinkUrl: z.string().trim().url().optional().or(z.literal("")).transform((value) => value || undefined),
+  paymentProvider: z.string().trim().max(80).optional().or(z.literal("")).transform((value) => value || undefined),
+  sendPaymentNow: z.boolean().optional().default(false),
+  paymentStatus: z.enum(["NOT_REQUESTED", "REQUESTED", "PAID", "CANCELLED"]).optional(),
+  paymentReference: z.string().trim().max(160).optional().or(z.literal("")).transform((value) => value || undefined),
+  paymentMemo: z.string().trim().max(2000).optional().or(z.literal("")).transform((value) => value || undefined)
+});

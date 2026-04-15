@@ -1,6 +1,7 @@
 import type {
   CaseStage,
   InquiryStatus,
+  PaymentCollectionStatus,
   PaymentStageKind,
   Prisma,
   QuoteStatus
@@ -164,6 +165,18 @@ function toContractDraftSnapshot(contractDraft: QuoteWithRelations["contractDraf
     scopeText: contractDraft.scopeText,
     successFeeRestricted: contractDraft.successFeeRestricted,
     specialTerms: contractDraft.specialTerms,
+    contractShareUrl: contractDraft.contractShareUrl,
+    contractSentAt: contractDraft.contractSentAt ? contractDraft.contractSentAt.toISOString() : null,
+    contractSignedAt: contractDraft.contractSignedAt ? contractDraft.contractSignedAt.toISOString() : null,
+    paymentLinkUrl: contractDraft.paymentLinkUrl,
+    paymentProvider: contractDraft.paymentProvider,
+    paymentRequestedAt: contractDraft.paymentRequestedAt
+      ? contractDraft.paymentRequestedAt.toISOString()
+      : null,
+    paymentStatus: contractDraft.paymentStatus,
+    paidAt: contractDraft.paidAt ? contractDraft.paidAt.toISOString() : null,
+    paymentReference: contractDraft.paymentReference,
+    paymentMemo: contractDraft.paymentMemo,
     updatedAt: contractDraft.updatedAt.toISOString()
   };
 }
@@ -949,6 +962,95 @@ export async function createContractDraftFromQuote(quoteId: string) {
       dueDate: quote.caseRecord?.dueDate ?? quote.inquiry.dueDate,
       internalMemo: quote.caseRecord?.internalMemo ?? quote.draftNotes
     });
+  });
+
+  return serializeQuote(await getQuoteByIdOrThrow(quoteId));
+}
+
+export async function updateContractPaymentAutomation(
+  quoteId: string,
+  input: {
+    contractShareUrl?: string | null;
+    sendContractNow?: boolean;
+    markContractSigned?: boolean;
+    paymentLinkUrl?: string | null;
+    paymentProvider?: string | null;
+    sendPaymentNow?: boolean;
+    paymentStatus?: PaymentCollectionStatus;
+    paymentReference?: string | null;
+    paymentMemo?: string | null;
+  }
+) {
+  await prisma.$transaction(async (tx) => {
+    const db = tx as unknown as QuoteTxDb;
+    const quote = await loadQuoteWithRelations(db, quoteId);
+    const contractDraft = await upsertContractDraftFromQuote(db, quote);
+    const now = new Date();
+
+    const nextStatus =
+      input.paymentStatus === "PAID"
+        ? "PAID"
+        : input.paymentStatus === "CANCELLED"
+          ? "CANCELLED"
+          : input.sendPaymentNow
+            ? "REQUESTED"
+            : contractDraft.paymentStatus;
+
+    const updatedContractDraft = await db.contractDraft.update({
+      where: { id: contractDraft.id },
+      data: {
+        contractShareUrl:
+          input.contractShareUrl !== undefined ? input.contractShareUrl : contractDraft.contractShareUrl,
+        contractSentAt: input.sendContractNow ? now : contractDraft.contractSentAt,
+        contractSignedAt: input.markContractSigned ? now : contractDraft.contractSignedAt,
+        status: input.markContractSigned ? "FINALIZED" : contractDraft.status,
+        paymentLinkUrl:
+          input.paymentLinkUrl !== undefined ? input.paymentLinkUrl : contractDraft.paymentLinkUrl,
+        paymentProvider:
+          input.paymentProvider !== undefined ? input.paymentProvider : contractDraft.paymentProvider,
+        paymentRequestedAt: input.sendPaymentNow ? now : contractDraft.paymentRequestedAt,
+        paymentStatus: nextStatus,
+        paidAt:
+          nextStatus === "PAID"
+            ? contractDraft.paidAt ?? now
+            : nextStatus === "CANCELLED"
+              ? null
+              : contractDraft.paidAt,
+        paymentReference:
+          input.paymentReference !== undefined ? input.paymentReference : contractDraft.paymentReference,
+        paymentMemo: input.paymentMemo !== undefined ? input.paymentMemo : contractDraft.paymentMemo
+      }
+    });
+
+    if (nextStatus === "PAID") {
+      await db.quote.update({
+        where: { id: quote.id },
+        data: { status: "ACCEPTED" }
+      });
+
+      await db.inquiry.update({
+        where: { id: quote.inquiryId },
+        data: { status: quoteStatusToInquiryStatus.ACCEPTED }
+      });
+
+      const refreshed = await loadQuoteWithRelations(db, quoteId);
+      await ensureCaseRecordForQuote(db, refreshed, {
+        contractDraftId: updatedContractDraft.id,
+        currentStage: "DOCUMENT_COLLECTION",
+        dueDate: refreshed.caseRecord?.dueDate ?? refreshed.inquiry.dueDate,
+        internalMemo: refreshed.caseRecord?.internalMemo ?? refreshed.draftNotes
+      });
+      return;
+    }
+
+    if (quote.caseRecord) {
+      await ensureCaseRecordForQuote(db, quote, {
+        contractDraftId: updatedContractDraft.id,
+        currentStage: quote.caseRecord.currentStage,
+        dueDate: quote.caseRecord.dueDate,
+        internalMemo: quote.caseRecord.internalMemo
+      });
+    }
   });
 
   return serializeQuote(await getQuoteByIdOrThrow(quoteId));

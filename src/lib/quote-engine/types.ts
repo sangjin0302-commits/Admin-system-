@@ -1,6 +1,7 @@
 import type {
   CaseStage,
   ContractDraftStatus,
+  PaymentCollectionStatus,
   PaymentStageKind,
   PricingOptionType,
   PricingRuleType,
@@ -214,6 +215,16 @@ export type QuoteSummarySnapshot = {
     scopeText: string | null;
     successFeeRestricted: boolean;
     specialTerms: string | null;
+    contractShareUrl: string | null;
+    contractSentAt: string | null;
+    contractSignedAt: string | null;
+    paymentLinkUrl: string | null;
+    paymentProvider: string | null;
+    paymentRequestedAt: string | null;
+    paymentStatus: PaymentCollectionStatus;
+    paidAt: string | null;
+    paymentReference: string | null;
+    paymentMemo: string | null;
     updatedAt: string;
   } | null;
   caseRecord: {

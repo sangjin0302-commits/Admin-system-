@@ -117,6 +117,13 @@ enum ContractDraftStatus {
   VOID
 }
 
+enum PaymentCollectionStatus {
+  NOT_REQUESTED
+  REQUESTED
+  PAID
+  CANCELLED
+}
+
 enum CaseStage {
   CONTRACT_PREPARATION
   DOCUMENT_COLLECTION
@@ -382,6 +389,16 @@ model ContractDraft {
   paymentSummary       String?
   successFeeRestricted Boolean             @default(false)
   specialTerms         String?
+  contractShareUrl     String?
+  contractSentAt       DateTime?
+  contractSignedAt     DateTime?
+  paymentLinkUrl       String?
+  paymentProvider      String?
+  paymentRequestedAt   DateTime?
+  paymentStatus        PaymentCollectionStatus @default(NOT_REQUESTED)
+  paidAt               DateTime?
+  paymentReference     String?
+  paymentMemo          String?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   caseRecord           CaseRecord?
