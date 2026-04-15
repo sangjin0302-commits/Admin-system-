@@ -12,6 +12,7 @@ import { parseAdminInquiryQuery } from "@/lib/validation/admin";
 import { getWorkQueueSnapshot } from "@/lib/work-queue/service";
 
 export const dynamic = "force-dynamic";
+type InquiryListItem = Awaited<ReturnType<typeof listInquiries>>[number];
 
 export default async function AdminInquiryListPage({
   searchParams
@@ -45,14 +46,16 @@ export default async function AdminInquiryListPage({
 
       <InquiryDashboardSummary
         totalCount={allInquiries.length}
-        urgentCount={allInquiries.filter((item) => item.urgencyLevel === "CRITICAL").length}
+        urgentCount={
+          allInquiries.filter((item: InquiryListItem) => item.urgencyLevel === "CRITICAL").length
+        }
         waitingCount={
           allInquiries.filter(
-            (item) =>
+            (item: InquiryListItem) =>
               item.status === "CONSULTATION_REQUIRED" || item.status === "WAITING_CONSULTATION"
           ).length
         }
-        assignedCount={allInquiries.filter((item) => Boolean(item.assignee)).length}
+        assignedCount={allInquiries.filter((item: InquiryListItem) => Boolean(item.assignee)).length}
       />
 
       <WorkQueuePanel snapshot={workQueue} />
