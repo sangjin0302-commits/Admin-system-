@@ -1,4 +1,4 @@
-import {
+﻿import {
   inquiryTypeLabels,
   type InquiryType,
   type Locale,
@@ -26,8 +26,8 @@ const RULES: Rule[] = [
       "relocation",
       "expat",
       "global mobility",
-      "외국인 채용",
-      "해외지사"
+      "해외인력",
+      "주재원"
     ]
   },
   {
@@ -65,43 +65,46 @@ const RULES: Rule[] = [
   },
   {
     type: "APOSTILLE_CONSULAR",
-    tags: ["apostille", "consular"],
+    tags: ["appeal", "administrative-appeal"],
     keywords: [
-      "apostille",
-      "아포스티유",
-      "영사확인",
-      "consular",
-      "consulate",
-      "legalization",
-      "대사관",
-      "영사"
-    ]
-  },
-  {
-    type: "TRANSLATION_NOTARY",
-    tags: ["translation", "notary"],
-    keywords: [
-      "번역",
-      "translation",
-      "공증",
-      "notary",
-      "certified translation",
-      "sworn translation",
-      "번역공증"
+      "행정심판",
+      "심판청구",
+      "불복",
+      "취소심판",
+      "무효확인",
+      "집행정지",
+      "처분취소",
+      "administrative appeal",
+      "appeal petition"
     ]
   },
   {
     type: "GENERAL_ADMIN_CIVIL",
-    tags: ["civil"],
+    tags: ["license", "permit"],
     keywords: [
-      "행정민원",
-      "민원",
+      "인허가",
+      "허가",
+      "인가",
+      "등록",
+      "신고",
       "permit",
       "license",
-      "인허가",
-      "신고",
+      "approval",
+      "business registration"
+    ]
+  },
+  {
+    type: "TRANSLATION_NOTARY",
+    tags: ["other-admin"],
+    keywords: [
+      "민원",
+      "행정",
       "확인서",
-      "증명서"
+      "사실증명",
+      "진정",
+      "기타 상담",
+      "administrative",
+      "civil petition"
     ]
   }
 ];
@@ -154,7 +157,10 @@ function scoreRules(text: string, input: ClassificationInput) {
     if (rule.type === "FOREIGNER_VISA" && input.currentStatus?.toLowerCase().includes("visa")) {
       score += 2;
     }
-    if (rule.type === "APOSTILLE_CONSULAR" && input.documentCountry) score += 1;
+    if (rule.type === "IMMIGRATION_STAY" && input.currentStatus?.toLowerCase().includes("stay")) {
+      score += 2;
+    }
+    if (rule.type === "GENERAL_ADMIN_CIVIL" && input.targetAgency) score += 1;
 
     return { rule, matched, score };
   }).sort((a, b) => b.score - a.score);
@@ -217,16 +223,18 @@ export class RuleBasedInquiryClassifier implements InquiryClassifier {
 
     const recommendedNextStep =
       inquiryType === "CORPORATE_REQUEST"
-        ? "Check corporate documents, timeline, and scope before sending a bundled quotation."
+        ? "Check company documents, scope, and timeline before sending a bundled quotation."
         : inquiryType === "APOSTILLE_CONSULAR"
-          ? "Verify issuing country, target use in Korea, and whether notarization is required first."
-          : inquiryType === "TRANSLATION_NOTARY"
-            ? "Confirm source language, page count, and destination authority before pricing."
+          ? "Review the administrative decision, filing period, and remedy goal before consultation."
+          : inquiryType === "GENERAL_ADMIN_CIVIL"
+            ? "Confirm the target authority, filing type, and required documents before consultation."
             : inquiryType === "IMMIGRATION_STAY"
               ? "Check current stay status, deadline, and reporting obligations before consultation."
               : inquiryType === "FOREIGNER_VISA"
                 ? "Confirm current visa, target visa, and sponsor documents before consultation."
-                : "Review the inquiry manually and clarify the target authority and deadline.";
+                : inquiryType === "TRANSLATION_NOTARY"
+                  ? "Review the issue first and confirm whether it falls within direct handling or needs separate guidance."
+                  : "Review the inquiry manually and clarify the target authority and deadline.";
 
     return {
       inquiryType,

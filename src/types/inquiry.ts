@@ -1,4 +1,4 @@
-export const localeValues = ["ko", "en", "ar"] as const;
+﻿export const localeValues = ["ko", "en", "ar"] as const;
 export type Locale = (typeof localeValues)[number];
 
 export const formLocaleValues = ["ko", "en"] as const;
@@ -49,32 +49,32 @@ export const inquiryTypeLabels: LabeledMap<InquiryType> = {
     ar: "Foreigner Visa"
   },
   IMMIGRATION_STAY: {
-    ko: "출입국/체류",
+    ko: "출입국 / 체류",
     en: "Immigration / Stay",
     ar: "Immigration / Stay"
   },
   APOSTILLE_CONSULAR: {
-    ko: "아포스티유/영사확인",
-    en: "Apostille / Consular",
-    ar: "Apostille / Consular"
+    ko: "행정심판",
+    en: "Administrative Appeal",
+    ar: "Administrative Appeal"
   },
   TRANSLATION_NOTARY: {
-    ko: "번역/공증",
-    en: "Translation / Notary",
-    ar: "Translation / Notary"
+    ko: "기타 행정 상담",
+    en: "Other Administrative Consultation",
+    ar: "Other Administrative Consultation"
   },
   GENERAL_ADMIN_CIVIL: {
-    ko: "일반 행정민원",
-    en: "General Administrative Service",
-    ar: "General Administrative Service"
+    ko: "인허가",
+    en: "Licenses / Permits",
+    ar: "Licenses / Permits"
   },
   CORPORATE_REQUEST: {
-    ko: "기업 의뢰",
-    en: "Corporate Request",
-    ar: "Corporate Request"
+    ko: "기업 / 법인 행정 지원",
+    en: "Corporate Administrative Support",
+    ar: "Corporate Administrative Support"
   },
   UNKNOWN: {
-    ko: "기타/추가확인",
+    ko: "분야 미정 / 추가 확인",
     en: "Needs Review",
     ar: "Needs Review"
   }
@@ -91,7 +91,7 @@ export const inquiryStatusLabels: LabeledMap<InquiryStatus> = {
   WAITING_CONSULTATION: { ko: "상담대기", en: "Waiting", ar: "Waiting" },
   QUOTE_SENT: { ko: "견적발송", en: "Quote Sent", ar: "Quote Sent" },
   WON: { ko: "수임", en: "Won", ar: "Won" },
-  CLOSED: { ko: "종료", en: "Closed", ar: "Closed" }
+  CLOSED: { ko: "종결", en: "Closed", ar: "Closed" }
 };
 
 export const urgencyLabels: LabeledMap<UrgencyLevel> = {
