@@ -54,11 +54,20 @@ type QuoteWorkspaceProps = {
   workspace: QuoteWorkspace;
 };
 
+type QuoteAiDraft = {
+  proposalHeadline: string;
+  customerSummary: string;
+  scopeSummary: string;
+  nextStepGuide: string;
+  internalMemo: string;
+};
+
 export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProps) {
   const router = useRouter();
   const [quote, setQuote] = useState<QuoteSummarySnapshot | null>(workspace.latestQuote);
   const [message, setMessage] = useState("");
   const [tone, setTone] = useState<"default" | "success" | "error">("default");
+  const [aiDraft, setAiDraft] = useState<QuoteAiDraft | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const groupedServices = useMemo(() => {
@@ -316,6 +325,28 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
     } catch {
       setFeedback("클립보드 복사에 실패했습니다.", "error");
     }
+  }
+
+  async function handleGenerateAiDraft() {
+    if (!quote) return;
+
+    setFeedback("", "default");
+
+    startTransition(async () => {
+      const response = await fetch(`/api/admin/quotes/${quote.id}/ai-draft`, {
+        method: "POST"
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        setFeedback(payload.error ?? "AI 제안서 초안을 생성하지 못했습니다.", "error");
+        return;
+      }
+
+      setAiDraft(payload.draft);
+      setFeedback("AI 제안서 초안을 생성했습니다.", "success");
+    });
   }
 
   function updateLineField<T extends keyof (typeof lineItems)[number]>(
@@ -774,6 +805,116 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
                     </Card>
                   </div>
                 </div>
+              </Card>
+
+              <Card className="p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="ui-section-title">AI 제안서 초안</h3>
+                    <p className="ui-section-copy mt-2">
+                      현재 문의와 견적 계산 결과를 바탕으로 고객 안내용 제안 문안과 내부 메모를
+                      초안으로 생성합니다.
+                    </p>
+                  </div>
+                  <Button variant="secondary" onClick={handleGenerateAiDraft} disabled={isPending}>
+                    {isPending ? "생성 중..." : "AI 제안서 초안 생성"}
+                  </Button>
+                </div>
+
+                {aiDraft ? (
+                  <div className="mt-5 grid gap-4">
+                    <Card muted className="ui-stat-card p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-text-strong">제안 헤드라인</p>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="ui-toolbar-button"
+                          onClick={() => handleCopyMessage(aiDraft.proposalHeadline, "제안 헤드라인")}
+                        >
+                          복사
+                        </Button>
+                      </div>
+                      <p className="mt-3 text-sm text-text">{aiDraft.proposalHeadline}</p>
+                    </Card>
+
+                    <Card muted className="ui-stat-card p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-text-strong">고객 요약</p>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="ui-toolbar-button"
+                          onClick={() => handleCopyMessage(aiDraft.customerSummary, "고객 요약")}
+                        >
+                          복사
+                        </Button>
+                      </div>
+                      <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
+                        {aiDraft.customerSummary}
+                      </pre>
+                    </Card>
+
+                    <Card muted className="ui-stat-card p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-text-strong">업무 범위 설명</p>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="ui-toolbar-button"
+                          onClick={() => handleCopyMessage(aiDraft.scopeSummary, "업무 범위 설명")}
+                        >
+                          복사
+                        </Button>
+                      </div>
+                      <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
+                        {aiDraft.scopeSummary}
+                      </pre>
+                    </Card>
+
+                    <div className="grid gap-4 xl:grid-cols-2">
+                      <Card muted className="ui-stat-card p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-text-strong">다음 단계 안내</p>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="ui-toolbar-button"
+                            onClick={() => handleCopyMessage(aiDraft.nextStepGuide, "다음 단계 안내")}
+                          >
+                            복사
+                          </Button>
+                        </div>
+                        <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
+                          {aiDraft.nextStepGuide}
+                        </pre>
+                      </Card>
+
+                      <Card muted className="ui-stat-card p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-text-strong">내부 메모</p>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="ui-toolbar-button"
+                            onClick={() => handleCopyMessage(aiDraft.internalMemo, "내부 메모")}
+                          >
+                            복사
+                          </Button>
+                        </div>
+                        <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
+                          {aiDraft.internalMemo}
+                        </pre>
+                      </Card>
+                    </div>
+                  </div>
+                ) : (
+                  <EmptyState
+                    title="AI 제안서 초안이 아직 없습니다."
+                    description="견적 계산 결과가 정리된 뒤 버튼을 눌러 고객 안내용 문안과 내부 메모 초안을 생성할 수 있습니다."
+                    className="mt-5"
+                  />
+                )}
               </Card>
 
               <Card className="p-6">
