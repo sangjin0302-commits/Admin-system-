@@ -337,12 +337,14 @@ async function seedQuoteFlow() {
     prisma.serviceType.findMany(),
     prisma.pricingOption.findMany()
   ]);
+  type ServiceTypeRecord = (typeof serviceTypes)[number];
+  type PricingOptionRecord = (typeof pricingOptions)[number];
 
   const serviceByLegacy = new Map(
-    serviceTypes.map((item: (typeof serviceTypes)[number]) => [item.legacyId, item] as const)
+    serviceTypes.map((item: ServiceTypeRecord) => [item.legacyId, item] as const)
   );
   const optionByLegacy = new Map(
-    pricingOptions.map((item: (typeof pricingOptions)[number]) => [item.legacyId, item] as const)
+    pricingOptions.map((item: PricingOptionRecord) => [item.legacyId, item] as const)
   );
 
   const visaInquiry = await prisma.inquiry.findFirst({
@@ -357,11 +359,11 @@ async function seedQuoteFlow() {
 
   if (!visaInquiry || !corporateInquiry || !lailaInquiry) return;
 
-  const corpServices = ["npo_reg", "npo_minutes"]
+  const corpServices: ServiceTypeRecord[] = ["npo_reg", "npo_minutes"]
     .map((legacyId) => serviceByLegacy.get(legacyId))
-    .filter(Boolean);
+    .filter((service): service is ServiceTypeRecord => Boolean(service));
   const corpBase = sumRange(
-    corpServices.map((service) => ({ min: service!.minPrice, max: service!.maxPrice }))
+    corpServices.map((service) => ({ min: service.minPrice, max: service.maxPrice }))
   );
   const corpUrgency = {
     min: Math.round(corpBase.min * 0.3),
@@ -388,7 +390,7 @@ async function seedQuoteFlow() {
     data: {
       inquiryId: corporateInquiry.id,
       status: "SENT",
-      selectedServiceLegacyIds: JSON.stringify(corpServices.map((service) => service!.legacyId)),
+      selectedServiceLegacyIds: JSON.stringify(corpServices.map((service) => service.legacyId)),
       selectedOptionLegacyIds: JSON.stringify(["docs", "vat"]),
       urgencyRuleCode: "URGENCY_EXPRESS",
       consultRuleCode: "CONSULT_NONE",
@@ -411,12 +413,12 @@ async function seedQuoteFlow() {
       lineItems: {
         create: [
           ...corpServices.map((service, index) => ({
-            serviceTypeId: service!.id,
+            serviceTypeId: service.id,
             kind: "SERVICE" as const,
-            label: service!.name,
-            description: `${service!.category} 기본 범위`,
-            amountMin: service!.minPrice,
-            amountMax: service!.maxPrice,
+            label: service.name,
+            description: `${service.category} 기본 범위`,
+            amountMin: service.minPrice,
+            amountMax: service.maxPrice,
             sortOrder: index
           })),
           {
