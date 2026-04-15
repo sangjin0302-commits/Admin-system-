@@ -47,6 +47,13 @@ type CaseWithSubmissionRelations = Prisma.CaseRecordGetPayload<{
   };
 }>;
 
+type SubmissionDocumentRecord = CaseWithSubmissionRelations["documents"][number];
+type SubmissionDocumentFileRecord = SubmissionDocumentRecord["files"][number];
+type SubmissionPackageRecord = CaseWithSubmissionRelations["submissionPackages"][number];
+type SubmissionPackageItemRecord = SubmissionPackageRecord["items"][number];
+type SupplementRequestRecord = CaseWithSubmissionRelations["supplementRequests"][number];
+type SupplementRequestItemRecord = SupplementRequestRecord["items"][number];
+
 export type SubmissionWorkspaceSnapshot = {
   caseId: string;
   caseNumber: string;
@@ -160,12 +167,15 @@ function serializeWorkspace(record: CaseWithSubmissionRelations): SubmissionWork
   });
 
   const submittableDocuments = record.documents
-    .map((doc) => {
+    .map((doc: SubmissionDocumentRecord) => {
       const currentFile =
-        doc.files.find((file) => file.isCurrentVersion) ??
+        doc.files.find((file: SubmissionDocumentFileRecord) => file.isCurrentVersion) ??
         doc.files
           .slice()
-          .sort((a, b) => b.versionNumber - a.versionNumber || b.uploadedAt.getTime() - a.uploadedAt.getTime())[0];
+          .sort(
+            (a: SubmissionDocumentFileRecord, b: SubmissionDocumentFileRecord) =>
+              b.versionNumber - a.versionNumber || b.uploadedAt.getTime() - a.uploadedAt.getTime()
+          )[0];
       if (!currentFile) return null;
 
       return {
@@ -181,15 +191,21 @@ function serializeWorkspace(record: CaseWithSubmissionRelations): SubmissionWork
     .sort((left, right) => left.label.localeCompare(right.label, "ko-KR"));
 
   const required = record.documents.filter((doc) => doc.isRequired);
-  const receivedRequired = required.filter((doc) => doc.isReceived || doc.files.some((file) => file.isCurrentVersion));
+  const receivedRequired = required.filter(
+    (doc: SubmissionDocumentRecord) =>
+      doc.isReceived || doc.files.some((file: SubmissionDocumentFileRecord) => file.isCurrentVersion)
+  );
   const missingDocuments = required
-    .filter((doc) => !doc.isReceived && !doc.files.some((file) => file.isCurrentVersion))
-    .map((doc) => doc.label);
+    .filter(
+      (doc: SubmissionDocumentRecord) =>
+        !doc.isReceived && !doc.files.some((file: SubmissionDocumentFileRecord) => file.isCurrentVersion)
+    )
+    .map((doc: SubmissionDocumentRecord) => doc.label);
 
   const submissionPackages = record.submissionPackages
     .slice()
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .map((pkg) => ({
+    .sort((a: SubmissionPackageRecord, b: SubmissionPackageRecord) => b.createdAt.getTime() - a.createdAt.getTime())
+    .map((pkg: SubmissionPackageRecord) => ({
       id: pkg.id,
       packageNumber: pkg.packageNumber,
       packageLabel: pkg.packageLabel,
@@ -199,7 +215,7 @@ function serializeWorkspace(record: CaseWithSubmissionRelations): SubmissionWork
       note: pkg.note,
       createdAt: pkg.createdAt.toISOString(),
       updatedAt: pkg.updatedAt.toISOString(),
-      items: pkg.items.map((item) => ({
+      items: pkg.items.map((item: SubmissionPackageItemRecord) => ({
         id: item.id,
         caseDocumentItemId: item.caseDocumentItemId,
         caseDocumentFileId: item.caseDocumentFileId,
@@ -212,8 +228,8 @@ function serializeWorkspace(record: CaseWithSubmissionRelations): SubmissionWork
 
   const supplementRequests = record.supplementRequests
     .slice()
-    .sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime())
-    .map((request) => ({
+    .sort((a: SupplementRequestRecord, b: SupplementRequestRecord) => b.requestedAt.getTime() - a.requestedAt.getTime())
+    .map((request: SupplementRequestRecord) => ({
       id: request.id,
       submissionPackageId: request.submissionPackageId,
       submissionPackageNumber: request.submissionPackage?.packageNumber ?? null,
@@ -225,8 +241,8 @@ function serializeWorkspace(record: CaseWithSubmissionRelations): SubmissionWork
       note: request.note,
       relatedItems: request.items
         .slice()
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-        .map((item) => ({
+        .sort((a: SupplementRequestItemRecord, b: SupplementRequestItemRecord) => a.sortOrder - b.sortOrder)
+        .map((item: SupplementRequestItemRecord) => ({
           id: item.id,
           caseDocumentItemId: item.caseDocumentItemId,
           labelSnapshot: item.labelSnapshot
@@ -237,7 +253,9 @@ function serializeWorkspace(record: CaseWithSubmissionRelations): SubmissionWork
     .filter((deadline) => deadline.status !== "NONE" && deadline.value)
     .sort((left, right) => new Date(left.value!).getTime() - new Date(right.value!).getTime())[0];
   const latestPackage = submissionPackages[0];
-  const openSupplement = supplementRequests.find((request) => request.status !== "RESOLVED");
+  const openSupplement = supplementRequests.find(
+    (request: SubmissionWorkspaceSnapshot["supplementRequests"][number]) => request.status !== "RESOLVED"
+  );
 
   const messageInput = {
     contactName: record.inquiry.contactName,
@@ -352,8 +370,8 @@ export async function createSubmissionPackage(
       ? new Set(input.selectedDocumentItemIds)
       : null;
 
-  const targetDocuments = record.documents.filter((doc) =>
-    selectedIds ? selectedIds.has(doc.id) : doc.files.some((file) => file.isCurrentVersion)
+  const targetDocuments = record.documents.filter((doc: SubmissionDocumentRecord) =>
+    selectedIds ? selectedIds.has(doc.id) : doc.files.some((file: SubmissionDocumentFileRecord) => file.isCurrentVersion)
   );
   if (targetDocuments.length === 0) {
     throw new Error("제출 패키지에 포함할 문서를 선택해 주세요.");
@@ -361,12 +379,15 @@ export async function createSubmissionPackage(
 
   const status = input.status ?? "DRAFT";
   const shouldSetSubmittedAt = status === "SUBMITTED" || status === "RESUBMITTED";
-  const items = targetDocuments.map((doc) => {
+  const items = targetDocuments.map((doc: SubmissionDocumentRecord) => {
     const currentFile =
-      doc.files.find((file) => file.isCurrentVersion) ??
+      doc.files.find((file: SubmissionDocumentFileRecord) => file.isCurrentVersion) ??
       doc.files
         .slice()
-        .sort((a, b) => b.versionNumber - a.versionNumber || b.uploadedAt.getTime() - a.uploadedAt.getTime())[0];
+        .sort(
+          (a: SubmissionDocumentFileRecord, b: SubmissionDocumentFileRecord) =>
+            b.versionNumber - a.versionNumber || b.uploadedAt.getTime() - a.uploadedAt.getTime()
+        )[0];
     if (!currentFile) {
       throw new Error(`"${doc.label}" 문서에 제출 가능한 파일이 없습니다.`);
     }
@@ -475,8 +496,8 @@ export async function createSupplementRequest(
 
     const selectedSet = new Set(input.relatedDocumentItemIds);
     const relatedDocs = record.documents
-      .filter((doc) => selectedSet.has(doc.id))
-      .sort((a, b) => a.sortOrder - b.sortOrder);
+      .filter((doc: { id: string }) => selectedSet.has(doc.id))
+      .sort((a: { sortOrder: number }, b: { sortOrder: number }) => a.sortOrder - b.sortOrder);
 
     let submissionPackageId: string | null = null;
     if (input.submissionPackageId) {
@@ -500,7 +521,7 @@ export async function createSupplementRequest(
         note: input.note?.trim() || null,
         status: "OPEN",
         items: {
-          create: relatedDocs.map((doc, index) => ({
+          create: relatedDocs.map((doc: { id: string; label: string }, index: number) => ({
             caseDocumentItemId: doc.id,
             labelSnapshot: doc.label,
             sortOrder: index

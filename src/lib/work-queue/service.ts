@@ -48,6 +48,13 @@ function sortItems(items: WorkQueueItem[]) {
   });
 }
 
+type WorkQueueCaseDocumentRecord = {
+  isRequired: boolean;
+  isReceived: boolean;
+  label: string;
+  files: Array<{ isCurrentVersion: boolean }>;
+};
+
 function classifyItem(item: WorkQueueItem) {
   if (!item.dueDate) return "followUp" as const;
 
@@ -170,7 +177,10 @@ export async function getWorkQueueSnapshot(): Promise<WorkQueueSnapshot> {
     }
 
     const missingDocs = record.documents.filter(
-      (doc) => doc.isRequired && !doc.isReceived && !doc.files.some((file) => file.isCurrentVersion)
+      (doc: WorkQueueCaseDocumentRecord) =>
+        doc.isRequired &&
+        !doc.isReceived &&
+        !doc.files.some((file: { isCurrentVersion: boolean }) => file.isCurrentVersion)
     );
 
     if (missingDocs.length > 0) {
@@ -188,7 +198,7 @@ export async function getWorkQueueSnapshot(): Promise<WorkQueueSnapshot> {
           contactName: record.inquiry.contactName,
           inquiryTitle: record.inquiry.title,
           caseNumber: record.caseNumber,
-          missingDocuments: missingDocs.map((doc) => doc.label)
+          missingDocuments: missingDocs.map((doc: WorkQueueCaseDocumentRecord) => doc.label)
         }),
         href: `/admin/inquiries/${record.inquiryId}`
       });
