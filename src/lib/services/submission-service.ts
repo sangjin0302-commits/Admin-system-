@@ -53,6 +53,12 @@ type SubmissionPackageRecord = CaseWithSubmissionRelations["submissionPackages"]
 type SubmissionPackageItemRecord = SubmissionPackageRecord["items"][number];
 type SupplementRequestRecord = CaseWithSubmissionRelations["supplementRequests"][number];
 type SupplementRequestItemRecord = SupplementRequestRecord["items"][number];
+type SubmissionTxDb = {
+  caseRecord: Pick<typeof prisma.caseRecord, "findUniqueOrThrow" | "update">;
+  caseStageLog: Pick<typeof prisma.caseStageLog, "create">;
+  submissionPackage: Pick<typeof prisma.submissionPackage, "create" | "findUniqueOrThrow" | "update">;
+  supplementRequest: Pick<typeof prisma.supplementRequest, "create" | "findUniqueOrThrow" | "update">;
+};
 
 export type SubmissionWorkspaceSnapshot = {
   caseId: string;
@@ -329,7 +335,7 @@ async function getCaseWithRelations(caseId: string) {
   });
 }
 
-async function updateCaseStage(tx: Prisma.TransactionClient, caseId: string, stage: CaseStage, note?: string) {
+async function updateCaseStage(tx: SubmissionTxDb, caseId: string, stage: CaseStage, note?: string) {
   const current = await tx.caseRecord.findUniqueOrThrow({
     where: { id: caseId },
     select: { currentStage: true }
@@ -407,8 +413,9 @@ export async function createSubmissionPackage(
   });
 
   await prisma.$transaction(async (tx) => {
+    const db = tx as unknown as SubmissionTxDb;
     const packageNumber = generateSubmissionPackageNumber(caseNumberOrFallback(record.caseNumber), record.submissionPackages.length + 1);
-    await tx.submissionPackage.create({
+    await db.submissionPackage.create({
       data: {
         caseId,
         packageNumber,
@@ -424,7 +431,7 @@ export async function createSubmissionPackage(
     });
 
     if (status === "SUBMITTED" || status === "RESUBMITTED") {
-      await updateCaseStage(tx, caseId, "SUBMITTED", `제출 패키지 생성 (${packageNumber})`);
+      await updateCaseStage(db, caseId, "SUBMITTED", `제출 패키지 생성 (${packageNumber})`);
     }
   });
 
@@ -443,7 +450,8 @@ export async function updateSubmissionPackage(
   }
 ) {
   await prisma.$transaction(async (tx) => {
-    const target = await tx.submissionPackage.findUniqueOrThrow({
+    const db = tx as unknown as SubmissionTxDb;
+    const target = await db.submissionPackage.findUniqueOrThrow({
       where: { id: packageId },
       select: { caseId: true, status: true, submittedAt: true, packageNumber: true }
     });
@@ -455,7 +463,7 @@ export async function updateSubmissionPackage(
     const nextStatus = input.status ?? target.status;
     const shouldSetSubmittedAt = nextStatus === "SUBMITTED" || nextStatus === "RESUBMITTED";
 
-    await tx.submissionPackage.update({
+    await db.submissionPackage.update({
       where: { id: packageId },
       data: {
         status: nextStatus,
@@ -472,9 +480,9 @@ export async function updateSubmissionPackage(
     });
 
     if (nextStatus === "SUBMITTED" || nextStatus === "RESUBMITTED") {
-      await updateCaseStage(tx, caseId, "SUBMITTED", `제출 상태 변경 (${target.packageNumber})`);
+      await updateCaseStage(db, caseId, "SUBMITTED", `제출 상태 변경 (${target.packageNumber})`);
     } else if (nextStatus === "SUPPLEMENT_REQUESTED") {
-      await updateCaseStage(tx, caseId, "SUPPLEMENT_REQUESTED", `보완 상태 변경 (${target.packageNumber})`);
+      await updateCaseStage(db, caseId, "SUPPLEMENT_REQUESTED", `보완 상태 변경 (${target.packageNumber})`);
     }
   });
 
@@ -493,7 +501,8 @@ export async function createSupplementRequest(
   }
 ) {
   await prisma.$transaction(async (tx) => {
-    const record = await tx.caseRecord.findUniqueOrThrow({
+    const db = tx as unknown as SubmissionTxDb;
+    const record = await db.caseRecord.findUniqueOrThrow({
       where: { id: caseId },
       include: { documents: true }
     });
@@ -505,7 +514,7 @@ export async function createSupplementRequest(
 
     let submissionPackageId: string | null = null;
     if (input.submissionPackageId) {
-      const targetPackage = await tx.submissionPackage.findUniqueOrThrow({
+      const targetPackage = await db.submissionPackage.findUniqueOrThrow({
         where: { id: input.submissionPackageId },
         select: { id: true, caseId: true }
       });
@@ -515,7 +524,7 @@ export async function createSupplementRequest(
       submissionPackageId = targetPackage.id;
     }
 
-    await tx.supplementRequest.create({
+    await db.supplementRequest.create({
       data: {
         caseId,
         submissionPackageId,
@@ -535,19 +544,19 @@ export async function createSupplementRequest(
     });
 
     if (submissionPackageId) {
-      await tx.submissionPackage.update({
+      await db.submissionPackage.update({
         where: { id: submissionPackageId },
         data: { status: "SUPPLEMENT_REQUESTED" }
       });
     }
 
-    await tx.caseRecord.update({
+    await db.caseRecord.update({
       where: { id: caseId },
       data: {
         supplementDeadline: input.dueDate ?? undefined
       }
     });
-    await updateCaseStage(tx, caseId, "SUPPLEMENT_REQUESTED", `보완 요청 등록: ${input.summary.trim()}`);
+    await updateCaseStage(db, caseId, "SUPPLEMENT_REQUESTED", `보완 요청 등록: ${input.summary.trim()}`);
   });
 
   return serializeWorkspace(await getCaseWithRelations(caseId));
@@ -564,7 +573,8 @@ export async function updateSupplementRequest(
   }
 ) {
   await prisma.$transaction(async (tx) => {
-    const target = await tx.supplementRequest.findUniqueOrThrow({
+    const db = tx as unknown as SubmissionTxDb;
+    const target = await db.supplementRequest.findUniqueOrThrow({
       where: { id: supplementRequestId },
       select: { caseId: true, status: true }
     });
@@ -574,7 +584,7 @@ export async function updateSupplementRequest(
     }
 
     const nextStatus = input.status ?? target.status;
-    await tx.supplementRequest.update({
+    await db.supplementRequest.update({
       where: { id: supplementRequestId },
       data: {
         status: nextStatus,
@@ -585,16 +595,16 @@ export async function updateSupplementRequest(
     });
 
     if (input.dueDate !== undefined) {
-      await tx.caseRecord.update({
+      await db.caseRecord.update({
         where: { id: caseId },
         data: { supplementDeadline: input.dueDate }
       });
     }
 
     if (nextStatus === "RESOLVED") {
-      await updateCaseStage(tx, caseId, "UNDER_REVIEW", "보완 요청 해결");
+      await updateCaseStage(db, caseId, "UNDER_REVIEW", "보완 요청 해결");
     } else {
-      await updateCaseStage(tx, caseId, "SUPPLEMENT_REQUESTED");
+      await updateCaseStage(db, caseId, "SUPPLEMENT_REQUESTED");
     }
   });
 
