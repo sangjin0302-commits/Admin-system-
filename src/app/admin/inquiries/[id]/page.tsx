@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AdminSessionBanner } from "@/components/admin/admin-session-banner";
 import { IssueBotLinkForm } from "@/components/admin/issue-bot-link-form";
 import { InquiryManagementForm } from "@/components/admin/inquiry-management-form";
+import { InquiryScreeningActionPanel } from "@/components/admin/inquiry-screening-action-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { requireAdminPageSession } from "@/lib/auth/session";
@@ -61,7 +62,8 @@ export default async function AdminInquiryDetailPage({
     isCorporateRequest: inquiry.isCorporateRequest,
     dueDate: inquiry.dueDate,
     preferredLanguage,
-    status: inquiryStatus
+    status: inquiryStatus,
+    contactName: inquiry.contactName
   });
 
   return (
@@ -180,6 +182,12 @@ export default async function AdminInquiryDetailPage({
               </Link>
             </div>
           </Card>
+
+          <InquiryScreeningActionPanel
+            inquiryId={inquiry.id}
+            screening={screening}
+            canApplyStatus={session.user.role === "ADMIN"}
+          />
 
           <div className="mt-5 grid gap-3">
             <InfoItem label="문의 유형" value={inquiryTypeLabels[inquiryType].ko} />

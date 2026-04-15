@@ -1,4 +1,4 @@
-import type { Prisma } from "@generated/prisma-client/client";
+﻿import type { Prisma } from "@generated/prisma-client/client";
 
 import { classifyInquiryWithOpenAI } from "@/lib/classification/openai-intake-classifier";
 import { prisma } from "@/lib/prisma/client";
@@ -328,3 +328,4 @@ export function getInquiryMessagePreviewSet(inquiry: {
 }
 
 export type InquiryRecord = Awaited<ReturnType<typeof getInquiryById>>;
+

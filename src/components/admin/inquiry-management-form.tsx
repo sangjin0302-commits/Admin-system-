@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
@@ -79,7 +79,7 @@ export function InquiryManagementForm({
           <Input
             value={assignee}
             onChange={(event) => setAssignee(event.target.value)}
-            placeholder="예: 김행정사 / 운영담당"
+            placeholder="예: 김행정 / 운영담당"
           />
         </Field>
         <Field label="내부 메모" hint="고객에게 보이지 않는 관리자 메모입니다.">
@@ -87,7 +87,7 @@ export function InquiryManagementForm({
             rows={8}
             value={internalMemo}
             onChange={(event) => setInternalMemo(event.target.value)}
-            placeholder="상담 포인트, 우선 확인사항, 견적 전 체크 내용 등을 기록합니다."
+            placeholder="상담 인상, 우선 확인사항, 견적 전 체크 내용 등을 기록합니다."
           />
         </Field>
       </FieldGroup>

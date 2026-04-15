@@ -9,6 +9,7 @@ import {
   inquiryTypeLabels,
   languageCodeLabels,
   screeningGradeLabels,
+  screeningRouteLabels,
   type InquiryStatus,
   type InquiryType,
   type LanguageCode,
@@ -54,7 +55,8 @@ export function InquiryCardList({ inquiries }: { inquiries: InquiryItem[] }) {
           isCorporateRequest: inquiry.isCorporateRequest,
           dueDate: inquiry.dueDate,
           preferredLanguage: inquiry.preferredLanguage,
-          status: inquiry.status
+          status: inquiry.status,
+          contactName: inquiry.contactName
         });
 
         return (
@@ -85,6 +87,7 @@ export function InquiryCardList({ inquiries }: { inquiries: InquiryItem[] }) {
                 </p>
                 <p className="font-medium text-text">{inquiryTypeLabels[inquiry.inquiryType].ko}</p>
                 <p className="text-xs text-text-muted">{screening.headline}</p>
+                <p className="text-xs text-text-muted">{screeningRouteLabels[screening.route].ko}</p>
                 <p>담당자 {inquiry.assignee || "-"}</p>
                 <p>접수일 {formatDateTime(inquiry.createdAt)}</p>
               </div>

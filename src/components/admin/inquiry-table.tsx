@@ -9,6 +9,7 @@ import {
   inquiryTypeLabels,
   languageCodeLabels,
   screeningGradeLabels,
+  screeningRouteLabels,
   type InquiryStatus,
   type InquiryType,
   type LanguageCode,
@@ -66,10 +67,11 @@ export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
               hasPreparedDocuments: inquiry.hasPreparedDocuments,
               needsTranslation: inquiry.needsTranslation,
               isCorporateRequest: inquiry.isCorporateRequest,
-              dueDate: inquiry.dueDate,
-              preferredLanguage: inquiry.preferredLanguage,
-              status: inquiry.status
-            });
+          dueDate: inquiry.dueDate,
+          preferredLanguage: inquiry.preferredLanguage,
+          status: inquiry.status,
+          contactName: inquiry.contactName
+        });
 
             return (
               <tr key={inquiry.id}>
@@ -87,6 +89,7 @@ export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
                       {screeningGradeLabels[screening.grade].ko}
                     </Badge>
                     <p className="text-xs text-text-muted">{screening.headline}</p>
+                    <p className="text-xs text-text-muted">{screeningRouteLabels[screening.route].ko}</p>
                   </div>
                 </td>
                 <td>
