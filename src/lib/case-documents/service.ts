@@ -1,9 +1,11 @@
-import type { Prisma, PrismaClient } from "@generated/prisma-client/client";
+import type { PrismaClient } from "@generated/prisma-client/client";
 import type { InquiryType } from "@/types/inquiry";
 
 import { getDefaultCaseDocumentTemplates } from "@/lib/case-documents/templates";
 
-type DbClient = PrismaClient | Prisma.TransactionClient;
+type DbClient = {
+  caseDocumentItem: Pick<PrismaClient["caseDocumentItem"], "findMany" | "createMany">;
+};
 
 export async function ensureCaseDocumentChecklist(
   db: DbClient,
