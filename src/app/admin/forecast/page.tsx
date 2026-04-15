@@ -9,6 +9,9 @@ import { getLatestDemandForecastSummary } from "@/lib/forecasting/service";
 import { inquiryTypeLabels, type InquiryType } from "@/types/inquiry";
 
 export const dynamic = "force-dynamic";
+type ForecastPoint = NonNullable<
+  Awaited<ReturnType<typeof getLatestDemandForecastSummary>>["latestRun"]
+>["points"][number];
 
 export default async function AdminForecastPage() {
   const session = await requireAdminPageSession("/admin/forecast", "STAFF");
@@ -95,7 +98,7 @@ export default async function AdminForecastPage() {
 
           <div className="mt-5 grid gap-3">
             {forecastSummary.latestRun?.points.length ? (
-              forecastSummary.latestRun.points.map((point) => (
+              forecastSummary.latestRun.points.map((point: ForecastPoint) => (
                 <Card key={point.id} muted className="p-4">
                   <p className="text-xs text-text-muted">
                     {point.targetWeekStart.toISOString().slice(0, 10)}

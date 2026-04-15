@@ -1,7 +1,8 @@
 import type { Prisma } from "@generated/prisma-client/client";
 
+import { classifyInquiryWithOpenAI } from "@/lib/classification/openai-intake-classifier";
 import { prisma } from "@/lib/prisma/client";
-import { getIntakeEvaluator } from "@/lib/intake-evaluator";
+import { deriveIntakeEvaluation, getIntakeEvaluator } from "@/lib/intake-evaluator";
 import {
   buildMessagePreview,
   buildMessagePreviewSet,
@@ -54,7 +55,27 @@ export async function createInquiry(payload: unknown) {
   const effectiveClientType =
     input.isCorporateRequest || input.clientType === "COMPANY" ? "COMPANY" : "INDIVIDUAL";
 
-  const evaluation = evaluator.evaluate({
+  const desiredOutcome = input.requestedOutcome?.trim();
+  const mergedDescription = desiredOutcome
+    ? `${input.description}\n\nDesired outcome: ${desiredOutcome}`
+    : input.description;
+
+  const aiClassification = await classifyInquiryWithOpenAI({
+    clientType: effectiveClientType,
+    contactName: input.contactName,
+    email: input.email,
+    organizationName: input.organizationName,
+    title: input.title,
+    description: mergedDescription,
+    nationality: input.nationality,
+    currentStatus: input.currentStatus,
+    documentCountry: input.documentCountry,
+    targetAgency: input.targetAgency,
+    dueDate: input.dueDate,
+    preferredLanguage: input.preferredLanguage
+  });
+
+  const evaluationInput = {
     clientType: effectiveClientType,
     contactName: input.contactName,
     email: input.email,
@@ -73,7 +94,11 @@ export async function createInquiry(payload: unknown) {
     hasPreparedDocuments: input.hasPreparedDocuments,
     needsTranslation: input.needsTranslation,
     isCorporateRequest: input.isCorporateRequest
-  });
+  } as const;
+
+  const evaluation = aiClassification
+    ? deriveIntakeEvaluation(evaluationInput, aiClassification)
+    : evaluator.evaluate(evaluationInput);
 
   const generatedSummary = buildInquirySummary({
     inquiryType: evaluation.inquiryType,
