@@ -34,14 +34,14 @@ export default async function AdminInquiryRelationshipPage({
           <div>
             <p className="ui-kicker">Relationship</p>
             <h2 className="mt-2 ui-page-title">{inquiry.title}</h2>
-            <p className="mt-2 text-sm text-text-muted">
+            <p className="ui-section-copy mt-2">
               Closure, follow-up, review, referral, and reengagement tools now load separately
               from the main inquiry page.
             </p>
           </div>
           <Link
             href={`/admin/inquiries/${id}`}
-            className="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-semibold text-text transition hover:border-text hover:text-text"
+            className="ui-toolbar-button px-4 py-2 text-sm"
           >
             Back to summary
           </Link>

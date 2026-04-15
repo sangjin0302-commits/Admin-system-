@@ -60,7 +60,7 @@ export function AdminLoginForm({ nextPath }: { nextPath: string }) {
           required
         />
       </Field>
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending} className="ui-toolbar-button w-full justify-center">
         {isPending ? "로그인 중.." : "로그인"}
       </Button>
       {message ? <StateInline tone={tone}>{message}</StateInline> : null}

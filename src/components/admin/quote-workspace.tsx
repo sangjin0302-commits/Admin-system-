@@ -367,7 +367,7 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="ui-section-title">견적 초안 생성</h3>
-              <p className="mt-2 text-sm text-text-muted">
+              <p className="ui-section-copy mt-2">
                 문의 분류와 레거시 단가표를 바탕으로 초안을 생성합니다.
               </p>
             </div>
@@ -415,7 +415,7 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
                   ) : null}
                 </div>
                 <h3 className="mt-4 ui-section-title">실무형 견적 워크스페이스</h3>
-                <p className="mt-2 whitespace-pre-line text-sm text-text-muted">
+                <p className="ui-section-copy mt-2 whitespace-pre-line">
                   {quote.calculationSummary ?? "자동 계산 요약이 아직 없습니다."}
                 </p>
               </div>
@@ -440,7 +440,7 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
           <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
             <Card className="p-6">
               <h3 className="ui-section-title">자동 계산 기준</h3>
-              <p className="mt-2 text-sm text-text-muted">
+              <p className="ui-section-copy mt-2">
                 서비스 선택과 옵션 조합을 바꾸면 레거시 계산 순서대로 다시 계산합니다.
               </p>
               <div className="mt-5 space-y-6">
@@ -603,7 +603,7 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
             <div className="space-y-6">
               <Card className="p-6">
                 <h3 className="ui-section-title">항목별 견적 미리보기</h3>
-                <p className="mt-2 text-sm text-text-muted">
+                <p className="ui-section-copy mt-2">
                   자동 계산 결과를 바탕으로 항목 금액을 최종 조정할 수 있습니다.
                 </p>
 
@@ -714,7 +714,7 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
                   </TableContainer>
 
                   <div className="grid gap-4 md:grid-cols-2">
-                    <Card muted className="p-5">
+                    <Card muted className="ui-stat-card p-5">
                       <p className="ui-kicker">금액 요약</p>
                       <div className="mt-4 space-y-2 text-sm text-text">
                         <SummaryRow label="기본 합계" value={formatRange(quote.serviceBaseMin, quote.serviceBaseMax)} />
@@ -732,7 +732,7 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
                       </div>
                     </Card>
 
-                    <Card muted className="p-5">
+                    <Card muted className="ui-stat-card p-5">
                       <p className="ui-kicker">납입 구조</p>
                       <div className="mt-4 space-y-4">
                         {paymentPlans.map((plan) => (
@@ -778,16 +778,17 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
 
               <Card className="p-6">
                 <h3 className="ui-section-title">견적 발송/수락 메시지 초안</h3>
-                <p className="mt-2 text-sm text-text-muted">
+                <p className="ui-section-copy mt-2">
                   이메일·문자·알림톡 연동 전 단계에서 그대로 복사해 사용할 수 있는 관리자용 문구입니다.
                 </p>
                 <div className="mt-5 space-y-4">
-                  <Card muted className="p-4">
+                  <Card muted className="ui-stat-card p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-text-strong">견적 발송 안내 (KO)</p>
                       <Button
                         size="sm"
                         variant="secondary"
+                        className="ui-toolbar-button"
                         onClick={() => handleCopyMessage(quote.messageDrafts.quoteSendKo, "견적 발송 안내")}
                       >
                         복사
@@ -797,12 +798,13 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
                       {quote.messageDrafts.quoteSendKo}
                     </pre>
                   </Card>
-                  <Card muted className="p-4">
+                  <Card muted className="ui-stat-card p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-text-strong">수락 후 계약 준비 안내 (KO)</p>
                       <Button
                         size="sm"
                         variant="secondary"
+                        className="ui-toolbar-button"
                         onClick={() => handleCopyMessage(quote.messageDrafts.acceptedKo, "수락 안내")}
                       >
                         복사
@@ -817,11 +819,11 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
 
               <Card className="p-6">
                 <h3 className="ui-section-title">계약 초안 및 사건 흐름</h3>
-                <p className="mt-2 text-sm text-text-muted">
+                <p className="ui-section-copy mt-2">
                   견적 수락 시 계약 초안과 사건 레코드가 자동 연결됩니다.
                 </p>
                 {quote.contractDraft ? (
-                  <Card muted className="mt-5 p-5">
+                  <Card muted className="ui-stat-card mt-5 p-5">
                     <p className="text-sm font-semibold text-text-strong">{quote.contractDraft.title}</p>
                     <p className="mt-2 text-xs text-text-muted">
                       마지막 업데이트: {new Date(quote.contractDraft.updatedAt).toLocaleString("ko-KR")}
@@ -839,7 +841,7 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
                 )}
 
                 {quote.caseRecord ? (
-                  <Card muted className="mt-4 p-5">
+                  <Card muted className="ui-stat-card mt-4 p-5">
                     <p className="text-sm font-semibold text-text-strong">
                       사건번호: {quote.caseRecord.caseNumber}
                     </p>
@@ -869,7 +871,7 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
 
 function InfoPanel({ label, value }: { label: string; value: string }) {
   return (
-    <Card muted className="p-4">
+    <Card muted className="ui-stat-card p-4">
       <p className="ui-kicker">{label}</p>
       <p className="mt-2 text-sm font-medium text-text-strong">{value}</p>
     </Card>

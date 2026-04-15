@@ -201,7 +201,7 @@ export function ClientRelationshipPanel({ initialWorkspace }: ClientRelationship
     <div className="space-y-6">
       <Card className="p-6">
         <h3 className="ui-section-title">종결 처리와 고객 관계</h3>
-        <div className="mt-4 grid gap-3 text-sm text-text-muted sm:grid-cols-2">
+        <div className="ui-section-copy mt-4 grid gap-3 sm:grid-cols-2">
           <p>사건번호: {workspace.caseNumber}</p>
           <p>관계 상태: {clientRelationshipStatusLabels[workspace.relationship.clientRelationshipStatus]}</p>
         </div>
@@ -376,7 +376,7 @@ function ToggleCard({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-md border border-line bg-surface px-3 py-2 text-sm">
+    <label className="ui-stat-card flex items-center justify-between rounded-md px-3 py-2 text-sm">
       <span>{label}</span>
       <input
         type="checkbox"
@@ -413,7 +413,7 @@ function FollowUpActionCard({
   }, [action]);
 
   return (
-    <Card muted className="p-4">
+    <Card muted className="ui-stat-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-text-strong">{action.title}</p>
@@ -421,7 +421,12 @@ function FollowUpActionCard({
             {followUpActionTypeLabels[action.type]} / {followUpActionStatusLabels[action.status]}
           </p>
         </div>
-        <Button size="sm" variant="secondary" onClick={() => onCopy(action.title, action.messageDraft)}>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="ui-toolbar-button"
+          onClick={() => onCopy(action.title, action.messageDraft)}
+        >
           복사
         </Button>
       </div>
@@ -469,10 +474,10 @@ function MessageCard({
   onCopy: () => Promise<void>;
 }) {
   return (
-    <Card muted className="p-4">
+    <Card muted className="ui-stat-card p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-text-strong">{title}</p>
-        <Button size="sm" variant="secondary" onClick={onCopy}>
+        <Button size="sm" variant="secondary" className="ui-toolbar-button" onClick={onCopy}>
           복사
         </Button>
       </div>

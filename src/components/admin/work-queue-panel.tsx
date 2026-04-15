@@ -48,7 +48,7 @@ export function WorkQueuePanel({ snapshot }: WorkQueuePanelProps) {
         <div>
           <p className="ui-kicker">Operations Queue</p>
           <h3 className="mt-2 ui-section-title">알림/리마인더 작업 큐</h3>
-          <p className="mt-2 text-sm text-text-muted">
+          <p className="ui-section-copy mt-2">
             기한, 보완, 누락 서류, 견적 후속 상태를 기반으로 우선순위 작업을 자동 정리합니다.
           </p>
         </div>
@@ -99,7 +99,7 @@ export function WorkQueuePanel({ snapshot }: WorkQueuePanelProps) {
 
 function QueueStat({ label, value }: { label: string; value: number }) {
   return (
-    <Card muted className="px-3 py-2 text-center">
+    <Card className="ui-stat-card px-3 py-2 text-center">
       <p className="text-[11px] text-text-muted">{label}</p>
       <p className="mt-1 text-base font-semibold text-text-strong">{value}</p>
     </Card>
@@ -156,7 +156,7 @@ function QueueSection({
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href={item.href}
-                  className="inline-flex items-center rounded-md border border-line px-3 py-1.5 text-xs font-semibold text-text-strong hover:bg-surface-muted"
+                  className="ui-toolbar-button"
                 >
                   관련 화면 열기
                 </Link>

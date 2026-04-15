@@ -57,7 +57,7 @@ export default async function AdminInquiryDetailPage({
             <div>
               <p className="ui-kicker">Inquiry</p>
               <h2 className="mt-2 ui-page-title">{inquiry.title}</h2>
-              <p className="mt-3 max-w-3xl text-sm text-text">{inquiry.generatedSummary}</p>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-text">{inquiry.generatedSummary}</p>
             </div>
 
             <div className="grid gap-3 text-sm text-text-muted sm:grid-cols-2 xl:grid-cols-3">
@@ -171,7 +171,7 @@ export default async function AdminInquiryDetailPage({
           <div>
             <p className="ui-kicker">Workspaces</p>
             <h3 className="mt-2 ui-section-title">Move heavy flows into route-level bundles</h3>
-            <p className="mt-2 text-sm text-text-muted">
+            <p className="ui-section-copy mt-2">
               Quote, case, and relationship tools now load on dedicated subroutes instead of this
               summary page.
             </p>
@@ -194,7 +194,7 @@ function RouteLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-semibold text-text transition hover:border-text hover:text-text"
+      className="ui-toolbar-button px-4 py-2 text-sm"
     >
       {label}
     </Link>

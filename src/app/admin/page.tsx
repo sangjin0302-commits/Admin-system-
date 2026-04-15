@@ -37,7 +37,7 @@ export default async function AdminIndexPage() {
           <div>
             <p className="ui-kicker">Admin Home</p>
             <h2 className="mt-2 ui-page-title">운영 대시보드</h2>
-            <p className="mt-2 text-sm text-text-muted">
+            <p className="ui-section-copy mt-2">
               상담, 견적, 사건, 보완, 기한 상태를 기준으로 오늘 처리할 작업을 한 번에 확인할 수
               있습니다.
             </p>
@@ -45,7 +45,7 @@ export default async function AdminIndexPage() {
           <div className="flex flex-wrap gap-2">
             <Link
               href="/admin/inquiries"
-              className="inline-flex items-center rounded-md border border-line px-3 py-1.5 text-xs font-semibold text-text-strong hover:bg-surface-muted"
+              className="ui-toolbar-button"
             >
               문의 목록으로 이동
             </Link>
@@ -69,7 +69,7 @@ export default async function AdminIndexPage() {
           <div>
             <p className="ui-kicker">Demand Forecast Pilot</p>
             <h3 className="mt-2 text-lg font-semibold text-text-strong">주간 수요 예측 레이어</h3>
-            <p className="mt-2 text-sm text-text-muted">
+            <p className="ui-section-copy mt-2">
               내부 문의/수임 흐름에 외부 지표와 이벤트 플래그를 결합해 TimesFM 배치 예측을
               저장하는 파일럿 영역입니다.
             </p>
@@ -77,17 +77,17 @@ export default async function AdminIndexPage() {
 
           <div className="grid gap-3 lg:grid-cols-3">
             <SummaryBox label="주간 데이터셋" value={forecastSummary.datasetCount} tone="info" />
-            <div className="rounded-md border border-line bg-surface px-3 py-2">
+            <div className="ui-stat-card">
               <p className="text-xs text-text-muted">최근 데이터셋 기준 주</p>
-              <p className="mt-1 text-sm font-semibold text-text-strong">
+              <p className="mt-1 text-sm font-semibold tracking-[-0.01em] text-text-strong">
                 {forecastSummary.latestDatasetWeekStart
                   ? forecastSummary.latestDatasetWeekStart.toISOString().slice(0, 10)
                   : "미생성"}
               </p>
             </div>
-            <div className="rounded-md border border-line bg-surface px-3 py-2">
+            <div className="ui-stat-card">
               <p className="text-xs text-text-muted">최근 예측 실행</p>
-              <p className="mt-1 text-sm font-semibold text-text-strong">
+              <p className="mt-1 text-sm font-semibold tracking-[-0.01em] text-text-strong">
                 {forecastSummary.latestRun
                   ? `${forecastSummary.latestRun.targetCategory} / ${forecastSummary.latestRun.targetMetric}`
                   : "샘플 또는 배치 미생성"}
@@ -98,10 +98,7 @@ export default async function AdminIndexPage() {
           {forecastSummary.latestRun ? (
             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
               {forecastSummary.latestRun.points.map((point) => (
-                <div
-                  key={point.id}
-                  className="rounded-md border border-line bg-surface-muted px-3 py-2"
-                >
+                <div key={point.id} className="ui-stat-card bg-surface-muted">
                   <p className="text-xs text-text-muted">
                     {point.targetWeekStart.toISOString().slice(0, 10)}
                   </p>
@@ -147,7 +144,7 @@ function SummaryBox({
           : "border-slate-200 bg-slate-50 text-slate-700";
 
   return (
-    <div className="rounded-md border border-line bg-surface px-3 py-2">
+    <div className="ui-stat-card">
       <p className="text-xs text-text-muted">{label}</p>
       <div className="mt-1 flex items-center justify-between">
         <p className="text-lg font-semibold text-text-strong">{value}</p>

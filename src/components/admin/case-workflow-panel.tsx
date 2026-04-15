@@ -485,14 +485,14 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
     <div className="space-y-6">
       <Card className="p-6">
         <h3 className="ui-section-title">사건 진행현황</h3>
-        <div className="mt-4 grid gap-3 text-sm text-text-muted sm:grid-cols-2">
+        <div className="ui-section-copy mt-4 grid gap-3 sm:grid-cols-2">
           <p>사건번호: {caseWorkspace.caseNumber}</p>
           <p>필수서류 수령: {caseWorkspace.documentSummary.receivedRequiredCount}/{caseWorkspace.documentSummary.requiredCount}</p>
           <p className="sm:col-span-2">누락 문서: {missingText}</p>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {caseWorkspace.deadlines.map((deadline) => (
-            <Card key={deadline.key} muted className="p-3 text-xs">
+            <Card key={deadline.key} muted className="ui-stat-card p-3 text-xs">
               <p className="font-semibold text-text-strong">{deadline.label}</p>
               <p className="mt-1 text-text-muted">
                 {deadline.value ? new Date(deadline.value).toLocaleDateString("ko-KR") : "미설정"}
@@ -611,10 +611,10 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
       <Card className="p-6">
         <h3 className="ui-section-title">제출 패키지 관리</h3>
         {!submissionWorkspace ? (
-          <p className="mt-4 text-sm text-text-muted">제출 패키지 데이터를 불러오는 중입니다.</p>
+          <p className="ui-section-copy mt-4">제출 패키지 데이터를 불러오는 중입니다.</p>
         ) : (
           <div className="mt-4 space-y-4">
-            <Card muted className="p-4">
+            <Card muted className="ui-stat-card p-4">
               <p className="text-sm text-text-muted">
                 필수 수령 현황: {submissionWorkspace.checklist.receivedRequiredCount}/
                 {submissionWorkspace.checklist.requiredCount}
@@ -627,7 +627,7 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
               </p>
             </Card>
 
-            <Card muted className="p-4">
+            <Card muted className="ui-stat-card p-4">
               <p className="text-sm font-semibold text-text-strong">새 제출 패키지 생성</p>
               <FieldGroup className="mt-3">
                 <Field label="패키지 라벨">
@@ -722,10 +722,10 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
       <Card className="p-6">
         <h3 className="ui-section-title">보완 요청 관리</h3>
         {!submissionWorkspace ? (
-          <p className="mt-4 text-sm text-text-muted">보완 요청 데이터를 불러오는 중입니다.</p>
+          <p className="ui-section-copy mt-4">보완 요청 데이터를 불러오는 중입니다.</p>
         ) : (
           <div className="mt-4 space-y-4">
-            <Card muted className="p-4">
+            <Card muted className="ui-stat-card p-4">
               <p className="text-sm font-semibold text-text-strong">보완 요청 등록</p>
               <FieldGroup className="mt-3">
                 <Field label="연결 제출 패키지">
@@ -891,7 +891,7 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
         ) : (
           <div className="mt-4 space-y-2">
             {caseWorkspace.stageLogs.map((log) => (
-              <Card key={log.id} muted className="p-4 text-sm text-text">
+              <Card key={log.id} muted className="ui-stat-card p-4 text-sm text-text">
                 <p>
                   {log.fromStage ? caseStageLabels[log.fromStage as CaseStage] : "초기"} →{" "}
                   {caseStageLabels[log.toStage as CaseStage]}
@@ -1018,7 +1018,7 @@ function CaseDocumentRow({
           ) : (
             <div className="space-y-2">
               {item.files.map((file) => (
-                <Card key={file.id} muted className="p-3">
+                <Card key={file.id} muted className="ui-stat-card p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs font-semibold text-text-strong">
                       {file.originalFilename} (v{file.versionNumber})
@@ -1047,7 +1047,7 @@ function CaseDocumentRow({
                       href={`/api/admin/cases/${caseId}/documents/${item.id}/files/${file.id}/download`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center rounded-md border border-line px-2 py-1 text-xs font-semibold text-text-strong hover:bg-surface-muted"
+                      className="ui-toolbar-button"
                     >
                       다운로드
                     </a>
@@ -1134,7 +1134,7 @@ function SubmissionPackageCard({
   }, [pkg]);
 
   return (
-    <Card muted className="p-4">
+    <Card muted className="ui-stat-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold text-text-strong">{pkg.packageNumber}</p>
         <p className="text-xs text-text-muted">
@@ -1211,7 +1211,7 @@ function SupplementRequestCard({
   }, [request]);
 
   return (
-    <Card muted className="p-4">
+    <Card muted className="ui-stat-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold text-text-strong">{request.summary}</p>
         <p className="text-xs text-text-muted">
@@ -1268,10 +1268,10 @@ function MessageCard({
   onCopy: () => Promise<void>;
 }) {
   return (
-    <Card muted className="p-4">
+    <Card muted className="ui-stat-card p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-text-strong">{title}</p>
-        <Button size="sm" variant="secondary" onClick={onCopy}>
+        <Button size="sm" variant="secondary" className="ui-toolbar-button" onClick={onCopy}>
           복사
         </Button>
       </div>

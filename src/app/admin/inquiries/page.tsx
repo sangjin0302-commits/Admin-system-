@@ -36,7 +36,7 @@ export default async function AdminInquiryListPage({
           <div>
             <p className="ui-kicker">Admin Dashboard</p>
             <h2 className="mt-2 ui-page-title">문의 목록</h2>
-            <p className="mt-2 text-sm text-text-muted">
+            <p className="ui-section-copy mt-2">
               검색, 필터, 정렬을 이용해 실제 검토 대상 건을 빠르게 찾을 수 있습니다.
             </p>
           </div>

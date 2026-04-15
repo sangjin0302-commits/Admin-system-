@@ -38,6 +38,12 @@ export function InquiryFilters({ filters }: InquiryFiltersProps) {
   return (
     <Card className="p-5">
       <form method="get" className="space-y-4">
+        <div>
+          <p className="ui-kicker">Filters</p>
+          <p className="mt-2 text-sm text-text-muted">
+            검색과 정렬 기준을 고정해 실제 검토 대상 문의를 빠르게 좁힙니다.
+          </p>
+        </div>
         <FieldGroup className="md:grid-cols-[1.7fr_1fr_1fr_1fr_1fr_1fr]">
           <Field label="검색">
             <Input
@@ -105,7 +111,7 @@ export function InquiryFilters({ filters }: InquiryFiltersProps) {
           </Button>
           <Link
             href="/admin/inquiries"
-            className="inline-flex h-10 items-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
+            className="ui-toolbar-button h-10 px-4 text-sm"
           >
             초기화
           </Link>

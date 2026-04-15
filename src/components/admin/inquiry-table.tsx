@@ -46,8 +46,10 @@ export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
             <tr key={inquiry.id}>
               <td>
                 <Link href={`/admin/inquiries/${inquiry.id}`} className="block">
-                  <p className="font-semibold text-text-strong">{inquiry.title}</p>
-                  <p className="mt-1 text-sm text-text">{inquiry.contactName}</p>
+                  <p className="font-semibold tracking-[-0.01em] text-text-strong">
+                    {inquiry.title}
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-text">{inquiry.contactName}</p>
                   <p className="text-sm text-text-muted">
                     {inquiry.organizationName || inquiry.email}
                   </p>

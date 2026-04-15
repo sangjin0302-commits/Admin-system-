@@ -4,26 +4,26 @@
 
 :root {
   color-scheme: light;
-  --color-canvas: 244 246 248;
+  --color-canvas: 243 245 247;
   --color-surface: 255 255 255;
   --color-surface-muted: 247 249 251;
   --color-surface-raised: 255 255 255;
-  --color-line: 218 224 230;
-  --color-line-strong: 197 206 214;
-  --color-text-strong: 22 33 43;
-  --color-text: 58 71 82;
-  --color-text-muted: 103 118 130;
+  --color-line: 215 222 229;
+  --color-line-strong: 196 206 216;
+  --color-text-strong: 23 33 43;
+  --color-text: 60 72 84;
+  --color-text-muted: 105 119 132;
   --color-primary: 24 72 109;
-  --color-primary-soft: 231 240 247;
-  --color-success: 40 112 76;
-  --color-warning: 161 104 36;
-  --color-danger: 166 63 63;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 22px;
-  --shadow-panel: 0 10px 28px rgba(16, 24, 32, 0.06);
-  --shadow-floating: 0 18px 40px rgba(16, 24, 32, 0.1);
+  --color-primary-soft: 232 239 245;
+  --color-success: 43 107 73;
+  --color-warning: 155 106 40;
+  --color-danger: 161 69 69;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --shadow-panel: 0 8px 24px rgba(15, 23, 31, 0.045);
+  --shadow-floating: 0 16px 34px rgba(15, 23, 31, 0.08);
 }
 
 body {
@@ -112,14 +112,30 @@ a {
   }
 
   .ui-kicker {
-    @apply text-xs font-semibold tracking-[0.14em] text-text-muted;
+    @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted;
   }
 
   .ui-page-title {
-    @apply text-3xl font-semibold tracking-[-0.02em] text-text-strong;
+    @apply text-[30px] font-semibold tracking-[-0.03em] text-text-strong;
   }
 
   .ui-section-title {
-    @apply text-xl font-semibold text-text-strong;
+    @apply text-[22px] font-semibold tracking-[-0.02em] text-text-strong;
+  }
+
+  .ui-section-copy {
+    @apply text-sm leading-6 text-text-muted;
+  }
+
+  .ui-stat-card {
+    @apply rounded-md border border-line bg-surface px-3 py-3 shadow-panel;
+  }
+
+  .ui-subtle-rule {
+    @apply border-t border-line;
+  }
+
+  .ui-toolbar-button {
+    @apply inline-flex items-center rounded-md border border-line-strong bg-surface px-3 py-1.5 text-xs font-semibold text-text-strong transition hover:bg-surface-muted;
   }
 }

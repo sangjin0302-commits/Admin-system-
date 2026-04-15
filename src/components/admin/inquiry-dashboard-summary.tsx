@@ -21,9 +21,11 @@ export function InquiryDashboardSummary({
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
-        <Card key={item.label} muted className="p-5">
+        <Card key={item.label} className="ui-stat-card p-5">
           <p className="ui-kicker">{item.label}</p>
-          <p className="mt-2 text-3xl font-semibold text-text-strong">{item.value}</p>
+          <p className="mt-2 text-[30px] font-semibold tracking-[-0.03em] text-text-strong">
+            {item.value}
+          </p>
         </Card>
       ))}
     </div>
