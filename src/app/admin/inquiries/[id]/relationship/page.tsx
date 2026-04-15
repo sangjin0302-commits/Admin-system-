@@ -32,18 +32,17 @@ export default async function AdminInquiryRelationshipPage({
       <Card className="p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="ui-kicker">Relationship</p>
+            <p className="ui-kicker">고객관리 / 후속조치</p>
             <h2 className="mt-2 ui-page-title">{inquiry.title}</h2>
             <p className="ui-section-copy mt-2">
-              Closure, follow-up, review, referral, and reengagement tools now load separately
-              from the main inquiry page.
+              종결 처리, 후속조치, 리뷰 요청, 소개 관리, 재접촉 도구는 이 전용 화면에서 따로 확인합니다.
             </p>
           </div>
           <Link
             href={`/admin/inquiries/${id}`}
             className="ui-toolbar-button px-4 py-2 text-sm"
           >
-            Back to summary
+            접수 요약으로 돌아가기
           </Link>
         </div>
       </Card>
@@ -52,3 +51,4 @@ export default async function AdminInquiryRelationshipPage({
     </div>
   );
 }
+

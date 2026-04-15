@@ -32,18 +32,17 @@ export default async function AdminInquiryCasePage({
       <Card className="p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="ui-kicker">Case</p>
+            <p className="ui-kicker">사건 / 제출 관리</p>
             <h2 className="mt-2 ui-page-title">{inquiry.title}</h2>
             <p className="ui-section-copy mt-2">
-              Case, files, submission, supplement, and deadline workflow now loads on its own
-              route.
+              사건 생성, 파일, 제출 패키지, 보완 요청, 기한 관리는 이 전용 화면에서 따로 처리합니다.
             </p>
           </div>
           <Link
             href={`/admin/inquiries/${id}`}
             className="ui-toolbar-button px-4 py-2 text-sm"
           >
-            Back to summary
+            접수 요약으로 돌아가기
           </Link>
         </div>
       </Card>
@@ -52,3 +51,4 @@ export default async function AdminInquiryCasePage({
     </div>
   );
 }
+

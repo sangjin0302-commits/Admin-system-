@@ -32,17 +32,17 @@ export default async function AdminInquiryQuotePage({
       <Card className="p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="ui-kicker">Quote</p>
+            <p className="ui-kicker">견적 / 제안서</p>
             <h2 className="mt-2 ui-page-title">{inquiry.title}</h2>
             <p className="ui-section-copy mt-2">
-              Quote and contract flow has been isolated from the inquiry summary route.
+              견적, 제안서, 계약 초안 흐름은 접수 요약 화면과 분리된 전용 화면에서 처리합니다.
             </p>
           </div>
           <Link
             href={`/admin/inquiries/${id}`}
             className="ui-toolbar-button px-4 py-2 text-sm"
           >
-            Back to summary
+            접수 요약으로 돌아가기
           </Link>
         </div>
       </Card>
@@ -51,3 +51,4 @@ export default async function AdminInquiryQuotePage({
     </div>
   );
 }
+

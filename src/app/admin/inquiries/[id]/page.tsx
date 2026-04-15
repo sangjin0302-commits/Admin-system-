@@ -69,21 +69,21 @@ export default async function AdminInquiryDetailPage({
             </div>
 
             <div>
-              <p className="ui-kicker">Inquiry</p>
+              <p className="ui-kicker">접수 상세</p>
               <h2 className="mt-2 ui-page-title">{inquiry.title}</h2>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-text">{inquiry.generatedSummary}</p>
             </div>
 
             <div className="grid gap-3 text-sm text-text-muted sm:grid-cols-2 xl:grid-cols-3">
-              <p>ID: {inquiry.id}</p>
-              <p>Created: {formatDateTime(inquiry.createdAt)}</p>
-              <p>Updated: {formatDateTime(inquiry.updatedAt)}</p>
-              <p>Contact: {inquiry.contactName}</p>
-              <p>Email: {inquiry.email}</p>
-              <p>Phone: {inquiry.phone || "-"}</p>
-              <p>Client: {clientTypeLabels[clientType].ko}</p>
-              <p>Corporate: {inquiry.isCorporateRequest ? "Yes" : "No"}</p>
-              <p>Assignee: {inquiry.assignee || "-"}</p>
+              <p>접수번호: {inquiry.id}</p>
+              <p>접수일: {formatDateTime(inquiry.createdAt)}</p>
+              <p>최종 수정: {formatDateTime(inquiry.updatedAt)}</p>
+              <p>담당 연락처: {inquiry.contactName}</p>
+              <p>이메일: {inquiry.email}</p>
+              <p>전화번호: {inquiry.phone || "-"}</p>
+              <p>고객 구분: {clientTypeLabels[clientType].ko}</p>
+              <p>기업 의뢰: {inquiry.isCorporateRequest ? "예" : "아니오"}</p>
+              <p>담당자: {inquiry.assignee || "-"}</p>
             </div>
           </div>
 
@@ -102,33 +102,33 @@ export default async function AdminInquiryDetailPage({
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="p-6">
-          <h3 className="ui-section-title">Inquiry Summary</h3>
+          <h3 className="ui-section-title">접수 요약</h3>
           <div className="mt-5 grid gap-4 text-sm text-text sm:grid-cols-2">
-            <InfoItem label="Nationality" value={inquiry.nationality} />
-            <InfoItem label="Current status" value={inquiry.currentStatus} />
-            <InfoItem label="Document country" value={inquiry.documentCountry} />
-            <InfoItem label="Target agency" value={inquiry.targetAgency} />
+            <InfoItem label="국적" value={inquiry.nationality} />
+            <InfoItem label="현재 체류/상태" value={inquiry.currentStatus} />
+            <InfoItem label="서류 발급 국가" value={inquiry.documentCountry} />
+            <InfoItem label="대상 기관" value={inquiry.targetAgency} />
             <InfoItem
-              label="Requested type"
+              label="희망 분야"
               value={inquiryTypeLabels[requestedInquiryType].ko}
             />
             <InfoItem
-              label="Declared urgency"
+              label="신청 긴급도"
               value={urgencyLabels[declaredUrgency].ko}
             />
-            <InfoItem label="Due date" value={formatDateTime(inquiry.dueDate)} />
-            <InfoItem label="Prepared docs" value={inquiry.hasPreparedDocuments ? "Yes" : "No"} />
-            <InfoItem label="Translation" value={inquiry.needsTranslation ? "Yes" : "No"} />
-            <InfoItem label="Callback" value={inquiry.wantsCallback ? "Yes" : "No"} />
+            <InfoItem label="희망 기한" value={formatDateTime(inquiry.dueDate)} />
+            <InfoItem label="준비된 서류" value={inquiry.hasPreparedDocuments ? "예" : "아니오"} />
+            <InfoItem label="번역 필요" value={inquiry.needsTranslation ? "예" : "아니오"} />
+            <InfoItem label="전화 회신 요청" value={inquiry.wantsCallback ? "예" : "아니오"} />
           </div>
 
           <Card muted className="mt-6 p-5">
-            <p className="ui-kicker">Original request</p>
+            <p className="ui-kicker">원문 접수 내용</p>
             <p className="mt-3 whitespace-pre-line text-sm text-text">{inquiry.description}</p>
           </Card>
 
           <Card muted className="mt-4 p-5">
-            <p className="ui-kicker">Requested outcome</p>
+            <p className="ui-kicker">희망 결과</p>
             <p className="mt-3 whitespace-pre-line text-sm text-text">
               {inquiry.requestedOutcome || "-"}
             </p>
@@ -136,38 +136,38 @@ export default async function AdminInquiryDetailPage({
         </Card>
 
         <Card className="p-6">
-          <h3 className="ui-section-title">Precheck Snapshot</h3>
+          <h3 className="ui-section-title">사전 검토 요약</h3>
           <div className="mt-5 grid gap-3">
-            <InfoItem label="Type" value={inquiryTypeLabels[inquiryType].ko} />
-            <InfoItem label="Urgency" value={urgencyLabels[urgencyLevel].ko} />
+            <InfoItem label="문의 유형" value={inquiryTypeLabels[inquiryType].ko} />
+            <InfoItem label="긴급도" value={urgencyLabels[urgencyLevel].ko} />
             <InfoItem
               label="Consultation"
               value={inquiry.consultationRequired ? "Required" : "Guidance first"}
             />
             <InfoItem
-              label="Confidence"
+              label="분류 신뢰도"
               value={`${Math.round(inquiry.classificationConfidence * 100)}%`}
             />
-            <InfoItem label="Qualification" value={`${inquiry.qualificationScore} / 100`} />
+            <InfoItem label="적합도" value={`${inquiry.qualificationScore} / 100`} />
           </div>
 
           <Card muted className="mt-5 p-5">
-            <p className="ui-kicker">Classification reason</p>
+            <p className="ui-kicker">분류 사유</p>
             <p className="mt-3 text-sm text-text">{inquiry.classificationReason}</p>
           </Card>
 
           <Card muted className="mt-5 p-5">
-            <p className="ui-kicker">Recommended next step</p>
+            <p className="ui-kicker">권장 다음 단계</p>
             <p className="mt-3 text-sm text-text">{inquiry.recommendedNextStep}</p>
           </Card>
 
           <Card muted className="mt-5 p-5">
-            <p className="ui-kicker">Recommended documents</p>
+            <p className="ui-kicker">추천 서류</p>
             <ul className="mt-3 list-decimal space-y-1 pl-5 text-sm text-text">
               {precheckDocs.length > 0 ? (
                 precheckDocs.map((doc) => <li key={doc}>{doc}</li>)
               ) : (
-                <li>No generated document list</li>
+                <li>생성된 추천 서류 목록이 없습니다.</li>
               )}
             </ul>
           </Card>
@@ -183,19 +183,18 @@ export default async function AdminInquiryDetailPage({
       <Card className="p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="ui-kicker">Workspaces</p>
-            <h3 className="mt-2 ui-section-title">Move heavy flows into route-level bundles</h3>
+            <p className="ui-kicker">업무 바로가기</p>
+            <h3 className="mt-2 ui-section-title">견적, 사건, 고객관리를 전용 화면으로 분리했습니다</h3>
             <p className="ui-section-copy mt-2">
-              Quote, case, and relationship tools now load on dedicated subroutes instead of this
-              summary page.
+              이 접수 요약 화면에서는 핵심 정보만 보고, 실제 업무 처리는 전용 하위 화면에서 진행합니다.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <RouteLink href={`/admin/inquiries/${inquiry.id}/quote`} label="Quote workspace" />
-            <RouteLink href={`/admin/inquiries/${inquiry.id}/case`} label="Case workspace" />
+            <RouteLink href={`/admin/inquiries/${inquiry.id}/quote`} label="제안서 / 견적" />
+            <RouteLink href={`/admin/inquiries/${inquiry.id}/case`} label="사건 / 제출 관리" />
             <RouteLink
               href={`/admin/inquiries/${inquiry.id}/relationship`}
-              label="Relationship workspace"
+              label="고객관리 / 후속조치"
             />
           </div>
         </div>
@@ -227,3 +226,4 @@ function InfoItem({ label, value }: { label: string; value?: string | null }) {
     </Card>
   );
 }
+
