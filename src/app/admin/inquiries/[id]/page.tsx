@@ -7,6 +7,7 @@ import { InquiryManagementForm } from "@/components/admin/inquiry-management-for
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { requireAdminPageSession } from "@/lib/auth/session";
+import { deriveInquiryScreening } from "@/lib/intake-screening/service";
 import { getInquiryById } from "@/lib/services/inquiry-service";
 import { listIssueBotLinks } from "@/lib/services/issue-bot-service";
 import { formatDateTime, parseJsonArray } from "@/lib/utils";
@@ -15,6 +16,8 @@ import {
   inquiryStatusLabels,
   inquiryTypeLabels,
   languageCodeLabels,
+  screeningGradeLabels,
+  screeningRouteLabels,
   urgencyLabels,
   type ClientType,
   type InquiryType,
@@ -47,6 +50,19 @@ export default async function AdminInquiryDetailPage({
   const clientType = inquiry.clientType as ClientType;
   const requestedInquiryType = (inquiry.requestedInquiryType ?? "UNKNOWN") as InquiryType;
   const declaredUrgency = (inquiry.declaredUrgency ?? "MEDIUM") as UrgencyLevel;
+  const screening = deriveInquiryScreening({
+    id: inquiry.id,
+    qualificationScore: inquiry.qualificationScore,
+    classificationConfidence: inquiry.classificationConfidence,
+    urgencyLevel,
+    consultationRequired: inquiry.consultationRequired,
+    hasPreparedDocuments: inquiry.hasPreparedDocuments,
+    needsTranslation: inquiry.needsTranslation,
+    isCorporateRequest: inquiry.isCorporateRequest,
+    dueDate: inquiry.dueDate,
+    preferredLanguage,
+    status: inquiryStatus
+  });
 
   return (
     <div className="space-y-6">
@@ -136,7 +152,35 @@ export default async function AdminInquiryDetailPage({
         </Card>
 
         <Card className="p-6">
-          <h3 className="ui-section-title">사전 검토 요약</h3>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="ui-section-title">사전 검토 요약</h3>
+              <p className="ui-section-copy mt-2">
+                AI 분류와 기존 선별 점수를 합쳐 상담 우선순위와 다음 운영 경로를 제안합니다.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="bg-amber-50 text-amber-700 border-amber-200">
+                {screeningGradeLabels[screening.grade].ko}
+              </Badge>
+              <Badge>{screeningRouteLabels[screening.route].ko}</Badge>
+            </div>
+          </div>
+
+          <Card muted className="mt-5 p-5">
+            <p className="ui-kicker">선별 결과</p>
+            <p className="mt-3 text-sm font-semibold text-text-strong">{screening.headline}</p>
+            <p className="mt-2 text-sm leading-6 text-text">{screening.summary}</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link href={screening.actionHref} className="ui-toolbar-button px-4 py-2 text-sm">
+                {screening.actionLabel}
+              </Link>
+              <Link href={`/admin/inquiries/${inquiry.id}/quote`} className="ui-toolbar-button px-4 py-2 text-sm">
+                견적 / 제안서 검토
+              </Link>
+            </div>
+          </Card>
+
           <div className="mt-5 grid gap-3">
             <InfoItem label="문의 유형" value={inquiryTypeLabels[inquiryType].ko} />
             <InfoItem label="긴급도" value={urgencyLabels[urgencyLevel].ko} />

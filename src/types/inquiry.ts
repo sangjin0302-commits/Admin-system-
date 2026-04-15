@@ -40,6 +40,18 @@ export type LanguageCode = (typeof languageCodeValues)[number];
 export const clientTypeValues = ["INDIVIDUAL", "COMPANY"] as const;
 export type ClientType = (typeof clientTypeValues)[number];
 
+export const screeningGradeValues = ["A", "B", "C", "D"] as const;
+export type ScreeningGrade = (typeof screeningGradeValues)[number];
+
+export const screeningRouteValues = [
+  "PRIORITY_CONSULT",
+  "PAID_DIAGNOSIS",
+  "DOCS_REVIEW_FIRST",
+  "GUIDANCE_FIRST",
+  "DECLINE_OR_REFER"
+] as const;
+export type ScreeningRoute = (typeof screeningRouteValues)[number];
+
 type LabeledMap<T extends string> = Record<T, Record<Locale, string>>;
 
 export const inquiryTypeLabels: LabeledMap<InquiryType> = {
@@ -104,6 +116,21 @@ export const urgencyLabels: LabeledMap<UrgencyLevel> = {
 export const clientTypeLabels: LabeledMap<ClientType> = {
   INDIVIDUAL: { ko: "개인", en: "Individual", ar: "Individual" },
   COMPANY: { ko: "기업", en: "Company", ar: "Company" }
+};
+
+export const screeningGradeLabels: Record<ScreeningGrade, Record<Locale, string>> = {
+  A: { ko: "A급", en: "Grade A", ar: "Grade A" },
+  B: { ko: "B급", en: "Grade B", ar: "Grade B" },
+  C: { ko: "C급", en: "Grade C", ar: "Grade C" },
+  D: { ko: "D급", en: "Grade D", ar: "Grade D" }
+};
+
+export const screeningRouteLabels: Record<ScreeningRoute, Record<Locale, string>> = {
+  PRIORITY_CONSULT: { ko: "우선 상담 연결", en: "Priority Consult", ar: "Priority Consult" },
+  PAID_DIAGNOSIS: { ko: "유료 사전진단 권장", en: "Paid Diagnosis", ar: "Paid Diagnosis" },
+  DOCS_REVIEW_FIRST: { ko: "서류 확인 후 상담", en: "Docs Review First", ar: "Docs Review First" },
+  GUIDANCE_FIRST: { ko: "안내문 우선", en: "Guidance First", ar: "Guidance First" },
+  DECLINE_OR_REFER: { ko: "불수임 / 외부 연계 검토", en: "Decline or Refer", ar: "Decline or Refer" }
 };
 
 export const languageCodeLabels: LabeledMap<LanguageCode> = {
