@@ -47,7 +47,17 @@ type QuoteWithRelations = Prisma.QuoteGetPayload<{
     caseRecord: true;
   };
 }>;
-type DbClient = Prisma.TransactionClient;
+type QuoteLineItemRecord = QuoteWithRelations["lineItems"][number];
+type QuoteAdjustmentRecord = QuoteWithRelations["adjustments"][number];
+type PaymentPlanRecord = QuoteWithRelations["paymentPlans"][number];
+type QuoteTxDb = {
+  quote: Pick<typeof prisma.quote, "findUniqueOrThrow" | "update">;
+  inquiry: Pick<typeof prisma.inquiry, "update">;
+  contractDraft: Pick<typeof prisma.contractDraft, "create" | "update">;
+  caseRecord: Pick<typeof prisma.caseRecord, "create" | "update">;
+  caseDocumentItem: Pick<typeof prisma.caseDocumentItem, "findMany" | "createMany">;
+};
+type DbClient = QuoteTxDb;
 
 function parseStringArray(value: string) {
   try {
@@ -156,9 +166,15 @@ function toContractDraftSnapshot(contractDraft: QuoteWithRelations["contractDraf
 }
 
 function serializeQuote(quote: QuoteWithRelations) {
-  const sortedLineItems = quote.lineItems.sort((left, right) => left.sortOrder - right.sortOrder);
-  const sortedAdjustments = quote.adjustments.sort((left, right) => left.sortOrder - right.sortOrder);
-  const sortedPaymentPlans = quote.paymentPlans.sort((left, right) => left.sortOrder - right.sortOrder);
+  const sortedLineItems = quote.lineItems.sort(
+    (left: QuoteLineItemRecord, right: QuoteLineItemRecord) => left.sortOrder - right.sortOrder
+  );
+  const sortedAdjustments = quote.adjustments.sort(
+    (left: QuoteAdjustmentRecord, right: QuoteAdjustmentRecord) => left.sortOrder - right.sortOrder
+  );
+  const sortedPaymentPlans = quote.paymentPlans.sort(
+    (left: PaymentPlanRecord, right: PaymentPlanRecord) => left.sortOrder - right.sortOrder
+  );
   const paymentSummary = buildPaymentSummaryText(sortedPaymentPlans);
   const messageInput = {
     contactName: quote.inquiry.contactName,
@@ -193,7 +209,7 @@ function serializeQuote(quote: QuoteWithRelations) {
     createdAt: quote.createdAt.toISOString(),
     updatedAt: quote.updatedAt.toISOString(),
     lineItems: sortedLineItems
-      .map((line) => ({
+      .map((line: QuoteLineItemRecord) => ({
         id: line.id,
         kind: line.kind,
         label: line.label,
@@ -205,7 +221,7 @@ function serializeQuote(quote: QuoteWithRelations) {
         isManual: line.isManual
       })),
     adjustments: sortedAdjustments
-      .map((adjustment) => ({
+      .map((adjustment: QuoteAdjustmentRecord) => ({
         id: adjustment.id,
         label: adjustment.label,
         description: adjustment.description,
@@ -220,7 +236,7 @@ function serializeQuote(quote: QuoteWithRelations) {
         isManual: adjustment.isManual
       })),
     paymentPlans: sortedPaymentPlans
-      .map((plan) => ({
+      .map((plan: PaymentPlanRecord) => ({
         id: plan.id,
         stageKind: plan.stageKind,
         percentage: plan.percentage,
@@ -510,10 +526,10 @@ export async function getQuoteWorkspaceForInquiry(inquiryId: string): Promise<Qu
     masters: {
       serviceTypes: masters.serviceTypes,
       pricingOptions: masters.pricingOptions,
-      urgencyRules: masters.pricingRules.filter((rule) => rule.ruleType === "URGENCY"),
-      consultRules: masters.pricingRules.filter((rule) => rule.ruleType === "CONSULT"),
-      paymentRules: masters.pricingRules.filter((rule) => rule.ruleType === "PAYMENT"),
-      policyRules: masters.pricingRules.filter((rule) => rule.ruleType === "POLICY")
+      urgencyRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "URGENCY"),
+      consultRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "CONSULT"),
+      paymentRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "PAYMENT"),
+      policyRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "POLICY")
     },
     suggestedServiceLegacyIds,
     suggestedUrgencyRuleCode: mapUrgencyLevelToRuleCode(inquiry.urgencyLevel),
@@ -658,26 +674,34 @@ export async function saveQuoteManualEdits(
   ]);
 
   const refreshed = await getQuoteByIdOrThrow(quoteId);
-  const lineItems = refreshed.lineItems.sort((left, right) => left.sortOrder - right.sortOrder);
-  const adjustments = refreshed.adjustments.sort((left, right) => left.sortOrder - right.sortOrder);
+  const lineItems = refreshed.lineItems.sort(
+    (left: QuoteLineItemRecord, right: QuoteLineItemRecord) => left.sortOrder - right.sortOrder
+  );
+  const adjustments = refreshed.adjustments.sort(
+    (left: QuoteAdjustmentRecord, right: QuoteAdjustmentRecord) => left.sortOrder - right.sortOrder
+  );
   const serviceBaseMin = lineItems
-    .filter((line) => line.kind === "SERVICE")
-    .reduce((sum, line) => sum + line.amountMin, 0);
+    .filter((line: QuoteLineItemRecord) => line.kind === "SERVICE")
+    .reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMin, 0);
   const serviceBaseMax = lineItems
-    .filter((line) => line.kind === "SERVICE")
-    .reduce((sum, line) => sum + line.amountMax, 0);
+    .filter((line: QuoteLineItemRecord) => line.kind === "SERVICE")
+    .reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMax, 0);
   const subtotalMin =
-    lineItems.reduce((sum, line) => sum + line.amountMin, 0) +
-    adjustments.filter((adjustment) => !adjustment.isVat).reduce((sum, adjustment) => sum + adjustment.computedMin, 0);
+    lineItems.reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMin, 0) +
+    adjustments
+      .filter((adjustment: QuoteAdjustmentRecord) => !adjustment.isVat)
+      .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMin, 0);
   const subtotalMax =
-    lineItems.reduce((sum, line) => sum + line.amountMax, 0) +
-    adjustments.filter((adjustment) => !adjustment.isVat).reduce((sum, adjustment) => sum + adjustment.computedMax, 0);
+    lineItems.reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMax, 0) +
+    adjustments
+      .filter((adjustment: QuoteAdjustmentRecord) => !adjustment.isVat)
+      .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMax, 0);
   const vatAmountMin = adjustments
-    .filter((adjustment) => adjustment.isVat)
-    .reduce((sum, adjustment) => sum + adjustment.computedMin, 0);
+    .filter((adjustment: QuoteAdjustmentRecord) => adjustment.isVat)
+    .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMin, 0);
   const vatAmountMax = adjustments
-    .filter((adjustment) => adjustment.isVat)
-    .reduce((sum, adjustment) => sum + adjustment.computedMax, 0);
+    .filter((adjustment: QuoteAdjustmentRecord) => adjustment.isVat)
+    .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMax, 0);
   const totalMin = subtotalMin + vatAmountMin;
   const totalMax = subtotalMax + vatAmountMax;
 
@@ -692,14 +716,14 @@ export async function saveQuoteManualEdits(
         vatAmountMin,
         vatAmountMax,
         totalMin,
-        totalMax,
-        calculationSummary: buildManualSummary({
-          lineItems: lineItems.map((line) => ({
+          totalMax,
+          calculationSummary: buildManualSummary({
+          lineItems: lineItems.map((line: QuoteLineItemRecord) => ({
             label: line.label,
             amountMin: line.amountMin,
             amountMax: line.amountMax
           })),
-          adjustments: adjustments.map((adjustment) => ({
+          adjustments: adjustments.map((adjustment: QuoteAdjustmentRecord) => ({
             label: adjustment.label,
             computedMin: adjustment.computedMin,
             computedMax: adjustment.computedMax,
@@ -710,8 +734,8 @@ export async function saveQuoteManualEdits(
         })
       }
     }),
-    ...refreshed.paymentPlans.map((plan) => {
-      const incoming = input.paymentPlans.find((entry) => entry.id === plan.id);
+    ...refreshed.paymentPlans.map((plan: PaymentPlanRecord) => {
+      const incoming = input.paymentPlans.find((entry: (typeof input.paymentPlans)[number]) => entry.id === plan.id);
       const percentage = incoming?.percentage ?? plan.percentage;
 
       return prisma.paymentPlan.update({
@@ -755,8 +779,12 @@ async function upsertContractDraftFromQuote(db: DbClient, quote: QuoteWithRelati
     : [];
   const draft = buildContractDraftText({
     inquiry: serializeInquiryForQuote(quote.inquiry),
-    lineItems: quote.lineItems.sort((left, right) => left.sortOrder - right.sortOrder),
-    paymentPlans: quote.paymentPlans.sort((left, right) => left.sortOrder - right.sortOrder),
+    lineItems: quote.lineItems.sort(
+      (left: QuoteLineItemRecord, right: QuoteLineItemRecord) => left.sortOrder - right.sortOrder
+    ),
+    paymentPlans: quote.paymentPlans.sort(
+      (left: PaymentPlanRecord, right: PaymentPlanRecord) => left.sortOrder - right.sortOrder
+    ),
     totalMin: quote.totalMin,
     totalMax: quote.totalMax,
     vatAmountMin: quote.vatAmountMin,
@@ -846,21 +874,22 @@ export async function transitionQuoteStatus(
   assertQuoteTransition(current.status, input.status);
 
   await prisma.$transaction(async (tx) => {
-    await tx.quote.update({
+    const db = tx as unknown as QuoteTxDb;
+    await db.quote.update({
       where: { id: quoteId },
       data: { status: input.status }
     });
 
-    await tx.inquiry.update({
+    await db.inquiry.update({
       where: { id: current.inquiryId },
       data: { status: quoteStatusToInquiryStatus[input.status] }
     });
 
-    const refreshed = await loadQuoteWithRelations(tx, quoteId);
+    const refreshed = await loadQuoteWithRelations(db, quoteId);
 
     if (input.status === "ACCEPTED") {
-      const contractDraft = await upsertContractDraftFromQuote(tx, refreshed);
-      await ensureCaseRecordForQuote(tx, refreshed, {
+      const contractDraft = await upsertContractDraftFromQuote(db, refreshed);
+      await ensureCaseRecordForQuote(db, refreshed, {
         contractDraftId: contractDraft.id,
         currentStage: "CONTRACT_PREPARATION",
         dueDate: input.caseDueDate,
@@ -871,7 +900,7 @@ export async function transitionQuoteStatus(
 
     if (input.status === "REJECTED" || input.status === "EXPIRED") {
       if (refreshed.caseRecord) {
-        await ensureCaseRecordForQuote(tx, refreshed, {
+        await ensureCaseRecordForQuote(db, refreshed, {
           currentStage: "ON_HOLD",
           dueDate: input.caseDueDate,
           internalMemo: input.caseInternalMemo
@@ -881,7 +910,7 @@ export async function transitionQuoteStatus(
     }
 
     if (refreshed.caseRecord && (input.caseDueDate || input.caseInternalMemo)) {
-      await ensureCaseRecordForQuote(tx, refreshed, {
+      await ensureCaseRecordForQuote(db, refreshed, {
         currentStage: refreshed.caseRecord.currentStage,
         dueDate: input.caseDueDate,
         internalMemo: input.caseInternalMemo
@@ -894,23 +923,24 @@ export async function transitionQuoteStatus(
 
 export async function createContractDraftFromQuote(quoteId: string) {
   await prisma.$transaction(async (tx) => {
-    const quote = await loadQuoteWithRelations(tx, quoteId);
-    const contractDraft = await upsertContractDraftFromQuote(tx, quote);
+    const db = tx as unknown as QuoteTxDb;
+    const quote = await loadQuoteWithRelations(db, quoteId);
+    const contractDraft = await upsertContractDraftFromQuote(db, quote);
     const nextStatus = quote.status === "DRAFT" ? "READY_TO_SEND" : quote.status;
 
     if (quote.status !== nextStatus) {
-      await tx.quote.update({
+      await db.quote.update({
         where: { id: quote.id },
         data: { status: nextStatus }
       });
     }
 
-    await tx.inquiry.update({
+    await db.inquiry.update({
       where: { id: quote.inquiryId },
       data: { status: quoteStatusToInquiryStatus[nextStatus] }
     });
 
-    await ensureCaseRecordForQuote(tx, quote, {
+    await ensureCaseRecordForQuote(db, quote, {
       contractDraftId: contractDraft.id,
       currentStage: "CONTRACT_PREPARATION",
       dueDate: quote.caseRecord?.dueDate ?? quote.inquiry.dueDate,
