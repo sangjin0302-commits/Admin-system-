@@ -929,7 +929,7 @@ export async function createContractDraftFromQuote(quoteId: string) {
     const db = tx as unknown as QuoteTxDb;
     const quote = await loadQuoteWithRelations(db, quoteId);
     const contractDraft = await upsertContractDraftFromQuote(db, quote);
-    const nextStatus = quote.status === "DRAFT" ? "READY_TO_SEND" : quote.status;
+    const nextStatus: QuoteStatus = quote.status === "DRAFT" ? "READY_TO_SEND" : quote.status;
 
     if (quote.status !== nextStatus) {
       await db.quote.update({
