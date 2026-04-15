@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma/client";
 
+type DashboardInquiry = { createdAt: Date; inquiryType: string };
+type DashboardQuote = { createdAt: Date; status: string };
+type DashboardCase = { createdAt: Date; currentStage: string; closedAt: Date | null };
+type DashboardFollowUp = { createdAt: Date; type: string; status: string };
+
 export type AdminDashboardSnapshot = {
   kpis: {
     totalInquiries: number;
@@ -82,12 +87,14 @@ export async function getAdminDashboardSnapshot(): Promise<AdminDashboardSnapsho
     kpis: {
       totalInquiries: inquiries.length,
       quotesCreated: quotes.length,
-      acceptedQuotes: quotes.filter((quote) => quote.status === "ACCEPTED").length,
+      acceptedQuotes: quotes.filter((quote: DashboardQuote) => quote.status === "ACCEPTED").length,
       casesCreated: cases.length,
-      closedCases: cases.filter((record) => record.currentStage === "COMPLETED" || record.currentStage === "CLOSED").length,
-      reviewRequests: followUps.filter((action) => action.type === "REVIEW_REQUEST").length,
+      closedCases: cases.filter(
+        (record: DashboardCase) => record.currentStage === "COMPLETED" || record.currentStage === "CLOSED"
+      ).length,
+      reviewRequests: followUps.filter((action: DashboardFollowUp) => action.type === "REVIEW_REQUEST").length,
       reviewCompleted: followUps.filter(
-        (action) => action.type === "REVIEW_REQUEST" && action.status === "COMPLETED"
+        (action: DashboardFollowUp) => action.type === "REVIEW_REQUEST" && action.status === "COMPLETED"
       ).length,
       supplementRequests: supplements.length
     },
@@ -98,10 +105,10 @@ export async function getAdminDashboardSnapshot(): Promise<AdminDashboardSnapsho
       const key = dayKey(date);
       return {
         date: key,
-        inquiries: inquiries.filter((item) => dayKey(item.createdAt) === key).length,
-        closedCases: cases.filter((item) => item.closedAt && dayKey(item.closedAt) === key).length,
+        inquiries: inquiries.filter((item: DashboardInquiry) => dayKey(item.createdAt) === key).length,
+        closedCases: cases.filter((item: DashboardCase) => item.closedAt && dayKey(item.closedAt) === key).length,
         reviewRequests: followUps.filter(
-          (item) => item.type === "REVIEW_REQUEST" && dayKey(item.createdAt) === key
+          (item: DashboardFollowUp) => item.type === "REVIEW_REQUEST" && dayKey(item.createdAt) === key
         ).length
       };
     })
