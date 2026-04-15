@@ -122,6 +122,8 @@ export type SubmissionWorkspaceSnapshot = {
   };
 };
 
+type SubmittableDocumentEntry = SubmissionWorkspaceSnapshot["checklist"]["submittableDocuments"][number];
+
 const DUE_SOON_DAYS = 3;
 
 function toStartOfDay(date: Date) {
@@ -187,8 +189,10 @@ function serializeWorkspace(record: CaseWithSubmissionRelations): SubmissionWork
         currentVersionNumber: currentFile.versionNumber
       };
     })
-    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-    .sort((left, right) => left.label.localeCompare(right.label, "ko-KR"));
+    .filter((entry: SubmittableDocumentEntry | null): entry is SubmittableDocumentEntry => Boolean(entry))
+    .sort((left: SubmittableDocumentEntry, right: SubmittableDocumentEntry) =>
+      left.label.localeCompare(right.label, "ko-KR")
+    );
 
   const required = record.documents.filter((doc) => doc.isRequired);
   const receivedRequired = required.filter(
