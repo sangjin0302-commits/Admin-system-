@@ -21,6 +21,8 @@ type CaseRelationshipRecord = Prisma.CaseRecordGetPayload<{
   };
 }>;
 
+type FollowUpActionRecord = CaseRelationshipRecord["followUpActions"][number];
+
 export type ClientRelationshipWorkspace = {
   caseId: string;
   caseNumber: string;
@@ -90,7 +92,7 @@ function serializeWorkspace(record: CaseRelationshipRecord): ClientRelationshipW
     },
     followUpActions: record.followUpActions
       .slice()
-      .sort((left, right) => {
+      .sort((left: FollowUpActionRecord, right: FollowUpActionRecord) => {
         if (left.status !== right.status) {
           return left.status === "PENDING" ? -1 : 1;
         }
@@ -103,7 +105,7 @@ function serializeWorkspace(record: CaseRelationshipRecord): ClientRelationshipW
         if (right.dueDate) return 1;
         return right.createdAt.getTime() - left.createdAt.getTime();
       })
-      .map((action) => ({
+      .map((action: FollowUpActionRecord) => ({
         id: action.id,
         type: action.type,
         status: action.status,
