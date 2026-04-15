@@ -8,6 +8,7 @@ import {
   generatePreparationGuidance,
   generateReceiptMessage
 } from "@/lib/message-templates/service";
+import { sendInquiryNotificationEmails } from "@/lib/notifications/inquiry-email";
 import { dispatchInitialClientMessage } from "@/lib/services/client-message-service";
 import { formatDate } from "@/lib/utils";
 import { parseCreateInquiryInput } from "@/lib/validation/inquiry";
@@ -152,10 +153,28 @@ export async function createInquiry(payload: unknown) {
     }
   });
 
-  await dispatchInitialClientMessage({
-    inquiryId: updated.id,
-    preview: buildMessagePreview(finalizedMessageInput)
-  });
+  const initialPreview = buildMessagePreview(finalizedMessageInput);
+
+  await Promise.allSettled([
+    dispatchInitialClientMessage({
+      inquiryId: updated.id,
+      preview: initialPreview
+    }),
+    sendInquiryNotificationEmails({
+      id: updated.id,
+      contactName: updated.contactName,
+      organizationName: updated.organizationName,
+      email: updated.email,
+      phone: updated.phone,
+      title: updated.title,
+      description: updated.description,
+      requestedOutcome: updated.requestedOutcome,
+      inquiryType: updated.inquiryType as InquiryType,
+      urgencyLevel: updated.urgencyLevel as UrgencyLevel,
+      preferredLanguage: updated.preferredLanguage as LanguageCode,
+      generatedReceiptMessage: updated.generatedReceiptMessage
+    })
+  ]);
 
   return updated;
 }
