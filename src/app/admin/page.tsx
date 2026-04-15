@@ -54,6 +54,9 @@ export default async function AdminIndexPage() {
             >
               문의 목록으로 이동
             </Link>
+            <Link href="/admin/content" className="ui-toolbar-button">
+              공개 문구 설정
+            </Link>
           </div>
         </div>
       </Card>

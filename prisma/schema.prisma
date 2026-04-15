@@ -567,6 +567,13 @@ model User {
   auditLogs    AuditLog[]
 }
 
+model PublicContentSettings {
+  id               String   @id
+  intakeContentJson String  @default("{}")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
 model UserSession {
   id           String   @id @default(cuid())
   userId       String

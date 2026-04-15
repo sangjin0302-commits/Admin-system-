@@ -12,6 +12,7 @@ import {
 } from "@generated/prisma-client/client";
 import { Pool } from "pg";
 import { hashPassword } from "../src/lib/auth/password";
+import { defaultPublicIntakeContent, PUBLIC_CONTENT_SETTINGS_ID } from "../src/lib/public-content/defaults";
 import legacyPricing from "./data/legacy-pricing.json";
 
 function loadEnvFile(filePath: string) {
@@ -165,6 +166,19 @@ async function seedAdminUsers() {
         isActive: true
       }
     ]
+  });
+}
+
+async function seedPublicContentSettings() {
+  await prisma.publicContentSettings.upsert({
+    where: { id: PUBLIC_CONTENT_SETTINGS_ID },
+    update: {
+      intakeContentJson: JSON.stringify(defaultPublicIntakeContent)
+    },
+    create: {
+      id: PUBLIC_CONTENT_SETTINGS_ID,
+      intakeContentJson: JSON.stringify(defaultPublicIntakeContent)
+    }
   });
 }
 
@@ -1255,6 +1269,7 @@ async function main() {
   await prisma.weeklyForecastDataset.deleteMany();
   await prisma.forecastEventFlag.deleteMany();
   await prisma.externalIndicatorObservation.deleteMany();
+  await prisma.publicContentSettings.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.userSession.deleteMany();
   await prisma.user.deleteMany();
@@ -1279,6 +1294,7 @@ async function main() {
   await prisma.inquiry.deleteMany();
 
   await seedAdminUsers();
+  await seedPublicContentSettings();
   await seedLegacyPricing();
   await seedInquiries();
   await seedQuoteFlow();
