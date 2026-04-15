@@ -43,6 +43,8 @@ export default async function AdminInquiryDetailPage({
   const urgencyLevel = inquiry.urgencyLevel as UrgencyLevel;
   const preferredLanguage = inquiry.preferredLanguage as LanguageCode;
   const clientType = inquiry.clientType as ClientType;
+  const requestedInquiryType = (inquiry.requestedInquiryType ?? "UNKNOWN") as InquiryType;
+  const declaredUrgency = (inquiry.declaredUrgency ?? "MEDIUM") as UrgencyLevel;
 
   return (
     <div className="space-y-6">
@@ -106,11 +108,11 @@ export default async function AdminInquiryDetailPage({
             <InfoItem label="Target agency" value={inquiry.targetAgency} />
             <InfoItem
               label="Requested type"
-              value={inquiryTypeLabels[inquiry.requestedInquiryType ?? "UNKNOWN"].ko}
+              value={inquiryTypeLabels[requestedInquiryType].ko}
             />
             <InfoItem
               label="Declared urgency"
-              value={urgencyLabels[inquiry.declaredUrgency ?? "MEDIUM"].ko}
+              value={urgencyLabels[declaredUrgency].ko}
             />
             <InfoItem label="Due date" value={formatDateTime(inquiry.dueDate)} />
             <InfoItem label="Prepared docs" value={inquiry.hasPreparedDocuments ? "Yes" : "No"} />
