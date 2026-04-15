@@ -1,16 +1,16 @@
 import path from "node:path";
 import type { NextConfig } from "next";
 
+const isVercel = process.env.VERCEL === "1" || process.env.VERCEL === "true";
+
 const nextConfig: NextConfig = {
   // Keep production output separate from the default .next directory to avoid
   // Windows + OneDrive lock contention during repeated builds.
   distDir:
-    process.env.VERCEL === "1" || process.env.VERCEL === "true"
-      ? ".next"
-      : process.env.NODE_ENV === "production"
+    isVercel ? ".next" : process.env.NODE_ENV === "production"
         ? ".next-prod"
         : ".next",
-  outputFileTracingRoot: path.resolve(process.cwd(), ".."),
+  outputFileTracingRoot: isVercel ? process.cwd() : path.resolve(process.cwd(), ".."),
   serverExternalPackages: [
     "@prisma/adapter-pg",
     "@prisma/adapter-better-sqlite3",
