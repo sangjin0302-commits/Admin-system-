@@ -23,7 +23,7 @@ export const createInquirySchema = z.object({
   email: z.string().trim().email(),
   phone: z.string().trim().max(30).optional().or(z.literal("")),
   title: z.string().trim().min(4).max(120),
-  description: z.string().trim().min(20).max(2000),
+  description: z.string().trim().min(10).max(2000),
   requestedOutcome: z.string().trim().max(400).optional().or(z.literal("")),
   requestedInquiryType: z.enum(inquiryTypeValues).optional().default("UNKNOWN"),
   declaredUrgency: z.enum(urgencyValues).optional().default("MEDIUM"),

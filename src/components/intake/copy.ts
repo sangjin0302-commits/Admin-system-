@@ -5,7 +5,7 @@ const copy = {
     pageKicker: "행정사 상담 접수",
     pageTitle: "전문 분야 중심의 초기 상담 접수",
     pageDescription:
-      "접수 내용을 바탕으로 문의 유형, 긴급도, 기본 안내 메시지가 자동 생성됩니다. 최종 진행 가능 여부와 처리 방향은 관리자 검토 후 확정됩니다.",
+      "접수 내용을 남겨주시면 관리자 검토 후 순차적으로 연락드리고, 진행 가능 여부와 처리 방향을 안내해드립니다.",
     infoTitle: "안내",
     infoItems: [
       "주요 전문 분야는 외국인 비자, 출입국·체류, 행정심판, 인허가입니다.",
@@ -14,8 +14,8 @@ const copy = {
       "영문 접수도 가능하지만 실제 진행 가능 여부는 관리자 검토 후 확정됩니다."
     ],
     formTitle: "상담 접수 작성",
-    resultTitle: "자동 생성 결과",
-    resultDescription: "접수 직후 생성되는 초안입니다. 관리자 검토 후 실제 안내에 반영됩니다.",
+    resultTitle: "접수 완료",
+    resultDescription: "접수 후 관리자 검토를 거쳐 순차적으로 안내드립니다.",
     labels: {
       preferredLocale: "응답 언어",
       clientType: "의뢰 형태",
@@ -68,14 +68,14 @@ const copy = {
       documentsReady: "기본 서류를 이미 보유하고 있습니다."
     },
     adminLink: "관리자 화면",
-    emptyResult: "접수 후 이 영역에서 자동 분류, 긴급도, 기본 안내 메시지를 확인할 수 있습니다.",
+    emptyResult: "접수 후 이 영역에서 접수 완료 상태와 안내 메시지를 확인할 수 있습니다.",
     errorGeneric: "접수 처리 중 오류가 발생했습니다. 입력값을 다시 확인해 주세요."
   },
   en: {
     pageKicker: "Administrative Office Intake",
     pageTitle: "Initial consultation intake centered on core specialties",
     pageDescription:
-      "After submission, the system generates a provisional inquiry type, urgency level, and client guidance draft. Final handling is confirmed after admin review.",
+      "Submit your inquiry and we will review it before sharing the next steps and handling direction.",
     infoTitle: "Notes",
     infoItems: [
       "Core specialties include foreigner visas, immigration and stay matters, administrative appeals, and licenses or permits.",
@@ -84,8 +84,8 @@ const copy = {
       "You may submit in English, but final handling is confirmed after admin review."
     ],
     formTitle: "Submit an Inquiry",
-    resultTitle: "Generated Draft",
-    resultDescription: "This draft is created immediately after submission and may be adjusted after admin review.",
+    resultTitle: "Submission Complete",
+    resultDescription: "We will review your inquiry and follow up with the next steps.",
     labels: {
       preferredLocale: "Response language",
       clientType: "Client type",
@@ -138,7 +138,7 @@ const copy = {
       documentsReady: "I already have the base documents."
     },
     adminLink: "Admin Dashboard",
-    emptyResult: "After submission, this panel will show the generated category, urgency, and client guidance.",
+    emptyResult: "After submission, this panel will show the completion message and reference details.",
     errorGeneric: "There was an error while submitting. Please review the form."
   }
 } as const;

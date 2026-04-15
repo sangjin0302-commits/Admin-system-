@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState, type FormEvent } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, FieldGroup } from "@/components/ui/field";
@@ -12,23 +11,17 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { getIntakeCopy } from "@/components/intake/copy";
 import {
-  inquiryTypeValues,
   inquiryTypeLabels,
-  urgencyValues,
+  inquiryTypeValues,
   urgencyLabels,
+  urgencyValues,
   type Locale
 } from "@/types/inquiry";
 
 type IntakeResponse = {
   inquiry: {
     id: string;
-    inquiryType: keyof typeof inquiryTypeLabels;
-    urgencyLevel: keyof typeof urgencyLabels;
-    generatedSummary: string;
-    generatedGuidance: string;
     generatedReceiptMessage: string;
-    consultationRequired: boolean;
-    riskComplexityHint?: string | null;
   };
 };
 
@@ -41,9 +34,9 @@ type FormState = {
   phone: string;
   title: string;
   description: string;
-  requestedInquiryType: keyof typeof inquiryTypeLabels;
+  requestedInquiryType: (typeof inquiryTypeValues)[number];
   requestedOutcome: string;
-  declaredUrgency: keyof typeof urgencyLabels;
+  declaredUrgency: (typeof urgencyValues)[number];
   nationality: string;
   currentStatus: string;
   documentCountry: string;
@@ -90,6 +83,12 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
   const [error, setError] = useState("");
   const [result, setResult] = useState<IntakeResponse["inquiry"] | null>(null);
   const copy = useMemo(() => getIntakeCopy(locale), [locale]);
+  const successTitle = locale === "ko" ? "접수가 완료되었습니다." : "Your inquiry has been submitted.";
+  const successDescription =
+    locale === "ko"
+      ? "관리자 검토 후 순차적으로 안내드리겠습니다. 필요하면 접수번호를 보관해 주세요."
+      : "Your inquiry has been received. Please keep the reference number if you need to follow up.";
+  const successResetLabel = locale === "ko" ? "새 문의 작성" : "Start another inquiry";
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -232,7 +231,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
               >
                 {inquiryTypeValues.map((value) => (
                   <option key={value} value={value}>
-                    {value === "UNKNOWN" ? (locale === "ko" ? "미선택" : "Not selected") : inquiryTypeLabels[value][locale]}
+                    {inquiryTypeLabels[value][locale]}
                   </option>
                 ))}
               </Select>
@@ -299,7 +298,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
                 className="mt-1 h-4 w-4 rounded border-line text-primary"
               />
               <span className="text-sm font-semibold text-text-strong">
-                {copy.labels.isCorporateRequest} · {copy.optionLabels.corporateYes}
+                {copy.labels.isCorporateRequest} / {copy.optionLabels.corporateYes}
               </span>
             </label>
             <label className="flex items-start gap-3">
@@ -310,7 +309,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
                 className="mt-1 h-4 w-4 rounded border-line text-primary"
               />
               <span className="text-sm font-semibold text-text-strong">
-                {copy.labels.needsTranslation} · {copy.optionLabels.translationYes}
+                {copy.labels.needsTranslation} / {copy.optionLabels.translationYes}
               </span>
             </label>
             <label className="flex items-start gap-3">
@@ -321,7 +320,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
                 className="mt-1 h-4 w-4 rounded border-line text-primary"
               />
               <span className="text-sm font-semibold text-text-strong">
-                {copy.labels.hasPreparedDocuments} · {copy.optionLabels.documentsReady}
+                {copy.labels.hasPreparedDocuments} / {copy.optionLabels.documentsReady}
               </span>
             </label>
           </div>
@@ -368,42 +367,26 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
 
       <div className="space-y-4">
         <Card muted className="p-5">
-          <p className="text-lg font-semibold text-text-strong">{copy.resultTitle}</p>
-          <p className="mt-2 text-sm text-text-muted">{copy.resultDescription}</p>
+          <p className="text-lg font-semibold text-text-strong">
+            {result ? successTitle : copy.resultTitle}
+          </p>
+          <p className="mt-2 text-sm text-text-muted">
+            {result ? successDescription : copy.resultDescription}
+          </p>
           {result ? (
             <div className="mt-4 space-y-3">
-              <div className="flex flex-wrap gap-2">
-                <Badge>{result.id}</Badge>
-                <Badge>{inquiryTypeLabels[result.inquiryType][locale]}</Badge>
-                <Badge tone="urgency" urgency={result.urgencyLevel}>
-                  {urgencyLabels[result.urgencyLevel][locale]}
-                </Badge>
+              <div className="rounded-md border border-line bg-surface px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">
+                  Reference
+                </p>
+                <p className="mt-2 text-sm font-semibold text-text-strong">{result.id}</p>
               </div>
               <Card className="p-4">
-                <p className="ui-kicker">요약</p>
-                <p className="mt-2 text-sm text-text">{result.generatedSummary}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="ui-kicker">준비 권장 서류</p>
-                <p className="mt-2 whitespace-pre-line text-sm text-text">{result.generatedGuidance}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="ui-kicker">접수 메시지</p>
+                <p className="ui-kicker">Confirmation</p>
                 <p className="mt-2 text-sm text-text">{result.generatedReceiptMessage}</p>
               </Card>
-              <Card className="p-4">
-                <p className="ui-kicker">사전진단 메모</p>
-                <p className="mt-2 text-sm text-text">
-                  {result.consultationRequired
-                    ? "상담 필요로 분류되었습니다."
-                    : "기본 서류 확인 후 견적 초안 단계로 진행할 수 있습니다."}
-                </p>
-                {result.riskComplexityHint ? (
-                  <p className="mt-2 text-xs text-text-muted">{result.riskComplexityHint}</p>
-                ) : null}
-              </Card>
               <Button type="button" variant="secondary" onClick={() => setResult(null)}>
-                {copy.buttons.resetResult}
+                {successResetLabel}
               </Button>
             </div>
           ) : (
