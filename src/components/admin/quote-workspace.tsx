@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { EmptyState, ErrorState, StateInline } from "@/components/ui/state-panel";
 import { Table, TableContainer } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import type { OperationsSettings } from "@/lib/operations-content/defaults";
 import { formatCurrency } from "@/lib/quote-engine/utils";
 import type { QuoteSummarySnapshot, QuoteWorkspace } from "@/lib/quote-engine/types";
 
@@ -61,6 +62,7 @@ function formatRange(min: number, max: number) {
 type QuoteWorkspaceProps = {
   inquiryId: string;
   workspace: QuoteWorkspace;
+  operationsSettings: OperationsSettings;
 };
 
 type QuoteAiDraft = {
@@ -71,7 +73,11 @@ type QuoteAiDraft = {
   internalMemo: string;
 };
 
-export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProps) {
+export function QuoteWorkspacePanel({
+  inquiryId,
+  workspace,
+  operationsSettings
+}: QuoteWorkspaceProps) {
   const router = useRouter();
   const [quote, setQuote] = useState<QuoteSummarySnapshot | null>(workspace.latestQuote);
   const [message, setMessage] = useState("");
@@ -1128,6 +1134,96 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
                           입금 확인 후 사건 전환
                         </Button>
                       </div>
+
+                      <Card muted className="ui-stat-card mt-4 p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-text-strong">링크가 없을 때 쓰는 운영 안내</p>
+                            <p className="mt-1 text-xs text-text-muted">
+                              아직 전자계약이나 PG 링크가 없어도, 아래 문구를 복사해서 고객에게 바로 안내할 수 있습니다.
+                            </p>
+                          </div>
+                          <a
+                            href="/admin/operations"
+                            className="inline-flex items-center justify-center rounded-md border border-line px-3 py-2 text-sm font-medium text-text-strong transition hover:bg-surface"
+                          >
+                            운영 설정 열기
+                          </a>
+                        </div>
+
+                        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                          <div className="rounded-md border border-line bg-surface px-4 py-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-semibold text-text-strong">계약 안내</p>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="ui-toolbar-button"
+                                onClick={() =>
+                                  handleCopyMessage(
+                                    operationsSettings.contractGuide,
+                                    "계약 안내"
+                                  )
+                                }
+                              >
+                                복사
+                              </Button>
+                            </div>
+                            <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
+                              {operationsSettings.contractGuide}
+                            </pre>
+                          </div>
+
+                          <div className="rounded-md border border-line bg-surface px-4 py-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-semibold text-text-strong">결제 안내</p>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="ui-toolbar-button"
+                                onClick={() =>
+                                  handleCopyMessage(
+                                    [
+                                      operationsSettings.paymentGuide,
+                                      operationsSettings.paymentMethodLabel,
+                                      operationsSettings.paymentLinkUrl || null,
+                                      operationsSettings.bankTransferGuide
+                                    ]
+                                      .filter(Boolean)
+                                      .join("\n\n"),
+                                    "결제 안내"
+                                  )
+                                }
+                              >
+                                복사
+                              </Button>
+                            </div>
+                            <div className="mt-3 space-y-3 text-sm text-text">
+                              <p>{operationsSettings.paymentGuide}</p>
+                              <p className="font-medium text-text-strong">
+                                {operationsSettings.paymentMethodLabel}
+                              </p>
+                              {operationsSettings.paymentLinkUrl ? (
+                                <a
+                                  href={operationsSettings.paymentLinkUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-primary underline underline-offset-4"
+                                >
+                                  {operationsSettings.paymentLinkUrl}
+                                </a>
+                              ) : (
+                                <p className="text-text-muted">
+                                  아직 별도 결제 링크는 연결하지 않았습니다.
+                                </p>
+                              )}
+                              <pre className="whitespace-pre-wrap text-sm text-text">
+                                {operationsSettings.bankTransferGuide}
+                              </pre>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
 
                       <div className="mt-4 grid gap-2 text-xs text-text-muted sm:grid-cols-2">
                         <p>계약 발송: {quote.contractDraft.contractSentAt ? new Date(quote.contractDraft.contractSentAt).toLocaleString("ko-KR") : "-"}</p>

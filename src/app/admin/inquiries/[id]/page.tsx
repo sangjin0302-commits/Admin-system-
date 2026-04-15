@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { requireAdminPageSession } from "@/lib/auth/session";
 import { deriveInquiryScreening } from "@/lib/intake-screening/service";
+import { getOperationsSettings } from "@/lib/operations-content/service";
 import { getInquiryById } from "@/lib/services/inquiry-service";
 import { listIssueBotLinks } from "@/lib/services/issue-bot-service";
 import { formatDateTime, parseJsonArray } from "@/lib/utils";
@@ -36,7 +37,11 @@ export default async function AdminInquiryDetailPage({
 }) {
   const { id } = await params;
   const session = await requireAdminPageSession(`/admin/inquiries/${id}`);
-  const [inquiry, issueBotLinks] = await Promise.all([getInquiryById(id), listIssueBotLinks(id)]);
+  const [inquiry, issueBotLinks, operationsSettings] = await Promise.all([
+    getInquiryById(id),
+    listIssueBotLinks(id),
+    getOperationsSettings()
+  ]);
 
   if (!inquiry) {
     notFound();
@@ -187,6 +192,7 @@ export default async function AdminInquiryDetailPage({
             inquiryId={inquiry.id}
             screening={screening}
             canApplyStatus={session.user.role === "ADMIN"}
+            operationsSettings={operationsSettings}
           />
 
           <div className="mt-5 grid gap-3">

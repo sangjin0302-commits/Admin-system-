@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { OperationsSettings } from "@/lib/operations-content/defaults";
 import { StateInline } from "@/components/ui/state-panel";
 import type { InquiryScreeningResult } from "@/lib/intake-screening/service";
 import { inquiryStatusLabels, type InquiryStatus } from "@/types/inquiry";
@@ -13,11 +14,13 @@ import { inquiryStatusLabels, type InquiryStatus } from "@/types/inquiry";
 export function InquiryScreeningActionPanel({
   inquiryId,
   screening,
-  canApplyStatus
+  canApplyStatus,
+  operationsSettings
 }: {
   inquiryId: string;
   screening: InquiryScreeningResult;
   canApplyStatus: boolean;
+  operationsSettings: OperationsSettings;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -63,6 +66,33 @@ export function InquiryScreeningActionPanel({
     }
   }
 
+  async function handleCopyOpsGuide() {
+    let text = operationsSettings.consultationIntro;
+
+    if (screening.route === "PRIORITY_CONSULT") {
+      text = operationsSettings.priorityConsultationGuide;
+    } else if (screening.route === "PAID_DIAGNOSIS") {
+      text = operationsSettings.paidDiagnosisGuide;
+    } else if (screening.route === "DOCS_REVIEW_FIRST") {
+      text = operationsSettings.docsReviewGuide;
+    } else if (screening.route === "DECLINE_OR_REFER") {
+      text = operationsSettings.declineGuide;
+    }
+
+    if (operationsSettings.consultationLinkUrl) {
+      text = `${text}\n\n${operationsSettings.consultationLinkLabel}: ${operationsSettings.consultationLinkUrl}`;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setMessageTone("success");
+      setMessage("운영 안내 문구를 클립보드에 복사했습니다.");
+    } catch {
+      setMessageTone("error");
+      setMessage("클립보드 복사에 실패했습니다.");
+    }
+  }
+
   return (
     <Card muted className="mt-5 p-5">
       <p className="ui-kicker">실행 가이드</p>
@@ -94,6 +124,9 @@ export function InquiryScreeningActionPanel({
             <Button size="sm" variant="secondary" onClick={handleCopyClientMessage}>
               고객 안내 문구 복사
             </Button>
+            <Button size="sm" variant="secondary" onClick={handleCopyOpsGuide}>
+              운영 안내 문구 복사
+            </Button>
           </div>
 
           {message ? <StateInline tone={messageTone}>{message}</StateInline> : null}
@@ -106,6 +139,10 @@ export function InquiryScreeningActionPanel({
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <Card className="p-4">
+            <p className="ui-kicker">운영 메모</p>
+            <p className="mt-2 text-sm text-text">{operationsSettings.internalRoutingNote}</p>
+          </Card>
         </div>
       </div>
     </Card>

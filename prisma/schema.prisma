@@ -613,6 +613,7 @@ model User {
 model PublicContentSettings {
   id               String   @id
   intakeContentJson String  @default("{}")
+  operationsSettingsJson String @default("{}")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }

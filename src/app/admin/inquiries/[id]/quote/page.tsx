@@ -5,6 +5,7 @@ import { AdminSessionBanner } from "@/components/admin/admin-session-banner";
 import { QuoteWorkspacePanel } from "@/components/admin/quote-workspace";
 import { Card } from "@/components/ui/card";
 import { requireAdminPageSession } from "@/lib/auth/session";
+import { getOperationsSettings } from "@/lib/operations-content/service";
 import { getInquiryById } from "@/lib/services/inquiry-service";
 import { getQuoteWorkspaceForInquiry } from "@/lib/services/quote-service";
 
@@ -23,7 +24,10 @@ export default async function AdminInquiryQuotePage({
     notFound();
   }
 
-  const workspace = await getQuoteWorkspaceForInquiry(id);
+  const [workspace, operationsSettings] = await Promise.all([
+    getQuoteWorkspaceForInquiry(id),
+    getOperationsSettings()
+  ]);
 
   return (
     <div className="space-y-6">
@@ -47,7 +51,7 @@ export default async function AdminInquiryQuotePage({
         </div>
       </Card>
 
-      <QuoteWorkspacePanel inquiryId={id} workspace={workspace} />
+      <QuoteWorkspacePanel inquiryId={id} workspace={workspace} operationsSettings={operationsSettings} />
     </div>
   );
 }
