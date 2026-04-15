@@ -138,22 +138,27 @@ async function seedLegacyPricing() {
 }
 
 async function seedAdminUsers() {
+  const adminEmail = process.env.ADMIN_SEED_EMAIL?.trim().toLowerCase() || "admin@admin-office.local";
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD?.trim() || "Admin1234!";
+  const staffEmail = process.env.STAFF_SEED_EMAIL?.trim().toLowerCase() || "staff@admin-office.local";
+  const staffPassword = process.env.STAFF_SEED_PASSWORD?.trim() || "Staff1234!";
+
   const [adminPasswordHash, staffPasswordHash] = await Promise.all([
-    hashPassword("Admin1234!"),
-    hashPassword("Staff1234!")
+    hashPassword(adminPassword),
+    hashPassword(staffPassword)
   ]);
 
   await prisma.user.createMany({
     data: [
       {
-        email: "admin@admin-office.local",
+        email: adminEmail,
         name: "Local Admin",
         role: "ADMIN",
         passwordHash: adminPasswordHash,
         isActive: true
       },
       {
-        email: "staff@admin-office.local",
+        email: staffEmail,
         name: "Local Staff",
         role: "STAFF",
         passwordHash: staffPasswordHash,
