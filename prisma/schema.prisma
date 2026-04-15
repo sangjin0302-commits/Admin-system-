@@ -219,6 +219,23 @@ model Inquiry {
   quotes                   Quote[]
   contractDrafts           ContractDraft[]
   cases                    CaseRecord[]
+  issueBotLinks            IssueBotLink[]
+}
+
+model IssueBotLink {
+  id               String   @id @default(cuid())
+  inquiryId        String
+  inquiry          Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  botKey           String
+  botLabel         String
+  status           String   @default("PLANNED")
+  connectionNotes  String?
+  externalThreadId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([inquiryId, botKey])
+  @@index([inquiryId, status])
 }
 
 model ServiceType {

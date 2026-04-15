@@ -2,11 +2,13 @@
 import { notFound } from "next/navigation";
 
 import { AdminSessionBanner } from "@/components/admin/admin-session-banner";
+import { IssueBotLinkForm } from "@/components/admin/issue-bot-link-form";
 import { InquiryManagementForm } from "@/components/admin/inquiry-management-form";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { requireAdminPageSession } from "@/lib/auth/session";
 import { getInquiryById } from "@/lib/services/inquiry-service";
+import { listIssueBotLinks } from "@/lib/services/issue-bot-service";
 import { formatDateTime, parseJsonArray } from "@/lib/utils";
 import {
   clientTypeLabels,
@@ -30,7 +32,7 @@ export default async function AdminInquiryDetailPage({
 }) {
   const { id } = await params;
   const session = await requireAdminPageSession(`/admin/inquiries/${id}`);
-  const inquiry = await getInquiryById(id);
+  const [inquiry, issueBotLinks] = await Promise.all([getInquiryById(id), listIssueBotLinks(id)]);
 
   if (!inquiry) {
     notFound();
@@ -197,6 +199,10 @@ export default async function AdminInquiryDetailPage({
             />
           </div>
         </div>
+      </Card>
+
+      <Card className="p-6">
+        <IssueBotLinkForm inquiryId={inquiry.id} links={issueBotLinks} />
       </Card>
     </div>
   );
