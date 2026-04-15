@@ -2,6 +2,7 @@ import fsSync from "node:fs";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaBetterSQLite3 } from "@prisma/adapter-better-sqlite3";
 import {
   PrismaClient,
@@ -9,6 +10,7 @@ import {
   type PricingOptionType,
   type PricingRuleType
 } from "@generated/prisma-client/client";
+import { Pool } from "pg";
 import { hashPassword } from "../src/lib/auth/password";
 import legacyPricing from "./data/legacy-pricing.json";
 
@@ -36,19 +38,60 @@ function loadEnvFile(filePath: string) {
 loadEnvFile(path.join(process.cwd(), ".env"));
 
 const databaseUrl = process.env.DATABASE_URL;
+const databaseProvider = process.env.DATABASE_PROVIDER?.trim() || (databaseUrl?.startsWith("file:") ? "sqlite" : "postgresql");
 
 if (!databaseUrl) {
   throw new Error("DATABASE_URL is not configured.");
 }
 
-const adapter = new PrismaBetterSQLite3(
-  {
-    url: databaseUrl
-  },
-  {
-    timestampFormat: "unixepoch-ms"
+function normalizePostgresConnectionString(databaseUrlValue: string) {
+  try {
+    const url = new URL(databaseUrlValue);
+    url.searchParams.delete("sslmode");
+    url.searchParams.delete("sslcert");
+    url.searchParams.delete("sslkey");
+    url.searchParams.delete("sslrootcert");
+    return url.toString();
+  } catch {
+    return databaseUrlValue;
   }
-);
+}
+
+function shouldRejectUnauthorized(databaseUrlValue: string) {
+  const configured = process.env.PGSSL_REJECT_UNAUTHORIZED?.trim().toLowerCase();
+  if (configured === "true") return true;
+  if (configured === "false") return false;
+
+  try {
+    const hostname = new URL(databaseUrlValue).hostname.toLowerCase();
+    if (hostname.endsWith(".rlwy.net") || hostname === "postgres.railway.internal") {
+      return false;
+    }
+  } catch {
+    return true;
+  }
+
+  return true;
+}
+
+const adapter =
+  databaseProvider === "sqlite"
+    ? new PrismaBetterSQLite3(
+        {
+          url: databaseUrl
+        },
+        {
+          timestampFormat: "unixepoch-ms"
+        }
+      )
+    : new PrismaPg(
+        new Pool({
+          connectionString: normalizePostgresConnectionString(databaseUrl),
+          ssl: {
+            rejectUnauthorized: shouldRejectUnauthorized(databaseUrl)
+          }
+        })
+      );
 
 const prisma = new PrismaClient({ adapter });
 const uploadRoot = path.resolve(process.cwd(), process.env.DOCUMENT_UPLOAD_DIR?.trim() || "uploads");
