@@ -18,6 +18,37 @@ const nextConfig: NextConfig = {
     // under the current Windows environment.
     webpackBuildWorker: false,
     externalDir: true
+  },
+  webpack: (config) => {
+    config.resolve = config.resolve ?? {};
+    config.resolve.alias = {
+      ...(config.resolve.alias ?? {}),
+      // Prisma's custom generated client imports these runtime subpaths directly.
+      // Vercel's Next/webpack build fails to resolve them from the external
+      // generated directory unless we pin them to the installed runtime files.
+      "@prisma/client/runtime/client": path.resolve(
+        process.cwd(),
+        "node_modules/@prisma/client/runtime/client.js"
+      ),
+      "@prisma/client/runtime/query_compiler_bg.postgresql.mjs": path.resolve(
+        process.cwd(),
+        "node_modules/@prisma/client/runtime/query_compiler_bg.postgresql.mjs"
+      ),
+      "@prisma/client/runtime/query_compiler_bg.postgresql.wasm-base64.mjs": path.resolve(
+        process.cwd(),
+        "node_modules/@prisma/client/runtime/query_compiler_bg.postgresql.wasm-base64.mjs"
+      ),
+      "@prisma/client/runtime/query_engine_bg.postgresql.mjs": path.resolve(
+        process.cwd(),
+        "node_modules/@prisma/client/runtime/query_engine_bg.postgresql.mjs"
+      ),
+      "@prisma/client/runtime/query_engine_bg.postgresql.wasm-base64.mjs": path.resolve(
+        process.cwd(),
+        "node_modules/@prisma/client/runtime/query_engine_bg.postgresql.wasm-base64.mjs"
+      )
+    };
+
+    return config;
   }
 };
 
