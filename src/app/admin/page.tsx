@@ -10,6 +10,7 @@ import { listInquiries } from "@/lib/services/inquiry-service";
 import { getWorkQueueSnapshot } from "@/lib/work-queue/service";
 
 export const dynamic = "force-dynamic";
+type DashboardInquiryItem = Awaited<ReturnType<typeof listInquiries>>[number];
 
 export default async function AdminIndexPage() {
   const session = await requireAdminPageSession("/admin", "STAFF");
@@ -21,12 +22,14 @@ export default async function AdminIndexPage() {
 
   const total = inquiries.length;
   const consultation = inquiries.filter(
-    (item) => item.status === "CONSULTATION_REQUIRED" || item.status === "WAITING_CONSULTATION"
+    (item: DashboardInquiryItem) =>
+      item.status === "CONSULTATION_REQUIRED" || item.status === "WAITING_CONSULTATION"
   ).length;
   const quotePending = inquiries.filter(
-    (item) => item.status === "QUOTE_DRAFTED" || item.status === "QUOTE_SENT"
+    (item: DashboardInquiryItem) =>
+      item.status === "QUOTE_DRAFTED" || item.status === "QUOTE_SENT"
   ).length;
-  const won = inquiries.filter((item) => item.status === "WON").length;
+  const won = inquiries.filter((item: DashboardInquiryItem) => item.status === "WON").length;
 
   return (
     <div className="space-y-6">
