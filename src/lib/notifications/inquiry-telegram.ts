@@ -60,7 +60,7 @@ function buildTelegramMessage(input: InquiryTelegramNotificationInput) {
   return lines.join("\n");
 }
 
-export async function sendInquiryTelegramNotification(input: InquiryTelegramNotificationInput) {
+export async function sendTelegramMessage(text: string) {
   const config = getTelegramConfig();
   if (!config.botToken || !config.chatId) {
     return;
@@ -73,7 +73,7 @@ export async function sendInquiryTelegramNotification(input: InquiryTelegramNoti
     },
     body: JSON.stringify({
       chat_id: config.chatId,
-      text: buildTelegramMessage(input),
+      text,
       parse_mode: "MarkdownV2",
       disable_web_page_preview: true
     })
@@ -83,4 +83,8 @@ export async function sendInquiryTelegramNotification(input: InquiryTelegramNoti
     const body = await response.text();
     throw new Error(`Failed to send Telegram notification: ${response.status} ${body}`);
   }
+}
+
+export async function sendInquiryTelegramNotification(input: InquiryTelegramNotificationInput) {
+  await sendTelegramMessage(buildTelegramMessage(input));
 }

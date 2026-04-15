@@ -25,6 +25,14 @@ type CaseWorkflowPanelProps = {
   initialCaseWorkspace: CaseWorkspaceSnapshot | null;
 };
 
+type CaseAiBrief = {
+  caseSummary: string;
+  keyRisks: string;
+  nextActions: string;
+  clientUpdateDraft: string;
+  internalPriorityMemo: string;
+};
+
 function deadlineInputValue(
   workspace: CaseWorkspaceSnapshot | null,
   key: "dueDate" | "filingDeadline" | "supplementDeadline" | "stayExpirationDate" | "internalDeadline"
@@ -37,6 +45,7 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
   const [submissionWorkspace, setSubmissionWorkspace] = useState<SubmissionWorkspaceSnapshot | null>(null);
   const [message, setMessage] = useState("");
   const [tone, setTone] = useState<"default" | "success" | "error">("default");
+  const [aiBrief, setAiBrief] = useState<CaseAiBrief | null>(null);
   const [isPending, startTransition] = useTransition();
   const [stage, setStage] = useState<CaseStage>(
     initialCaseWorkspace?.currentStage ?? "CONTRACT_PREPARATION"
@@ -481,6 +490,29 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
     }
   }
 
+  async function handleGenerateAiBrief() {
+    if (!caseWorkspace) return;
+
+    startTransition(async () => {
+      try {
+        const response = await fetch(`/api/admin/cases/${caseWorkspace.id}/ai-brief`, {
+          method: "POST"
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          setFeedback(payload.error ?? "AI 사건 요약을 생성하지 못했습니다.", "error");
+          return;
+        }
+
+        setAiBrief(payload.brief);
+        setFeedback("AI 사건 요약을 생성했습니다.", "success");
+      } catch {
+        setFeedback("AI 사건 요약 생성 중 오류가 발생했습니다.", "error");
+      }
+    });
+  }
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
@@ -904,6 +936,59 @@ export function CaseWorkflowPanel({ initialCaseWorkspace }: CaseWorkflowPanelPro
         )}
       </Card>
 
+      <Card className="p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="ui-section-title">AI 사건 요약</h3>
+            <p className="ui-section-copy mt-2">
+              현재 기한, 누락 서류, 제출 패키지, 보완 요청을 기준으로 실무 요약과 다음 액션을
+              정리합니다.
+            </p>
+          </div>
+          <Button variant="secondary" onClick={handleGenerateAiBrief} disabled={isPending}>
+            {isPending ? "생성 중..." : "AI 사건 요약 생성"}
+          </Button>
+        </div>
+
+        {aiBrief ? (
+          <div className="mt-5 grid gap-4">
+            <CaseAiCard
+              title="사건 요약"
+              text={aiBrief.caseSummary}
+              onCopy={() => copyText("사건 요약", aiBrief.caseSummary)}
+            />
+            <CaseAiCard
+              title="주요 리스크"
+              text={aiBrief.keyRisks}
+              onCopy={() => copyText("주요 리스크", aiBrief.keyRisks)}
+            />
+            <CaseAiCard
+              title="다음 액션"
+              text={aiBrief.nextActions}
+              onCopy={() => copyText("다음 액션", aiBrief.nextActions)}
+            />
+            <div className="grid gap-4 xl:grid-cols-2">
+              <CaseAiCard
+                title="고객 안내 초안"
+                text={aiBrief.clientUpdateDraft}
+                onCopy={() => copyText("고객 안내 초안", aiBrief.clientUpdateDraft)}
+              />
+              <CaseAiCard
+                title="내부 우선순위 메모"
+                text={aiBrief.internalPriorityMemo}
+                onCopy={() => copyText("내부 우선순위 메모", aiBrief.internalPriorityMemo)}
+              />
+            </div>
+          </div>
+        ) : (
+          <EmptyState
+            title="AI 사건 요약이 아직 없습니다."
+            description="사건 진행 상태와 제출 흐름이 잡힌 뒤 버튼을 눌러 실무형 요약을 생성할 수 있습니다."
+            className="mt-5"
+          />
+        )}
+      </Card>
+
       {message ? <StateInline tone={tone}>{message}</StateInline> : null}
     </div>
   );
@@ -1259,6 +1344,28 @@ function SupplementRequestCard({
 }
 
 function MessageCard({
+  title,
+  text,
+  onCopy
+}: {
+  title: string;
+  text: string;
+  onCopy: () => Promise<void>;
+}) {
+  return (
+    <Card muted className="ui-stat-card p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-text-strong">{title}</p>
+        <Button size="sm" variant="secondary" className="ui-toolbar-button" onClick={onCopy}>
+          복사
+        </Button>
+      </div>
+      <pre className="mt-3 whitespace-pre-wrap text-sm text-text">{text}</pre>
+    </Card>
+  );
+}
+
+function CaseAiCard({
   title,
   text,
   onCopy

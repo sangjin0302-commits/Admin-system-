@@ -26,6 +26,14 @@ type ClientRelationshipPanelProps = {
   initialWorkspace: ClientRelationshipWorkspace | null;
 };
 
+type RelationshipAiDraft = {
+  followUpStrategy: string;
+  reviewRequest: string;
+  referralRequest: string;
+  reengagementMessage: string;
+  internalNote: string;
+};
+
 function dateInputValue(value?: string | null) {
   return value?.slice(0, 10) ?? "";
 }
@@ -34,6 +42,7 @@ export function ClientRelationshipPanel({ initialWorkspace }: ClientRelationship
   const [workspace, setWorkspace] = useState(initialWorkspace);
   const [message, setMessage] = useState("");
   const [tone, setTone] = useState<"default" | "success" | "error">("default");
+  const [aiDraft, setAiDraft] = useState<RelationshipAiDraft | null>(null);
   const [isPending, startTransition] = useTransition();
   const [closedAt, setClosedAt] = useState(dateInputValue(initialWorkspace?.closure.closedAt));
   const [closeReason, setCloseReason] = useState(initialWorkspace?.closure.closeReason ?? "");
@@ -182,6 +191,29 @@ export function ClientRelationshipPanel({ initialWorkspace }: ClientRelationship
     } catch {
       setFeedback("클립보드 복사에 실패했습니다.", "error");
     }
+  }
+
+  async function generateAiDraft() {
+    if (!workspace) return;
+
+    startTransition(async () => {
+      try {
+        const response = await fetch(`/api/admin/cases/${workspace.caseId}/relationship-ai`, {
+          method: "POST"
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          setFeedback(payload.error ?? "AI 후속 문안을 생성하지 못했습니다.", "error");
+          return;
+        }
+
+        setAiDraft(payload.draft);
+        setFeedback("AI 후속 문안을 생성했습니다.", "success");
+      } catch {
+        setFeedback("AI 후속 문안 생성 중 오류가 발생했습니다.", "error");
+      }
+    });
   }
 
   if (!workspace) {
@@ -359,6 +391,57 @@ export function ClientRelationshipPanel({ initialWorkspace }: ClientRelationship
             onCopy={() => copyText("재의뢰 안부", workspace.messageDrafts.reengagementKo)}
           />
         </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="ui-section-title">AI 후속 문안</h3>
+            <p className="ui-section-copy mt-2">
+              종결 사유, 후속 일정, 현재 관계 상태를 기준으로 후기·추천·재의뢰 문안을
+              실무형으로 다듬어줍니다.
+            </p>
+          </div>
+          <Button variant="secondary" onClick={generateAiDraft} disabled={isPending}>
+            {isPending ? "생성 중..." : "AI 후속 문안 생성"}
+          </Button>
+        </div>
+
+        {aiDraft ? (
+          <div className="mt-5 grid gap-4">
+            <MessageCard
+              title="후속 전략 메모"
+              text={aiDraft.followUpStrategy}
+              onCopy={() => copyText("후속 전략 메모", aiDraft.followUpStrategy)}
+            />
+            <MessageCard
+              title="후기 요청 초안"
+              text={aiDraft.reviewRequest}
+              onCopy={() => copyText("후기 요청 초안", aiDraft.reviewRequest)}
+            />
+            <MessageCard
+              title="추천 요청 초안"
+              text={aiDraft.referralRequest}
+              onCopy={() => copyText("추천 요청 초안", aiDraft.referralRequest)}
+            />
+            <MessageCard
+              title="재의뢰 안부 초안"
+              text={aiDraft.reengagementMessage}
+              onCopy={() => copyText("재의뢰 안부 초안", aiDraft.reengagementMessage)}
+            />
+            <MessageCard
+              title="내부 메모"
+              text={aiDraft.internalNote}
+              onCopy={() => copyText("내부 메모", aiDraft.internalNote)}
+            />
+          </div>
+        ) : (
+          <EmptyState
+            title="AI 후속 문안이 아직 없습니다."
+            description="후속조치나 관계 상태가 정리된 뒤 버튼을 눌러 고객 안내와 내부 메모 초안을 생성할 수 있습니다."
+            className="mt-5"
+          />
+        )}
       </Card>
 
       {message ? <StateInline tone={tone}>{message}</StateInline> : null}
