@@ -1,4 +1,6 @@
-﻿import { AdminSessionBanner } from "@/components/admin/admin-session-banner";
+﻿import Link from "next/link";
+
+import { AdminSessionBanner } from "@/components/admin/admin-session-banner";
 import { InquiryCardList } from "@/components/admin/inquiry-card-list";
 import { InquiryDashboardSummary } from "@/components/admin/inquiry-dashboard-summary";
 import { InquiryFilters } from "@/components/admin/inquiry-filters";
@@ -11,6 +13,24 @@ import { parseAdminInquiryQuery } from "@/lib/validation/admin";
 
 export const dynamic = "force-dynamic";
 type InquiryListItem = Awaited<ReturnType<typeof listInquiries>>[number];
+
+const quickLinks = [
+  {
+    title: "고객관리",
+    description: "수임 이후 관계관리와 후속조치가 필요한 접수로 바로 이동합니다.",
+    href: "/admin/inquiries?status=WON"
+  },
+  {
+    title: "예측",
+    description: "최근 KPI와 주간 예측 데이터를 별도 화면에서 검토합니다.",
+    href: "/admin/forecast"
+  },
+  {
+    title: "제안서",
+    description: "견적 초안이 필요한 접수로 바로 이동해 Quote workspace로 이어집니다.",
+    href: "/admin/inquiries?status=QUOTE_DRAFTED"
+  }
+] as const;
 
 export default async function AdminInquiryListPage({
   searchParams
@@ -37,6 +57,19 @@ export default async function AdminInquiryListPage({
           </div>
         </div>
       </Card>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        {quickLinks.map((item) => (
+          <Card key={item.title} className="p-5">
+            <p className="ui-kicker">Quick Access</p>
+            <h3 className="mt-2 ui-section-title">{item.title}</h3>
+            <p className="ui-section-copy mt-2">{item.description}</p>
+            <Link href={item.href} className="ui-toolbar-button mt-4 inline-flex px-4 py-2 text-sm">
+              바로 이동
+            </Link>
+          </Card>
+        ))}
+      </div>
 
       <InquiryDashboardSummary
         totalCount={allInquiries.length}
