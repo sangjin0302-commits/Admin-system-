@@ -50,6 +50,9 @@ type QuoteWithRelations = Prisma.QuoteGetPayload<{
 type QuoteLineItemRecord = QuoteWithRelations["lineItems"][number];
 type QuoteAdjustmentRecord = QuoteWithRelations["adjustments"][number];
 type PaymentPlanRecord = QuoteWithRelations["paymentPlans"][number];
+type ServiceTypeRecord = Awaited<ReturnType<typeof prisma.serviceType.findMany>>[number];
+type PricingOptionRecord = Awaited<ReturnType<typeof prisma.pricingOption.findMany>>[number];
+type PricingRuleRecord = Awaited<ReturnType<typeof prisma.pricingRule.findMany>>[number];
 type QuoteTxDb = {
   quote: Pick<typeof prisma.quote, "findUniqueOrThrow" | "update">;
   inquiry: Pick<typeof prisma.inquiry, "update">;
@@ -273,7 +276,7 @@ async function loadQuoteMasters() {
   ]);
 
   return {
-    serviceTypes: serviceTypes.map<ServiceTypeMaster>((serviceType) => ({
+    serviceTypes: serviceTypes.map<ServiceTypeMaster>((serviceType: ServiceTypeRecord) => ({
       id: serviceType.id,
       legacyId: serviceType.legacyId,
       name: serviceType.name,
@@ -283,7 +286,7 @@ async function loadQuoteMasters() {
       isAppeal: serviceType.isAppeal,
       isActive: serviceType.isActive
     })),
-    pricingOptions: pricingOptions.map<PricingOptionMaster>((option) => ({
+    pricingOptions: pricingOptions.map<PricingOptionMaster>((option: PricingOptionRecord) => ({
       id: option.id,
       legacyId: option.legacyId,
       name: option.name,
@@ -295,7 +298,7 @@ async function loadQuoteMasters() {
       isVat: option.isVat,
       isActive: option.isActive
     })),
-    pricingRules: pricingRules.map<PricingRuleMaster>((rule) => ({
+    pricingRules: pricingRules.map<PricingRuleMaster>((rule: PricingRuleRecord) => ({
       id: rule.id,
       code: rule.code,
       ruleType: rule.ruleType,
