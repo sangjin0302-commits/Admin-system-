@@ -249,10 +249,20 @@ function toContractDraftSnapshot(contractDraft: QuoteWithRelations["contractDraf
   };
 }
 
+type QuoteLineItemRecord = QuoteWithRelations["lineItems"][number];
+type QuoteAdjustmentRecord = QuoteWithRelations["adjustments"][number];
+type QuotePaymentPlanRecord = QuoteWithRelations["paymentPlans"][number];
+
 function serializeQuote(quote: QuoteWithRelations) {
-  const sortedLineItems = quote.lineItems.sort((left, right) => left.sortOrder - right.sortOrder);
-  const sortedAdjustments = quote.adjustments.sort((left, right) => left.sortOrder - right.sortOrder);
-  const sortedPaymentPlans = quote.paymentPlans.sort((left, right) => left.sortOrder - right.sortOrder);
+  const sortedLineItems = quote.lineItems.sort(
+    (left: QuoteLineItemRecord, right: QuoteLineItemRecord) => left.sortOrder - right.sortOrder
+  );
+  const sortedAdjustments = quote.adjustments.sort(
+    (left: QuoteAdjustmentRecord, right: QuoteAdjustmentRecord) => left.sortOrder - right.sortOrder
+  );
+  const sortedPaymentPlans = quote.paymentPlans.sort(
+    (left: QuotePaymentPlanRecord, right: QuotePaymentPlanRecord) => left.sortOrder - right.sortOrder
+  );
   const paymentSummary = buildPaymentSummaryText(sortedPaymentPlans);
   const messageInput = {
     contactName: quote.inquiry.contactName,
