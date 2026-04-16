@@ -36,7 +36,7 @@ export function InquiryOperationsFeedPanel({
         <div>
           <h3 className="ui-section-title">운영 흐름 및 커뮤니케이션 로그</h3>
           <p className="mt-2 text-sm text-text-muted">
-            접수 후 어떤 단계가 지나갔는지와, 지금 바로 고객에게 보낼 수 있는 운영 메모를 함께 보여줍니다.
+            접수부터 사건 진행 전환까지 어떤 단계가 반영됐는지, 지금 바로 어떤 메모를 남겨야 하는지 함께 보여줍니다.
           </p>
         </div>
         <Button size="sm" variant="secondary" onClick={() => void copyDraft()}>

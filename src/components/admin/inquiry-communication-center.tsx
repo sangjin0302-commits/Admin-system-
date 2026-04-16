@@ -39,7 +39,7 @@ export function InquiryCommunicationCenter({
         <div>
           <h3 className="ui-section-title">고객 커뮤니케이션 허브</h3>
           <p className="mt-2 text-sm text-text-muted">
-            접수 이후 바로 보낼 수 있는 안내문, 자료 요청문, 상담 및 견적 연결 문안을 한곳에서 관리합니다.
+            접수 직후부터 상담, 자료 요청, 견적 연결까지 바로 보낼 수 있는 문안을 한곳에서 관리합니다.
           </p>
         </div>
         <Badge>실무 템플릿</Badge>
@@ -64,7 +64,7 @@ export function InquiryCommunicationCenter({
               <div className="flex items-center gap-2">
                 {draft.badge ? <Badge>{draft.badge}</Badge> : null}
                 <Button size="sm" variant="secondary" onClick={() => void copyDraft(draft.id, draft.content)}>
-                  {copiedId === draft.id ? "복사됨" : "복사"}
+                  {copiedId === draft.id ? "복사됨" : "문안 복사"}
                 </Button>
               </div>
             </div>

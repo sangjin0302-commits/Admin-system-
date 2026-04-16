@@ -38,7 +38,7 @@ export function ReferenceRecommendationsPanel({
       {!hasContent ? (
         <EmptyState
           className="mt-5"
-          title="추천된 참고자료가 아직 없습니다."
+          title="추천할 참고자료가 아직 없습니다."
           description="Notion 참고자료 DB와 참고 홈페이지 DB가 연결되면 사건 유형에 맞는 자료가 자동으로 추천됩니다."
         />
       ) : (
@@ -48,7 +48,7 @@ export function ReferenceRecommendationsPanel({
             {recommendations.materials.length === 0 ? (
               <EmptyState
                 title="추천 자료가 없습니다."
-                description="분야 태그나 자료 요약을 더 채워두면 추천 정확도가 좋아집니다."
+                description="분야 태그와 자료 요약이 채워질수록 추천 정확도가 좋아집니다."
               />
             ) : (
               recommendations.materials.map((item) => (
@@ -62,7 +62,7 @@ export function ReferenceRecommendationsPanel({
             {recommendations.websites.length === 0 ? (
               <EmptyState
                 title="추천 홈페이지가 없습니다."
-                description="분야별 홈페이지 DB에 관련 기관과 용도 설명을 더 채워두면 추천 정확도가 좋아집니다."
+                description="분야별 사이트 DB에 관련 기관과 용도 설명이 채워질수록 추천 정확도가 좋아집니다."
               />
             ) : (
               recommendations.websites.map((item) => (

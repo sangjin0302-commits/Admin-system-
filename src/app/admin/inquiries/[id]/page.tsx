@@ -2,6 +2,7 @@
 
 import { InquiryCaseAnalysisPanel } from "@/components/admin/inquiry-case-analysis-panel";
 import { InquiryCommunicationCenter } from "@/components/admin/inquiry-communication-center";
+import { InquiryDecisionBoard } from "@/components/admin/inquiry-decision-board";
 import { LawbotCaseAnalysisPanel } from "@/components/admin/lawbot-case-analysis-panel";
 import { InquiryManagementForm } from "@/components/admin/inquiry-management-form";
 import { InquiryMessagePreview } from "@/components/admin/inquiry-message-preview";
@@ -487,7 +488,13 @@ export default async function AdminInquiryDetailPage({
           </Card>
 
           <InquiryCaseAnalysisPanel analysis={caseAnalysis} />
-      <InquiryCommunicationCenter drafts={communicationDrafts} />
+          <InquiryDecisionBoard
+            analysis={caseAnalysis}
+            lawbotAnalysis={lawbotAnalysis}
+            references={referenceRecommendations}
+            qualificationScore={inquiry.qualificationScore}
+          />
+          <InquiryCommunicationCenter drafts={communicationDrafts} />
           <InquiryOperationsFeedPanel items={operationsFeed} communicationDraft={operationsDraft} />
           <LawbotCaseAnalysisPanel inquiryId={inquiry.id} initialResult={lawbotAnalysis} />
           <ReferenceRecommendationsPanel recommendations={referenceRecommendations} />
