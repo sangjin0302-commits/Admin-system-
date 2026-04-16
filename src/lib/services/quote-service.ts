@@ -50,7 +50,11 @@ type QuoteWithRelations = Prisma.QuoteGetPayload<{
     caseRecord: true;
   };
 }>;
-type DbClient = Pick<typeof prisma, "quote" | "contractDraft" | "caseRecord">;
+type DbClient = Pick<typeof prisma, "quote" | "contractDraft" | "caseRecord" | "inquiry">;
+
+function asDbClient(client: unknown): DbClient {
+  return client as DbClient;
+}
 
 function buildContractAnalysisTerms(quote: QuoteWithRelations) {
   const analysis = analyzeInquiryCase(quote.inquiry);
@@ -1071,21 +1075,23 @@ export async function transitionQuoteStatus(
   assertQuoteTransition(current.status, input.status);
 
   await prisma.$transaction(async (tx) => {
-    await tx.quote.update({
+    const db = asDbClient(tx);
+
+    await db.quote.update({
       where: { id: quoteId },
       data: { status: input.status }
     });
 
-    await tx.inquiry.update({
+    await db.inquiry.update({
       where: { id: current.inquiryId },
       data: { status: quoteStatusToInquiryStatus[input.status] }
     });
 
-    const refreshed = await loadQuoteWithRelations(tx, quoteId);
+    const refreshed = await loadQuoteWithRelations(db, quoteId);
 
     if (input.status === "ACCEPTED") {
-      const contractDraft = await upsertContractDraftFromQuote(tx, refreshed);
-      await ensureCaseRecordForQuote(tx, refreshed, {
+      const contractDraft = await upsertContractDraftFromQuote(db, refreshed);
+      await ensureCaseRecordForQuote(db, refreshed, {
         contractDraftId: contractDraft.id,
         currentStage: "CONTRACT_PREPARATION",
         dueDate: input.caseDueDate,
@@ -1096,7 +1102,7 @@ export async function transitionQuoteStatus(
 
     if (input.status === "REJECTED" || input.status === "EXPIRED") {
       if (refreshed.caseRecord) {
-        await ensureCaseRecordForQuote(tx, refreshed, {
+        await ensureCaseRecordForQuote(db, refreshed, {
           currentStage: "ON_HOLD",
           dueDate: input.caseDueDate,
           internalMemo: input.caseInternalMemo
@@ -1106,7 +1112,7 @@ export async function transitionQuoteStatus(
     }
 
     if (refreshed.caseRecord && (input.caseDueDate || input.caseInternalMemo)) {
-      await ensureCaseRecordForQuote(tx, refreshed, {
+      await ensureCaseRecordForQuote(db, refreshed, {
         currentStage: refreshed.caseRecord.currentStage,
         dueDate: input.caseDueDate,
         internalMemo: input.caseInternalMemo
@@ -1124,23 +1130,24 @@ export async function transitionQuoteStatus(
 
 export async function createContractDraftFromQuote(quoteId: string) {
   await prisma.$transaction(async (tx) => {
-    const quote = await loadQuoteWithRelations(tx, quoteId);
-    const contractDraft = await upsertContractDraftFromQuote(tx, quote);
+    const db = asDbClient(tx);
+    const quote = await loadQuoteWithRelations(db, quoteId);
+    const contractDraft = await upsertContractDraftFromQuote(db, quote);
     const nextStatus = quote.status === "DRAFT" ? "READY_TO_SEND" : quote.status;
 
     if (quote.status !== nextStatus) {
-      await tx.quote.update({
+      await db.quote.update({
         where: { id: quote.id },
         data: { status: nextStatus }
       });
     }
 
-    await tx.inquiry.update({
+    await db.inquiry.update({
       where: { id: quote.inquiryId },
       data: { status: quoteStatusToInquiryStatus[nextStatus] }
     });
 
-    await ensureCaseRecordForQuote(tx, quote, {
+    await ensureCaseRecordForQuote(db, quote, {
       contractDraftId: contractDraft.id,
       currentStage: "CONTRACT_PREPARATION",
       dueDate: quote.caseRecord?.dueDate ?? quote.inquiry.dueDate,
