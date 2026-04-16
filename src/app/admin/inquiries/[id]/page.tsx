@@ -258,6 +258,8 @@ export default async function AdminInquiryDetailPage({
   const inquiryType = inquiry.inquiryType as keyof typeof inquiryTypeLabels;
   const inquiryLanguage = inquiry.preferredLanguage as keyof typeof languageCodeLabels;
   const inquiryClientType = inquiry.clientType as keyof typeof clientTypeLabels;
+  const requestedInquiryType = (inquiry.requestedInquiryType ?? "UNKNOWN") as keyof typeof inquiryTypeLabels;
+  const declaredUrgency = (inquiry.declaredUrgency ?? "MEDIUM") as keyof typeof urgencyLabels;
   const quickStatuses = getQuickStatuses(caseAnalysis.strengthLabel);
   const quickStatusOptions = quickStatuses.map((status) => ({
     code: status,
@@ -416,8 +418,8 @@ export default async function AdminInquiryDetailPage({
               <InfoItem label="현재 상태" value={inquiry.currentStatus} />
               <InfoItem label="문서 발행국" value={inquiry.documentCountry} />
               <InfoItem label="제출처" value={inquiry.targetAgency} />
-              <InfoItem label="요청 문의유형" value={inquiryTypeLabels[inquiry.requestedInquiryType ?? "UNKNOWN"].ko} />
-              <InfoItem label="체감 긴급도" value={urgencyLabels[inquiry.declaredUrgency ?? "MEDIUM"].ko} />
+              <InfoItem label="요청 문의유형" value={inquiryTypeLabels[requestedInquiryType].ko} />
+              <InfoItem label="체감 긴급도" value={urgencyLabels[declaredUrgency].ko} />
               <InfoItem label="희망 일정" value={formatDateTime(inquiry.dueDate)} />
               <InfoItem label="보유 서류 여부" value={inquiry.hasPreparedDocuments ? "보유" : "미보유"} />
               <InfoItem label="번역 필요 여부" value={inquiry.needsTranslation ? "예" : "아니오"} />
