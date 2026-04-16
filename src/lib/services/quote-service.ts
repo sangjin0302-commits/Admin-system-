@@ -255,6 +255,32 @@ type QuotePaymentPlanRecord = QuoteWithRelations["paymentPlans"][number];
 type QuoteComputedLineItem = QuoteComputationResult["lineItems"][number];
 type QuoteComputedAdjustment = QuoteComputationResult["adjustments"][number];
 type QuoteComputedPaymentPlan = QuoteComputationResult["paymentPlans"][number];
+type ServiceTypeRecord = Awaited<ReturnType<typeof prisma.serviceType.findMany>>[number];
+type PricingOptionRecord = Awaited<ReturnType<typeof prisma.pricingOption.findMany>>[number];
+type PricingRuleRecord = Awaited<ReturnType<typeof prisma.pricingRule.findMany>>[number];
+type ManualQuoteLineInput = {
+  id: string;
+  label: string;
+  description?: string | null;
+  amountMin: number;
+  amountMax: number;
+  sortOrder: number;
+};
+type ManualQuoteAdjustmentInput = {
+  id: string;
+  label: string;
+  description?: string | null;
+  computedMin: number;
+  computedMax: number;
+  sortOrder: number;
+};
+type ManualQuotePaymentPlanInput = {
+  id: string;
+  percentage: number;
+  dueText: string;
+  sortOrder: number;
+  stageKind: PaymentStageKind;
+};
 
 function serializeQuote(quote: QuoteWithRelations) {
   const sortedLineItems = quote.lineItems.sort(
@@ -364,7 +390,7 @@ async function loadQuoteMasters() {
   ]);
 
   return {
-    serviceTypes: serviceTypes.map<ServiceTypeMaster>((serviceType) => ({
+    serviceTypes: serviceTypes.map<ServiceTypeMaster>((serviceType: ServiceTypeRecord) => ({
       id: serviceType.id,
       legacyId: serviceType.legacyId,
       name: serviceType.name,
@@ -374,7 +400,7 @@ async function loadQuoteMasters() {
       isAppeal: serviceType.isAppeal,
       isActive: serviceType.isActive
     })),
-    pricingOptions: pricingOptions.map<PricingOptionMaster>((option) => ({
+    pricingOptions: pricingOptions.map<PricingOptionMaster>((option: PricingOptionRecord) => ({
       id: option.id,
       legacyId: option.legacyId,
       name: option.name,
@@ -386,7 +412,7 @@ async function loadQuoteMasters() {
       isVat: option.isVat,
       isActive: option.isActive
     })),
-    pricingRules: pricingRules.map<PricingRuleMaster>((rule) => ({
+    pricingRules: pricingRules.map<PricingRuleMaster>((rule: PricingRuleRecord) => ({
       id: rule.id,
       code: rule.code,
       ruleType: rule.ruleType,
@@ -621,10 +647,10 @@ export async function getQuoteWorkspaceForInquiry(inquiryId: string): Promise<Qu
     masters: {
       serviceTypes: masters.serviceTypes,
       pricingOptions: masters.pricingOptions,
-      urgencyRules: masters.pricingRules.filter((rule) => rule.ruleType === "URGENCY"),
-      consultRules: masters.pricingRules.filter((rule) => rule.ruleType === "CONSULT"),
-      paymentRules: masters.pricingRules.filter((rule) => rule.ruleType === "PAYMENT"),
-      policyRules: masters.pricingRules.filter((rule) => rule.ruleType === "POLICY")
+      urgencyRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "URGENCY"),
+      consultRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "CONSULT"),
+      paymentRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "PAYMENT"),
+      policyRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "POLICY")
     },
     suggestedServiceLegacyIds,
     suggestedUrgencyRuleCode: mapUrgencyLevelToRuleCode(inquiry.urgencyLevel),
@@ -731,7 +757,7 @@ export async function saveQuoteManualEdits(
       where: { id: quoteId },
       data: { draftNotes: input.draftNotes ?? null }
     }),
-    ...input.lineItems.map((line) =>
+    ...input.lineItems.map((line: ManualQuoteLineInput) =>
       prisma.quoteLineItem.update({
         where: { id: line.id },
         data: {
@@ -744,7 +770,7 @@ export async function saveQuoteManualEdits(
         }
       })
     ),
-    ...input.adjustments.map((adjustment) =>
+    ...input.adjustments.map((adjustment: ManualQuoteAdjustmentInput) =>
       prisma.quoteAdjustment.update({
         where: { id: adjustment.id },
         data: {
@@ -757,7 +783,7 @@ export async function saveQuoteManualEdits(
         }
       })
     ),
-    ...input.paymentPlans.map((plan) =>
+    ...input.paymentPlans.map((plan: ManualQuotePaymentPlanInput) =>
       prisma.paymentPlan.update({
         where: { id: plan.id },
         data: {
