@@ -12,6 +12,8 @@ import type { InquiryDashboardSummaryProps } from "@/components/admin/inquiry-da
 
 export const dynamic = "force-dynamic";
 
+type InquiryListItem = Awaited<ReturnType<typeof listInquiries>>[number];
+
 function isWithinDays(date: Date | null | undefined, days: number) {
   if (!date) return false;
   const now = new Date();
@@ -27,33 +29,33 @@ export default async function AdminInquiryListPage({
   const rawParams = await searchParams;
   const filters = parseAdminInquiryQuery(rawParams);
   const [allInquiries, inquiries] = await Promise.all([listInquiries(), listInquiries(filters)]);
-  const activeInquiries = allInquiries.filter((item) => item.status !== "CLOSED");
-  const quotePendingCount = activeInquiries.filter((item) =>
+  const activeInquiries = allInquiries.filter((item: InquiryListItem) => item.status !== "CLOSED");
+  const quotePendingCount = activeInquiries.filter((item: InquiryListItem) =>
     ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)
   ).length;
-  const consultationNeededCount = activeInquiries.filter((item) =>
+  const consultationNeededCount = activeInquiries.filter((item: InquiryListItem) =>
     ["CONSULTATION_REQUIRED", "WAITING_CONSULTATION", "PRE_DIAGNOSED"].includes(item.status)
   ).length;
-  const nextThreeDaysCount = activeInquiries.filter((item) => isWithinDays(item.dueDate, 3)).length;
+  const nextThreeDaysCount = activeInquiries.filter((item: InquiryListItem) => isWithinDays(item.dueDate, 3)).length;
   const docsPendingCount = activeInquiries.filter(
-    (item) => !item.hasPreparedDocuments && item.status !== "WON"
+    (item: InquiryListItem) => !item.hasPreparedDocuments && item.status !== "WON"
   ).length;
   const todayActionCount = activeInquiries.filter(
-    (item) =>
+    (item: InquiryListItem) =>
       item.urgencyLevel === "CRITICAL" ||
       isWithinDays(item.dueDate, 1) ||
       ["QUOTE_DRAFTED", "QUOTE_PENDING", "CONSULTATION_REQUIRED"].includes(item.status)
   ).length;
   const actionItems: InquiryDashboardSummaryProps["actionItems"] = activeInquiries
     .filter(
-      (item) =>
+      (item: InquiryListItem) =>
         item.urgencyLevel === "CRITICAL" ||
         isWithinDays(item.dueDate, 3) ||
         ["QUOTE_DRAFTED", "QUOTE_PENDING", "CONSULTATION_REQUIRED", "WAITING_CONSULTATION"].includes(item.status) ||
         !item.hasPreparedDocuments
     )
     .slice(0, 6)
-    .map((item) => ({
+    .map((item: InquiryListItem) => ({
       id: item.id,
       title: item.title,
       href: `/admin/inquiries/${item.id}`,
