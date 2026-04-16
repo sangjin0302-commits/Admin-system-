@@ -1076,6 +1076,7 @@ export async function transitionQuoteStatus(
 
   await prisma.$transaction(async (tx) => {
     const db = asDbClient(tx);
+    const nextInquiryStatus = quoteStatusToInquiryStatus[input.status as QuoteStatus];
 
     await db.quote.update({
       where: { id: quoteId },
@@ -1084,7 +1085,7 @@ export async function transitionQuoteStatus(
 
     await db.inquiry.update({
       where: { id: current.inquiryId },
-      data: { status: quoteStatusToInquiryStatus[input.status] }
+      data: { status: nextInquiryStatus }
     });
 
     const refreshed = await loadQuoteWithRelations(db, quoteId);
@@ -1133,7 +1134,8 @@ export async function createContractDraftFromQuote(quoteId: string) {
     const db = asDbClient(tx);
     const quote = await loadQuoteWithRelations(db, quoteId);
     const contractDraft = await upsertContractDraftFromQuote(db, quote);
-    const nextStatus = quote.status === "DRAFT" ? "READY_TO_SEND" : quote.status;
+    const nextStatus: QuoteStatus = quote.status === "DRAFT" ? "READY_TO_SEND" : quote.status;
+    const nextInquiryStatus = quoteStatusToInquiryStatus[nextStatus];
 
     if (quote.status !== nextStatus) {
       await db.quote.update({
@@ -1144,7 +1146,7 @@ export async function createContractDraftFromQuote(quoteId: string) {
 
     await db.inquiry.update({
       where: { id: quote.inquiryId },
-      data: { status: quoteStatusToInquiryStatus[nextStatus] }
+      data: { status: nextInquiryStatus }
     });
 
     await ensureCaseRecordForQuote(db, quote, {
