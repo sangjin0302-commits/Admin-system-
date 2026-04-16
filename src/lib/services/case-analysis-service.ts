@@ -358,11 +358,12 @@ function unique(items: string[]) {
 }
 
 export function analyzeInquiryCase(inquiry: NonNullable<InquiryRecord>): InquiryCaseAnalysis {
-  const profile = PROFILE_MAP[inquiry.inquiryType];
+  const inquiryType = inquiry.inquiryType as keyof typeof PROFILE_MAP;
+  const profile = PROFILE_MAP[inquiryType];
   const dynamicSignals = buildDynamicSignals(inquiry);
   const strengthScore = calculateStrengthScore(inquiry, profile);
   const strengthLabel = labelFromScore(strengthScore);
-  const typeLabel = inquiryTypeLabels[inquiry.inquiryType].ko;
+  const typeLabel = inquiryTypeLabels[inquiryType].ko;
 
   const favorableFactors = unique([...profile.favorableFactors, ...dynamicSignals.favorable]);
   const riskFactors = unique([...profile.riskFactors, ...dynamicSignals.risk]);
