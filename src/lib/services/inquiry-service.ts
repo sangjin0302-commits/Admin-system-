@@ -43,7 +43,7 @@ function buildInquirySummary(input: {
   const deadline = input.dueDate ? formatDate(input.dueDate, locale === "ko" ? "ko-KR" : "en-US") : null;
 
   if (locale === "ko") {
-    return `${inquiryTypeLabels[input.inquiryType][locale]} 臾몄쓽?낅땲?? ?쒕ぉ? "${input.title}"?대ŉ, ?섏엫 ?곹빀?꾨뒗 ${input.qualificationScore}?먯엯?덈떎.${deadline ? ` ?щ쭩 ?쇱젙? ${deadline}?낅땲??` : ""} ?듭떖 ?댁슜: ${clippedDescription}`;
+    return `${inquiryTypeLabels[input.inquiryType][locale]} 문의입니다. 제목은 "${input.title}"이며, 수임 적합도는 ${input.qualificationScore}점입니다.${deadline ? ` 희망 일정은 ${deadline}입니다.` : ""} 상담 내용: ${clippedDescription}`;
   }
 
   return `${inquiryTypeLabels[input.inquiryType][locale]} inquiry. Title: "${input.title}". Qualification score: ${input.qualificationScore}.${deadline ? ` Target date: ${deadline}.` : ""} Summary: ${clippedDescription}`;
@@ -81,7 +81,7 @@ export async function createInquiry(payload: unknown) {
     preferredLanguage: input.preferredLanguage,
     title: input.title,
     description: input.requestedOutcome
-      ? `${input.description} / ?щ쭩 寃곌낵: ${input.requestedOutcome}`
+      ? `${input.description} / 희망 결과: ${input.requestedOutcome}`
       : input.description,
     urgencyLevel: evaluation.urgencyLevel,
     qualificationScore: evaluation.qualificationScore,

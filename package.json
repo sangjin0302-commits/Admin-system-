@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "postinstall": "node scripts/prepare-prisma-client.mjs",
     "prebuild": "node scripts/prepare-prisma-client.mjs",
     "build": "next build",
     "typecheck": "tsc --noEmit",
