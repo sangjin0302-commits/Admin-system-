@@ -451,8 +451,8 @@ export default async function AdminInquiryDetailPage({
           <Card className="p-6">
             <h3 className="ui-section-title">사전진단 결과</h3>
             <div className="mt-5 grid gap-3">
-              <InfoItem label="문의 유형" value={inquiryTypeLabels[inquiry.inquiryType].ko} />
-              <InfoItem label="긴급도" value={urgencyLabels[inquiry.urgencyLevel].ko} />
+              <InfoItem label="문의 유형" value={inquiryTypeLabels[inquiryType].ko} />
+              <InfoItem label="긴급도" value={urgencyLabels[inquiryUrgency].ko} />
               <InfoItem label="상담 필요 여부" value={inquiry.consultationRequired ? "필요" : "기본 안내 후 진행"} />
               <InfoItem label="분류 신뢰도" value={`${Math.round(inquiry.classificationConfidence * 100)}%`} />
               <InfoItem label="수임 적합도" value={`${inquiry.qualificationScore} / 100`} />
