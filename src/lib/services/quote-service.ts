@@ -50,7 +50,7 @@ type QuoteWithRelations = Prisma.QuoteGetPayload<{
     caseRecord: true;
   };
 }>;
-type DbClient = Prisma.TransactionClient;
+type DbClient = Pick<typeof prisma, "quote" | "contractDraft" | "caseRecord">;
 
 function buildContractAnalysisTerms(quote: QuoteWithRelations) {
   const analysis = analyzeInquiryCase(quote.inquiry);
