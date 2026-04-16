@@ -26,6 +26,8 @@ type InquiryListFilters = {
   sort?: AdminSort;
 };
 
+type InquiryListRecord = Awaited<ReturnType<typeof prisma.inquiry.findMany>>[number];
+
 function buildInquirySummary(input: {
   inquiryType: InquiryType;
   preferredLanguage: LanguageCode;
@@ -221,7 +223,7 @@ export async function listInquiries(filters: InquiryListFilters = {}) {
   });
 
   if (filters.sort === "urgency") {
-    return inquiries.sort((a, b) => {
+    return inquiries.sort((a: InquiryListRecord, b: InquiryListRecord) => {
       const urgencyDiff = getUrgencyRank(b.urgencyLevel) - getUrgencyRank(a.urgencyLevel);
       if (urgencyDiff !== 0) return urgencyDiff;
       return b.createdAt.getTime() - a.createdAt.getTime();
