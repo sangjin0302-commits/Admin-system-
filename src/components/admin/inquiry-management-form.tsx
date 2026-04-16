@@ -19,12 +19,14 @@ export function InquiryManagementForm({
   inquiryId,
   status: initialStatus,
   assignee: initialAssignee,
-  internalMemo: initialInternalMemo
+  internalMemo: initialInternalMemo,
+  quickStatuses = []
 }: {
   inquiryId: string;
   status: InquiryStatus;
   assignee: string | null;
   internalMemo: string | null;
+  quickStatuses?: InquiryStatus[];
 }) {
   const router = useRouter();
   const [status, setStatus] = useState(initialStatus);
@@ -63,6 +65,35 @@ export function InquiryManagementForm({
     });
   }
 
+  function submitWithStatus(nextStatus: InquiryStatus) {
+    setStatus(nextStatus);
+    setMessage("");
+
+    startTransition(async () => {
+      const response = await fetch(`/api/admin/inquiries/${inquiryId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: nextStatus,
+          assignee,
+          internalMemo
+        })
+      });
+
+      if (!response.ok) {
+        setMessageTone("error");
+        setMessage("상태 변경 중 오류가 발생했습니다.");
+        return;
+      }
+
+      setMessageTone("success");
+      setMessage(`${inquiryStatusLabels[nextStatus].ko} 상태로 반영했습니다.`);
+      router.refresh();
+    });
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <FieldGroup>
@@ -74,12 +105,28 @@ export function InquiryManagementForm({
               </option>
             ))}
           </Select>
+          {quickStatuses.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {quickStatuses.map((value) => (
+                <Button
+                  key={value}
+                  type="button"
+                  size="sm"
+                  variant={value === status ? "primary" : "secondary"}
+                  onClick={() => submitWithStatus(value)}
+                  disabled={isPending}
+                >
+                  {inquiryStatusLabels[value].ko}
+                </Button>
+              ))}
+            </div>
+          ) : null}
         </Field>
         <Field label="담당자">
           <Input
             value={assignee}
             onChange={(event) => setAssignee(event.target.value)}
-            placeholder="예: 김행정 / 운영담당"
+            placeholder="예: 김정우 / 운영담당"
           />
         </Field>
         <Field label="내부 메모" hint="고객에게 보이지 않는 관리자 메모입니다.">
@@ -87,7 +134,7 @@ export function InquiryManagementForm({
             rows={8}
             value={internalMemo}
             onChange={(event) => setInternalMemo(event.target.value)}
-            placeholder="상담 인상, 우선 확인사항, 견적 전 체크 내용 등을 기록합니다."
+            placeholder="상담 시 확인할 사항, 견적 체크 포인트, 후속 조치 메모를 기록합니다."
           />
         </Field>
       </FieldGroup>

@@ -1,4 +1,4 @@
-import type { PricingOptionType } from "@generated/prisma-client/client";
+﻿import type { PricingOptionType } from "@generated/prisma-client/client";
 
 import { mapUrgencyLevelToRuleCode, selectDefaultRuleCode, suggestServiceLegacyIds } from "@/lib/quote-engine/legacy-mapping";
 import type {
@@ -57,7 +57,7 @@ function buildStageTemplates(
     paymentRuleJson?.stages ?? [
       { stageKind: "RETAINER", percentage: 50, dueText: "계약 체결 시" },
       { stageKind: "MIDTERM", percentage: 50, dueText: "서류 접수 시" },
-      { stageKind: "SUCCESS", percentage: 0, dueText: "허가 완료 시" }
+      { stageKind: "SUCCESS", percentage: 0, dueText: "업무 완료 시" }
     ];
 
   const merged = baseStages.map((stage) => ({
@@ -212,7 +212,7 @@ export function computeQuoteDraft(input: QuoteComputationInput): QuoteComputatio
   if (successFeeRestricted) {
     warnings.push(
       appealPolicyJson?.message ??
-        "행정심판/이의신청 계열 업무는 성공보수를 포함하지 않도록 제한됩니다."
+        "행정심판/이의신청 계열 업무는 성공보수를 포함하지 않도록 제한합니다."
     );
   }
 
@@ -282,18 +282,18 @@ function buildCalculationSummary(input: {
       : "추가 옵션 없음";
   const consultText =
     (input.consultRule.numericValue ?? 0) > 0
-      ? `${input.consultRule.label} ${formatCurrency(input.consultRule.numericValue ?? 0)}원`
+      ? `${input.consultRule.label} ${formatCurrency(input.consultRule.numericValue ?? 0)}`
       : input.consultRule.label;
 
   return [
     `기본 업무: ${services}`,
-    `긴급도: ${input.urgencyRule.label}`,
+    `긴급도 규칙: ${input.urgencyRule.label}`,
     `추가 옵션: ${optionText}`,
     `상담료: ${consultText}`,
-    `견적 합계: ${formatCurrency(input.totalMin)}원 ~ ${formatCurrency(input.totalMax)}원`,
+    `견적 합계: ${formatCurrency(input.totalMin)} ~ ${formatCurrency(input.totalMax)}`,
     input.successFeeRestricted
-      ? "행정심판/이의신청 성격 업무로 성공보수는 자동 제한되었습니다."
-      : "기본 성공보수 구조는 관리자 검토 후 조정할 수 있습니다."
+      ? "행정심판/이의신청 계열 업무로 분류되어 성공보수는 제한됩니다."
+      : "성공보수 포함 여부는 관리자가 개별 사건 특성에 따라 조정할 수 있습니다."
   ].join("\n");
 }
 
@@ -304,23 +304,23 @@ export function buildManualSummary(input: {
   successFeeRestricted: boolean;
 }) {
   const lines = input.lineItems
-    .map((line) => `${line.label}: ${formatCurrency(line.amountMin)}원 ~ ${formatCurrency(line.amountMax)}원`)
+    .map((line) => `${line.label}: ${formatCurrency(line.amountMin)} ~ ${formatCurrency(line.amountMax)}`)
     .slice(0, 5);
 
   const optionLines = input.adjustments
     .map(
       (adjustment) =>
-        `${adjustment.isVat ? "VAT" : adjustment.label}: ${formatCurrency(adjustment.computedMin)}원 ~ ${formatCurrency(adjustment.computedMax)}원`
+        `${adjustment.isVat ? "VAT" : adjustment.label}: ${formatCurrency(adjustment.computedMin)} ~ ${formatCurrency(adjustment.computedMax)}`
     )
     .slice(0, 5);
 
   return [
     ...lines,
     ...optionLines,
-    input.consultFee > 0 ? `상담료: ${formatCurrency(input.consultFee)}원` : "상담료 미적용",
+    input.consultFee > 0 ? `상담료: ${formatCurrency(input.consultFee)}` : "상담료 미적용",
     input.successFeeRestricted
-      ? "행정심판/이의신청 계열로 성공보수 제한 적용"
-      : "성공보수 구조는 관리자 검토 가능"
+      ? "행정심판/이의신청 계열로 분류되어 성공보수 제한이 적용됩니다."
+      : "성공보수 구조는 관리자 검토 후 추가 조정 가능합니다."
   ].join("\n");
 }
 
@@ -340,14 +340,14 @@ export function buildContractDraftText(input: {
   const scopeText = input.lineItems
     .map(
       (line, index) =>
-        `${index + 1}. ${line.label}${line.description ? ` (${line.description})` : ""}: ${formatCurrency(line.amountMin)}원 ~ ${formatCurrency(line.amountMax)}원`
+        `${index + 1}. ${line.label}${line.description ? ` (${line.description})` : ""}: ${formatCurrency(line.amountMin)} ~ ${formatCurrency(line.amountMax)}`
     )
     .join("\n");
 
   const paymentSummary = input.paymentPlans
     .map(
       (stage) =>
-        `${toStageKindLabel(stage.stageKind as "RETAINER" | "MIDTERM" | "SUCCESS")} ${stage.percentage}% - ${stage.dueText} (${formatCurrency(stage.amountMin)}원 ~ ${formatCurrency(stage.amountMax)}원)`
+        `${toStageKindLabel(stage.stageKind as "RETAINER" | "MIDTERM" | "SUCCESS")} ${stage.percentage}% - ${stage.dueText} (${formatCurrency(stage.amountMin)} ~ ${formatCurrency(stage.amountMax)})`
     )
     .join("\n");
 
@@ -359,14 +359,22 @@ export function buildContractDraftText(input: {
     scopeText,
     "",
     "[보수 범위]",
-    `총 보수: ${formatCurrency(input.totalMin)}원 ~ ${formatCurrency(input.totalMax)}원`,
-    `VAT: ${formatCurrency(input.vatAmountMin)}원 ~ ${formatCurrency(input.vatAmountMax)}원`,
+    `총 보수: ${formatCurrency(input.totalMin)} ~ ${formatCurrency(input.totalMax)}`,
+    `VAT: ${formatCurrency(input.vatAmountMin)} ~ ${formatCurrency(input.vatAmountMax)}`,
     input.consultFee > 0
-      ? `상담료(수임 시 면제): ${formatCurrency(input.consultFee)}원`
-      : "상담료: 미적용",
+      ? `상담료(수임 시 공제): ${formatCurrency(input.consultFee)}`
+      : "상담료 미적용",
     "",
-    "[납입 구조]",
-    paymentSummary
+    "[결제 구조]",
+    paymentSummary,
+    "",
+    "[기본 안내]",
+    "1. 본 계약 초안은 현재까지 제공된 사실관계와 자료를 기준으로 작성된 내부 초안입니다.",
+    "2. 실제 업무 진행 가능 여부와 결과는 추가 자료, 관할 기관 심사, 사실관계 변동에 따라 달라질 수 있습니다.",
+    "3. 의뢰인은 사실관계와 제출 자료를 정확하게 제공해야 하며, 누락 또는 허위 자료로 인한 불이익은 별도 검토가 필요합니다.",
+    "4. 업무 범위에 명시되지 않은 번역, 공증, 외부 기관 수수료, 송달 비용, 추가 보완 대응은 별도 협의될 수 있습니다.",
+    "5. 기관 재량 판단, 제도 변경, 추가 보완 요청 등 외부 사유로 인한 지연 또는 결과 차이는 본 계약 초안만으로 확정되지 않습니다.",
+    "6. 업무 착수 이후 해지, 환불, 추가 비용 정산 기준은 실제 체결 시 별도 특약 또는 최종 계약문에서 확정합니다."
   ];
 
   if (input.successFeeRestricted) {
@@ -374,7 +382,7 @@ export function buildContractDraftText(input: {
       "",
       "[성공보수 제한]",
       input.warnings[0] ??
-        "행정심판/이의신청 계열 업무는 결과 연동 성공보수를 포함하지 않도록 제한합니다."
+        "행정심판/이의신청 계열 업무는 결과 연동형 성공보수를 포함하지 않도록 제한합니다."
     );
   }
 
@@ -389,3 +397,4 @@ export function buildContractDraftText(input: {
     paymentSummary
   };
 }
+

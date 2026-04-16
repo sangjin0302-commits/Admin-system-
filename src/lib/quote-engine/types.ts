@@ -1,7 +1,6 @@
 import type {
   CaseStage,
   ContractDraftStatus,
-  PaymentCollectionStatus,
   PaymentStageKind,
   PricingOptionType,
   PricingRuleType,
@@ -9,6 +8,8 @@ import type {
   QuoteStatus
 } from "@generated/prisma-client/client";
 import type { InquiryType, LanguageCode, UrgencyLevel } from "@/types/inquiry";
+import type { InquiryCaseAnalysis } from "@/lib/services/case-analysis-service";
+import type { LawbotCaseAnalysisResult } from "@/lib/services/lawbot-case-analysis-service";
 
 export type QuoteInquirySnapshot = {
   id: string;
@@ -215,16 +216,6 @@ export type QuoteSummarySnapshot = {
     scopeText: string | null;
     successFeeRestricted: boolean;
     specialTerms: string | null;
-    contractShareUrl: string | null;
-    contractSentAt: string | null;
-    contractSignedAt: string | null;
-    paymentLinkUrl: string | null;
-    paymentProvider: string | null;
-    paymentRequestedAt: string | null;
-    paymentStatus: PaymentCollectionStatus;
-    paidAt: string | null;
-    paymentReference: string | null;
-    paymentMemo: string | null;
     updatedAt: string;
   } | null;
   caseRecord: {
@@ -248,6 +239,8 @@ export type QuoteWorkspace = {
     createdAt: string;
     updatedAt: string;
   };
+  caseAnalysis: InquiryCaseAnalysis;
+  lawbotAnalysis: LawbotCaseAnalysisResult;
   masters: {
     serviceTypes: ServiceTypeMaster[];
     pricingOptions: PricingOptionMaster[];

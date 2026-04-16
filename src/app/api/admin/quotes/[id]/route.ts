@@ -1,20 +1,14 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
-import { createAuditLog } from "@/lib/audit/service";
-import { authErrorResponse } from "@/lib/auth/api";
-import { requireAdminApiSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/prisma/client";
 import {
   recalculateQuoteDraft,
   saveQuoteManualEdits,
-  transitionQuoteStatus,
-  updateContractPaymentAutomation
+  transitionQuoteStatus
 } from "@/lib/services/quote-service";
 import {
   recalculateQuoteSchema,
   saveQuoteManualEditsSchema,
-  updateContractPaymentAutomationSchema,
   updateQuoteStatusSchema
 } from "@/lib/validation/quote";
 
@@ -26,8 +20,6 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const requiredRole = body?.mode === "status" ? "ADMIN" : "STAFF";
-    const session = await requireAdminApiSession(requiredRole);
 
     if (body?.mode === "manual") {
       const payload = saveQuoteManualEditsSchema.parse(body);
@@ -42,23 +34,6 @@ export async function PATCH(
         caseDueDate: payload.caseDueDate ? new Date(payload.caseDueDate) : undefined,
         caseInternalMemo: payload.caseInternalMemo
       });
-      await createAuditLog(prisma, {
-        actor: {
-          userId: session.user.id,
-          email: session.user.email,
-          role: session.user.role
-        },
-        actionType: "QUOTE_STATUS_UPDATED",
-        entityType: "QUOTE",
-        entityId: quote.id,
-        summary: `견적 상태를 ${payload.status}로 변경`
-      });
-      return NextResponse.json({ quote });
-    }
-
-    if (body?.mode === "contractPayment") {
-      const payload = updateContractPaymentAutomationSchema.parse(body);
-      const quote = await updateContractPaymentAutomation(id, payload);
       return NextResponse.json({ quote });
     }
 
@@ -68,11 +43,14 @@ export async function PATCH(
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: error.issues[0]?.message ?? "Validation error" },
+        { error: error.issues[0]?.message ?? "입력값을 다시 확인해 주세요." },
         { status: 400 }
       );
     }
 
-    return authErrorResponse(error, "Failed to update quote.");
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "견적 정보를 수정하지 못했습니다." },
+      { status: 400 }
+    );
   }
 }

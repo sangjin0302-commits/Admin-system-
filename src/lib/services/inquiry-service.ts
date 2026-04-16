@@ -1,17 +1,14 @@
 ﻿import type { Prisma } from "@generated/prisma-client/client";
 
-import { classifyInquiryWithOpenAI } from "@/lib/classification/openai-intake-classifier";
-import { syncInquiryToNotion } from "@/lib/integrations/notion";
 import { prisma } from "@/lib/prisma/client";
-import { deriveIntakeEvaluation, getIntakeEvaluator } from "@/lib/intake-evaluator";
+import { syncConsultationToNotion } from "@/lib/integrations/notion";
+import { getIntakeEvaluator } from "@/lib/intake-evaluator";
 import {
   buildMessagePreview,
   buildMessagePreviewSet,
   generatePreparationGuidance,
   generateReceiptMessage
 } from "@/lib/message-templates/service";
-import { sendInquiryNotificationEmails } from "@/lib/notifications/inquiry-email";
-import { sendInquiryTelegramNotification } from "@/lib/notifications/inquiry-telegram";
 import { dispatchInitialClientMessage } from "@/lib/services/client-message-service";
 import { formatDate } from "@/lib/utils";
 import { parseCreateInquiryInput } from "@/lib/validation/inquiry";
@@ -26,8 +23,6 @@ type InquiryListFilters = {
   language?: LanguageCode;
   sort?: AdminSort;
 };
-
-type InquiryListItem = Awaited<ReturnType<typeof prisma.inquiry.findMany>>[number];
 
 function buildInquirySummary(input: {
   inquiryType: InquiryType;
@@ -44,7 +39,7 @@ function buildInquirySummary(input: {
   const deadline = input.dueDate ? formatDate(input.dueDate, locale === "ko" ? "ko-KR" : "en-US") : null;
 
   if (locale === "ko") {
-    return `${inquiryTypeLabels[input.inquiryType][locale]} 문의입니다. 제목은 "${input.title}"이며, 수임 적합도는 ${input.qualificationScore}점입니다.${deadline ? ` 희망 일정은 ${deadline}입니다.` : ""} 핵심 내용: ${clippedDescription}`;
+    return `${inquiryTypeLabels[input.inquiryType][locale]} 臾몄쓽?낅땲?? ?쒕ぉ? "${input.title}"?대ŉ, ?섏엫 ?곹빀?꾨뒗 ${input.qualificationScore}?먯엯?덈떎.${deadline ? ` ?щ쭩 ?쇱젙? ${deadline}?낅땲??` : ""} ?듭떖 ?댁슜: ${clippedDescription}`;
   }
 
   return `${inquiryTypeLabels[input.inquiryType][locale]} inquiry. Title: "${input.title}". Qualification score: ${input.qualificationScore}.${deadline ? ` Target date: ${deadline}.` : ""} Summary: ${clippedDescription}`;
@@ -56,27 +51,7 @@ export async function createInquiry(payload: unknown) {
   const effectiveClientType =
     input.isCorporateRequest || input.clientType === "COMPANY" ? "COMPANY" : "INDIVIDUAL";
 
-  const desiredOutcome = input.requestedOutcome?.trim();
-  const mergedDescription = desiredOutcome
-    ? `${input.description}\n\nDesired outcome: ${desiredOutcome}`
-    : input.description;
-
-  const aiClassification = await classifyInquiryWithOpenAI({
-    clientType: effectiveClientType,
-    contactName: input.contactName,
-    email: input.email,
-    organizationName: input.organizationName,
-    title: input.title,
-    description: mergedDescription,
-    nationality: input.nationality,
-    currentStatus: input.currentStatus,
-    documentCountry: input.documentCountry,
-    targetAgency: input.targetAgency,
-    dueDate: input.dueDate,
-    preferredLanguage: input.preferredLanguage
-  });
-
-  const evaluationInput = {
+  const evaluation = evaluator.evaluate({
     clientType: effectiveClientType,
     contactName: input.contactName,
     email: input.email,
@@ -95,18 +70,14 @@ export async function createInquiry(payload: unknown) {
     hasPreparedDocuments: input.hasPreparedDocuments,
     needsTranslation: input.needsTranslation,
     isCorporateRequest: input.isCorporateRequest
-  } as const;
-
-  const evaluation = aiClassification
-    ? deriveIntakeEvaluation(evaluationInput, aiClassification)
-    : evaluator.evaluate(evaluationInput);
+  });
 
   const generatedSummary = buildInquirySummary({
     inquiryType: evaluation.inquiryType,
     preferredLanguage: input.preferredLanguage,
     title: input.title,
     description: input.requestedOutcome
-      ? `${input.description} / 희망 결과: ${input.requestedOutcome}`
+      ? `${input.description} / ?щ쭩 寃곌낵: ${input.requestedOutcome}`
       : input.description,
     urgencyLevel: evaluation.urgencyLevel,
     qualificationScore: evaluation.qualificationScore,
@@ -180,44 +151,32 @@ export async function createInquiry(payload: unknown) {
     }
   });
 
-  const initialPreview = buildMessagePreview(finalizedMessageInput);
+  await dispatchInitialClientMessage({
+    inquiryId: updated.id,
+    preview: buildMessagePreview(finalizedMessageInput)
+  });
 
-  await Promise.allSettled([
-    dispatchInitialClientMessage({
+  try {
+    await syncConsultationToNotion({
       inquiryId: updated.id,
-      preview: initialPreview
-    }),
-    sendInquiryNotificationEmails({
-      id: updated.id,
       contactName: updated.contactName,
-      organizationName: updated.organizationName,
-      email: updated.email,
-      phone: updated.phone,
-      title: updated.title,
-      description: updated.description,
-      requestedOutcome: updated.requestedOutcome,
+      contactPhone: updated.phone,
+      inquiryTitle: updated.title,
       inquiryType: updated.inquiryType as InquiryType,
+      inquiryStatus: updated.status as InquiryStatus,
       urgencyLevel: updated.urgencyLevel as UrgencyLevel,
-      preferredLanguage: updated.preferredLanguage as LanguageCode,
-      generatedReceiptMessage: updated.generatedReceiptMessage
-    }),
-    sendInquiryTelegramNotification({
-      id: updated.id,
-      contactName: updated.contactName,
-      organizationName: updated.organizationName,
-      email: updated.email,
-      phone: updated.phone,
-      title: updated.title,
-      description: updated.description,
-      requestedOutcome: updated.requestedOutcome,
-      inquiryType: updated.inquiryType as InquiryType,
-      urgencyLevel: updated.urgencyLevel as UrgencyLevel,
-      preferredLanguage: updated.preferredLanguage as LanguageCode
-    }),
-    syncInquiryToNotion(updated.id).catch((error) => {
-      console.error("Failed to sync inquiry to Notion.", error);
-    })
-  ]);
+      qualificationScore: updated.qualificationScore,
+      generatedSummary: updated.generatedSummary,
+      recommendedNextStep: updated.recommendedNextStep,
+      classificationReason: updated.classificationReason,
+      recommendedDocuments: JSON.parse(updated.precheckRecommendedDocs || "[]"),
+      serviceTags: JSON.parse(updated.serviceTags || "[]"),
+      createdAt: updated.createdAt.toISOString(),
+      dueDate: updated.dueDate?.toISOString() ?? null
+    });
+  } catch (error) {
+    console.error("Failed to sync consultation to Notion", error);
+  }
 
   return updated;
 }
@@ -247,7 +206,7 @@ export async function listInquiries(filters: InquiryListFilters = {}) {
   });
 
   if (filters.sort === "urgency") {
-    return inquiries.sort((a: InquiryListItem, b: InquiryListItem) => {
+    return inquiries.sort((a, b) => {
       const urgencyDiff = getUrgencyRank(b.urgencyLevel) - getUrgencyRank(a.urgencyLevel);
       if (urgencyDiff !== 0) return urgencyDiff;
       return b.createdAt.getTime() - a.createdAt.getTime();
@@ -271,7 +230,7 @@ export async function updateInquiryAdminFields(
     internalMemo?: string;
   }
 ) {
-  return prisma.inquiry.update({
+  const updated = await prisma.inquiry.update({
     where: { id },
     data: {
       ...(payload.status !== undefined ? { status: payload.status } : {}),
@@ -281,6 +240,30 @@ export async function updateInquiryAdminFields(
         : {})
     }
   });
+
+  try {
+    await syncConsultationToNotion({
+      inquiryId: updated.id,
+      contactName: updated.contactName,
+      contactPhone: updated.phone,
+      inquiryTitle: updated.title,
+      inquiryType: updated.inquiryType as InquiryType,
+      inquiryStatus: updated.status as InquiryStatus,
+      urgencyLevel: updated.urgencyLevel as UrgencyLevel,
+      qualificationScore: updated.qualificationScore,
+      generatedSummary: updated.generatedSummary,
+      recommendedNextStep: updated.recommendedNextStep,
+      classificationReason: updated.internalMemo ?? updated.classificationReason,
+      recommendedDocuments: JSON.parse(updated.precheckRecommendedDocs || "[]"),
+      serviceTags: JSON.parse(updated.serviceTags || "[]"),
+      createdAt: updated.createdAt.toISOString(),
+      dueDate: updated.dueDate?.toISOString() ?? null
+    });
+  } catch (error) {
+    console.error("Failed to refresh consultation Notion sync", error);
+  }
+
+  return updated;
 }
 
 export function getInquiryMessagePreviewSet(inquiry: {

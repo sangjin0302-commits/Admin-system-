@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "prebuild": "node scripts/prepare-prisma-client.mjs",
-    "build": "next build --debug",
+    "build": "next build",
+    "typecheck": "tsc --noEmit",
+    "quickcheck": "npm run typecheck",
+    "clean": "node scripts/clean-build.mjs",
+    "rebuild": "npm run clean && npm run build",
     "start": "next start",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:generate:postgres": "node scripts/render-prisma-schema.mjs postgresql && prisma generate --schema .codex-tmp/schema.postgresql.prisma",
@@ -42,3 +46,5 @@
     "typescript": "^5.7.2"
   }
 }
+
+

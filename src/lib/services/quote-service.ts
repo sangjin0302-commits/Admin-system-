@@ -1,15 +1,13 @@
-import type {
+﻿import type {
   CaseStage,
   InquiryStatus,
-  PaymentCollectionStatus,
   PaymentStageKind,
   Prisma,
   QuoteStatus
 } from "@generated/prisma-client/client";
 
-import { ensureCaseDocumentChecklist } from "@/lib/case-documents/service";
 import { generateCaseNumber } from "@/lib/case-utils/case-number";
-import { syncCaseToNotion } from "@/lib/integrations/notion";
+import { syncCaseAnalysisToNotion } from "@/lib/integrations/notion";
 import {
   buildAcceptedNoticeDraftEn,
   buildAcceptedNoticeDraftKo,
@@ -17,6 +15,8 @@ import {
   buildQuoteSendDraftKo
 } from "@/lib/message-templates/quote-flow";
 import { prisma } from "@/lib/prisma/client";
+import { analyzeInquiryCase } from "@/lib/services/case-analysis-service";
+import { getLawbotCaseAnalysis } from "@/lib/services/lawbot-case-analysis-service";
 import {
   buildContractDraftText,
   buildManualSummary,
@@ -37,6 +37,7 @@ import type {
   ServiceTypeMaster
 } from "@/lib/quote-engine/types";
 import { formatCurrency, toStageKindLabel } from "@/lib/quote-engine/utils";
+import type { InquiryType, UrgencyLevel } from "@/types/inquiry";
 
 type InquiryRecord = Prisma.InquiryGetPayload<Record<string, never>>;
 type QuoteWithRelations = Prisma.QuoteGetPayload<{
@@ -49,20 +50,98 @@ type QuoteWithRelations = Prisma.QuoteGetPayload<{
     caseRecord: true;
   };
 }>;
-type QuoteLineItemRecord = QuoteWithRelations["lineItems"][number];
-type QuoteAdjustmentRecord = QuoteWithRelations["adjustments"][number];
-type PaymentPlanRecord = QuoteWithRelations["paymentPlans"][number];
-type ServiceTypeRecord = Awaited<ReturnType<typeof prisma.serviceType.findMany>>[number];
-type PricingOptionRecord = Awaited<ReturnType<typeof prisma.pricingOption.findMany>>[number];
-type PricingRuleRecord = Awaited<ReturnType<typeof prisma.pricingRule.findMany>>[number];
-type QuoteTxDb = {
-  quote: Pick<typeof prisma.quote, "findUniqueOrThrow" | "update">;
-  inquiry: Pick<typeof prisma.inquiry, "update">;
-  contractDraft: Pick<typeof prisma.contractDraft, "create" | "update">;
-  caseRecord: Pick<typeof prisma.caseRecord, "create" | "update">;
-  caseDocumentItem: Pick<typeof prisma.caseDocumentItem, "findMany" | "createMany">;
-};
-type DbClient = QuoteTxDb;
+type DbClient = Prisma.TransactionClient;
+
+function buildContractAnalysisTerms(quote: QuoteWithRelations) {
+  const analysis = analyzeInquiryCase(quote.inquiry);
+
+  const sections = [
+    "[사건 분석 참고]",
+    `사건 강도: ${analysis.strengthLabel} (${analysis.strengthScore}점)`,
+    `사건 요약: ${analysis.summary}`,
+    "",
+    "[핵심 쟁점]",
+    ...analysis.issues.map((item) => `- ${item}`),
+    "",
+    "[유리 요소]",
+    ...analysis.favorableFactors.map((item) => `- ${item}`),
+    "",
+    "[불리 요소]",
+    ...analysis.riskFactors.map((item) => `- ${item}`),
+    "",
+    "[추가 확인 필요 사실]",
+    ...analysis.missingFacts.map((item) => `- ${item}`),
+    "",
+    "[참고 법령]",
+    ...analysis.lawReferences.map((item) => `- ${item.title}: ${item.summary}`),
+    "",
+    "[판례 검색어]",
+    ...analysis.precedentReferences.map((item) => `- ${item.query}`)
+  ];
+
+  return sections.join("\n");
+}
+
+function buildLawbotAnalysisDraft(result: Awaited<ReturnType<typeof getLawbotCaseAnalysis>>) {
+  if (result.status !== "available") {
+    return null;
+  }
+
+  const data = result.data;
+  return [
+    "[Lawbot 참고 분석]",
+    `- 입력 요약: ${data.input_summary}`,
+    "",
+    "[Lawbot 핵심 쟁점]",
+    ...(data.key_issues.length > 0 ? data.key_issues.map((item) => `- ${item}`) : ["- 원문 명시 없음"]),
+    "",
+    "[Lawbot 추가 확인 사실]",
+    ...(data.followup_facts.length > 0 ? data.followup_facts.map((item) => `- ${item}`) : ["- 원문 명시 없음"]),
+    "",
+    "[Lawbot 참고 법령]",
+    ...(data.applicable_laws.length > 0 ? data.applicable_laws.map((item) => `- ${item.law}: ${item.summary}`) : ["- 원문 명시 없음"]),
+    "",
+    "[Lawbot 참고 판례]",
+    ...(data.related_precedents?.length
+      ? data.related_precedents.map((item) =>
+          `- ${item.case_name} / ${item.case_number}${item.court_name ? ` / ${item.court_name}` : ""}${item.decision_date ? ` / ${item.decision_date}` : ""}`
+        )
+      : ["- 원문 명시 없음"]),
+    "",
+    "[Lawbot 참고 해석례]",
+    ...(data.related_interpretations?.length
+      ? data.related_interpretations.map((item) =>
+          `- ${item.title}${item.number ? ` / ${item.number}` : ""}${item.agency ? ` / ${item.agency}` : ""}${item.decision_date ? ` / ${item.decision_date}` : ""}`
+        )
+      : ["- 원문 명시 없음"])
+  ].join("\n");
+}
+
+function composeContractAnalysisTerms(
+  quote: QuoteWithRelations,
+  lawbotAnalysis?: Awaited<ReturnType<typeof getLawbotCaseAnalysis>>
+) {
+  const internalTerms = buildContractAnalysisTerms(quote);
+  const lawbotTerms = buildLawbotAnalysisDraft(lawbotAnalysis ?? { status: "disabled", message: "" });
+
+  return [internalTerms, lawbotTerms].filter(Boolean).join("\n\n");
+}
+
+function mergeEditableSpecialTerms(
+  manualTerms: string | null | undefined,
+  analysisTerms: string
+) {
+  const cleanedManualTerms = manualTerms
+    ?.split("\n\n[자동 분석 참고]\n\n")[0]
+    ?.trim();
+  const cleanedAnalysisTerms = analysisTerms.trim();
+
+  if (cleanedManualTerms && cleanedAnalysisTerms) {
+    return [cleanedManualTerms, "[자동 분석 참고]", cleanedAnalysisTerms].join("\n\n");
+  }
+
+  return cleanedManualTerms || cleanedAnalysisTerms || null;
+}
 
 function parseStringArray(value: string) {
   try {
@@ -143,13 +222,13 @@ function buildPaymentSummaryText(
   }>
 ) {
   if (paymentPlans.length === 0) {
-    return "납입 구조 미설정";
+    return "수임 구조 미설정";
   }
 
   return paymentPlans
     .map(
       (plan) =>
-        `${toStageKindLabel(plan.stageKind)} ${plan.percentage}% - ${plan.dueText} (${formatCurrency(plan.amountMin)}원 ~ ${formatCurrency(plan.amountMax)}원)`
+        `${toStageKindLabel(plan.stageKind)} ${plan.percentage}% - ${plan.dueText} (${formatCurrency(plan.amountMin)} ~ ${formatCurrency(plan.amountMax)})`
     )
     .join("\n");
 }
@@ -166,32 +245,14 @@ function toContractDraftSnapshot(contractDraft: QuoteWithRelations["contractDraf
     scopeText: contractDraft.scopeText,
     successFeeRestricted: contractDraft.successFeeRestricted,
     specialTerms: contractDraft.specialTerms,
-    contractShareUrl: contractDraft.contractShareUrl,
-    contractSentAt: contractDraft.contractSentAt ? contractDraft.contractSentAt.toISOString() : null,
-    contractSignedAt: contractDraft.contractSignedAt ? contractDraft.contractSignedAt.toISOString() : null,
-    paymentLinkUrl: contractDraft.paymentLinkUrl,
-    paymentProvider: contractDraft.paymentProvider,
-    paymentRequestedAt: contractDraft.paymentRequestedAt
-      ? contractDraft.paymentRequestedAt.toISOString()
-      : null,
-    paymentStatus: contractDraft.paymentStatus,
-    paidAt: contractDraft.paidAt ? contractDraft.paidAt.toISOString() : null,
-    paymentReference: contractDraft.paymentReference,
-    paymentMemo: contractDraft.paymentMemo,
     updatedAt: contractDraft.updatedAt.toISOString()
   };
 }
 
 function serializeQuote(quote: QuoteWithRelations) {
-  const sortedLineItems = quote.lineItems.sort(
-    (left: QuoteLineItemRecord, right: QuoteLineItemRecord) => left.sortOrder - right.sortOrder
-  );
-  const sortedAdjustments = quote.adjustments.sort(
-    (left: QuoteAdjustmentRecord, right: QuoteAdjustmentRecord) => left.sortOrder - right.sortOrder
-  );
-  const sortedPaymentPlans = quote.paymentPlans.sort(
-    (left: PaymentPlanRecord, right: PaymentPlanRecord) => left.sortOrder - right.sortOrder
-  );
+  const sortedLineItems = quote.lineItems.sort((left, right) => left.sortOrder - right.sortOrder);
+  const sortedAdjustments = quote.adjustments.sort((left, right) => left.sortOrder - right.sortOrder);
+  const sortedPaymentPlans = quote.paymentPlans.sort((left, right) => left.sortOrder - right.sortOrder);
   const paymentSummary = buildPaymentSummaryText(sortedPaymentPlans);
   const messageInput = {
     contactName: quote.inquiry.contactName,
@@ -226,7 +287,7 @@ function serializeQuote(quote: QuoteWithRelations) {
     createdAt: quote.createdAt.toISOString(),
     updatedAt: quote.updatedAt.toISOString(),
     lineItems: sortedLineItems
-      .map((line: QuoteLineItemRecord) => ({
+      .map((line) => ({
         id: line.id,
         kind: line.kind,
         label: line.label,
@@ -238,7 +299,7 @@ function serializeQuote(quote: QuoteWithRelations) {
         isManual: line.isManual
       })),
     adjustments: sortedAdjustments
-      .map((adjustment: QuoteAdjustmentRecord) => ({
+      .map((adjustment) => ({
         id: adjustment.id,
         label: adjustment.label,
         description: adjustment.description,
@@ -253,7 +314,7 @@ function serializeQuote(quote: QuoteWithRelations) {
         isManual: adjustment.isManual
       })),
     paymentPlans: sortedPaymentPlans
-      .map((plan: PaymentPlanRecord) => ({
+      .map((plan) => ({
         id: plan.id,
         stageKind: plan.stageKind,
         percentage: plan.percentage,
@@ -290,7 +351,7 @@ async function loadQuoteMasters() {
   ]);
 
   return {
-    serviceTypes: serviceTypes.map<ServiceTypeMaster>((serviceType: ServiceTypeRecord) => ({
+    serviceTypes: serviceTypes.map<ServiceTypeMaster>((serviceType) => ({
       id: serviceType.id,
       legacyId: serviceType.legacyId,
       name: serviceType.name,
@@ -300,7 +361,7 @@ async function loadQuoteMasters() {
       isAppeal: serviceType.isAppeal,
       isActive: serviceType.isActive
     })),
-    pricingOptions: pricingOptions.map<PricingOptionMaster>((option: PricingOptionRecord) => ({
+    pricingOptions: pricingOptions.map<PricingOptionMaster>((option) => ({
       id: option.id,
       legacyId: option.legacyId,
       name: option.name,
@@ -312,7 +373,7 @@ async function loadQuoteMasters() {
       isVat: option.isVat,
       isActive: option.isActive
     })),
-    pricingRules: pricingRules.map<PricingRuleMaster>((rule: PricingRuleRecord) => ({
+    pricingRules: pricingRules.map<PricingRuleMaster>((rule) => ({
       id: rule.id,
       code: rule.code,
       ruleType: rule.ruleType,
@@ -537,16 +598,20 @@ export async function getQuoteWorkspaceForInquiry(inquiryId: string): Promise<Qu
 
   const inquirySnapshot = serializeInquiryForQuote(inquiry);
   const suggestedServiceLegacyIds = suggestServiceLegacyIds(inquirySnapshot, masters.serviceTypes);
+  const caseAnalysis = analyzeInquiryCase(inquiry);
+  const lawbotAnalysis = await getLawbotCaseAnalysis(inquiry);
 
   return {
     inquiry: inquirySnapshot,
+    caseAnalysis,
+    lawbotAnalysis,
     masters: {
       serviceTypes: masters.serviceTypes,
       pricingOptions: masters.pricingOptions,
-      urgencyRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "URGENCY"),
-      consultRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "CONSULT"),
-      paymentRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "PAYMENT"),
-      policyRules: masters.pricingRules.filter((rule: PricingRuleMaster) => rule.ruleType === "POLICY")
+      urgencyRules: masters.pricingRules.filter((rule) => rule.ruleType === "URGENCY"),
+      consultRules: masters.pricingRules.filter((rule) => rule.ruleType === "CONSULT"),
+      paymentRules: masters.pricingRules.filter((rule) => rule.ruleType === "PAYMENT"),
+      policyRules: masters.pricingRules.filter((rule) => rule.ruleType === "POLICY")
     },
     suggestedServiceLegacyIds,
     suggestedUrgencyRuleCode: mapUrgencyLevelToRuleCode(inquiry.urgencyLevel),
@@ -620,6 +685,7 @@ export async function saveQuoteManualEdits(
   quoteId: string,
   input: {
     draftNotes?: string | null;
+    specialTerms?: string | null;
     lineItems: Array<{
       id: string;
       label: string;
@@ -691,34 +757,26 @@ export async function saveQuoteManualEdits(
   ]);
 
   const refreshed = await getQuoteByIdOrThrow(quoteId);
-  const lineItems = refreshed.lineItems.sort(
-    (left: QuoteLineItemRecord, right: QuoteLineItemRecord) => left.sortOrder - right.sortOrder
-  );
-  const adjustments = refreshed.adjustments.sort(
-    (left: QuoteAdjustmentRecord, right: QuoteAdjustmentRecord) => left.sortOrder - right.sortOrder
-  );
+  const lineItems = refreshed.lineItems.sort((left, right) => left.sortOrder - right.sortOrder);
+  const adjustments = refreshed.adjustments.sort((left, right) => left.sortOrder - right.sortOrder);
   const serviceBaseMin = lineItems
-    .filter((line: QuoteLineItemRecord) => line.kind === "SERVICE")
-    .reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMin, 0);
+    .filter((line) => line.kind === "SERVICE")
+    .reduce((sum, line) => sum + line.amountMin, 0);
   const serviceBaseMax = lineItems
-    .filter((line: QuoteLineItemRecord) => line.kind === "SERVICE")
-    .reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMax, 0);
+    .filter((line) => line.kind === "SERVICE")
+    .reduce((sum, line) => sum + line.amountMax, 0);
   const subtotalMin =
-    lineItems.reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMin, 0) +
-    adjustments
-      .filter((adjustment: QuoteAdjustmentRecord) => !adjustment.isVat)
-      .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMin, 0);
+    lineItems.reduce((sum, line) => sum + line.amountMin, 0) +
+    adjustments.filter((adjustment) => !adjustment.isVat).reduce((sum, adjustment) => sum + adjustment.computedMin, 0);
   const subtotalMax =
-    lineItems.reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMax, 0) +
-    adjustments
-      .filter((adjustment: QuoteAdjustmentRecord) => !adjustment.isVat)
-      .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMax, 0);
+    lineItems.reduce((sum, line) => sum + line.amountMax, 0) +
+    adjustments.filter((adjustment) => !adjustment.isVat).reduce((sum, adjustment) => sum + adjustment.computedMax, 0);
   const vatAmountMin = adjustments
-    .filter((adjustment: QuoteAdjustmentRecord) => adjustment.isVat)
-    .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMin, 0);
+    .filter((adjustment) => adjustment.isVat)
+    .reduce((sum, adjustment) => sum + adjustment.computedMin, 0);
   const vatAmountMax = adjustments
-    .filter((adjustment: QuoteAdjustmentRecord) => adjustment.isVat)
-    .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMax, 0);
+    .filter((adjustment) => adjustment.isVat)
+    .reduce((sum, adjustment) => sum + adjustment.computedMax, 0);
   const totalMin = subtotalMin + vatAmountMin;
   const totalMax = subtotalMax + vatAmountMax;
 
@@ -733,14 +791,14 @@ export async function saveQuoteManualEdits(
         vatAmountMin,
         vatAmountMax,
         totalMin,
-          totalMax,
-          calculationSummary: buildManualSummary({
-          lineItems: lineItems.map((line: QuoteLineItemRecord) => ({
+        totalMax,
+        calculationSummary: buildManualSummary({
+          lineItems: lineItems.map((line) => ({
             label: line.label,
             amountMin: line.amountMin,
             amountMax: line.amountMax
           })),
-          adjustments: adjustments.map((adjustment: QuoteAdjustmentRecord) => ({
+          adjustments: adjustments.map((adjustment) => ({
             label: adjustment.label,
             computedMin: adjustment.computedMin,
             computedMax: adjustment.computedMax,
@@ -751,8 +809,8 @@ export async function saveQuoteManualEdits(
         })
       }
     }),
-    ...refreshed.paymentPlans.map((plan: PaymentPlanRecord) => {
-      const incoming = input.paymentPlans.find((entry: (typeof input.paymentPlans)[number]) => entry.id === plan.id);
+    ...refreshed.paymentPlans.map((plan) => {
+      const incoming = input.paymentPlans.find((entry) => entry.id === plan.id);
       const percentage = incoming?.percentage ?? plan.percentage;
 
       return prisma.paymentPlan.update({
@@ -765,6 +823,15 @@ export async function saveQuoteManualEdits(
       });
     })
   ]);
+
+  if (input.specialTerms !== undefined && refreshed.contractDraft) {
+    await prisma.contractDraft.update({
+      where: { id: refreshed.contractDraft.id },
+      data: {
+        specialTerms: input.specialTerms?.trim() ? input.specialTerms.trim() : null
+      }
+    });
+  }
 
   return serializeQuote(await getQuoteByIdOrThrow(quoteId));
 }
@@ -792,16 +859,14 @@ function assertQuoteTransition(currentStatus: QuoteStatus, nextStatus: QuoteStat
 
 async function upsertContractDraftFromQuote(db: DbClient, quote: QuoteWithRelations) {
   const warning = quote.successFeeRestricted
-    ? ["행정심판/이의신청 계열 업무는 성공보수를 포함하지 않도록 제한됩니다."]
+    ? ["행정심판/이의신청 계열 업무는 성공보수를 포함하지 않도록 제한합니다."]
     : [];
+  const analysisTerms = composeContractAnalysisTerms(quote);
+  const mergedSpecialTerms = mergeEditableSpecialTerms(quote.contractDraft?.specialTerms, analysisTerms);
   const draft = buildContractDraftText({
     inquiry: serializeInquiryForQuote(quote.inquiry),
-    lineItems: quote.lineItems.sort(
-      (left: QuoteLineItemRecord, right: QuoteLineItemRecord) => left.sortOrder - right.sortOrder
-    ),
-    paymentPlans: quote.paymentPlans.sort(
-      (left: PaymentPlanRecord, right: PaymentPlanRecord) => left.sortOrder - right.sortOrder
-    ),
+    lineItems: quote.lineItems.sort((left, right) => left.sortOrder - right.sortOrder),
+    paymentPlans: quote.paymentPlans.sort((left, right) => left.sortOrder - right.sortOrder),
     totalMin: quote.totalMin,
     totalMax: quote.totalMax,
     vatAmountMin: quote.vatAmountMin,
@@ -820,6 +885,7 @@ async function upsertContractDraftFromQuote(db: DbClient, quote: QuoteWithRelati
         bodyText: draft.bodyText,
         scopeText: draft.scopeText,
         paymentSummary: draft.paymentSummary,
+        specialTerms: mergedSpecialTerms,
         successFeeRestricted: quote.successFeeRestricted
       }
     });
@@ -833,6 +899,7 @@ async function upsertContractDraftFromQuote(db: DbClient, quote: QuoteWithRelati
       bodyText: draft.bodyText,
       scopeText: draft.scopeText,
       paymentSummary: draft.paymentSummary,
+      specialTerms: mergedSpecialTerms,
       successFeeRestricted: quote.successFeeRestricted
     }
   });
@@ -849,7 +916,7 @@ async function ensureCaseRecordForQuote(
   }
 ) {
   if (quote.caseRecord) {
-    const updated = await db.caseRecord.update({
+    return db.caseRecord.update({
       where: { id: quote.caseRecord.id },
       data: {
         contractDraftId: input.contractDraftId ?? quote.caseRecord.contractDraftId,
@@ -858,12 +925,9 @@ async function ensureCaseRecordForQuote(
         internalMemo: input.internalMemo ?? quote.caseRecord.internalMemo
       }
     });
-
-    await ensureCaseDocumentChecklist(db, updated.id, quote.inquiry.inquiryType);
-    return updated;
   }
 
-  const created = await db.caseRecord.create({
+  return db.caseRecord.create({
     data: {
       caseNumber: await generateCaseNumber(),
       inquiryId: quote.inquiryId,
@@ -874,9 +938,74 @@ async function ensureCaseRecordForQuote(
       internalMemo: input.internalMemo ?? quote.draftNotes
     }
   });
+}
 
-  await ensureCaseDocumentChecklist(db, created.id, quote.inquiry.inquiryType);
-  return created;
+async function syncQuoteAnalysisSnapshot(quoteId: string) {
+  const quote = await getQuoteByIdOrThrow(quoteId);
+  const analysis = analyzeInquiryCase(quote.inquiry);
+  const lawbotAnalysis = await getLawbotCaseAnalysis(quote.inquiry);
+  const caseStage = quote.caseRecord?.currentStage ? String(quote.caseRecord.currentStage) : null;
+
+  try {
+    await syncCaseAnalysisToNotion({
+      inquiryId: quote.inquiryId,
+      contactName: quote.inquiry.contactName,
+      contactPhone: quote.inquiry.phone,
+      inquiryTitle: quote.inquiry.title,
+      inquiryType: quote.inquiry.inquiryType as InquiryType,
+      inquiryStatus: quote.inquiry.status as InquiryStatus,
+      urgencyLevel: quote.inquiry.urgencyLevel as UrgencyLevel,
+      qualificationScore: quote.inquiry.qualificationScore,
+      generatedSummary: quote.inquiry.generatedSummary,
+      recommendedNextStep: quote.inquiry.recommendedNextStep,
+      classificationReason: quote.inquiry.classificationReason,
+      recommendedDocuments: parseStringArray(quote.inquiry.precheckRecommendedDocs),
+      serviceTags: parseStringArray(quote.inquiry.serviceTags),
+      createdAt: quote.inquiry.createdAt.toISOString(),
+      targetAgency: quote.inquiry.targetAgency,
+      organizationName: quote.inquiry.organizationName,
+      analysis,
+      contractTitle: quote.contractDraft?.title,
+      draftNotes: quote.draftNotes,
+      caseNumber: quote.caseRecord?.caseNumber,
+      dueDate: quote.caseRecord?.dueDate?.toISOString() ?? quote.inquiry.dueDate?.toISOString() ?? null,
+      compensationStatus:
+        quote.status === "ACCEPTED"
+          ? "수임 완료"
+          : quote.status === "SENT" || quote.status === "READY_TO_SEND"
+            ? "견적 단계"
+            : quote.status === "REJECTED" || quote.status === "EXPIRED"
+              ? "보류"
+              : "검토 중",
+      lawbotAnalysis,
+      workflowStatus:
+        caseStage === "CLOSED" || caseStage === "COMPLETED"
+          ? "완료"
+          : caseStage
+            ? "진행 중"
+            : "시작 전"
+    });
+  } catch (error) {
+    console.error("Failed to sync quote analysis to Notion", error);
+  }
+}
+
+async function syncContractDraftAnalysisTerms(quoteId: string) {
+  const quote = await getQuoteByIdOrThrow(quoteId);
+
+  if (!quote.contractDraft) {
+    return;
+  }
+
+  const lawbotAnalysis = await getLawbotCaseAnalysis(quote.inquiry);
+  const specialTerms = composeContractAnalysisTerms(quote, lawbotAnalysis);
+
+  await prisma.contractDraft.update({
+    where: { id: quote.contractDraft.id },
+    data: {
+      specialTerms: mergeEditableSpecialTerms(quote.contractDraft.specialTerms, specialTerms)
+    }
+  });
 }
 
 export async function transitionQuoteStatus(
@@ -891,22 +1020,21 @@ export async function transitionQuoteStatus(
   assertQuoteTransition(current.status, input.status);
 
   await prisma.$transaction(async (tx) => {
-    const db = tx as unknown as QuoteTxDb;
-    await db.quote.update({
+    await tx.quote.update({
       where: { id: quoteId },
       data: { status: input.status }
     });
 
-    await db.inquiry.update({
+    await tx.inquiry.update({
       where: { id: current.inquiryId },
       data: { status: quoteStatusToInquiryStatus[input.status] }
     });
 
-    const refreshed = await loadQuoteWithRelations(db, quoteId);
+    const refreshed = await loadQuoteWithRelations(tx, quoteId);
 
     if (input.status === "ACCEPTED") {
-      const contractDraft = await upsertContractDraftFromQuote(db, refreshed);
-      await ensureCaseRecordForQuote(db, refreshed, {
+      const contractDraft = await upsertContractDraftFromQuote(tx, refreshed);
+      await ensureCaseRecordForQuote(tx, refreshed, {
         contractDraftId: contractDraft.id,
         currentStage: "CONTRACT_PREPARATION",
         dueDate: input.caseDueDate,
@@ -917,7 +1045,7 @@ export async function transitionQuoteStatus(
 
     if (input.status === "REJECTED" || input.status === "EXPIRED") {
       if (refreshed.caseRecord) {
-        await ensureCaseRecordForQuote(db, refreshed, {
+        await ensureCaseRecordForQuote(tx, refreshed, {
           currentStage: "ON_HOLD",
           dueDate: input.caseDueDate,
           internalMemo: input.caseInternalMemo
@@ -927,7 +1055,7 @@ export async function transitionQuoteStatus(
     }
 
     if (refreshed.caseRecord && (input.caseDueDate || input.caseInternalMemo)) {
-      await ensureCaseRecordForQuote(db, refreshed, {
+      await ensureCaseRecordForQuote(tx, refreshed, {
         currentStage: refreshed.caseRecord.currentStage,
         dueDate: input.caseDueDate,
         internalMemo: input.caseInternalMemo
@@ -935,36 +1063,33 @@ export async function transitionQuoteStatus(
     }
   });
 
-  const refreshed = await getQuoteByIdOrThrow(quoteId);
-  if (refreshed.caseRecord?.id) {
-    await syncCaseToNotion(refreshed.caseRecord.id).catch((error) => {
-      console.error("Failed to sync case to Notion after quote transition.", error);
-    });
+  if (input.status === "ACCEPTED") {
+    await syncContractDraftAnalysisTerms(quoteId);
+    await syncQuoteAnalysisSnapshot(quoteId);
   }
 
-  return serializeQuote(refreshed);
+  return serializeQuote(await getQuoteByIdOrThrow(quoteId));
 }
 
 export async function createContractDraftFromQuote(quoteId: string) {
   await prisma.$transaction(async (tx) => {
-    const db = tx as unknown as QuoteTxDb;
-    const quote = await loadQuoteWithRelations(db, quoteId);
-    const contractDraft = await upsertContractDraftFromQuote(db, quote);
-    const nextStatus: QuoteStatus = quote.status === "DRAFT" ? "READY_TO_SEND" : quote.status;
+    const quote = await loadQuoteWithRelations(tx, quoteId);
+    const contractDraft = await upsertContractDraftFromQuote(tx, quote);
+    const nextStatus = quote.status === "DRAFT" ? "READY_TO_SEND" : quote.status;
 
     if (quote.status !== nextStatus) {
-      await db.quote.update({
+      await tx.quote.update({
         where: { id: quote.id },
         data: { status: nextStatus }
       });
     }
 
-    await db.inquiry.update({
+    await tx.inquiry.update({
       where: { id: quote.inquiryId },
       data: { status: quoteStatusToInquiryStatus[nextStatus] }
     });
 
-    await ensureCaseRecordForQuote(db, quote, {
+    await ensureCaseRecordForQuote(tx, quote, {
       contractDraftId: contractDraft.id,
       currentStage: "CONTRACT_PREPARATION",
       dueDate: quote.caseRecord?.dueDate ?? quote.inquiry.dueDate,
@@ -972,108 +1097,43 @@ export async function createContractDraftFromQuote(quoteId: string) {
     });
   });
 
-  const refreshed = await getQuoteByIdOrThrow(quoteId);
-  if (refreshed.caseRecord?.id) {
-    await syncCaseToNotion(refreshed.caseRecord.id).catch((error) => {
-      console.error("Failed to sync case to Notion after contract draft creation.", error);
-    });
-  }
+  await syncContractDraftAnalysisTerms(quoteId);
+  await syncQuoteAnalysisSnapshot(quoteId);
 
-  return serializeQuote(refreshed);
+  return serializeQuote(await getQuoteByIdOrThrow(quoteId));
 }
 
-export async function updateContractPaymentAutomation(
-  quoteId: string,
-  input: {
-    contractShareUrl?: string | null;
-    sendContractNow?: boolean;
-    markContractSigned?: boolean;
-    paymentLinkUrl?: string | null;
-    paymentProvider?: string | null;
-    sendPaymentNow?: boolean;
-    paymentStatus?: PaymentCollectionStatus;
-    paymentReference?: string | null;
-    paymentMemo?: string | null;
-  }
-) {
-  await prisma.$transaction(async (tx) => {
-    const db = tx as unknown as QuoteTxDb;
-    const quote = await loadQuoteWithRelations(db, quoteId);
-    const contractDraft = await upsertContractDraftFromQuote(db, quote);
-    const now = new Date();
+export async function exportContractDraftDocument(quoteId: string) {
+  const quote = await getQuoteByIdOrThrow(quoteId);
 
-    const nextStatus =
-      input.paymentStatus === "PAID"
-        ? "PAID"
-        : input.paymentStatus === "CANCELLED"
-          ? "CANCELLED"
-          : input.sendPaymentNow
-            ? "REQUESTED"
-            : contractDraft.paymentStatus;
-
-    const updatedContractDraft = await db.contractDraft.update({
-      where: { id: contractDraft.id },
-      data: {
-        contractShareUrl:
-          input.contractShareUrl !== undefined ? input.contractShareUrl : contractDraft.contractShareUrl,
-        contractSentAt: input.sendContractNow ? now : contractDraft.contractSentAt,
-        contractSignedAt: input.markContractSigned ? now : contractDraft.contractSignedAt,
-        status: input.markContractSigned ? "FINALIZED" : contractDraft.status,
-        paymentLinkUrl:
-          input.paymentLinkUrl !== undefined ? input.paymentLinkUrl : contractDraft.paymentLinkUrl,
-        paymentProvider:
-          input.paymentProvider !== undefined ? input.paymentProvider : contractDraft.paymentProvider,
-        paymentRequestedAt: input.sendPaymentNow ? now : contractDraft.paymentRequestedAt,
-        paymentStatus: nextStatus,
-        paidAt:
-          nextStatus === "PAID"
-            ? contractDraft.paidAt ?? now
-            : nextStatus === "CANCELLED"
-              ? null
-              : contractDraft.paidAt,
-        paymentReference:
-          input.paymentReference !== undefined ? input.paymentReference : contractDraft.paymentReference,
-        paymentMemo: input.paymentMemo !== undefined ? input.paymentMemo : contractDraft.paymentMemo
-      }
-    });
-
-    if (nextStatus === "PAID") {
-      await db.quote.update({
-        where: { id: quote.id },
-        data: { status: "ACCEPTED" }
-      });
-
-      await db.inquiry.update({
-        where: { id: quote.inquiryId },
-        data: { status: quoteStatusToInquiryStatus.ACCEPTED }
-      });
-
-      const refreshed = await loadQuoteWithRelations(db, quoteId);
-      await ensureCaseRecordForQuote(db, refreshed, {
-        contractDraftId: updatedContractDraft.id,
-        currentStage: "DOCUMENT_COLLECTION",
-        dueDate: refreshed.caseRecord?.dueDate ?? refreshed.inquiry.dueDate,
-        internalMemo: refreshed.caseRecord?.internalMemo ?? refreshed.draftNotes
-      });
-      return;
-    }
-
-    if (quote.caseRecord) {
-      await ensureCaseRecordForQuote(db, quote, {
-        contractDraftId: updatedContractDraft.id,
-        currentStage: quote.caseRecord.currentStage,
-        dueDate: quote.caseRecord.dueDate,
-        internalMemo: quote.caseRecord.internalMemo
-      });
-    }
-  });
-
-  const refreshed = await getQuoteByIdOrThrow(quoteId);
-  if (refreshed.caseRecord?.id) {
-    await syncCaseToNotion(refreshed.caseRecord.id).catch((error) => {
-      console.error("Failed to sync case to Notion after payment automation update.", error);
-    });
+  if (!quote.contractDraft) {
+    throw new Error("계약 초안이 아직 생성되지 않았습니다.");
   }
 
-  return serializeQuote(refreshed);
+  const safeTitle = `${quote.inquiry.contactName}-${quote.inquiry.title}`
+    .replace(/[\\/:*?\"<>|]/g, "-")
+    .slice(0, 80);
+
+  const content = [
+    `# ${quote.contractDraft.title}`,
+    "",
+    quote.contractDraft.bodyText,
+    "",
+    "## 업무 범위",
+    quote.contractDraft.scopeText,
+    "",
+    "## 결제 안내",
+    quote.contractDraft.paymentSummary,
+    "",
+    "## 특약 및 사건 분석 참고",
+    quote.contractDraft.specialTerms ?? "특약 없음"
+  ].join("\n");
+
+  return {
+    fileName: `${safeTitle || "contract-draft"}.md`,
+    content
+  };
 }
+
+
+

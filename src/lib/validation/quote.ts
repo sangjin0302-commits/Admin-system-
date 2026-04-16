@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const createQuoteDraftSchema = z.object({
   create: z.literal(true).optional().default(true)
@@ -57,6 +57,7 @@ export const saveQuoteManualEditsSchema = z
   .object({
     mode: z.literal("manual"),
     draftNotes: z.string().trim().max(4000).nullish(),
+    specialTerms: z.string().trim().max(6000).nullish(),
     lineItems: z.array(editableLineSchema).min(1),
     adjustments: z.array(editableAdjustmentSchema),
     paymentPlans: z.array(editablePaymentPlanSchema).length(3)
@@ -66,13 +67,13 @@ export const saveQuoteManualEditsSchema = z
       value.lineItems.every((line) => line.amountMax >= line.amountMin) &&
       value.adjustments.every((adjustment) => adjustment.computedMax >= adjustment.computedMin),
     {
-      message: "범위 금액은 최대값이 최소값보다 작을 수 없습니다."
+      message: "범위 금액은 최대 금액이 최소 금액보다 작을 수 없습니다."
     }
   )
   .refine(
     (value) => value.paymentPlans.reduce((sum, plan) => sum + plan.percentage, 0) === 100,
     {
-      message: "납입 비율 합계는 100이어야 합니다."
+      message: "결제 비율 합계는 100이어야 합니다."
     }
   );
 
@@ -85,17 +86,4 @@ export const updateQuoteStatusSchema = z.object({
   status: z.enum(["DRAFT", "READY_TO_SEND", "SENT", "ACCEPTED", "REJECTED", "EXPIRED"]),
   caseDueDate: z.string().trim().optional().or(z.literal("")),
   caseInternalMemo: z.string().trim().max(4000).optional()
-});
-
-export const updateContractPaymentAutomationSchema = z.object({
-  mode: z.literal("contractPayment"),
-  contractShareUrl: z.string().trim().url().optional().or(z.literal("")).transform((value) => value || undefined),
-  sendContractNow: z.boolean().optional().default(false),
-  markContractSigned: z.boolean().optional().default(false),
-  paymentLinkUrl: z.string().trim().url().optional().or(z.literal("")).transform((value) => value || undefined),
-  paymentProvider: z.string().trim().max(80).optional().or(z.literal("")).transform((value) => value || undefined),
-  sendPaymentNow: z.boolean().optional().default(false),
-  paymentStatus: z.enum(["NOT_REQUESTED", "REQUESTED", "PAID", "CANCELLED"]).optional(),
-  paymentReference: z.string().trim().max(160).optional().or(z.literal("")).transform((value) => value || undefined),
-  paymentMemo: z.string().trim().max(2000).optional().or(z.literal("")).transform((value) => value || undefined)
 });

@@ -1,117 +1,199 @@
-"use client";
+﻿"use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { EmptyState, ErrorState, StateInline } from "@/components/ui/state-panel";
-import { Table, TableContainer } from "@/components/ui/table";
+import { EmptyState, StateInline } from "@/components/ui/state-panel";
 import { Textarea } from "@/components/ui/textarea";
-import type { OperationsSettings } from "@/lib/operations-content/defaults";
 import { formatCurrency } from "@/lib/quote-engine/utils";
 import type { QuoteSummarySnapshot, QuoteWorkspace } from "@/lib/quote-engine/types";
+import type { LawbotCaseAnalysisResult } from "@/lib/services/lawbot-case-analysis-service";
 
-const stageKindLabels = {
+const stageKindLabels: Record<string, string> = {
   RETAINER: "착수금",
   MIDTERM: "중도금",
   SUCCESS: "성공보수"
-} as const;
+};
 
-const quoteStatusLabels = {
+const quoteStatusLabels: Record<string, string> = {
   DRAFT: "초안",
   READY_TO_SEND: "발송 준비",
-  SENT: "발송됨",
+  SENT: "발송 완료",
   ACCEPTED: "수락",
   REJECTED: "거절",
   EXPIRED: "만료"
-} as const;
+};
 
-const paymentCollectionStatusLabels = {
-  NOT_REQUESTED: "결제 요청 전",
-  REQUESTED: "결제 요청됨",
-  PAID: "입금 확인",
-  CANCELLED: "결제 취소"
-} as const;
-
-type PaymentCollectionStatusValue = keyof typeof paymentCollectionStatusLabels;
-
-const caseStageLabels = {
+const caseStageLabels: Record<string, string> = {
   CONTRACT_PREPARATION: "계약 준비",
   DOCUMENT_COLLECTION: "서류 수집",
-  UNDER_REVIEW: "검토중",
+  UNDER_REVIEW: "검토 중",
+  ACTIVE: "진행 중",
   SUBMITTED: "제출 완료",
   SUPPLEMENT_REQUESTED: "보완 요청",
   COMPLETED: "완료",
   ON_HOLD: "보류",
   CLOSED: "종결"
-} as const;
+};
 
 function formatRange(min: number, max: number) {
   if (min === max) {
-    return `${formatCurrency(min)}원`;
+    return formatCurrency(min);
   }
 
-  return `${formatCurrency(min)}원 ~ ${formatCurrency(max)}원`;
+  return `${formatCurrency(min)} ~ ${formatCurrency(max)}`;
+}
+
+function buildCaseAnalysisDraft(workspace: QuoteWorkspace) {
+  const analysis = workspace.caseAnalysis;
+  return [
+    "[AI 사건 분석 요약]",
+    `- 사건 강도: ${analysis.strengthLabel} (${analysis.strengthScore}점)`,
+    `- 사건 요약: ${analysis.summary}`,
+    "",
+    "[핵심 쟁점]",
+    ...analysis.issues.map((item) => `- ${item}`),
+    "",
+    "[유리 요소]",
+    ...analysis.favorableFactors.map((item) => `- ${item}`),
+    "",
+    "[불리 요소]",
+    ...analysis.riskFactors.map((item) => `- ${item}`),
+    "",
+    "[추가 확인 필요 사실]",
+    ...analysis.missingFacts.map((item) => `- ${item}`),
+    "",
+    "[참고 법령]",
+    ...analysis.lawReferences.map((item) => `- ${item.title}: ${item.summary}`),
+    "",
+    "[판례 검색어]",
+    ...analysis.precedentReferences.map((item) => `- ${item.query}`)
+  ].join("\n");
+}
+
+function buildLawbotAnalysisDraft(result: LawbotCaseAnalysisResult) {
+  if (result.status !== "available") {
+    return null;
+  }
+
+  const data = result.data;
+  return [
+    "[Lawbot 참고 분석]",
+    `- 입력 요약: ${data.input_summary}`,
+    "",
+    "[Lawbot 핵심 쟁점]",
+    ...(data.key_issues.length > 0 ? data.key_issues.map((item) => `- ${item}`) : ["- 원문 명시 없음"]),
+    "",
+    "[Lawbot 추가 확인 사실]",
+    ...(data.followup_facts.length > 0 ? data.followup_facts.map((item) => `- ${item}`) : ["- 원문 명시 없음"]),
+    "",
+    "[Lawbot 참고 법령]",
+    ...(data.applicable_laws.length > 0 ? data.applicable_laws.map((item) => `- ${item.law}: ${item.summary}`) : ["- 원문 명시 없음"]),
+    "",
+    "[Lawbot 참고 판례]",
+    ...(data.related_precedents?.length
+      ? data.related_precedents.map((item) =>
+          `- ${item.case_name} / ${item.case_number}${item.court_name ? ` / ${item.court_name}` : ""}${item.decision_date ? ` / ${item.decision_date}` : ""}`
+        )
+      : ["- 원문 명시 없음"])
+  ].join("\n");
+}
+
+function buildActionChecklist(workspace: QuoteWorkspace) {
+  const actions = [
+    workspace.caseAnalysis.recommendedAction,
+    ...workspace.caseAnalysis.missingFacts.slice(0, 3).map((item) => `${item} 확인`),
+  ];
+
+  if (workspace.lawbotAnalysis.status === "available") {
+    actions.push(...workspace.lawbotAnalysis.data.next_search_recommendations.slice(0, 3));
+  }
+
+  return [...new Set(actions.filter(Boolean))];
+}
+
+function buildActionTemplates(workspace: QuoteWorkspace, quote: QuoteSummarySnapshot | null) {
+  const missingFacts = workspace.caseAnalysis.missingFacts.slice(0, 3);
+  const lawbotMissingFacts =
+    workspace.lawbotAnalysis.status === "available"
+      ? workspace.lawbotAnalysis.data.followup_facts.slice(0, 3)
+      : [];
+
+  const combinedMissingFacts = [...new Set([...missingFacts, ...lawbotMissingFacts])].slice(0, 4);
+  const documentRequest = [
+    `${workspace.inquiry.contactName}님, 문의 내용 검토 결과 우선 아래 자료를 먼저 확인하면 다음 단계 판단이 훨씬 빨라집니다.`,
+    "",
+    ...combinedMissingFacts.map((item, index) => `${index + 1}. ${item}`),
+    "",
+    "자료를 보내주시면 확인 후 상담 또는 견적 진행 방향을 순차적으로 안내드리겠습니다."
+  ].join("\n");
+
+  const cautiousReview = [
+    `${workspace.inquiry.contactName}님, 현재 내용만으로는 바로 진행 판단을 확정하기보다 추가 사실 확인이 먼저 필요한 상태입니다.`,
+    workspace.caseAnalysis.recommendedAction,
+    "",
+    "관련 자료를 보완해 주시면 가능 범위와 주의할 점을 정리해서 다시 안내드리겠습니다."
+  ].join("\n");
+
+  const quoteAdvance = [
+    `${workspace.inquiry.contactName}님, 현재 검토 기준으로는 견적 또는 수임 검토 단계로 이어갈 수 있는 여지가 있습니다.`,
+    quote ? `예상 견적 범위는 ${formatRange(quote.totalMin, quote.totalMax)}입니다.` : "세부 견적은 자료 확인 후 확정됩니다.",
+    workspace.caseAnalysis.recommendedAction,
+    "",
+    "원하시면 바로 견적 설명과 다음 준비 절차를 안내드리겠습니다."
+  ].join("\n");
+
+  return { documentRequest, cautiousReview, quoteAdvance };
+}
+
+function buildRecommendedSpecialTerms(workspace: QuoteWorkspace) {
+  const missingFacts = workspace.caseAnalysis.missingFacts.slice(0, 3);
+  const lawbotFollowups =
+    workspace.lawbotAnalysis.status === "available"
+      ? workspace.lawbotAnalysis.data.followup_facts.slice(0, 3)
+      : [];
+
+  const factChecklist = [...new Set([...missingFacts, ...lawbotFollowups])];
+
+  return [
+    "[권장 특약 초안]",
+    "1. 의뢰인은 사실관계와 제출자료를 정확하게 제공하고, 추가 확인 요청이 있는 경우 지체 없이 협조합니다.",
+    "2. 행정기관 또는 관계기관의 심사 기준, 재량 판단, 보완 요구, 제도 변경에 따라 결과와 소요 기간이 달라질 수 있습니다.",
+    "3. 업무 범위에 포함되지 않은 번역, 공증, 외부 수수료, 추가 보완 대응, 현장 방문은 별도 협의 또는 추가 비용 대상이 될 수 있습니다.",
+    "4. 실제 제출 전 사실관계 또는 서류 상태가 달라질 경우 보수와 진행 전략이 조정될 수 있습니다.",
+    factChecklist.length > 0 ? "" : null,
+    factChecklist.length > 0 ? "[추가 확인 필요 사항]" : null,
+    ...factChecklist.map((item, index) => `${index + 1}. ${item}`)
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 type QuoteWorkspaceProps = {
   inquiryId: string;
   workspace: QuoteWorkspace;
-  operationsSettings: OperationsSettings;
+  operationsSettings?: unknown;
 };
 
-type QuoteAiDraft = {
-  proposalHeadline: string;
-  customerSummary: string;
-  scopeSummary: string;
-  nextStepGuide: string;
-  internalMemo: string;
-};
-
-export function QuoteWorkspacePanel({
-  inquiryId,
-  workspace,
-  operationsSettings
-}: QuoteWorkspaceProps) {
+export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProps) {
   const router = useRouter();
   const [quote, setQuote] = useState<QuoteSummarySnapshot | null>(workspace.latestQuote);
   const [message, setMessage] = useState("");
   const [tone, setTone] = useState<"default" | "success" | "error">("default");
-  const [aiDraft, setAiDraft] = useState<QuoteAiDraft | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [contractShareUrl, setContractShareUrl] = useState(
-    workspace.latestQuote?.contractDraft?.contractShareUrl ?? ""
-  );
-  const [paymentLinkUrl, setPaymentLinkUrl] = useState(
-    workspace.latestQuote?.contractDraft?.paymentLinkUrl ?? ""
-  );
-  const [paymentProvider, setPaymentProvider] = useState(
-    workspace.latestQuote?.contractDraft?.paymentProvider ?? ""
-  );
-  const [paymentStatus, setPaymentStatus] = useState<PaymentCollectionStatusValue>(
-    workspace.latestQuote?.contractDraft?.paymentStatus ?? "NOT_REQUESTED"
-  );
-  const [paymentReference, setPaymentReference] = useState(
-    workspace.latestQuote?.contractDraft?.paymentReference ?? ""
-  );
-  const [paymentMemo, setPaymentMemo] = useState(
-    workspace.latestQuote?.contractDraft?.paymentMemo ?? ""
-  );
 
   const groupedServices = useMemo(() => {
     const bucket = new Map<string, typeof workspace.masters.serviceTypes>();
-
     for (const service of workspace.masters.serviceTypes) {
-      const items = bucket.get(service.category) ?? [];
-      items.push(service);
-      bucket.set(service.category, items);
+      const current = bucket.get(service.category) ?? [];
+      current.push(service);
+      bucket.set(service.category, current);
     }
-
     return Array.from(bucket.entries());
   }, [workspace.masters.serviceTypes]);
 
@@ -128,24 +210,58 @@ export function QuoteWorkspacePanel({
     workspace.latestQuote?.consultRuleCode ?? workspace.masters.consultRules.find((rule) => rule.isDefault)?.code ?? "CONSULT_NONE"
   );
   const [paymentRuleCode, setPaymentRuleCode] = useState(
-    workspace.latestQuote?.paymentRuleCode ??
-      workspace.masters.paymentRules.find((rule) => rule.isDefault)?.code ??
-      "PAYMENT_STANDARD"
+    workspace.latestQuote?.paymentRuleCode ?? workspace.masters.paymentRules.find((rule) => rule.isDefault)?.code ?? "PAYMENT_STANDARD"
   );
   const [rangeMode, setRangeMode] = useState(workspace.latestQuote?.rangeMode ?? true);
-  const [quoteStatus, setQuoteStatus] = useState(workspace.latestQuote?.status ?? "DRAFT");
+  const [quoteStatus, setQuoteStatus] = useState<QuoteSummarySnapshot["status"]>(workspace.latestQuote?.status ?? "DRAFT");
   const [draftNotes, setDraftNotes] = useState(workspace.latestQuote?.draftNotes ?? "");
+  const [specialTerms, setSpecialTerms] = useState(workspace.latestQuote?.contractDraft?.specialTerms ?? "");
   const [caseDueDate, setCaseDueDate] = useState(
-    workspace.latestQuote?.caseRecord?.dueDate
-      ? workspace.latestQuote.caseRecord.dueDate.slice(0, 10)
-      : ""
+    workspace.latestQuote?.caseRecord?.dueDate ? workspace.latestQuote.caseRecord.dueDate.slice(0, 10) : ""
   );
-  const [caseInternalMemo, setCaseInternalMemo] = useState(
-    workspace.latestQuote?.caseRecord?.internalMemo ?? ""
-  );
+  const [caseInternalMemo, setCaseInternalMemo] = useState(workspace.latestQuote?.caseRecord?.internalMemo ?? "");
   const [lineItems, setLineItems] = useState(workspace.latestQuote?.lineItems ?? []);
   const [adjustments, setAdjustments] = useState(workspace.latestQuote?.adjustments ?? []);
   const [paymentPlans, setPaymentPlans] = useState(workspace.latestQuote?.paymentPlans ?? []);
+  const [showConditions, setShowConditions] = useState(true);
+  const [showItems, setShowItems] = useState(false);
+  const [showPaymentPlans, setShowPaymentPlans] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+  const [serviceSearch, setServiceSearch] = useState("");
+  const [optionSearch, setOptionSearch] = useState("");
+  const caseAnalysisDraft = useMemo(() => buildCaseAnalysisDraft(workspace), [workspace]);
+  const lawbotAnalysisDraft = useMemo(() => buildLawbotAnalysisDraft(workspace.lawbotAnalysis), [workspace.lawbotAnalysis]);
+  const actionChecklist = useMemo(() => buildActionChecklist(workspace), [workspace]);
+  const actionTemplates = useMemo(() => buildActionTemplates(workspace, quote), [workspace, quote]);
+  const recommendedSpecialTerms = useMemo(() => buildRecommendedSpecialTerms(workspace), [workspace]);
+  const normalizedServiceSearch = serviceSearch.trim().toLowerCase();
+  const normalizedOptionSearch = optionSearch.trim().toLowerCase();
+  const filteredGroupedServices = useMemo(() => {
+    if (!normalizedServiceSearch) {
+      return groupedServices;
+    }
+
+    return groupedServices
+      .map(([category, services]) => [
+        category,
+        services.filter((service) =>
+          [service.name, service.category, service.legacyId]
+            .filter(Boolean)
+            .some((value) => value.toLowerCase().includes(normalizedServiceSearch))
+        )
+      ] as const)
+      .filter(([, services]) => services.length > 0);
+  }, [groupedServices, normalizedServiceSearch]);
+  const filteredOptions = useMemo(() => {
+    if (!normalizedOptionSearch) {
+      return workspace.masters.pricingOptions;
+    }
+
+    return workspace.masters.pricingOptions.filter((option) =>
+      [option.name, option.description ?? "", option.legacyId]
+        .some((value) => value.toLowerCase().includes(normalizedOptionSearch))
+    );
+  }, [normalizedOptionSearch, workspace.masters.pricingOptions]);
 
   function applyQuote(nextQuote: QuoteSummarySnapshot) {
     setQuote(nextQuote);
@@ -157,17 +273,12 @@ export function QuoteWorkspacePanel({
     setPaymentRuleCode(nextQuote.paymentRuleCode);
     setRangeMode(nextQuote.rangeMode);
     setDraftNotes(nextQuote.draftNotes ?? "");
+    setSpecialTerms(nextQuote.contractDraft?.specialTerms ?? "");
     setCaseDueDate(nextQuote.caseRecord?.dueDate ? nextQuote.caseRecord.dueDate.slice(0, 10) : "");
     setCaseInternalMemo(nextQuote.caseRecord?.internalMemo ?? "");
     setLineItems(nextQuote.lineItems);
     setAdjustments(nextQuote.adjustments);
     setPaymentPlans(nextQuote.paymentPlans);
-    setContractShareUrl(nextQuote.contractDraft?.contractShareUrl ?? "");
-    setPaymentLinkUrl(nextQuote.contractDraft?.paymentLinkUrl ?? "");
-    setPaymentProvider(nextQuote.contractDraft?.paymentProvider ?? "");
-    setPaymentStatus(nextQuote.contractDraft?.paymentStatus ?? "NOT_REQUESTED");
-    setPaymentReference(nextQuote.contractDraft?.paymentReference ?? "");
-    setPaymentMemo(nextQuote.contractDraft?.paymentMemo ?? "");
   }
 
   function setFeedback(nextMessage: string, nextTone: "default" | "success" | "error") {
@@ -175,53 +286,41 @@ export function QuoteWorkspacePanel({
     setTone(nextTone);
   }
 
-  function toggleSelection(
-    values: string[],
-    setValues: (nextValues: string[]) => void,
-    target: string
-  ) {
+  function toggleSelection(values: string[], setValues: (nextValues: string[]) => void, target: string) {
     if (values.includes(target)) {
       setValues(values.filter((value) => value !== target));
       return;
     }
-
     setValues([...values, target]);
   }
 
   async function handleCreateQuote() {
     setFeedback("", "default");
-
     startTransition(async () => {
       const response = await fetch(`/api/admin/inquiries/${inquiryId}/quotes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ create: true })
       });
-
       const payload = await response.json();
-
       if (!response.ok) {
         setFeedback(payload.error ?? "견적 초안을 만들지 못했습니다.", "error");
         return;
       }
-
       applyQuote(payload.quote);
-      setFeedback("레거시 단가표 기준으로 견적 초안을 생성했습니다.", "success");
+      setFeedback("견적 초안을 생성했습니다.", "success");
       router.refresh();
     });
   }
 
   async function handleRecalculate() {
     if (!quote) return;
-
     setFeedback("", "default");
-
     startTransition(async () => {
       const response = await fetch(`/api/admin/quotes/${quote.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          mode: "recalculate",
           selectedServiceLegacyIds: selectedServices,
           selectedOptionLegacyIds: selectedOptions,
           urgencyRuleCode,
@@ -230,32 +329,24 @@ export function QuoteWorkspacePanel({
           rangeMode,
           draftNotes,
           stageOverrides: Object.fromEntries(
-            paymentPlans.map((plan) => [
-              plan.stageKind,
-              { percentage: Number(plan.percentage), dueText: plan.dueText }
-            ])
+            paymentPlans.map((plan) => [plan.stageKind, { percentage: Number(plan.percentage), dueText: plan.dueText }])
           )
         })
       });
-
       const payload = await response.json();
-
       if (!response.ok) {
-        setFeedback(payload.error ?? "자동 재계산 중 오류가 발생했습니다.", "error");
+        setFeedback(payload.error ?? "견적을 다시 계산하지 못했습니다.", "error");
         return;
       }
-
       applyQuote(payload.quote);
-      setFeedback("레거시 계산 규칙으로 견적을 다시 계산했습니다.", "success");
+      setFeedback("견적 계산을 갱신했습니다.", "success");
       router.refresh();
     });
   }
 
   async function handleSaveManualEdits() {
     if (!quote) return;
-
     setFeedback("", "default");
-
     startTransition(async () => {
       const response = await fetch(`/api/admin/quotes/${quote.id}`, {
         method: "PATCH",
@@ -263,6 +354,7 @@ export function QuoteWorkspacePanel({
         body: JSON.stringify({
           mode: "manual",
           draftNotes,
+          specialTerms: quote.contractDraft ? specialTerms : undefined,
           lineItems: lineItems.map((line, index) => ({
             id: line.id,
             label: line.label,
@@ -288,50 +380,40 @@ export function QuoteWorkspacePanel({
           }))
         })
       });
-
       const payload = await response.json();
-
       if (!response.ok) {
-        setFeedback(payload.error ?? "수동 조정 저장 중 오류가 발생했습니다.", "error");
+        setFeedback(payload.error ?? "수정 내용을 저장하지 못했습니다.", "error");
         return;
       }
-
       applyQuote(payload.quote);
-      setFeedback("항목별 수정 사항을 저장했습니다.", "success");
+      setFeedback("수정 내용을 저장했습니다.", "success");
       router.refresh();
     });
   }
 
   async function handleCreateContractDraft() {
     if (!quote) return;
-
     setFeedback("", "default");
-
     startTransition(async () => {
       const response = await fetch(`/api/admin/quotes/${quote.id}/contract-draft`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ create: true })
       });
-
       const payload = await response.json();
-
       if (!response.ok) {
         setFeedback(payload.error ?? "계약 초안을 만들지 못했습니다.", "error");
         return;
       }
-
       applyQuote(payload.quote);
-      setFeedback("견적 데이터를 기반으로 계약 초안을 생성했습니다.", "success");
+      setFeedback("계약 초안을 생성했습니다.", "success");
       router.refresh();
     });
   }
 
   async function handleUpdateQuoteStatus() {
     if (!quote) return;
-
     setFeedback("", "default");
-
     startTransition(async () => {
       const response = await fetch(`/api/admin/quotes/${quote.id}`, {
         method: "PATCH",
@@ -343,16 +425,13 @@ export function QuoteWorkspacePanel({
           caseInternalMemo
         })
       });
-
       const payload = await response.json();
-
       if (!response.ok) {
-        setFeedback(payload.error ?? "상태 변경 중 오류가 발생했습니다.", "error");
+        setFeedback(payload.error ?? "상태를 바꾸지 못했습니다.", "error");
         return;
       }
-
       applyQuote(payload.quote);
-      setFeedback("견적 상태를 반영했습니다.", "success");
+      setFeedback("상태를 반영했습니다.", "success");
       router.refresh();
     });
   }
@@ -360,938 +439,548 @@ export function QuoteWorkspacePanel({
   async function handleCopyMessage(text: string, label: string) {
     try {
       await navigator.clipboard.writeText(text);
-      setFeedback(`${label} 문구를 클립보드에 복사했습니다.`, "success");
+      setFeedback(`${label} 문구를 복사했습니다.`, "success");
     } catch {
-      setFeedback("클립보드 복사에 실패했습니다.", "error");
+      setFeedback("문구를 복사하지 못했습니다.", "error");
     }
   }
 
-  async function handleGenerateAiDraft() {
-    if (!quote) return;
-
-    setFeedback("", "default");
-
-    startTransition(async () => {
-      const response = await fetch(`/api/admin/quotes/${quote.id}/ai-draft`, {
-        method: "POST"
-      });
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        setFeedback(payload.error ?? "AI 제안서 초안을 생성하지 못했습니다.", "error");
-        return;
-      }
-
-      setAiDraft(payload.draft);
-      setFeedback("AI 제안서 초안을 생성했습니다.", "success");
-    });
+  function updateLineField<T extends keyof (typeof lineItems)[number]>(id: string, field: T, value: (typeof lineItems)[number][T]) {
+    setLineItems((current) => current.map((line) => (line.id === id ? { ...line, [field]: value } : line)));
   }
 
-  async function handleContractPaymentAutomation(action: "sendContract" | "markSigned" | "sendPayment" | "savePayment" | "markPaid") {
-    if (!quote) return;
-
-    setFeedback("", "default");
-
-    startTransition(async () => {
-      const response = await fetch(`/api/admin/quotes/${quote.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "contractPayment",
-          contractShareUrl,
-          sendContractNow: action === "sendContract",
-          markContractSigned: action === "markSigned",
-          paymentLinkUrl,
-          paymentProvider,
-          sendPaymentNow: action === "sendPayment",
-          paymentStatus: action === "markPaid" ? "PAID" : paymentStatus,
-          paymentReference,
-          paymentMemo
-        })
-      });
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        setFeedback(payload.error ?? "계약/결제 자동화 상태를 반영하지 못했습니다.", "error");
-        return;
-      }
-
-      applyQuote(payload.quote);
-      setFeedback(
-        action === "markPaid"
-          ? "입금 확인과 사건 전환 상태를 반영했습니다."
-          : "계약/결제 상태를 반영했습니다.",
-        "success"
-      );
-      router.refresh();
-    });
+  function updateAdjustmentField<T extends keyof (typeof adjustments)[number]>(id: string, field: T, value: (typeof adjustments)[number][T]) {
+    setAdjustments((current) => current.map((adjustment) => (adjustment.id === id ? { ...adjustment, [field]: value } : adjustment)));
   }
 
-  function updateLineField<T extends keyof (typeof lineItems)[number]>(
-    id: string,
-    field: T,
-    value: (typeof lineItems)[number][T]
-  ) {
-    setLineItems((current) =>
-      current.map((line) => (line.id === id ? { ...line, [field]: value } : line))
-    );
-  }
-
-  function updateAdjustmentField<T extends keyof (typeof adjustments)[number]>(
-    id: string,
-    field: T,
-    value: (typeof adjustments)[number][T]
-  ) {
-    setAdjustments((current) =>
-      current.map((adjustment) =>
-        adjustment.id === id ? { ...adjustment, [field]: value } : adjustment
-      )
-    );
-  }
-
-  function updatePaymentPlanField<T extends keyof (typeof paymentPlans)[number]>(
-    id: string,
-    field: T,
-    value: (typeof paymentPlans)[number][T]
-  ) {
-    setPaymentPlans((current) =>
-      current.map((plan) => (plan.id === id ? { ...plan, [field]: value } : plan))
-    );
+  function updatePaymentPlanField<T extends keyof (typeof paymentPlans)[number]>(id: string, field: T, value: (typeof paymentPlans)[number][T]) {
+    setPaymentPlans((current) => current.map((plan) => (plan.id === id ? { ...plan, [field]: value } : plan)));
   }
 
   const paymentPercentageTotal = paymentPlans.reduce((sum, plan) => sum + Number(plan.percentage), 0);
 
   return (
-    <div className="space-y-6">
-      {!quote ? (
-        <EmptyState
-          title="견적 초안이 아직 없습니다."
-          description="레거시 admin_suite 단가표 기준으로 자동 초안을 만든 뒤, 관리자 검토용으로 세부 항목을 조정할 수 있습니다."
-          className="text-left"
-        />
-      ) : null}
-
+    <div id="quote-workspace" className="space-y-6 scroll-mt-6">
       {!quote ? (
         <Card className="p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="ui-section-title">견적 초안 생성</h3>
-              <p className="ui-section-copy mt-2">
-                문의 분류와 레거시 단가표를 바탕으로 초안을 생성합니다.
-              </p>
-            </div>
-            <Button onClick={handleCreateQuote} disabled={isPending}>
-              {isPending ? "생성 중..." : "견적 생성"}
-            </Button>
+          <h3 className="ui-section-title">견적 초안 생성</h3>
+          <p className="mt-2 text-sm text-text-muted">문의 내용을 기준으로 추천 서비스와 사건 분석을 반영해 견적 초안을 만듭니다.</p>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <InfoPanel label="추천 서비스" value={workspace.suggestedServiceLegacyIds.map((legacyId) => workspace.masters.serviceTypes.find((service) => service.legacyId === legacyId)?.name ?? legacyId).join(", ")} />
+            <InfoPanel label="추천 긴급도 규칙" value={workspace.masters.urgencyRules.find((rule) => rule.code === workspace.suggestedUrgencyRuleCode)?.label ?? workspace.suggestedUrgencyRuleCode} />
           </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <InfoPanel
-              label="자동 추천 업무"
-              value={
-                workspace.suggestedServiceLegacyIds
-                  .map(
-                    (legacyId) =>
-                      workspace.masters.serviceTypes.find((service) => service.legacyId === legacyId)?.name ??
-                      legacyId
-                  )
-                  .join(", ")
-              }
-            />
-            <InfoPanel
-              label="기본 긴급도 규칙"
-              value={
-                workspace.masters.urgencyRules.find((rule) => rule.code === workspace.suggestedUrgencyRuleCode)
-                  ?.label ?? workspace.suggestedUrgencyRuleCode
-              }
-            />
+          <div className="mt-5">
+            <Button onClick={handleCreateQuote} disabled={isPending}>{isPending ? "생성 중..." : "견적 초안 만들기"}</Button>
           </div>
           {message ? <StateInline tone={tone}>{message}</StateInline> : null}
         </Card>
       ) : (
         <>
-          <Card className="p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge>견적 초안</Badge>
-                  <Badge className="border-primary/20 bg-primary-soft text-primary">
-                    상태: {quoteStatusLabels[quote.status]}
-                  </Badge>
-                  {quote.successFeeRestricted ? (
-                    <Badge className="border-rose-200 bg-rose-50 text-danger">
-                      행정심판/이의신청 성공보수 제한
-                    </Badge>
-                  ) : null}
-                </div>
-                <h3 className="mt-4 ui-section-title">실무형 견적 워크스페이스</h3>
-                <p className="ui-section-copy mt-2 whitespace-pre-line">
-                  {quote.calculationSummary ?? "자동 계산 요약이 아직 없습니다."}
-                </p>
-              </div>
-              <div className="grid w-full gap-3 sm:grid-cols-2 lg:max-w-xl">
-                <InfoPanel label="기본 합계" value={formatRange(quote.serviceBaseMin, quote.serviceBaseMax)} />
-                <InfoPanel label="소계" value={formatRange(quote.subtotalMin, quote.subtotalMax)} />
-                <InfoPanel label="VAT" value={formatRange(quote.vatAmountMin, quote.vatAmountMax)} />
-                <InfoPanel label="총액" value={formatRange(quote.totalMin, quote.totalMax)} />
-                <InfoPanel
-                  label="상담료"
-                  value={
-                    quote.consultFee > 0
-                      ? `${formatCurrency(quote.consultFee)}원 (수임 시 면제)`
-                      : "미적용"
-                  }
-                />
-                <InfoPanel label="최종 수정일" value={new Date(quote.updatedAt).toLocaleString("ko-KR")} />
-              </div>
+          <Card className="p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>작업 바로가기</Badge>
+              <a
+                href="#quote-analysis"
+                className="inline-flex h-9 items-center justify-center rounded-md border border-line px-3 text-xs font-medium text-text-strong transition hover:bg-surface"
+              >
+                사건 분석 보기
+              </a>
+              <a
+                href="#quote-contract"
+                className="inline-flex h-9 items-center justify-center rounded-md border border-line px-3 text-xs font-medium text-text-strong transition hover:bg-surface"
+              >
+                계약 초안으로 이동
+              </a>
+              <a
+                href="#quote-messages"
+                className="inline-flex h-9 items-center justify-center rounded-md border border-line px-3 text-xs font-medium text-text-strong transition hover:bg-surface"
+              >
+                안내 문구 보기
+              </a>
             </div>
           </Card>
 
-          <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-            <Card className="p-6">
-              <h3 className="ui-section-title">자동 계산 기준</h3>
-              <p className="ui-section-copy mt-2">
-                서비스 선택과 옵션 조합을 바꾸면 레거시 계산 순서대로 다시 계산합니다.
-              </p>
-              <div className="mt-5 space-y-6">
-                <FieldGroup>
-                  <Field label="업무 유형">
-                    <div className="space-y-4">
-                      {groupedServices.map(([category, services]) => (
-                        <div key={category} className="rounded-md border border-line bg-surface-muted p-4">
-                          <p className="text-sm font-semibold text-text-strong">{category}</p>
-                          <div className="mt-3 space-y-2">
-                            {services.map((service) => (
-                              <label
-                                key={service.legacyId}
-                                className="flex items-start gap-3 rounded-md bg-surface px-3 py-2 text-sm text-text"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedServices.includes(service.legacyId)}
-                                  onChange={() =>
-                                    toggleSelection(selectedServices, setSelectedServices, service.legacyId)
-                                  }
-                                  className="mt-1 h-4 w-4 rounded border-line-strong text-primary focus:ring-primary/20"
-                                />
-                                <span>
-                                  <span className="font-medium text-text-strong">{service.name}</span>
-                                  <span className="mt-1 block text-xs text-text-muted">
-                                    {formatRange(service.minPrice, service.maxPrice)}
-                                    {service.isAppeal ? " · appeal 제한 적용" : ""}
-                                  </span>
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Field>
-                  <Field label="추가 옵션">
-                    <div className="grid gap-2">
-                      {workspace.masters.pricingOptions.map((option) => (
-                        <label
-                          key={option.legacyId}
-                          className="flex items-start gap-3 rounded-md border border-line bg-surface-muted px-3 py-3 text-sm text-text"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedOptions.includes(option.legacyId)}
-                            onChange={() => toggleSelection(selectedOptions, setSelectedOptions, option.legacyId)}
-                            className="mt-1 h-4 w-4 rounded border-line-strong text-primary focus:ring-primary/20"
-                          />
-                          <span>
-                            <span className="font-medium text-text-strong">{option.name}</span>
-                            <span className="mt-1 block text-xs text-text-muted">
-                              {option.description}
-                              {option.unitLabel ? ` · ${option.unitLabel}` : ""}
-                            </span>
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </Field>
-                </FieldGroup>
+          <Card id="quote-analysis" className="p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge>사건 분석</Badge>
+                  <Badge className="border-primary/20 bg-primary-soft text-primary">{workspace.caseAnalysis.strengthLabel} · {workspace.caseAnalysis.strengthScore}점</Badge>
+                </div>
+                <h3 className="mt-4 ui-section-title">견적 전 사건 분석</h3>
+                <p className="mt-2 text-sm text-text-muted">사건 분석 요약을 견적 메모와 계약 초안 특약에 바로 반영할 수 있습니다.</p>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  setDraftNotes((current) => {
+                    const sections = [current?.trim(), caseAnalysisDraft, lawbotAnalysisDraft].filter(Boolean);
+                    return sections.join("\n\n");
+                  })
+                }
+              >
+                메모에 반영
+              </Button>
+            </div>
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <ListCard title="핵심 쟁점" items={workspace.caseAnalysis.issues} />
+              <ListCard title="추가 확인 필요 사실" items={workspace.caseAnalysis.missingFacts} />
+            </div>
+            <div className="mt-5">
+              <ListCard title="권장 액션" items={actionChecklist} />
+            </div>
+            {workspace.lawbotAnalysis.status === "available" ? (
+              <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                <ListCard title="Lawbot 핵심 쟁점" items={workspace.lawbotAnalysis.data.key_issues} />
+                <ListCard
+                  title="Lawbot 참고 판례"
+                  items={
+                    workspace.lawbotAnalysis.data.related_precedents?.map(
+                      (item) =>
+                        `${item.case_name} / ${item.case_number}${item.court_name ? ` / ${item.court_name}` : ""}${item.decision_date ? ` / ${item.decision_date}` : ""}`
+                    ) ?? []
+                  }
+                />
+              </div>
+            ) : null}
+            <div className="mt-5 grid gap-4 xl:grid-cols-3">
+              <MessageCard
+                title="추가서류 요청"
+                message={actionTemplates.documentRequest}
+                onCopy={() => handleCopyMessage(actionTemplates.documentRequest, "추가서류 요청")}
+              />
+              <MessageCard
+                title="보수 검토 안내"
+                message={actionTemplates.cautiousReview}
+                onCopy={() => handleCopyMessage(actionTemplates.cautiousReview, "보수 검토 안내")}
+              />
+              <MessageCard
+                title="견적 진행 안내"
+                message={actionTemplates.quoteAdvance}
+                onCopy={() => handleCopyMessage(actionTemplates.quoteAdvance, "견적 진행 안내")}
+              />
+            </div>
+          </Card>
 
-                <FieldGroup>
-                  <Field label="긴급도">
+          <Card className="p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>견적 관리</Badge>
+              <Badge className="border-primary/20 bg-primary-soft text-primary">상태: {quoteStatusLabels[quote.status]}</Badge>
+            </div>
+            <h3 className="mt-4 ui-section-title">견적 요약</h3>
+            <p className="mt-2 whitespace-pre-line text-sm text-text-muted">{quote.calculationSummary ?? "계산 요약이 아직 없습니다."}</p>
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <InfoPanel label="서비스 기본가" value={formatRange(quote.serviceBaseMin, quote.serviceBaseMax)} />
+              <InfoPanel label="소계" value={formatRange(quote.subtotalMin, quote.subtotalMax)} />
+              <InfoPanel label="VAT" value={formatRange(quote.vatAmountMin, quote.vatAmountMax)} />
+              <InfoPanel label="총액" value={formatRange(quote.totalMin, quote.totalMax)} />
+              <InfoPanel label="상담료" value={quote.consultFee > 0 ? `${formatCurrency(quote.consultFee)} (수임 시 공제)` : "없음"} />
+              <InfoPanel label="최종 수정" value={new Date(quote.updatedAt).toLocaleString("ko-KR")} />
+            </div>
+          </Card>
+
+          <CollapsibleSection
+            title="견적 조건 조정"
+            description="서비스, 옵션, 규칙, 메모를 조정하는 영역입니다. 필요할 때만 펼쳐서 수정하면 됩니다."
+            open={showConditions}
+            onToggle={() => setShowConditions((current) => !current)}
+          >
+            <div className="grid gap-6 xl:grid-cols-2">
+              <div className="space-y-5">
+                <div>
+                  <p className="text-sm font-semibold text-text-strong">서비스 선택</p>
+                  <div className="mt-3">
+                    <Input
+                      value={serviceSearch}
+                      onChange={(event) => setServiceSearch(event.target.value)}
+                      placeholder="서비스명, 분야, 코드로 검색"
+                    />
+                  </div>
+                  <div className="mt-3 space-y-4">
+                    {filteredGroupedServices.length === 0 ? (
+                      <EmptyState
+                        title="검색 결과가 없습니다."
+                        description="다른 키워드로 다시 검색해 보세요."
+                      />
+                    ) : null}
+                    {filteredGroupedServices.map(([category, services]) => (
+                      <Card key={category} muted className="p-4">
+                        <p className="text-sm font-semibold text-text-strong">{category}</p>
+                        <div className="mt-3 space-y-2">
+                          {services.map((service) => (
+                            <label key={service.legacyId} className="flex items-start gap-3 rounded-md bg-surface px-3 py-2 text-sm text-text">
+                              <input
+                                type="checkbox"
+                                checked={selectedServices.includes(service.legacyId)}
+                                onChange={() => toggleSelection(selectedServices, setSelectedServices, service.legacyId)}
+                                className="mt-1 h-4 w-4 rounded border-line-strong text-primary focus:ring-primary/20"
+                              />
+                              <span>
+                                <span className="font-medium text-text-strong">{service.name}</span>
+                                <span className="mt-1 block text-xs text-text-muted">{formatRange(service.minPrice, service.maxPrice)}</span>
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-text-strong">옵션 선택</p>
+                  <div className="mt-3">
+                    <Input
+                      value={optionSearch}
+                      onChange={(event) => setOptionSearch(event.target.value)}
+                      placeholder="옵션명, 설명, 코드로 검색"
+                    />
+                  </div>
+                  <div className="mt-3 grid gap-2">
+                    {filteredOptions.length === 0 ? (
+                      <EmptyState
+                        title="검색 결과가 없습니다."
+                        description="원하는 옵션 키워드를 다시 입력해 보세요."
+                      />
+                    ) : null}
+                    {filteredOptions.map((option) => (
+                      <label key={option.legacyId} className="flex items-start gap-3 rounded-md border border-line bg-surface-muted px-3 py-3 text-sm text-text">
+                        <input
+                          type="checkbox"
+                          checked={selectedOptions.includes(option.legacyId)}
+                          onChange={() => toggleSelection(selectedOptions, setSelectedOptions, option.legacyId)}
+                          className="mt-1 h-4 w-4 rounded border-line-strong text-primary focus:ring-primary/20"
+                        />
+                        <span>
+                          <span className="font-medium text-text-strong">{option.name}</span>
+                          <span className="mt-1 block text-xs text-text-muted">{option.description}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FieldBlock label="긴급도 규칙">
                     <Select value={urgencyRuleCode} onChange={(event) => setUrgencyRuleCode(event.target.value)}>
                       {workspace.masters.urgencyRules.map((rule) => (
-                        <option key={rule.code} value={rule.code}>
-                          {rule.label}
-                        </option>
+                        <option key={rule.code} value={rule.code}>{rule.label}</option>
                       ))}
                     </Select>
-                  </Field>
-                  <Field label="상담료">
+                  </FieldBlock>
+                  <FieldBlock label="상담료 규칙">
                     <Select value={consultRuleCode} onChange={(event) => setConsultRuleCode(event.target.value)}>
                       {workspace.masters.consultRules.map((rule) => (
-                        <option key={rule.code} value={rule.code}>
-                          {rule.label}
-                        </option>
+                        <option key={rule.code} value={rule.code}>{rule.label}</option>
                       ))}
                     </Select>
-                  </Field>
-                  <Field label="납입 구조">
+                  </FieldBlock>
+                  <FieldBlock label="결제 규칙">
                     <Select value={paymentRuleCode} onChange={(event) => setPaymentRuleCode(event.target.value)}>
                       {workspace.masters.paymentRules.map((rule) => (
-                        <option key={rule.code} value={rule.code}>
-                          {rule.label}
-                        </option>
+                        <option key={rule.code} value={rule.code}>{rule.label}</option>
                       ))}
                     </Select>
-                  </Field>
-                  <Field label="표시 방식">
+                  </FieldBlock>
+                  <FieldBlock label="범위 모드">
                     <label className="flex h-11 items-center gap-3 rounded-md border border-line bg-surface px-3 text-sm text-text">
-                      <input
-                        type="checkbox"
-                        checked={rangeMode}
-                        onChange={(event) => setRangeMode(event.target.checked)}
-                        className="h-4 w-4 rounded border-line-strong text-primary focus:ring-primary/20"
-                      />
-                      범위 견적으로 표시
+                      <input type="checkbox" checked={rangeMode} onChange={(event) => setRangeMode(event.target.checked)} />
+                      금액 범위를 유지합니다.
                     </label>
-                  </Field>
-                  <Field label="견적 상태">
-                    <Select
-                      value={quoteStatus}
-                      onChange={(event) =>
-                        setQuoteStatus(event.target.value as QuoteSummarySnapshot["status"])
-                      }
-                    >
-                      {Object.entries(quoteStatusLabels).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field label="사건 예정일">
-                    <Input
-                      type="date"
-                      value={caseDueDate}
-                      onChange={(event) => setCaseDueDate(event.target.value)}
-                    />
-                  </Field>
-                  <Field label="사건 내부 메모">
-                    <Textarea
-                      rows={3}
-                      value={caseInternalMemo}
-                      onChange={(event) => setCaseInternalMemo(event.target.value)}
-                      placeholder="수락/거절 사유 또는 계약 준비 메모를 기록합니다."
-                    />
-                  </Field>
-                  <Field label="관리 메모">
-                    <Textarea
-                      rows={5}
-                      value={draftNotes}
-                      onChange={(event) => setDraftNotes(event.target.value)}
-                      placeholder="견적 전제, 고객 협의 포인트, 제외 조건 등을 기록합니다."
-                    />
-                  </Field>
-                </FieldGroup>
+                  </FieldBlock>
+                </div>
+
+                <FieldBlock label="견적 메모">
+                  <Textarea rows={10} value={draftNotes} onChange={(event) => setDraftNotes(event.target.value)} />
+                </FieldBlock>
 
                 <div className="flex flex-wrap gap-3">
-                  <Button onClick={handleRecalculate} disabled={isPending || selectedServices.length === 0}>
-                    {isPending ? "계산 중..." : "자동 재계산"}
-                  </Button>
-                  <Button variant="secondary" onClick={handleSaveManualEdits} disabled={isPending}>
-                    {isPending ? "저장 중..." : "항목 조정 저장"}
-                  </Button>
-                  <Button variant="secondary" onClick={handleUpdateQuoteStatus} disabled={isPending}>
-                    {isPending ? "반영 중..." : "상태 반영"}
-                  </Button>
-                  <Button variant="secondary" onClick={handleCreateContractDraft} disabled={isPending}>
-                    {isPending ? "생성 중..." : "계약 초안 생성"}
-                  </Button>
+                  <Button onClick={handleRecalculate} disabled={isPending}>{isPending ? "계산 중..." : "견적 다시 계산"}</Button>
+                  <Button variant="secondary" onClick={handleSaveManualEdits} disabled={isPending}>수정 내용 저장</Button>
                 </div>
-                {message ? <StateInline tone={tone}>{message}</StateInline> : null}
               </div>
-            </Card>
+            </div>
+          </CollapsibleSection>
 
-            <div className="space-y-6">
-              <Card className="p-6">
-                <h3 className="ui-section-title">항목별 견적 미리보기</h3>
-                <p className="ui-section-copy mt-2">
-                  자동 계산 결과를 바탕으로 항목 금액을 최종 조정할 수 있습니다.
-                </p>
-
-                <div className="mt-5 space-y-6">
-                  <TableContainer>
-                    <Table>
-                      <thead>
-                        <tr>
-                          <th>구분</th>
-                          <th>항목</th>
-                          <th>최소</th>
-                          <th>최대</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {lineItems.map((line) => (
-                          <tr key={line.id}>
-                            <td>{line.kind === "SERVICE" ? "기본업무" : "긴급도"}</td>
-                            <td>
-                              <div className="space-y-2">
-                                <Input
-                                  value={line.label}
-                                  onChange={(event) => updateLineField(line.id, "label", event.target.value)}
-                                />
-                                <Input
-                                  value={line.description ?? ""}
-                                  onChange={(event) =>
-                                    updateLineField(line.id, "description", event.target.value || null)
-                                  }
-                                  placeholder="설명"
-                                />
-                              </div>
-                            </td>
-                            <td>
-                              <Input
-                                type="number"
-                                value={line.amountMin}
-                                onChange={(event) =>
-                                  updateLineField(line.id, "amountMin", Number(event.target.value))
-                                }
-                              />
-                            </td>
-                            <td>
-                              <Input
-                                type="number"
-                                value={line.amountMax}
-                                onChange={(event) =>
-                                  updateLineField(line.id, "amountMax", Number(event.target.value))
-                                }
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                        {adjustments.map((adjustment) => (
-                          <tr key={adjustment.id}>
-                            <td>{adjustment.isVat ? "VAT" : "가산"}</td>
-                            <td>
-                              <div className="space-y-2">
-                                <Input
-                                  value={adjustment.label}
-                                  onChange={(event) =>
-                                    updateAdjustmentField(adjustment.id, "label", event.target.value)
-                                  }
-                                />
-                                <Input
-                                  value={adjustment.description ?? ""}
-                                  onChange={(event) =>
-                                    updateAdjustmentField(
-                                      adjustment.id,
-                                      "description",
-                                      event.target.value || null
-                                    )
-                                  }
-                                  placeholder="설명"
-                                />
-                              </div>
-                            </td>
-                            <td>
-                              <Input
-                                type="number"
-                                value={adjustment.computedMin}
-                                onChange={(event) =>
-                                  updateAdjustmentField(
-                                    adjustment.id,
-                                    "computedMin",
-                                    Number(event.target.value)
-                                  )
-                                }
-                              />
-                            </td>
-                            <td>
-                              <Input
-                                type="number"
-                                value={adjustment.computedMax}
-                                onChange={(event) =>
-                                  updateAdjustmentField(
-                                    adjustment.id,
-                                    "computedMax",
-                                    Number(event.target.value)
-                                  )
-                                }
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </TableContainer>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Card muted className="ui-stat-card p-5">
-                      <p className="ui-kicker">금액 요약</p>
-                      <div className="mt-4 space-y-2 text-sm text-text">
-                        <SummaryRow label="기본 합계" value={formatRange(quote.serviceBaseMin, quote.serviceBaseMax)} />
-                        <SummaryRow label="소계" value={formatRange(quote.subtotalMin, quote.subtotalMax)} />
-                        <SummaryRow label="VAT" value={formatRange(quote.vatAmountMin, quote.vatAmountMax)} />
-                        <SummaryRow
-                          label="상담료"
-                          value={
-                            quote.consultFee > 0
-                              ? `${formatCurrency(quote.consultFee)}원`
-                              : "미적용"
-                          }
-                        />
-                        <SummaryRow label="총액" value={formatRange(quote.totalMin, quote.totalMax)} emphasized />
+          <CollapsibleSection
+            title="항목 조정"
+            description="서비스 라인과 가감 항목 금액을 직접 손볼 수 있습니다."
+            open={showItems}
+            onToggle={() => setShowItems((current) => !current)}
+          >
+            <div className="space-y-5">
+              <div className="space-y-3">
+                {lineItems.map((line) => (
+                  <Card key={line.id} muted className="p-4">
+                    <div className="grid gap-3 md:grid-cols-[1.3fr_0.7fr_0.7fr]">
+                      <div className="space-y-2">
+                        <Input value={line.label} onChange={(event) => updateLineField(line.id, "label", event.target.value)} />
+                        <Input value={line.description ?? ""} onChange={(event) => updateLineField(line.id, "description", event.target.value || null)} placeholder="설명" />
                       </div>
-                    </Card>
+                      <Input type="number" value={line.amountMin} onChange={(event) => updateLineField(line.id, "amountMin", Number(event.target.value))} />
+                      <Input type="number" value={line.amountMax} onChange={(event) => updateLineField(line.id, "amountMax", Number(event.target.value))} />
+                    </div>
+                  </Card>
+                ))}
+              </div>
 
-                    <Card muted className="ui-stat-card p-5">
-                      <p className="ui-kicker">납입 구조</p>
-                      <div className="mt-4 space-y-4">
-                        {paymentPlans.map((plan) => (
-                          <div key={plan.id} className="rounded-md border border-line bg-surface px-4 py-3">
-                            <p className="text-sm font-semibold text-text-strong">
-                              {stageKindLabels[plan.stageKind]}
-                            </p>
-                            <div className="mt-3 grid gap-3 sm:grid-cols-[110px_1fr]">
-                              <Input
-                                type="number"
-                                value={plan.percentage}
-                                onChange={(event) =>
-                                  updatePaymentPlanField(
-                                    plan.id,
-                                    "percentage",
-                                    Number(event.target.value)
-                                  )
-                                }
-                              />
-                              <Input
-                                value={plan.dueText}
-                                onChange={(event) =>
-                                  updatePaymentPlanField(plan.id, "dueText", event.target.value)
-                                }
-                              />
-                            </div>
-                            <p className="mt-2 text-xs text-text-muted">
-                              현재 계산 금액: {formatRange(plan.amountMin, plan.amountMax)}
-                            </p>
-                          </div>
-                        ))}
-                        {paymentPercentageTotal !== 100 ? (
-                          <ErrorState
-                            title="납입 비율 합계 확인"
-                            description={`현재 합계는 ${paymentPercentageTotal}%입니다. 100%로 맞춰야 저장됩니다.`}
-                          />
-                        ) : null}
+              <div className="space-y-3">
+                {adjustments.map((adjustment) => (
+                  <Card key={adjustment.id} muted className="p-4">
+                    <div className="grid gap-3 md:grid-cols-[1.3fr_0.7fr_0.7fr]">
+                      <div className="space-y-2">
+                        <Input value={adjustment.label} onChange={(event) => updateAdjustmentField(adjustment.id, "label", event.target.value)} />
+                        <Input value={adjustment.description ?? ""} onChange={(event) => updateAdjustmentField(adjustment.id, "description", event.target.value || null)} placeholder="설명" />
                       </div>
-                    </Card>
-                  </div>
-                </div>
-              </Card>
+                      <Input type="number" value={adjustment.computedMin} onChange={(event) => updateAdjustmentField(adjustment.id, "computedMin", Number(event.target.value))} />
+                      <Input type="number" value={adjustment.computedMax} onChange={(event) => updateAdjustmentField(adjustment.id, "computedMax", Number(event.target.value))} />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </CollapsibleSection>
 
-              <Card className="p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h3 className="ui-section-title">AI 제안서 초안</h3>
-                    <p className="ui-section-copy mt-2">
-                      현재 문의와 견적 계산 결과를 바탕으로 고객 안내용 제안 문안과 내부 메모를
-                      초안으로 생성합니다.
-                    </p>
+          <CollapsibleSection
+            title="결제 계획"
+            description="착수금, 중도금, 성공보수 비율과 안내 문구를 조정합니다."
+            open={showPaymentPlans}
+            onToggle={() => setShowPaymentPlans((current) => !current)}
+          >
+            <div className="grid gap-4 md:grid-cols-3">
+              {paymentPlans.map((plan) => (
+                <Card key={plan.id} muted className="p-4">
+                  <p className="text-sm font-semibold text-text-strong">{stageKindLabels[plan.stageKind]}</p>
+                  <div className="mt-3 space-y-2">
+                    <Input type="number" value={plan.percentage} onChange={(event) => updatePaymentPlanField(plan.id, "percentage", Number(event.target.value))} />
+                    <Input value={plan.dueText} onChange={(event) => updatePaymentPlanField(plan.id, "dueText", event.target.value)} />
                   </div>
-                  <Button variant="secondary" onClick={handleGenerateAiDraft} disabled={isPending}>
-                    {isPending ? "생성 중..." : "AI 제안서 초안 생성"}
+                  <p className="mt-2 text-xs text-text-muted">예상 금액 {formatRange(plan.amountMin, plan.amountMax)}</p>
+                </Card>
+              ))}
+            </div>
+            {paymentPercentageTotal !== 100 ? (
+              <StateInline tone="error">현재 결제 비율 합계는 {paymentPercentageTotal}%입니다. 100%로 맞춰 주세요.</StateInline>
+            ) : null}
+          </CollapsibleSection>
+
+          <Card id="quote-contract" className="p-6">
+            <h3 className="ui-section-title">상태 변경 및 계약 초안</h3>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <FieldBlock label="견적 상태">
+                <Select value={quoteStatus} onChange={(event) => setQuoteStatus(event.target.value as QuoteSummarySnapshot["status"])}>
+                  {Object.entries(quoteStatusLabels).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </Select>
+              </FieldBlock>
+              <FieldBlock label="사건 기한">
+                <Input type="date" value={caseDueDate} onChange={(event) => setCaseDueDate(event.target.value)} />
+              </FieldBlock>
+            </div>
+            <div className="mt-4">
+              <FieldBlock label="사건 내부 메모">
+                <Textarea rows={4} value={caseInternalMemo} onChange={(event) => setCaseInternalMemo(event.target.value)} />
+              </FieldBlock>
+            </div>
+            <div className="mt-4">
+              <FieldBlock label="특약 직접 편집">
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setSpecialTerms((current) => [current?.trim(), recommendedSpecialTerms].filter(Boolean).join("\n\n"))}
+                    disabled={!quote.contractDraft}
+                  >
+                    권장 특약 불러오기
                   </Button>
                 </div>
+                <Textarea
+                  rows={8}
+                  value={specialTerms}
+                  onChange={(event) => setSpecialTerms(event.target.value)}
+                  placeholder={
+                    quote.contractDraft
+                      ? "환불 기준, 추가 비용 정산, 자료 제출 협조, 업무 제외 범위 등 사건별 특약을 직접 적어둘 수 있습니다."
+                      : "계약 초안을 먼저 생성하면 사건별 특약을 직접 편집할 수 있습니다."
+                  }
+                  disabled={!quote.contractDraft}
+                />
+              </FieldBlock>
+              <p className="mt-2 text-xs text-text-muted">
+                계약 초안이 이미 생성된 경우 이 특약은 수정 내용 저장 후 유지됩니다. 자동 분석 참고는 아래 문서 미리보기에도 함께 반영됩니다.
+              </p>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button onClick={handleUpdateQuoteStatus} disabled={isPending}>{isPending ? "반영 중..." : "상태 반영"}</Button>
+              <Button variant="secondary" onClick={handleCreateContractDraft} disabled={isPending}>{isPending ? "생성 중..." : "계약 초안 생성"}</Button>
+            </div>
 
-                {aiDraft ? (
-                  <div className="mt-5 grid gap-4">
-                    <Card muted className="ui-stat-card p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-text-strong">제안 헤드라인</p>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="ui-toolbar-button"
-                          onClick={() => handleCopyMessage(aiDraft.proposalHeadline, "제안 헤드라인")}
-                        >
-                          복사
-                        </Button>
-                      </div>
-                      <p className="mt-3 text-sm text-text">{aiDraft.proposalHeadline}</p>
-                    </Card>
-
-                    <Card muted className="ui-stat-card p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-text-strong">고객 요약</p>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="ui-toolbar-button"
-                          onClick={() => handleCopyMessage(aiDraft.customerSummary, "고객 요약")}
-                        >
-                          복사
-                        </Button>
-                      </div>
-                      <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
-                        {aiDraft.customerSummary}
-                      </pre>
-                    </Card>
-
-                    <Card muted className="ui-stat-card p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-text-strong">업무 범위 설명</p>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="ui-toolbar-button"
-                          onClick={() => handleCopyMessage(aiDraft.scopeSummary, "업무 범위 설명")}
-                        >
-                          복사
-                        </Button>
-                      </div>
-                      <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
-                        {aiDraft.scopeSummary}
-                      </pre>
-                    </Card>
-
-                    <div className="grid gap-4 xl:grid-cols-2">
-                      <Card muted className="ui-stat-card p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold text-text-strong">다음 단계 안내</p>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="ui-toolbar-button"
-                            onClick={() => handleCopyMessage(aiDraft.nextStepGuide, "다음 단계 안내")}
-                          >
-                            복사
-                          </Button>
-                        </div>
-                        <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
-                          {aiDraft.nextStepGuide}
-                        </pre>
-                      </Card>
-
-                      <Card muted className="ui-stat-card p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold text-text-strong">내부 메모</p>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="ui-toolbar-button"
-                            onClick={() => handleCopyMessage(aiDraft.internalMemo, "내부 메모")}
-                          >
-                            복사
-                          </Button>
-                        </div>
-                        <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
-                          {aiDraft.internalMemo}
-                        </pre>
-                      </Card>
-                    </div>
+            {quote.contractDraft ? (
+              <Card muted className="mt-5 p-5">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-text-strong">{quote.contractDraft.title}</p>
+                    <p className="mt-2 text-xs text-text-muted">최근 수정: {new Date(quote.contractDraft.updatedAt).toLocaleString("ko-KR")}</p>
                   </div>
-                ) : (
-                  <EmptyState
-                    title="AI 제안서 초안이 아직 없습니다."
-                    description="견적 계산 결과가 정리된 뒤 버튼을 눌러 고객 안내용 문안과 내부 메모 초안을 생성할 수 있습니다."
-                    className="mt-5"
-                  />
-                )}
-              </Card>
-
-              <Card className="p-6">
-                <h3 className="ui-section-title">견적 발송/수락 메시지 초안</h3>
-                <p className="ui-section-copy mt-2">
-                  이메일·문자·알림톡 연동 전 단계에서 그대로 복사해 사용할 수 있는 관리자용 문구입니다.
-                </p>
-                <div className="mt-5 space-y-4">
-                  <Card muted className="ui-stat-card p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-text-strong">견적 발송 안내 (KO)</p>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="ui-toolbar-button"
-                        onClick={() => handleCopyMessage(quote.messageDrafts.quoteSendKo, "견적 발송 안내")}
-                      >
-                        복사
-                      </Button>
-                    </div>
-                    <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
-                      {quote.messageDrafts.quoteSendKo}
-                    </pre>
-                  </Card>
-                  <Card muted className="ui-stat-card p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-text-strong">수락 후 계약 준비 안내 (KO)</p>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="ui-toolbar-button"
-                        onClick={() => handleCopyMessage(quote.messageDrafts.acceptedKo, "수락 안내")}
-                      >
-                        복사
-                      </Button>
-                    </div>
-                    <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
-                      {quote.messageDrafts.acceptedKo}
-                    </pre>
-                  </Card>
+                  <div className="flex flex-wrap gap-3">
+                    <a
+                      href={`/api/admin/quotes/${quote.id}/contract-draft/export`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white transition hover:opacity-90"
+                    >
+                      계약 초안 열기
+                    </a>
+                    <a
+                      href={`/api/admin/quotes/${quote.id}/contract-draft/export?download=1`}
+                      className="inline-flex h-11 items-center justify-center rounded-md border border-line-strong px-4 text-sm font-medium text-text-strong transition hover:bg-surface"
+                    >
+                      파일 다운로드
+                    </a>
+                  </div>
+                </div>
+                <div className="mt-5 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+                  <DocumentBlock title="계약 본문" content={quote.contractDraft.bodyText} />
+                  <div className="space-y-4">
+                    {quote.contractDraft.scopeText ? (
+                      <DocumentBlock title="업무 범위" content={quote.contractDraft.scopeText} compact />
+                    ) : null}
+                    {quote.contractDraft.paymentSummary ? (
+                      <DocumentBlock title="결제 안내" content={quote.contractDraft.paymentSummary} compact />
+                    ) : null}
+                    {quote.contractDraft.specialTerms ? (
+                      <DocumentBlock title="특약 및 사건 분석 참고" content={quote.contractDraft.specialTerms} compact />
+                    ) : null}
+                  </div>
                 </div>
               </Card>
+            ) : (
+              <EmptyState title="계약 초안이 아직 없습니다." description="계약 초안 생성 버튼을 누르면 화면 미리보기와 다운로드 파일이 함께 준비됩니다." className="mt-5" />
+            )}
 
-              <Card className="p-6">
-                <h3 className="ui-section-title">계약 초안 및 사건 흐름</h3>
-                <p className="ui-section-copy mt-2">
-                  견적 수락 시 계약 초안과 사건 레코드가 자동 연결됩니다.
-                </p>
-                {quote.contractDraft ? (
-                  <div className="mt-5 space-y-4">
-                    <Card muted className="ui-stat-card p-5">
-                      <p className="text-sm font-semibold text-text-strong">{quote.contractDraft.title}</p>
-                      <p className="mt-2 text-xs text-text-muted">
-                        마지막 업데이트: {new Date(quote.contractDraft.updatedAt).toLocaleString("ko-KR")}
-                      </p>
-                      <pre className="mt-4 whitespace-pre-wrap text-sm text-text">
-                        {quote.contractDraft.bodyText}
-                      </pre>
-                    </Card>
-
-                    <Card muted className="ui-stat-card p-5">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-text-strong">계약 / 결제 자동화</p>
-                          <p className="mt-1 text-xs text-text-muted">
-                            외부 전자계약·PG를 아직 안 붙여도 계약 링크와 결제 링크를 관리하면서 수임 전환 흐름을 이어갈 수 있습니다.
-                          </p>
-                        </div>
-                        <Badge>{paymentCollectionStatusLabels[quote.contractDraft.paymentStatus]}</Badge>
-                      </div>
-
-                      <FieldGroup className="mt-4">
-                        <Field label="계약 링크">
-                          <Input
-                            value={contractShareUrl}
-                            onChange={(event) => setContractShareUrl(event.target.value)}
-                            placeholder="예: 전자계약 또는 PDF 공유 링크"
-                          />
-                        </Field>
-                        <Field label="결제 링크">
-                          <Input
-                            value={paymentLinkUrl}
-                            onChange={(event) => setPaymentLinkUrl(event.target.value)}
-                            placeholder="예: Toss / Stripe / 계좌안내 링크"
-                          />
-                        </Field>
-                        <Field label="결제 수단 / 제공사">
-                          <Input
-                            value={paymentProvider}
-                            onChange={(event) => setPaymentProvider(event.target.value)}
-                            placeholder="예: Toss Payments, Stripe, 수기 계좌이체"
-                          />
-                        </Field>
-                        <Field label="결제 상태">
-                          <Select
-                            value={paymentStatus}
-                            onChange={(event) => setPaymentStatus(event.target.value as PaymentCollectionStatusValue)}
-                          >
-                            {Object.entries(paymentCollectionStatusLabels).map(([value, label]) => (
-                              <option key={value} value={value}>
-                                {label}
-                              </option>
-                            ))}
-                          </Select>
-                        </Field>
-                        <Field label="입금 확인 / 거래 참고번호">
-                          <Input
-                            value={paymentReference}
-                            onChange={(event) => setPaymentReference(event.target.value)}
-                            placeholder="예: 입금자명, 거래번호, 내부 확인 메모"
-                          />
-                        </Field>
-                        <Field label="계약/결제 메모">
-                          <Textarea
-                            rows={3}
-                            value={paymentMemo}
-                            onChange={(event) => setPaymentMemo(event.target.value)}
-                            placeholder="예: 계약 링크 발송일, 유선 안내 내용, 결제 확인 메모"
-                          />
-                        </Field>
-                      </FieldGroup>
-
-                      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
-                        <Button variant="secondary" disabled={isPending} onClick={() => handleContractPaymentAutomation("sendContract")}>
-                          계약 링크 발송 기록
-                        </Button>
-                        <Button variant="secondary" disabled={isPending} onClick={() => handleContractPaymentAutomation("markSigned")}>
-                          계약 체결 처리
-                        </Button>
-                        <Button variant="secondary" disabled={isPending} onClick={() => handleContractPaymentAutomation("sendPayment")}>
-                          결제 링크 발송 기록
-                        </Button>
-                        <Button variant="secondary" disabled={isPending} onClick={() => handleContractPaymentAutomation("savePayment")}>
-                          결제 정보 저장
-                        </Button>
-                        <Button disabled={isPending} onClick={() => handleContractPaymentAutomation("markPaid")}>
-                          입금 확인 후 사건 전환
-                        </Button>
-                      </div>
-
-                      <Card muted className="ui-stat-card mt-4 p-4">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-text-strong">링크가 없을 때 쓰는 운영 안내</p>
-                            <p className="mt-1 text-xs text-text-muted">
-                              아직 전자계약이나 PG 링크가 없어도, 아래 문구를 복사해서 고객에게 바로 안내할 수 있습니다.
-                            </p>
-                          </div>
-                          <a
-                            href="/admin/operations"
-                            className="inline-flex items-center justify-center rounded-md border border-line px-3 py-2 text-sm font-medium text-text-strong transition hover:bg-surface"
-                          >
-                            운영 설정 열기
-                          </a>
-                        </div>
-
-                        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                          <div className="rounded-md border border-line bg-surface px-4 py-3">
-                            <div className="flex items-center justify-between gap-3">
-                              <p className="text-sm font-semibold text-text-strong">계약 안내</p>
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                className="ui-toolbar-button"
-                                onClick={() =>
-                                  handleCopyMessage(
-                                    operationsSettings.contractGuide,
-                                    "계약 안내"
-                                  )
-                                }
-                              >
-                                복사
-                              </Button>
-                            </div>
-                            <pre className="mt-3 whitespace-pre-wrap text-sm text-text">
-                              {operationsSettings.contractGuide}
-                            </pre>
-                          </div>
-
-                          <div className="rounded-md border border-line bg-surface px-4 py-3">
-                            <div className="flex items-center justify-between gap-3">
-                              <p className="text-sm font-semibold text-text-strong">결제 안내</p>
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                className="ui-toolbar-button"
-                                onClick={() =>
-                                  handleCopyMessage(
-                                    [
-                                      operationsSettings.paymentGuide,
-                                      operationsSettings.paymentMethodLabel,
-                                      operationsSettings.paymentLinkUrl || null,
-                                      operationsSettings.bankTransferGuide
-                                    ]
-                                      .filter(Boolean)
-                                      .join("\n\n"),
-                                    "결제 안내"
-                                  )
-                                }
-                              >
-                                복사
-                              </Button>
-                            </div>
-                            <div className="mt-3 space-y-3 text-sm text-text">
-                              <p>{operationsSettings.paymentGuide}</p>
-                              <p className="font-medium text-text-strong">
-                                {operationsSettings.paymentMethodLabel}
-                              </p>
-                              {operationsSettings.paymentLinkUrl ? (
-                                <a
-                                  href={operationsSettings.paymentLinkUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-primary underline underline-offset-4"
-                                >
-                                  {operationsSettings.paymentLinkUrl}
-                                </a>
-                              ) : (
-                                <p className="text-text-muted">
-                                  아직 별도 결제 링크는 연결하지 않았습니다.
-                                </p>
-                              )}
-                              <pre className="whitespace-pre-wrap text-sm text-text">
-                                {operationsSettings.bankTransferGuide}
-                              </pre>
-                            </div>
-                          </div>
-                        </div>
-                      </Card>
-
-                      <div className="mt-4 grid gap-2 text-xs text-text-muted sm:grid-cols-2">
-                        <p>계약 발송: {quote.contractDraft.contractSentAt ? new Date(quote.contractDraft.contractSentAt).toLocaleString("ko-KR") : "-"}</p>
-                        <p>계약 체결: {quote.contractDraft.contractSignedAt ? new Date(quote.contractDraft.contractSignedAt).toLocaleString("ko-KR") : "-"}</p>
-                        <p>결제 요청: {quote.contractDraft.paymentRequestedAt ? new Date(quote.contractDraft.paymentRequestedAt).toLocaleString("ko-KR") : "-"}</p>
-                        <p>입금 확인: {quote.contractDraft.paidAt ? new Date(quote.contractDraft.paidAt).toLocaleString("ko-KR") : "-"}</p>
-                      </div>
-                    </Card>
-                  </div>
-                ) : (
-                  <EmptyState
-                    title="계약 초안이 아직 없습니다."
-                    description="견적 초안이 확정되면 계약 초안 생성 버튼으로 납입 구조와 성공보수 제한 문구를 그대로 반영할 수 있습니다."
-                    className="mt-5"
-                  />
-                )}
-
-                {quote.caseRecord ? (
-                  <Card muted className="ui-stat-card mt-4 p-5">
-                    <p className="text-sm font-semibold text-text-strong">
-                      사건번호: {quote.caseRecord.caseNumber}
-                    </p>
-                    <div className="mt-3 grid gap-2 text-sm text-text-muted sm:grid-cols-2">
-                      <p>현재 단계: {caseStageLabels[quote.caseRecord.currentStage]}</p>
-                      <p>예정일: {quote.caseRecord.dueDate ? quote.caseRecord.dueDate.slice(0, 10) : "-"}</p>
-                      <p className="sm:col-span-2">
-                        내부 메모: {quote.caseRecord.internalMemo || "-"}
-                      </p>
-                    </div>
-                  </Card>
-                ) : (
-                  <EmptyState
-                    title="사건 레코드가 아직 없습니다."
-                    description="견적 수락(ACCEPTED) 상태로 변경하거나 계약 초안을 생성하면 사건번호가 생성됩니다."
-                    className="mt-4"
-                  />
-                )}
+            {quote.caseRecord ? (
+              <Card muted className="mt-4 p-5">
+                <p className="text-sm font-semibold text-text-strong">사건 번호: {quote.caseRecord.caseNumber}</p>
+                <div className="mt-3 grid gap-2 text-sm text-text-muted sm:grid-cols-2">
+                  <p>현재 단계: {caseStageLabels[quote.caseRecord.currentStage]}</p>
+                  <p>기한: {quote.caseRecord.dueDate ? quote.caseRecord.dueDate.slice(0, 10) : "-"}</p>
+                  <p className="sm:col-span-2">내부 메모: {quote.caseRecord.internalMemo || "-"}</p>
+                </div>
               </Card>
+            ) : null}
+          </Card>
+
+          <CollapsibleSection
+            id="quote-messages"
+            title="안내 문구"
+            description="카카오톡, 이메일, 상담 안내에 바로 붙여 쓸 문구입니다."
+            open={showMessages}
+            onToggle={() => setShowMessages((current) => !current)}
+          >
+            <div className="grid gap-4 xl:grid-cols-2">
+              <MessageCard title="견적 발송 문구 (KO)" message={quote.messageDrafts.quoteSendKo} onCopy={() => handleCopyMessage(quote.messageDrafts.quoteSendKo, "견적 발송 문구")}/>
+              <MessageCard title="견적 발송 문구 (EN)" message={quote.messageDrafts.quoteSendEn} onCopy={() => handleCopyMessage(quote.messageDrafts.quoteSendEn, "영문 견적 발송 문구")}/>
+              <MessageCard title="수락 안내 문구 (KO)" message={quote.messageDrafts.acceptedKo} onCopy={() => handleCopyMessage(quote.messageDrafts.acceptedKo, "수락 안내 문구")}/>
+              <MessageCard title="수락 안내 문구 (EN)" message={quote.messageDrafts.acceptedEn} onCopy={() => handleCopyMessage(quote.messageDrafts.acceptedEn, "영문 수락 안내 문구")}/>
             </div>
-          </div>
+          </CollapsibleSection>
+
+          {message ? <StateInline tone={tone}>{message}</StateInline> : null}
         </>
       )}
     </div>
   );
 }
 
+function FieldBlock({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <p className="mb-2 text-sm font-medium text-text-strong">{label}</p>
+      {children}
+    </div>
+  );
+}
+
+function CollapsibleSection({
+  id,
+  title,
+  description,
+  open,
+  onToggle,
+  children
+}: {
+  id?: string;
+  title: string;
+  description: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Card id={id} className="p-6 scroll-mt-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h3 className="ui-section-title">{title}</h3>
+          <p className="mt-2 text-sm text-text-muted">{description}</p>
+        </div>
+        <Button variant="secondary" onClick={onToggle}>
+          {open ? "접기" : "펼쳐서 보기"}
+        </Button>
+      </div>
+      {open ? <div className="mt-5">{children}</div> : null}
+    </Card>
+  );
+}
+
 function InfoPanel({ label, value }: { label: string; value: string }) {
   return (
-    <Card muted className="ui-stat-card p-4">
+    <Card muted className="p-4">
       <p className="ui-kicker">{label}</p>
       <p className="mt-2 text-sm font-medium text-text-strong">{value}</p>
     </Card>
   );
 }
 
-function SummaryRow({
-  label,
-  value,
-  emphasized = false
+function ListCard({ title, items }: { title: string; items: string[] }) {
+  return (
+    <Card muted className="p-5">
+      <p className="ui-kicker">{title}</p>
+      <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-text">
+        {items.map((item) => (
+          <li key={`${title}-${item}`}>{item}</li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+function DocumentBlock({
+  title,
+  content,
+  compact = false
 }: {
-  label: string;
-  value: string;
-  emphasized?: boolean;
+  title: string;
+  content: string;
+  compact?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-text-muted">{label}</span>
-      <span className={emphasized ? "font-semibold text-text-strong" : "text-text-strong"}>{value}</span>
-    </div>
+    <Card muted className={compact ? "p-4" : "p-5"}>
+      <p className="ui-kicker">{title}</p>
+      <pre className="mt-3 whitespace-pre-wrap text-sm text-text">{content}</pre>
+    </Card>
+  );
+}
+
+function MessageCard({ title, message, onCopy }: { title: string; message: string; onCopy: () => void }) {
+  return (
+    <Card muted className="p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-text-strong">{title}</p>
+        <Button size="sm" variant="secondary" onClick={onCopy}>복사</Button>
+      </div>
+      <pre className="mt-3 whitespace-pre-wrap text-sm text-text">{message}</pre>
+    </Card>
   );
 }
