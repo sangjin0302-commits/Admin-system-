@@ -252,6 +252,9 @@ function toContractDraftSnapshot(contractDraft: QuoteWithRelations["contractDraf
 type QuoteLineItemRecord = QuoteWithRelations["lineItems"][number];
 type QuoteAdjustmentRecord = QuoteWithRelations["adjustments"][number];
 type QuotePaymentPlanRecord = QuoteWithRelations["paymentPlans"][number];
+type QuoteComputedLineItem = QuoteComputationResult["lineItems"][number];
+type QuoteComputedAdjustment = QuoteComputationResult["adjustments"][number];
+type QuoteComputedPaymentPlan = QuoteComputationResult["paymentPlans"][number];
 
 function serializeQuote(quote: QuoteWithRelations) {
   const sortedLineItems = quote.lineItems.sort(
@@ -297,7 +300,7 @@ function serializeQuote(quote: QuoteWithRelations) {
     createdAt: quote.createdAt.toISOString(),
     updatedAt: quote.updatedAt.toISOString(),
     lineItems: sortedLineItems
-      .map((line) => ({
+      .map((line: QuoteLineItemRecord) => ({
         id: line.id,
         kind: line.kind,
         label: line.label,
@@ -309,7 +312,7 @@ function serializeQuote(quote: QuoteWithRelations) {
         isManual: line.isManual
       })),
     adjustments: sortedAdjustments
-      .map((adjustment) => ({
+      .map((adjustment: QuoteAdjustmentRecord) => ({
         id: adjustment.id,
         label: adjustment.label,
         description: adjustment.description,
@@ -324,7 +327,7 @@ function serializeQuote(quote: QuoteWithRelations) {
         isManual: adjustment.isManual
       })),
     paymentPlans: sortedPaymentPlans
-      .map((plan) => ({
+      .map((plan: QuotePaymentPlanRecord) => ({
         id: plan.id,
         stageKind: plan.stageKind,
         percentage: plan.percentage,
@@ -476,7 +479,7 @@ async function persistQuoteComputation(
         data: {
           ...payload,
           lineItems: {
-            create: computation.lineItems.map((line) => ({
+            create: computation.lineItems.map((line: QuoteComputedLineItem) => ({
               serviceTypeId: line.serviceTypeId,
               kind: line.kind,
               label: line.label,
@@ -488,7 +491,7 @@ async function persistQuoteComputation(
             }))
           },
           adjustments: {
-            create: computation.adjustments.map((adjustment) => ({
+            create: computation.adjustments.map((adjustment: QuoteComputedAdjustment) => ({
               pricingOptionId: adjustment.pricingOptionId,
               label: adjustment.label,
               description: adjustment.description,
@@ -503,7 +506,7 @@ async function persistQuoteComputation(
             }))
           },
           paymentPlans: {
-            create: computation.paymentPlans.map((plan) => ({
+            create: computation.paymentPlans.map((plan: QuoteComputedPaymentPlan) => ({
               stageKind: plan.stageKind,
               percentage: plan.percentage,
               dueText: plan.dueText,
@@ -524,7 +527,7 @@ async function persistQuoteComputation(
       inquiryId,
       ...payload,
       lineItems: {
-        create: computation.lineItems.map((line) => ({
+        create: computation.lineItems.map((line: QuoteComputedLineItem) => ({
           serviceTypeId: line.serviceTypeId,
           kind: line.kind,
           label: line.label,
@@ -536,7 +539,7 @@ async function persistQuoteComputation(
         }))
       },
       adjustments: {
-        create: computation.adjustments.map((adjustment) => ({
+        create: computation.adjustments.map((adjustment: QuoteComputedAdjustment) => ({
           pricingOptionId: adjustment.pricingOptionId,
           label: adjustment.label,
           description: adjustment.description,
@@ -551,7 +554,7 @@ async function persistQuoteComputation(
         }))
       },
       paymentPlans: {
-        create: computation.paymentPlans.map((plan) => ({
+        create: computation.paymentPlans.map((plan: QuoteComputedPaymentPlan) => ({
           stageKind: plan.stageKind,
           percentage: plan.percentage,
           dueText: plan.dueText,
@@ -767,26 +770,34 @@ export async function saveQuoteManualEdits(
   ]);
 
   const refreshed = await getQuoteByIdOrThrow(quoteId);
-  const lineItems = refreshed.lineItems.sort((left, right) => left.sortOrder - right.sortOrder);
-  const adjustments = refreshed.adjustments.sort((left, right) => left.sortOrder - right.sortOrder);
+  const lineItems = refreshed.lineItems.sort(
+    (left: QuoteLineItemRecord, right: QuoteLineItemRecord) => left.sortOrder - right.sortOrder
+  );
+  const adjustments = refreshed.adjustments.sort(
+    (left: QuoteAdjustmentRecord, right: QuoteAdjustmentRecord) => left.sortOrder - right.sortOrder
+  );
   const serviceBaseMin = lineItems
-    .filter((line) => line.kind === "SERVICE")
-    .reduce((sum, line) => sum + line.amountMin, 0);
+    .filter((line: QuoteLineItemRecord) => line.kind === "SERVICE")
+    .reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMin, 0);
   const serviceBaseMax = lineItems
-    .filter((line) => line.kind === "SERVICE")
-    .reduce((sum, line) => sum + line.amountMax, 0);
+    .filter((line: QuoteLineItemRecord) => line.kind === "SERVICE")
+    .reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMax, 0);
   const subtotalMin =
-    lineItems.reduce((sum, line) => sum + line.amountMin, 0) +
-    adjustments.filter((adjustment) => !adjustment.isVat).reduce((sum, adjustment) => sum + adjustment.computedMin, 0);
+    lineItems.reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMin, 0) +
+    adjustments
+      .filter((adjustment: QuoteAdjustmentRecord) => !adjustment.isVat)
+      .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMin, 0);
   const subtotalMax =
-    lineItems.reduce((sum, line) => sum + line.amountMax, 0) +
-    adjustments.filter((adjustment) => !adjustment.isVat).reduce((sum, adjustment) => sum + adjustment.computedMax, 0);
+    lineItems.reduce((sum: number, line: QuoteLineItemRecord) => sum + line.amountMax, 0) +
+    adjustments
+      .filter((adjustment: QuoteAdjustmentRecord) => !adjustment.isVat)
+      .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMax, 0);
   const vatAmountMin = adjustments
-    .filter((adjustment) => adjustment.isVat)
-    .reduce((sum, adjustment) => sum + adjustment.computedMin, 0);
+    .filter((adjustment: QuoteAdjustmentRecord) => adjustment.isVat)
+    .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMin, 0);
   const vatAmountMax = adjustments
-    .filter((adjustment) => adjustment.isVat)
-    .reduce((sum, adjustment) => sum + adjustment.computedMax, 0);
+    .filter((adjustment: QuoteAdjustmentRecord) => adjustment.isVat)
+    .reduce((sum: number, adjustment: QuoteAdjustmentRecord) => sum + adjustment.computedMax, 0);
   const totalMin = subtotalMin + vatAmountMin;
   const totalMax = subtotalMax + vatAmountMax;
 
@@ -803,12 +814,12 @@ export async function saveQuoteManualEdits(
         totalMin,
         totalMax,
         calculationSummary: buildManualSummary({
-          lineItems: lineItems.map((line) => ({
+          lineItems: lineItems.map((line: QuoteLineItemRecord) => ({
             label: line.label,
             amountMin: line.amountMin,
             amountMax: line.amountMax
           })),
-          adjustments: adjustments.map((adjustment) => ({
+          adjustments: adjustments.map((adjustment: QuoteAdjustmentRecord) => ({
             label: adjustment.label,
             computedMin: adjustment.computedMin,
             computedMax: adjustment.computedMax,
@@ -819,7 +830,7 @@ export async function saveQuoteManualEdits(
         })
       }
     }),
-    ...refreshed.paymentPlans.map((plan) => {
+    ...refreshed.paymentPlans.map((plan: QuotePaymentPlanRecord) => {
       const incoming = input.paymentPlans.find((entry) => entry.id === plan.id);
       const percentage = incoming?.percentage ?? plan.percentage;
 
@@ -875,8 +886,12 @@ async function upsertContractDraftFromQuote(db: DbClient, quote: QuoteWithRelati
   const mergedSpecialTerms = mergeEditableSpecialTerms(quote.contractDraft?.specialTerms, analysisTerms);
   const draft = buildContractDraftText({
     inquiry: serializeInquiryForQuote(quote.inquiry),
-    lineItems: quote.lineItems.sort((left, right) => left.sortOrder - right.sortOrder),
-    paymentPlans: quote.paymentPlans.sort((left, right) => left.sortOrder - right.sortOrder),
+    lineItems: quote.lineItems.sort(
+      (left: QuoteLineItemRecord, right: QuoteLineItemRecord) => left.sortOrder - right.sortOrder
+    ),
+    paymentPlans: quote.paymentPlans.sort(
+      (left: QuotePaymentPlanRecord, right: QuotePaymentPlanRecord) => left.sortOrder - right.sortOrder
+    ),
     totalMin: quote.totalMin,
     totalMax: quote.totalMax,
     vatAmountMin: quote.vatAmountMin,
