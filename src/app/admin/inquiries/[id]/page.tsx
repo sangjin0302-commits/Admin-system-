@@ -345,7 +345,7 @@ export default async function AdminInquiryDetailPage({
   });
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <Card className="p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -411,7 +411,7 @@ export default async function AdminInquiryDetailPage({
         caseStage={quoteWorkspace.latestQuote?.caseRecord?.currentStage ?? null}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
         <div className="space-y-6">
           <Card className="p-6">
             <h3 className="ui-section-title">문의 원문</h3>

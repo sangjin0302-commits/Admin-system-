@@ -473,7 +473,7 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
   const paymentPercentageTotal = paymentPlans.reduce((sum, plan) => sum + Number(plan.percentage), 0);
 
   return (
-    <div id="quote-workspace" className="space-y-6 scroll-mt-6">
+    <div id="quote-workspace" className="mx-auto w-full max-w-7xl space-y-6 scroll-mt-6">
       {!quote ? (
         <Card className="p-6">
           <h3 className="ui-section-title">견적 초안 생성</h3>
