@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -27,7 +27,10 @@ export function InquiryOperationalSummary({
   missingFacts,
   lawbotStatus,
 }: InquiryOperationalSummaryProps) {
-  const [copied, setCopied] = useState(false);
+  const [copiedState, setCopiedState] = useState<"summary" | "checklist" | null>(null);
+
+  const priorityFacts =
+    missingFacts.length > 0 ? missingFacts.slice(0, 4) : ["추가 확인이 필요한 항목은 아직 없습니다."];
 
   const summaryText = [
     "[운영 요약]",
@@ -37,16 +40,21 @@ export function InquiryOperationalSummary({
     `- 권장 다음 조치: ${recommendedAction}`,
     "",
     "[우선 확인 사항]",
-    ...(missingFacts.length > 0 ? missingFacts.slice(0, 4).map((item) => `- ${item}`) : ["- 추가 확인 사항 없음"]),
+    ...priorityFacts.map((item) => `- ${item}`),
   ].join("\n");
 
-  async function copySummary() {
+  const checklistText = [
+    "[추가 확인 체크리스트]",
+    ...priorityFacts.map((item, index) => `${index + 1}. ${item}`),
+  ].join("\n");
+
+  async function copyText(kind: "summary" | "checklist", text: string) {
     try {
-      await navigator.clipboard.writeText(summaryText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      await navigator.clipboard.writeText(text);
+      setCopiedState(kind);
+      setTimeout(() => setCopiedState(null), 1500);
     } catch {
-      setCopied(false);
+      setCopiedState(null);
     }
   }
 
@@ -62,12 +70,12 @@ export function InquiryOperationalSummary({
         </Badge>
       </div>
 
-      <p className="mt-4 text-sm font-semibold text-text-strong">지금 바로 할 일</p>
-      <p className="mt-2 text-sm text-text">{recommendedAction}</p>
+      <p className="mt-4 text-sm font-semibold text-text-strong">지금 바로 볼 핵심</p>
+      <p className="mt-2 text-sm leading-6 text-text">{recommendedAction}</p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
         <MetricCard label="수임 적합도" value={`${qualificationScore} / 100`} />
-        <MetricCard label="우선 확인 수" value={`${Math.max(missingFacts.length, 1)}건`} />
+        <MetricCard label="우선 확인 항목" value={`${priorityFacts.length}건`} />
       </div>
 
       <div className="mt-4">
@@ -86,16 +94,19 @@ export function InquiryOperationalSummary({
 
       <div className="mt-4">
         <p className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">우선 확인 사항</p>
-        <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-text">
-          {(missingFacts.length > 0 ? missingFacts.slice(0, 4) : ["추가 확인 사항 없음"]).map((item) => (
+        <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-6 text-text">
+          {priorityFacts.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3">
-        <Button size="sm" variant="secondary" onClick={copySummary}>
-          {copied ? "요약 복사됨" : "운영 요약 복사"}
+        <Button size="sm" variant="secondary" onClick={() => void copyText("summary", summaryText)}>
+          {copiedState === "summary" ? "운영 요약 복사됨" : "운영 요약 복사"}
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => void copyText("checklist", checklistText)}>
+          {copiedState === "checklist" ? "체크리스트 복사됨" : "체크리스트 복사"}
         </Button>
         <a
           href="#quote-workspace"

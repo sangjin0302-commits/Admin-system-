@@ -8,10 +8,43 @@ import { Card } from "@/components/ui/card";
 import type { InquiryCaseAnalysis } from "@/lib/services/case-analysis-service";
 
 export function InquiryCaseAnalysisPanel({
-  analysis
+  analysis,
 }: {
   analysis: InquiryCaseAnalysis;
 }) {
+  const [copied, setCopied] = useState<"analysis" | "action" | null>(null);
+
+  const analysisDraft = [
+    "[AI 사건 분석]",
+    `- 사건 강도: ${analysis.strengthLabel} (${analysis.strengthScore}점)`,
+    `- 사건 요약: ${analysis.summary}`,
+    "",
+    "[핵심 쟁점]",
+    ...analysis.issues.map((item) => `- ${item}`),
+    "",
+    "[유리 요소]",
+    ...analysis.favorableFactors.map((item) => `- ${item}`),
+    "",
+    "[불리 요소]",
+    ...analysis.riskFactors.map((item) => `- ${item}`),
+    "",
+    "[추가 확인 필요 사실]",
+    ...analysis.missingFacts.map((item) => `- ${item}`),
+    "",
+    "[권장 다음 조치]",
+    `- ${analysis.recommendedAction}`,
+  ].join("\n");
+
+  async function copy(kind: "analysis" | "action", text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(kind);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      setCopied(null);
+    }
+  }
+
   return (
     <Card className="p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -24,6 +57,12 @@ export function InquiryCaseAnalysisPanel({
         <div className="flex flex-wrap items-center gap-2">
           <Badge>{analysis.strengthLabel}</Badge>
           <Badge>{analysis.strengthScore}점</Badge>
+          <Button size="sm" variant="secondary" onClick={() => void copy("analysis", analysisDraft)}>
+            {copied === "analysis" ? "분석 복사됨" : "분석 메모 복사"}
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => void copy("action", analysis.recommendedAction)}>
+            {copied === "action" ? "조치 복사됨" : "다음 조치 복사"}
+          </Button>
         </div>
       </div>
 
@@ -46,7 +85,7 @@ export function InquiryCaseAnalysisPanel({
 
       <Card muted className="mt-5 p-5">
         <p className="ui-kicker">권장 다음 조치</p>
-        <p className="mt-3 text-sm text-text">{analysis.recommendedAction}</p>
+        <p className="mt-3 text-sm leading-6 text-text">{analysis.recommendedAction}</p>
       </Card>
     </Card>
   );
@@ -80,8 +119,8 @@ function ReferenceCard({
       <div className="mt-3 space-y-3">
         {items.map((item) => {
           const heading = "title" in item ? item.title : item.query;
-          const query = heading;
-          const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(`site:law.go.kr ${query}`)}`;
+          const searchSource = kind === "law" ? `site:law.go.kr ${heading}` : `site:glaw.scourt.go.kr ${heading}`;
+          const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchSource)}`;
           return (
             <div key={`${title}-${heading}`} className="rounded-2xl border border-border/60 bg-white/70 p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -89,7 +128,7 @@ function ReferenceCard({
                   <p className="text-sm font-semibold text-text">{heading}</p>
                   <p className="mt-2 text-sm text-text-muted">{item.summary}</p>
                 </div>
-                <ReferenceActions query={query} searchUrl={searchUrl} label={kind === "law" ? "법령 검색" : "판례 검색"} />
+                <ReferenceActions query={heading} searchUrl={searchUrl} label={kind === "law" ? "법령 검색" : "판례 검색"} />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {item.keywords.map((keyword) => (
@@ -127,7 +166,7 @@ function ReferenceActions({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button size="sm" variant="secondary" onClick={copyQuery}>
+      <Button size="sm" variant="secondary" onClick={() => void copyQuery()}>
         {copied ? "복사됨" : "검색어 복사"}
       </Button>
       <a

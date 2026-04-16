@@ -7,6 +7,7 @@ import { InquiryMessagePreview } from "@/components/admin/inquiry-message-previe
 import { InquiryOperationalSummary } from "@/components/admin/inquiry-operational-summary";
 import { ReferenceRecommendationsPanel } from "@/components/admin/reference-recommendations-panel";
 import { QuoteWorkspacePanel } from "@/components/admin/quote-workspace";
+import { WorkflowProgressPanel } from "@/components/admin/workflow-progress-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getNotionReferenceRecommendations } from "@/lib/integrations/notion";
@@ -45,6 +46,48 @@ function getQuickStatuses(strengthLabel: "강함" | "보통" | "주의" | "불�
   return ["IN_REVIEW", "ON_HOLD"];
 }
 
+function getWorkflowStep(input: {
+  inquiryStatus: InquiryStatus;
+  quoteStatus?: string | null;
+  caseStage?: string | null;
+}) {
+  if (input.inquiryStatus === "CLOSED" || input.caseStage === "CLOSED" || input.caseStage === "COMPLETED") {
+    return "CLOSED";
+  }
+
+  if (
+    input.caseStage &&
+    input.caseStage !== "CONTRACT_PREPARATION" &&
+    input.caseStage !== "ON_HOLD"
+  ) {
+    return "CASEWORK";
+  }
+
+  if (input.inquiryStatus === "WON" || input.quoteStatus === "ACCEPTED" || input.caseStage === "CONTRACT_PREPARATION") {
+    return "CONTRACT";
+  }
+
+  if (
+    input.inquiryStatus === "QUOTE_DRAFTED" ||
+    input.inquiryStatus === "QUOTE_PENDING" ||
+    input.inquiryStatus === "QUOTE_SENT" ||
+    input.quoteStatus
+  ) {
+    return "QUOTING";
+  }
+
+  if (
+    input.inquiryStatus === "PRE_DIAGNOSED" ||
+    input.inquiryStatus === "CONSULTATION_REQUIRED" ||
+    input.inquiryStatus === "IN_REVIEW" ||
+    input.inquiryStatus === "WAITING_CONSULTATION"
+  ) {
+    return "ANALYZED";
+  }
+
+  return "RECEIVED";
+}
+
 export default async function AdminInquiryDetailPage({
   params
 }: {
@@ -73,6 +116,11 @@ export default async function AdminInquiryDetailPage({
     code: status,
     label: inquiryStatusLabels[status].ko,
   }));
+  const workflowStep = getWorkflowStep({
+    inquiryStatus: inquiry.status,
+    quoteStatus: quoteWorkspace.latestQuote?.status ?? null,
+    caseStage: quoteWorkspace.latestQuote?.caseRecord?.currentStage ?? null,
+  });
 
   return (
     <div className="space-y-6">
@@ -132,6 +180,13 @@ export default async function AdminInquiryDetailPage({
           </div>
         </div>
       </Card>
+
+      <WorkflowProgressPanel
+        currentKey={workflowStep}
+        lawbotStatus={lawbotAnalysis.status}
+        quoteStatus={quoteWorkspace.latestQuote?.status ?? null}
+        caseStage={quoteWorkspace.latestQuote?.caseRecord?.currentStage ?? null}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
