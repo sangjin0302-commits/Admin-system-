@@ -14,6 +14,8 @@ export const adminInquiryQuerySchema = z.object({
   status: z.enum(inquiryStatusValues).optional(),
   urgency: z.enum(urgencyValues).optional(),
   language: z.enum(languageCodeValues).optional(),
+  assignee: z.string().trim().optional().catch(""),
+  retained: z.enum(["all", "won", "active"]).optional().default("all"),
   sort: z.enum(adminSortValues).optional().default("latest")
 });
 
@@ -24,6 +26,8 @@ export function parseAdminInquiryQuery(params: Record<string, string | string[] 
     status: typeof params.status === "string" ? params.status : undefined,
     urgency: typeof params.urgency === "string" ? params.urgency : undefined,
     language: typeof params.language === "string" ? params.language : undefined,
+    assignee: typeof params.assignee === "string" ? params.assignee : undefined,
+    retained: typeof params.retained === "string" ? params.retained : undefined,
     sort: typeof params.sort === "string" ? params.sort : undefined
   });
 }

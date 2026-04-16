@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,6 +30,8 @@ type InquiryFiltersProps = {
     status?: InquiryStatus;
     urgency?: UrgencyLevel;
     language?: LanguageCode;
+    assignee?: string;
+    retained?: "all" | "won" | "active";
     sort?: AdminSort;
   };
 };
@@ -38,18 +40,12 @@ export function InquiryFilters({ filters }: InquiryFiltersProps) {
   return (
     <Card className="p-5">
       <form method="get" className="space-y-4">
-        <div>
-          <p className="ui-kicker">Filters</p>
-          <p className="mt-2 text-sm text-text-muted">
-            검색과 정렬 기준을 고정해 실제 검토 대상 문의를 빠르게 좁힙니다.
-          </p>
-        </div>
-        <FieldGroup className="md:grid-cols-[1.7fr_1fr_1fr_1fr_1fr_1fr]">
-          <Field label="검색">
+        <FieldGroup className="md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]">
+          <Field label="검색어">
             <Input
               name="q"
               defaultValue={filters.q ?? ""}
-              placeholder="이름, 이메일, 제목, 회사명, 내용 검색"
+              placeholder="이름, 이메일, 제목, 회사명, 설명을 검색"
             />
           </Field>
           <Field label="문의 유형">
@@ -94,6 +90,20 @@ export function InquiryFilters({ filters }: InquiryFiltersProps) {
               ))}
             </Select>
           </Field>
+          <Field label="담당자">
+            <Input
+              name="assignee"
+              defaultValue={filters.assignee ?? ""}
+              placeholder="담당자명으로 필터"
+            />
+          </Field>
+          <Field label="수임 여부">
+            <Select name="retained" defaultValue={filters.retained ?? "all"}>
+              <option value="all">전체</option>
+              <option value="active">진행/검토 중</option>
+              <option value="won">수임 완료</option>
+            </Select>
+          </Field>
           <Field label="정렬">
             <Select name="sort" defaultValue={filters.sort ?? "latest"}>
               {adminSortValues.map((value) => (
@@ -107,11 +117,11 @@ export function InquiryFilters({ filters }: InquiryFiltersProps) {
 
         <div className="flex flex-wrap gap-2">
           <Button type="submit" variant="primary">
-            적용
+            필터 적용
           </Button>
           <Link
             href="/admin/inquiries"
-            className="ui-toolbar-button h-10 px-4 text-sm"
+            className="inline-flex h-10 items-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
           >
             초기화
           </Link>

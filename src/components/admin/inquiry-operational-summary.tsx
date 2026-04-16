@@ -1,10 +1,19 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { InquiryStatus } from "@/types/inquiry";
+
+type AutomationAction = {
+  label: string;
+  description: string;
+  status: InquiryStatus;
+  memo: string;
+};
 
 type InquiryOperationalSummaryProps = {
   inquiryId: string;
@@ -15,6 +24,7 @@ type InquiryOperationalSummaryProps = {
   quickStatuses: Array<{ code: string; label: string }>;
   missingFacts: string[];
   lawbotStatus: "available" | "disabled" | "error";
+  automationActions: AutomationAction[];
 };
 
 export function InquiryOperationalSummary({
@@ -26,8 +36,12 @@ export function InquiryOperationalSummary({
   quickStatuses,
   missingFacts,
   lawbotStatus,
+  automationActions,
 }: InquiryOperationalSummaryProps) {
+  const router = useRouter();
   const [copiedState, setCopiedState] = useState<"summary" | "checklist" | null>(null);
+  const [feedback, setFeedback] = useState("");
+  const [isPending, startTransition] = useTransition();
 
   const priorityFacts =
     missingFacts.length > 0 ? missingFacts.slice(0, 4) : ["추가 확인이 필요한 항목은 아직 없습니다."];
@@ -56,6 +70,29 @@ export function InquiryOperationalSummary({
     } catch {
       setCopiedState(null);
     }
+  }
+
+  async function applyAutomation(action: AutomationAction) {
+    startTransition(async () => {
+      const response = await fetch(`/api/admin/inquiries/${inquiryId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: action.status,
+          internalMemo: action.memo
+        })
+      });
+
+      if (!response.ok) {
+        setFeedback("자동 액션 반영 중 오류가 발생했습니다.");
+        return;
+      }
+
+      setFeedback(`${action.label} 흐름으로 반영했습니다.`);
+      router.refresh();
+    });
   }
 
   return (
@@ -100,6 +137,29 @@ export function InquiryOperationalSummary({
           ))}
         </ul>
       </div>
+
+      <div className="mt-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">운영 자동 액션</p>
+        <div className="mt-3 space-y-3">
+          {automationActions.map((action) => (
+            <Card key={`${action.label}-${action.status}`} muted className="p-4">
+              <p className="text-sm font-semibold text-text-strong">{action.label}</p>
+              <p className="mt-1 text-sm text-text-muted">{action.description}</p>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="mt-3"
+                disabled={isPending}
+                onClick={() => void applyAutomation(action)}
+              >
+                {action.label} 반영
+              </Button>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {feedback ? <p className="mt-4 text-sm text-text-muted">{feedback}</p> : null}
 
       <div className="mt-5 flex flex-wrap gap-3">
         <Button size="sm" variant="secondary" onClick={() => void copyText("summary", summaryText)}>

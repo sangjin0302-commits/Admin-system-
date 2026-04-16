@@ -1,88 +1,114 @@
 ﻿import Link from "next/link";
 
-import { AdminSessionBanner } from "@/components/admin/admin-session-banner";
 import { InquiryCardList } from "@/components/admin/inquiry-card-list";
 import { InquiryDashboardSummary } from "@/components/admin/inquiry-dashboard-summary";
 import { InquiryFilters } from "@/components/admin/inquiry-filters";
 import { InquiryTable } from "@/components/admin/inquiry-table";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
-import { requireAdminPageSession } from "@/lib/auth/session";
-import { listInquiries } from "@/lib/services/inquiry-service";
 import { parseAdminInquiryQuery } from "@/lib/validation/admin";
+import { listInquiries } from "@/lib/services/inquiry-service";
+import type { InquiryDashboardSummaryProps } from "@/components/admin/inquiry-dashboard-summary";
 
 export const dynamic = "force-dynamic";
-type InquiryListItem = Awaited<ReturnType<typeof listInquiries>>[number];
 
-const quickLinks = [
-  {
-    title: "고객관리",
-    description: "수임 이후 관계관리와 후속조치가 필요한 접수로 바로 이동합니다.",
-    href: "/admin/inquiries?status=WON"
-  },
-  {
-    title: "예측",
-    description: "최근 KPI와 주간 예측 데이터를 별도 화면에서 검토합니다.",
-    href: "/admin/forecast"
-  },
-  {
-    title: "제안서",
-    description: "견적 초안이 필요한 접수로 바로 이동해 Quote workspace로 이어집니다.",
-    href: "/admin/inquiries?status=QUOTE_DRAFTED"
-  }
-] as const;
+function isWithinDays(date: Date | null | undefined, days: number) {
+  if (!date) return false;
+  const now = new Date();
+  const distance = date.getTime() - now.getTime();
+  return distance >= 0 && distance <= days * 24 * 60 * 60 * 1000;
+}
 
 export default async function AdminInquiryListPage({
   searchParams
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await requireAdminPageSession("/admin/inquiries", "STAFF");
   const rawParams = await searchParams;
   const filters = parseAdminInquiryQuery(rawParams);
   const [allInquiries, inquiries] = await Promise.all([listInquiries(), listInquiries(filters)]);
+  const activeInquiries = allInquiries.filter((item) => item.status !== "CLOSED");
+  const quotePendingCount = activeInquiries.filter((item) =>
+    ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)
+  ).length;
+  const consultationNeededCount = activeInquiries.filter((item) =>
+    ["CONSULTATION_REQUIRED", "WAITING_CONSULTATION", "PRE_DIAGNOSED"].includes(item.status)
+  ).length;
+  const nextThreeDaysCount = activeInquiries.filter((item) => isWithinDays(item.dueDate, 3)).length;
+  const docsPendingCount = activeInquiries.filter(
+    (item) => !item.hasPreparedDocuments && item.status !== "WON"
+  ).length;
+  const todayActionCount = activeInquiries.filter(
+    (item) =>
+      item.urgencyLevel === "CRITICAL" ||
+      isWithinDays(item.dueDate, 1) ||
+      ["QUOTE_DRAFTED", "QUOTE_PENDING", "CONSULTATION_REQUIRED"].includes(item.status)
+  ).length;
+  const actionItems: InquiryDashboardSummaryProps["actionItems"] = activeInquiries
+    .filter(
+      (item) =>
+        item.urgencyLevel === "CRITICAL" ||
+        isWithinDays(item.dueDate, 3) ||
+        ["QUOTE_DRAFTED", "QUOTE_PENDING", "CONSULTATION_REQUIRED", "WAITING_CONSULTATION"].includes(item.status) ||
+        !item.hasPreparedDocuments
+    )
+    .slice(0, 6)
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      href: `/admin/inquiries/${item.id}`,
+      tone:
+        item.urgencyLevel === "CRITICAL"
+          ? "urgent"
+          : isWithinDays(item.dueDate, 3)
+            ? "deadline"
+            : ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)
+              ? "quote"
+              : !item.hasPreparedDocuments
+                ? "docs"
+                : "consult",
+      description:
+        item.urgencyLevel === "CRITICAL"
+          ? "매우 긴급으로 분류된 건입니다. 사실관계와 일정부터 바로 확인해 주세요."
+          : isWithinDays(item.dueDate, 3)
+            ? "3일 이내 희망 일정 또는 마감이 잡혀 있습니다."
+            : ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)
+              ? "견적 작성, 검토 또는 발송 후속조치가 필요한 상태입니다."
+              : !item.hasPreparedDocuments
+                ? "기본 서류 보유 여부가 미확인 상태입니다. 자료 요청 흐름을 먼저 확인해 주세요."
+                : "상담 연결이나 다음 응답이 필요한 상태입니다."
+    }));
 
   return (
     <div className="space-y-6">
-      <AdminSessionBanner session={session} />
-
       <Card className="p-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="ui-kicker">Admin Intake Queue</p>
-            <h2 className="mt-2 ui-page-title">접수 내역</h2>
-            <p className="ui-section-copy mt-2">
-              보호가 필요한 공개 정보는 루트에서 노출하지 않고, 로그인 후 이 화면에서만 접수 내역과 쟁점 봇 연결 상태를 관리합니다.
+            <p className="ui-kicker">운영 허브</p>
+            <h2 className="mt-2 ui-page-title">문의 목록</h2>
+            <p className="mt-2 text-sm text-text-muted">
+              오늘 우선 처리할 건과 기한 임박 건을 먼저 확인하고, 아래 필터로 실제 검토 대상을 빠르게 좁혀보세요.
             </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin/monitoring"
+              className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
+            >
+              법령·판례 모니터링
+            </Link>
           </div>
         </div>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        {quickLinks.map((item) => (
-          <Card key={item.title} className="p-5">
-            <p className="ui-kicker">Quick Access</p>
-            <h3 className="mt-2 ui-section-title">{item.title}</h3>
-            <p className="ui-section-copy mt-2">{item.description}</p>
-            <Link href={item.href} className="ui-toolbar-button mt-4 inline-flex px-4 py-2 text-sm">
-              바로 이동
-            </Link>
-          </Card>
-        ))}
-      </div>
-
       <InquiryDashboardSummary
         totalCount={allInquiries.length}
-        urgentCount={
-          allInquiries.filter((item: InquiryListItem) => item.urgencyLevel === "CRITICAL").length
-        }
-        waitingCount={
-          allInquiries.filter(
-            (item: InquiryListItem) =>
-              item.status === "CONSULTATION_REQUIRED" || item.status === "WAITING_CONSULTATION"
-          ).length
-        }
-        assignedCount={allInquiries.filter((item: InquiryListItem) => Boolean(item.assignee)).length}
+        todayActionCount={todayActionCount}
+        nextThreeDaysCount={nextThreeDaysCount}
+        quotePendingCount={quotePendingCount}
+        docsPendingCount={docsPendingCount}
+        consultationNeededCount={consultationNeededCount}
+        actionItems={actionItems}
       />
 
       <InquiryFilters filters={filters} />
@@ -95,7 +121,7 @@ export default async function AdminInquiryListPage({
       ) : (
         <EmptyState
           title="조건에 맞는 문의가 없습니다."
-          description="검색어 또는 필터 조건을 조정해 보세요. 초기화하면 전체 접수 내역을 다시 볼 수 있습니다."
+          description="검색어 또는 필터 조건을 조정해 보세요. 초기화하면 전체 문의를 다시 볼 수 있습니다."
           actionLabel="필터 초기화"
           actionHref="/admin/inquiries"
         />

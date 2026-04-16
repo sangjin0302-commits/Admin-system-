@@ -21,6 +21,8 @@ type InquiryListFilters = {
   status?: InquiryStatus;
   urgency?: UrgencyLevel;
   language?: LanguageCode;
+  assignee?: string;
+  retained?: "all" | "won" | "active";
   sort?: AdminSort;
 };
 
@@ -182,11 +184,24 @@ export async function createInquiry(payload: unknown) {
 }
 
 export async function listInquiries(filters: InquiryListFilters = {}) {
+  const statusFilter: Prisma.InquiryWhereInput["status"] =
+    filters.status ??
+    (filters.retained === "won"
+      ? "WON"
+      : filters.retained === "active"
+        ? { notIn: ["WON", "CLOSED"] }
+        : undefined);
+
   const where: Prisma.InquiryWhereInput = {
     inquiryType: filters.inquiryType,
-    status: filters.status,
+    status: statusFilter,
     urgencyLevel: filters.urgency,
     preferredLanguage: filters.language,
+    ...(filters.assignee
+      ? {
+          assignee: { contains: filters.assignee }
+        }
+      : {}),
     ...(filters.q
       ? {
           OR: [

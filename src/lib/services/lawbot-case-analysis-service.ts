@@ -81,6 +81,7 @@ export async function getLawbotCaseAnalysis(
   inquiry: NonNullable<InquiryRecord>
 ): Promise<LawbotCaseAnalysisResult> {
   const analyzeUrl = process.env.LAWBOT_ANALYZE_URL?.trim();
+  const analyzeToken = process.env.LAWBOT_ANALYZE_TOKEN?.trim();
 
   if (!analyzeUrl) {
     return {
@@ -97,7 +98,8 @@ export async function getLawbotCaseAnalysis(
     const response = await fetch(analyzeUrl, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json; charset=utf-8"
+        "Content-Type": "application/json; charset=utf-8",
+        ...(analyzeToken ? { "x-lawbot-token": analyzeToken } : {})
       },
       body: JSON.stringify({
         fact_input: buildFactInput(inquiry)
