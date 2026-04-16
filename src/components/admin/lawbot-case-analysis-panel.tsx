@@ -91,6 +91,7 @@ function renderPanel(
   const analysisNote = [
     "[Lawbot 참고 메모]",
     `- 입력 요약: ${data.input_summary}`,
+    data.analysis_mode ? `- 분석 모드: ${data.analysis_mode === "internal" ? "내부 심화 분석" : "공개 빠른 분석"}` : null,
     "",
     "[핵심 쟁점]",
     ...(data.key_issues.length > 0 ? data.key_issues.map((item) => `- ${item}`) : ["- 원문 명시 없음"]),
@@ -102,7 +103,15 @@ function renderPanel(
     ...(data.applicable_laws.length > 0
       ? data.applicable_laws.map((item) => `- ${item.law}: ${item.summary}`)
       : ["- 원문 명시 없음"]),
-  ].join("\n");
+    "",
+    "[유리 포인트]",
+    ...(data.pros?.length ? data.pros.map((item) => `- ${item}`) : ["- 추가 정리 없음"]),
+    "",
+    "[불리 포인트]",
+    ...(data.cons?.length ? data.cons.map((item) => `- ${item}`) : ["- 추가 정리 없음"]),
+  ]
+    .filter(Boolean)
+    .join("\n");
   const searchChecklist = [
     "[Lawbot 후속 검색 체크리스트]",
     ...(data.next_search_recommendations.length > 0
@@ -122,11 +131,13 @@ function renderPanel(
         <div>
           <h3 className="ui-section-title">Lawbot 참고 분석</h3>
           <p className="mt-2 text-sm text-text-muted">
-            공개 분석 엔진 기준으로 관련 법령, 쟁점, 후속 검색어를 함께 정리했습니다.
+            {data.analysis_mode === "internal"
+              ? "내부 심화 분석 기준으로 관련 법령, 판례·해석례, 주장 전략과 리스크 포인트를 함께 정리했습니다."
+              : "공개 분석 엔진 기준으로 관련 법령, 쟁점, 후속 검색어를 함께 정리했습니다."}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge>실시간 참고</Badge>
+          <Badge>{data.analysis_mode === "internal" ? "내부 심화 분석" : "실시간 참고"}</Badge>
           {data.precedent_source_type && data.precedent_source_type !== "none" ? (
             <Badge className="border-line-strong bg-surface text-text-strong">
               판례 {data.precedent_source_type === "real" ? "실검색" : "보조추천"}
@@ -157,6 +168,13 @@ function renderPanel(
         <SimpleListCard title="추가 확인 사실" items={data.followup_facts} />
       </div>
 
+      {(data.pros?.length || data.cons?.length) ? (
+        <div className="mt-5 grid gap-4 xl:grid-cols-2">
+          <SimpleListCard title="유리 포인트" items={data.pros ?? []} />
+          <SimpleListCard title="불리 포인트" items={data.cons ?? []} />
+        </div>
+      ) : null}
+
       <Card muted className="mt-5 p-5">
         <p className="ui-kicker">참고 법령 요약</p>
         <div className="mt-3 space-y-3">
@@ -186,6 +204,13 @@ function renderPanel(
           }
         />
       </div>
+
+      {(data.argument_strategy?.length || data.counter_argument_points?.length) ? (
+        <div className="mt-5 grid gap-4 xl:grid-cols-2">
+          <SimpleListCard title="권장 주장 전략" items={data.argument_strategy ?? []} />
+          <SimpleListCard title="예상 반론 포인트" items={data.counter_argument_points ?? []} />
+        </div>
+      ) : null}
 
       <div className="mt-5 grid gap-4 xl:grid-cols-2">
         <ReferenceCard

@@ -36,6 +36,7 @@ type LawbotResponse = {
   key_issues: string[];
   followup_facts: string[];
   applicable_laws: LawbotApplicableLaw[];
+  analysis_mode?: "internal" | "public_fast";
   precedent_source_type?: "real" | "fallback" | "none";
   interpret_source_type?: "real" | "fallback" | "none";
   next_search_recommendations: string[];
@@ -43,6 +44,10 @@ type LawbotResponse = {
   precedent_search_suggestions?: LawbotPrecedentSuggestion[];
   related_precedents?: LawbotRelatedPrecedent[];
   related_interpretations?: LawbotRelatedInterpretation[];
+  pros?: string[];
+  cons?: string[];
+  argument_strategy?: string[];
+  counter_argument_points?: string[];
 };
 
 export type LawbotCaseAnalysisResult =
