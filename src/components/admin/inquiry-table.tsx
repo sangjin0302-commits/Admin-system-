@@ -45,39 +45,46 @@ export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
           </tr>
         </thead>
         <tbody>
-          {inquiries.map((inquiry) => (
-            <tr key={inquiry.id}>
-              <td>
-                <Link href={`/admin/inquiries/${inquiry.id}`} className="block">
-                  <p className="font-semibold text-text-strong">{inquiry.title}</p>
-                  <p className="mt-1 text-sm text-text">{inquiry.contactName}</p>
-                  <p className="text-sm text-text-muted">
-                    {inquiry.organizationName || inquiry.email}
-                  </p>
-                </Link>
-              </td>
-              <td>{inquiryTypeLabels[inquiry.inquiryType].ko}</td>
-              <td>
-                <Badge tone="status" status={inquiry.status}>
-                  {inquiryStatusLabels[inquiry.status].ko}
-                </Badge>
-              </td>
-              <td>
-                <Badge tone="urgency" urgency={inquiry.urgencyLevel}>
-                  {urgencyLabels[inquiry.urgencyLevel].ko}
-                </Badge>
-              </td>
-              <td>
-                <Badge tone="language" language={inquiry.preferredLanguage}>
-                  {languageCodeLabels[inquiry.preferredLanguage].ko}
-                </Badge>
-              </td>
-              <td>{inquiry.assignee || "미배정"}</td>
-              <td>{formatDateTime(inquiry.dueDate)}</td>
-              <td>{inquiry.hasPreparedDocuments ? "기본 서류 보유" : "자료 확인 필요"}</td>
-              <td>{formatDateTime(inquiry.updatedAt)}</td>
-            </tr>
-          ))}
+          {inquiries.map((inquiry) => {
+            const inquiryType = inquiry.inquiryType as keyof typeof inquiryTypeLabels;
+            const inquiryStatus = inquiry.status as keyof typeof inquiryStatusLabels;
+            const inquiryUrgency = inquiry.urgencyLevel as keyof typeof urgencyLabels;
+            const inquiryLanguage = inquiry.preferredLanguage as keyof typeof languageCodeLabels;
+
+            return (
+              <tr key={inquiry.id}>
+                <td>
+                  <Link href={`/admin/inquiries/${inquiry.id}`} className="block">
+                    <p className="font-semibold text-text-strong">{inquiry.title}</p>
+                    <p className="mt-1 text-sm text-text">{inquiry.contactName}</p>
+                    <p className="text-sm text-text-muted">
+                      {inquiry.organizationName || inquiry.email}
+                    </p>
+                  </Link>
+                </td>
+                <td>{inquiryTypeLabels[inquiryType].ko}</td>
+                <td>
+                  <Badge tone="status" status={inquiry.status}>
+                    {inquiryStatusLabels[inquiryStatus].ko}
+                  </Badge>
+                </td>
+                <td>
+                  <Badge tone="urgency" urgency={inquiry.urgencyLevel}>
+                    {urgencyLabels[inquiryUrgency].ko}
+                  </Badge>
+                </td>
+                <td>
+                  <Badge tone="language" language={inquiry.preferredLanguage}>
+                    {languageCodeLabels[inquiryLanguage].ko}
+                  </Badge>
+                </td>
+                <td>{inquiry.assignee || "미배정"}</td>
+                <td>{formatDateTime(inquiry.dueDate)}</td>
+                <td>{inquiry.hasPreparedDocuments ? "기본 서류 보유" : "자료 확인 필요"}</td>
+                <td>{formatDateTime(inquiry.updatedAt)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </Table>
     </TableContainer>
