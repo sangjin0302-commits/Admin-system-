@@ -1,10 +1,3 @@
-export {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  StateInline
-} from "./state-panel-clean";
-/*
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -60,8 +53,8 @@ export function ErrorState({
 }
 
 export function LoadingState({
-  title = "불러오는 중입니다.",
-  description = "데이터를 준비하고 있습니다.",
+  title = "\uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.",
+  description = "\uB370\uC774\uD130\uB97C \uC900\uBE44\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4.",
   rows = 3
 }: {
   title?: string;
@@ -107,4 +100,3 @@ export function StateInline({
     </p>
   );
 }
-*/

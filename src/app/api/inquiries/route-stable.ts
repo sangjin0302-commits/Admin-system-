@@ -1,5 +1,3 @@
-export { POST } from "./route-stable";
-/*
 import { ZodError } from "zod";
 import { NextResponse } from "next/server";
 
@@ -19,7 +17,10 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ error: "문의 접수를 처리하지 못했습니다." }, { status: 500 });
+    console.error("Failed to create inquiry", error);
+    return NextResponse.json(
+      { error: "문의 접수를 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." },
+      { status: 500 }
+    );
   }
 }
-*/

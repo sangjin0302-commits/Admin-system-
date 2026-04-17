@@ -1,10 +1,7 @@
-export const dynamic = "force-dynamic";
-export { default } from "./page-stable";
-/*
 import Link from "next/link";
 
-import { getIntakeCopy } from "@/components/intake/copy-clean";
-import { IntakeForm } from "@/components/intake/intake-form-clean";
+import { getIntakeCopy } from "@/components/intake/copy-stable";
+import { IntakeForm } from "@/components/intake/intake-form-stable";
 import { Card } from "@/components/ui/card";
 import type { Locale } from "@/types/inquiry";
 
@@ -63,4 +60,3 @@ export default async function IntakePage({
     </div>
   );
 }
-*/

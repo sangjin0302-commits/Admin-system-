@@ -1,6 +1,3 @@
-export const dynamic = "force-dynamic";
-export { default } from "./dashboard-content";
-/*
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +19,33 @@ export const dynamic = "force-dynamic";
 
 type InquiryListItem = Awaited<ReturnType<typeof listInquiries>>[number];
 
+async function safeListInquiries() {
+  try {
+    return await listInquiries();
+  } catch (error) {
+    console.error("Failed to load inquiries for admin dashboard", error);
+    return [] as InquiryListItem[];
+  }
+}
+
+async function safeReadMarketingSnapshot() {
+  try {
+    return await readMarketingSnapshot();
+  } catch (error) {
+    console.error("Failed to load marketing snapshot for admin dashboard", error);
+    return null;
+  }
+}
+
+async function safeCount<T>(label: string, task: Promise<T>, fallback: T) {
+  try {
+    return await task;
+  } catch (error) {
+    console.error(`Failed to load ${label} for admin dashboard`, error);
+    return fallback;
+  }
+}
+
 function isWithinDays(date: Date | null | undefined, days: number) {
   if (!date) return false;
   const now = new Date();
@@ -35,24 +59,27 @@ function getLawbotStatus() {
 
   if (hasAnalyzeUrl && hasAnalyzeToken) {
     return {
-      label: "실연결 준비 완료",
+      label: "\uC2E4\uC5F0\uACB0 \uC900\uBE44 \uC644\uB8CC",
       toneClassName: "bg-success/10 text-success",
-      description: "사건 상세에서 실제 분석 호출과 스냅샷 저장까지 이어질 수 있습니다."
+      description:
+        "\uC0AC\uAC74 \uC0C1\uC138\uC5D0\uC11C \uC2E4\uC81C \uBD84\uC11D \uD638\uCD9C\uACFC \uC2A4\uB0C5\uC0F7 \uC800\uC7A5\uAE4C\uC9C0 \uC774\uC5B4\uC9C8 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     };
   }
 
   if (hasAnalyzeUrl) {
     return {
-      label: "주소만 연결됨",
+      label: "\uC8FC\uC18C\uB9CC \uC5F0\uACB0\uB428",
       toneClassName: "bg-warning/10 text-warning",
-      description: "분석 주소는 있지만 토큰이 없어 운영 기준에서는 점검이 더 필요합니다."
+      description:
+        "\uBD84\uC11D \uC8FC\uC18C\uB294 \uC788\uC9C0\uB9CC \uD1A0\uD070\uC774 \uC5C6\uC5B4 \uC6B4\uC601 \uAE30\uC900\uC5D0\uC11C\uB294 \uC810\uAC80\uC774 \uB354 \uD544\uC694\uD569\uB2C8\uB2E4."
     };
   }
 
   return {
-    label: "미연결",
+    label: "\uBBF8\uC5F0\uACB0",
     toneClassName: "bg-danger/10 text-danger",
-    description: "UI와 저장 구조는 준비돼 있지만 실제 호출은 아직 꺼져 있습니다."
+    description:
+      "UI\uC640 \uC800\uC7A5 \uAD6C\uC870\uB294 \uC900\uBE44\uB3FC \uC788\uC9C0\uB9CC \uC2E4\uC81C \uD638\uCD9C\uC740 \uC544\uC9C1 \uAEBC\uC838 \uC788\uC2B5\uB2C8\uB2E4."
   };
 }
 
@@ -64,13 +91,13 @@ function getStatusTone(status: InquiryStatus) {
   return "default";
 }
 
-export default async function AdminIndexPage() {
+export default async function AdminDashboardContent() {
   const [inquiries, marketingSnapshot, quoteCount, contractDraftCount, caseCount] = await Promise.all([
-    listInquiries(),
-    readMarketingSnapshot(),
-    prisma.quote.count(),
-    prisma.contractDraft.count(),
-    prisma.caseRecord.count()
+    safeListInquiries(),
+    safeReadMarketingSnapshot(),
+    safeCount("quote count", prisma.quote.count(), 0),
+    safeCount("contract draft count", prisma.contractDraft.count(), 0),
+    safeCount("case count", prisma.caseRecord.count(), 0)
   ]);
 
   const activeInquiries = inquiries.filter((item) => item.status !== "CLOSED");
@@ -99,43 +126,62 @@ export default async function AdminIndexPage() {
   const recentIntakes = inquiries.slice(0, 5);
 
   const pipeline = [
-    { key: "NEW", label: "신규", count: activeInquiries.filter((item) => item.status === "NEW").length },
+    {
+      key: "NEW",
+      label: "\uC2E0\uADDC",
+      count: activeInquiries.filter((item) => item.status === "NEW").length,
+      description: "\uAC00\uC7A5 \uBA3C\uC800 \uD559\uC778\uD558\uB294 \uC811\uC218 \uAD6C\uAC04"
+    },
     {
       key: "PRE_DIAGNOSED",
-      label: "사전진단",
-      count: activeInquiries.filter((item) => item.status === "PRE_DIAGNOSED").length
+      label: "\uC0AC\uC804\uC9C4\uB2E8",
+      count: activeInquiries.filter((item) => item.status === "PRE_DIAGNOSED").length,
+      description: "\uCD08\uAE30 \uBD84\uB958\uC640 \uAC80\uD1A0 \uBC29\uD5A5\uC744 \uC815\uB9AC\uD55C \uAD6C\uAC04"
     },
     {
       key: "CONSULTATION_REQUIRED",
-      label: "상담",
+      label: "\uC0C1\uB2F4",
       count: activeInquiries.filter((item) =>
         ["CONSULTATION_REQUIRED", "WAITING_CONSULTATION"].includes(item.status)
-      ).length
+      ).length,
+      description: "\uC0C1\uB2F4 \uC5F0\uACB0 \uB610\uB294 \uC0C1\uB2F4 \uB300\uAE30 \uD750\uB984"
     },
     {
       key: "QUOTE_PENDING",
-      label: "견적",
+      label: "\uACAC\uC801",
       count: activeInquiries.filter((item) =>
         ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)
-      ).length
+      ).length,
+      description: "\uACAC\uC801 \uC791\uC131\u00B7\uAC80\uD1A0\u00B7\uBC1C\uC1A1 \uAD6C\uAC04"
     },
-    { key: "WON", label: "수임", count: activeInquiries.filter((item) => item.status === "WON").length },
-    { key: "ON_HOLD", label: "보류", count: activeInquiries.filter((item) => item.status === "ON_HOLD").length }
+    {
+      key: "WON",
+      label: "\uC218\uC784",
+      count: activeInquiries.filter((item) => item.status === "WON").length,
+      description: "\uACC4\uC57D \uB610\uB294 \uC0AC\uAC74 \uC9C4\uD589\uC73C\uB85C \uB118\uC5B4\uAC04 \uAC74"
+    },
+    {
+      key: "ON_HOLD",
+      label: "\uBCF4\uB958",
+      count: activeInquiries.filter((item) => item.status === "ON_HOLD").length,
+      description: "\uC0AC\uC720 \uD655\uC778\uACFC \uC7AC\uC815\uB9AC\uAC00 \uD544\uC694\uD55C \uAC74"
+    }
   ];
 
   const lawbotStatus = getLawbotStatus();
   const marketingStatus = marketingSnapshot
     ? {
-        label: "스냅샷 수신 중",
+        label: "\uC2A4\uB0C5\uC0F7 \uC218\uC2E0 \uC911",
         toneClassName: "bg-success/10 text-success",
-        description: `최근 마케팅 데이터가 ${formatDateTime(
+        description: `\uCD5C\uADFC \uB9C8\uCF00\uD305 \uB370\uC774\uD130\uAC00 ${formatDateTime(
           marketingSnapshot.received_at ?? marketingSnapshot.generated_at ?? null
-        )} 기준으로 저장돼 있습니다.`
+        )} \uAE30\uC900\uC73C\uB85C \uC800\uC7A5\uB3FC \uC788\uC2B5\uB2C8\uB2E4.`
       }
     : {
-        label: "스냅샷 없음",
+        label: "\uC2A4\uB0C5\uC0F7 \uC5C6\uC74C",
         toneClassName: "bg-warning/10 text-warning",
-        description: "현재는 mock/기본 신호 중심이며, 실시간 market engine 연동은 아직 아닙니다."
+        description:
+          "\uD604\uC7AC\uB294 mock/\uAE30\uBCF8 \uC2E0\uD638 \uC911\uC2EC\uC774\uBA70, \uC2E4\uC2DC\uAC04 market engine \uC5F0\uB3D9\uC740 \uC544\uC9C1 \uC544\uB2D9\uB2C8\uB2E4."
       };
 
   return (
@@ -144,11 +190,12 @@ export default async function AdminIndexPage() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div>
-              <p className="ui-kicker">Admin Dashboard</p>
-              <h2 className="mt-2 ui-page-title">업무 관리 대시보드</h2>
+              <p className="ui-kicker">\uC5C5\uBB34 \uAD00\uB9AC \uD5C8\uBE0C</p>
+              <h2 className="mt-2 ui-page-title">\uAD00\uB9AC\uC790 \uB300\uC2DC\uBCF4\uB4DC</h2>
               <p className="mt-2 max-w-3xl text-sm text-text-muted">
-                문의 접수, 상담 준비, 견적 후속, 사건 진행, 분석 엔진 연결 상태를 한 화면에서 보고 바로 다음
-                행동으로 넘어갈 수 있게 정리했습니다.
+                \uBB38\uC758 \uC811\uC218, \uC0C1\uB2F4 \uC900\uBE44, \uACAC\uC801 \uD6C4\uC18D, \uC0AC\uAC74 \uC9C4\uD589,
+                \uBD84\uC11D \uC5D4\uC9C4 \uC5F0\uACB0 \uC0C1\uD0DC\uB97C \uD55C \uD654\uBA74\uC5D0\uC11C \uBCF4\uACE0 \uBC14\uB85C
+                \uB2E4\uC74C \uD589\uB3D9\uC73C\uB85C \uB118\uC5B4\uAC08 \uC218 \uC788\uAC8C \uC815\uB9AC\uD588\uC2B5\uB2C8\uB2E4.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -156,49 +203,44 @@ export default async function AdminIndexPage() {
                 href="/admin/inquiries"
                 className="inline-flex items-center justify-center rounded-full border border-primary bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-[#143d5d]"
               >
-                문의 목록 열기
+                \uBB38\uC758 \uBAA9\uB85D \uC5F4\uAE30
+              </Link>
+              <Link
+                href="/admin/integrations"
+                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
+              >
+                \uC5F0\uB3D9 \uC13C\uD130
               </Link>
               <Link
                 href="/admin/monitoring"
                 className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
               >
-                모니터링 허브
-              </Link>
-              <Link
-                href="/intake"
-                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
-              >
-                공개 접수 화면
+                \uBAA8\uB2C8\uD130\uB9C1
               </Link>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <span className="ui-analysis-chip">오늘 우선 확인 {urgentCount}건</span>
-            <span className="ui-analysis-chip">자료 확인 필요 {docsPendingCount}건</span>
-            <span className="ui-analysis-chip">응답 대기 {responsePendingCount}건</span>
-            <span className="ui-analysis-chip">견적 후속 {quotePendingCount}건</span>
+            <span className="ui-analysis-chip">\uC624\uB298 \uC6B0\uC120 \uD655\uC778 {urgentCount}\uAC74</span>
+            <span className="ui-analysis-chip">\uC790\uB8CC \uD655\uC778 \uD544\uC694 {docsPendingCount}\uAC74</span>
+            <span className="ui-analysis-chip">\uC751\uB2F5 \uB300\uAE30 {responsePendingCount}\uAC74</span>
+            <span className="ui-analysis-chip">\uACAC\uC801 \uD6C4\uC18D {quotePendingCount}\uAC74</span>
           </div>
 
-          <div className="grid gap-3 xl:grid-cols-3">
+          <div className="grid gap-3 xl:grid-cols-4">
             <Card className="ui-analysis-panel p-4">
               <p className="ui-kicker">System Core</p>
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <h3 className="text-base font-semibold text-text-strong">운영 현황</h3>
-                <span className="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
-                  활성 문의 {activeInquiries.length}건
-                </span>
-              </div>
+              <h3 className="mt-3 text-base font-semibold text-text-strong">\uC6B4\uC601 \uAE30\uC900</h3>
               <p className="mt-2 text-sm text-text-muted">
-                문의, 견적, 계약 초안, 사건 관리는 모두 system DB를 기준으로 운영됩니다.
+                \uBB38\uC758, \uACAC\uC801, \uACC4\uC57D \uCD08\uC548, \uC0AC\uAC74 \uAD00\uB9AC\uB294 system DB\uB97C \uAE30\uC900\uC73C\uB85C \uC6B4\uC601\uD569\uB2C8\uB2E4.
               </p>
             </Card>
 
             <Card className="ui-analysis-panel p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="ui-kicker">Lawbot Lane</p>
-                  <h3 className="mt-2 text-base font-semibold text-text-strong">법률 분석 엔진</h3>
+                  <p className="ui-kicker">Lawbot</p>
+                  <h3 className="mt-2 text-base font-semibold text-text-strong">\uBC95\uB960 \uBD84\uC11D</h3>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${lawbotStatus.toneClassName}`}>
                   {lawbotStatus.label}
@@ -211,7 +253,7 @@ export default async function AdminIndexPage() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="ui-kicker">Market Analyze</p>
-                  <h3 className="mt-2 text-base font-semibold text-text-strong">외부 수요 신호</h3>
+                  <h3 className="mt-2 text-base font-semibold text-text-strong">\uC2DC\uC7A5 \uC778\uC0AC\uC774\uD2B8</h3>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${marketingStatus.toneClassName}`}>
                   {marketingStatus.label}
@@ -219,26 +261,35 @@ export default async function AdminIndexPage() {
               </div>
               <p className="mt-3 text-sm text-text-muted">{marketingStatus.description}</p>
             </Card>
+
+            <Card className="ui-analysis-panel p-4">
+              <p className="ui-kicker">Workspace</p>
+              <h3 className="mt-3 text-base font-semibold text-text-strong">\uBCC4\uB3C4 \uD654\uBA74 \uC5F0\uACB0</h3>
+              <p className="mt-2 text-sm text-text-muted">
+                market-analyze \uD504\uB860\uD2B8 \uAD6C\uC870\uB97C \uAE30\uC900\uC73C\uB85C \uC5F0\uB3D9 \uC13C\uD130\uC5D0
+                \uC2A4\uD06C\uB9B0 \uC790\uB9AC\uB97C \uBBF8\uB9AC \uB9CC\uB4E4\uC5B4 \uB46C \uC0C1\uD0DC\uC785\uB2C8\uB2E4.
+              </p>
+            </Card>
           </div>
         </div>
       </Card>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <DashboardMetric label="문의" value={inquiries.length} description="누적 접수와 사건 후보" />
-        <DashboardMetric label="견적" value={quoteCount} description="생성된 견적 및 후속 흐름" />
-        <DashboardMetric label="계약 초안" value={contractDraftCount} description="계약 문안 및 정리 단계" />
-        <DashboardMetric label="사건" value={caseCount} description="실제 진행 중인 사건 레코드" />
+        <DashboardMetric label="\uBB38\uC758" value={inquiries.length} description="\uB204\uC801 \uC811\uC218\uC640 \uC0AC\uAC74 \uD6C4\uBCF4" />
+        <DashboardMetric label="\uACAC\uC801" value={quoteCount} description="\uC0DD\uC131\uB41C \uACAC\uC801 \uBC0F \uD6C4\uC18D \uD750\uB984" />
+        <DashboardMetric label="\uACC4\uC57D \uCD08\uC548" value={contractDraftCount} description="\uACC4\uC57D \uBB38\uC548 \uBC0F \uC815\uB9AC \uB2E8\uACC4" />
+        <DashboardMetric label="\uC0AC\uAC74" value={caseCount} description="\uC2E4\uC81C \uC9C4\uD589 \uC911\uC778 \uC0AC\uAC74 \uB808\uCF54\uB4DC" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
         <Card className="p-6">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="ui-kicker">Pipeline</p>
-              <h3 className="mt-2 ui-section-title">상태별 운영 파이프라인</h3>
+              <p className="ui-kicker">\uD30C\uC774\uD504\uB77C\uC778</p>
+              <h3 className="mt-2 ui-section-title">\uC0C1\uD0DC\uBCC4 \uC6B4\uC601 \uD750\uB984</h3>
             </div>
             <Link href="/admin/inquiries" className="text-sm font-medium text-primary">
-              전체 목록 보기
+              \uC804\uCCB4 \uBAA9\uB85D \uBCF4\uAE30
             </Link>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -246,40 +297,30 @@ export default async function AdminIndexPage() {
               <Card key={item.key} muted className="p-4">
                 <p className="ui-kicker">{item.label}</p>
                 <p className="mt-2 text-3xl font-semibold text-text-strong">{item.count}</p>
-                <p className="mt-2 text-xs text-text-muted">
-                  {item.label === "견적"
-                    ? "견적 작성, 검토, 발송이 이어지는 구간"
-                    : item.label === "상담"
-                      ? "상담 연결이나 상담 대기 흐름"
-                      : item.label === "수임"
-                        ? "계약 또는 사건 진행으로 이어진 건"
-                        : item.label === "보류"
-                          ? "사유 확인이 필요한 건"
-                          : "현재 이 단계에 머물고 있는 건"}
-                </p>
+                <p className="mt-2 text-xs text-text-muted">{item.description}</p>
               </Card>
             ))}
           </div>
         </Card>
 
         <Card className="p-6">
-          <p className="ui-kicker">Focus</p>
-          <h3 className="mt-2 ui-section-title">오늘의 운영 포인트</h3>
+          <p className="ui-kicker">\uC624\uB298\uC758 \uD3EC\uC778\uD2B8</p>
+          <h3 className="mt-2 ui-section-title">\uC6B0\uC120 \uD655\uC778 \uC694\uC57D</h3>
           <div className="mt-4 space-y-3 text-sm text-text-muted">
-            <p>• 긴급·당일 기준으로 먼저 볼 문의는 {urgentCount}건입니다.</p>
-            <p>• 자료 확보가 먼저 필요한 문의는 {docsPendingCount}건입니다.</p>
-            <p>• 상담 연결 또는 대기 흐름에 있는 문의는 {consultationCount}건입니다.</p>
-            <p>• 고객 회신이나 다음 연락을 기다리는 문의는 {responsePendingCount}건입니다.</p>
+            <p>\u2022 \uAE34\uAE09\u00B7\uB2F9\uC77C \uAE30\uC900\uC73C\uB85C \uBA3C\uC800 \uBCFC \uBB38\uC758\uB294 {urgentCount}\uAC74\uC785\uB2C8\uB2E4.</p>
+            <p>\u2022 \uC790\uB8CC \uD655\uBCF4\uAC00 \uBA3C\uC800 \uD544\uC694\uD55C \uBB38\uC758\uB294 {docsPendingCount}\uAC74\uC785\uB2C8\uB2E4.</p>
+            <p>\u2022 \uC0C1\uB2F4 \uC5F0\uACB0 \uB610\uB294 \uB300\uAE30 \uD750\uB984\uC740 {consultationCount}\uAC74\uC785\uB2C8\uB2E4.</p>
+            <p>\u2022 \uACE0\uAC1D \uD68C\uC2E0 \uB610\uB294 \uB2E4\uC74C \uC5F0\uB77D \uB300\uAE30\uB294 {responsePendingCount}\uAC74\uC785\uB2C8\uB2E4.</p>
           </div>
         </Card>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
         <DashboardListCard
-          kicker="Due Soon"
-          title="기한 임박 문의"
-          emptyTitle="임박 일정이 없습니다."
-          emptyDescription="3일 내 희망 일정 또는 기한이 잡힌 문의가 생기면 여기에 표시됩니다."
+          kicker="\uAE30\uD55C \uC784\uBC15"
+          title="\uAE30\uD55C \uC784\uBC15 \uBB38\uC758"
+          emptyTitle="\uC784\uBC15 \uC77C\uC815\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."
+          emptyDescription="3\uC77C \uB0B4 \uD76C\uB9DD \uC77C\uC815 \uB610\uB294 \uAE30\uD55C\uC774 \uC0DD\uAE30\uBA74 \uC5EC\uAE30\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4."
           items={dueSoonItems.map((item) => ({
             id: item.id,
             href: `/admin/inquiries/${item.id}`,
@@ -290,26 +331,26 @@ export default async function AdminIndexPage() {
         />
 
         <DashboardListCard
-          kicker="Follow Up"
-          title="연락·회신 확인"
-          emptyTitle="후속 연락 대기 건이 없습니다."
-          emptyDescription="응답 대기나 다음 연락 일정이 생기면 이 영역에 표시됩니다."
+          kicker="\uD6C4\uC18D \uC5F0\uB77D"
+          title="\uC5F0\uB77D\u00B7\uD68C\uC2E0 \uD655\uC778"
+          emptyTitle="\uD6C4\uC18D \uC5F0\uB77D \uB300\uAE30 \uAC74\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."
+          emptyDescription="\uC751\uB2F5 \uB300\uAE30\uB098 \uB2E4\uC74C \uC5F0\uB77D \uC77C\uC815\uC774 \uC0DD\uAE30\uBA74 \uC774 \uC601\uC5ED\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4."
           items={nextContactItems.map((item) => ({
             id: item.id,
             href: `/admin/inquiries/${item.id}`,
             title: item.title,
             meta: item.responsePending
-              ? "고객 응답 대기"
-              : `다음 연락 ${formatDateTime(item.nextContactAt)}`,
+              ? "\uACE0\uAC1D \uC751\uB2F5 \uB300\uAE30"
+              : `\uB2E4\uC74C \uC5F0\uB77D ${formatDateTime(item.nextContactAt)}`,
             description: `${inquiryStatusLabels[item.status].ko} · ${item.contactName}`
           }))}
         />
 
         <DashboardListCard
-          kicker="Recent Intake"
-          title="최근 접수"
-          emptyTitle="아직 접수가 없습니다."
-          emptyDescription="새 문의가 접수되면 가장 최근 건이 여기에 표시됩니다."
+          kicker="\uCD5C\uADFC \uC811\uC218"
+          title="\uCD5C\uADFC \uC811\uC218"
+          emptyTitle="\uC544\uC9C1 \uC811\uC218\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."
+          emptyDescription="\uC0C8 \uBB38\uC758\uAC00 \uC811\uC218\uB418\uBA74 \uAC00\uC7A5 \uCD5C\uADFC \uAC74\uC774 \uC5EC\uAE30\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4."
           items={recentIntakes.map((item) => ({
             id: item.id,
             href: `/admin/inquiries/${item.id}`,
@@ -323,10 +364,41 @@ export default async function AdminIndexPage() {
       <Card className="p-6">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="ui-kicker">Recent Workflow</p>
-            <h3 className="mt-2 ui-section-title">최근 주요 문의</h3>
+            <p className="ui-kicker">\uC5F0\uB3D9 \uC5C5\uBB34\uC2E4</p>
+            <h3 className="mt-2 ui-section-title">Lawbot · Market Analyze \uC790\uB9AC</h3>
           </div>
-          <p className="text-sm text-text-muted">상태와 긴급도를 같이 보면서 바로 상세 화면으로 이동할 수 있습니다.</p>
+          <Link href="/admin/integrations" className="text-sm font-medium text-primary">
+            \uC5F0\uB3D9 \uC13C\uD130 \uC5F4\uAE30
+          </Link>
+        </div>
+        <div className="mt-5 grid gap-4 xl:grid-cols-2">
+          <Card muted className="p-4">
+            <p className="ui-kicker">Lawbot</p>
+            <h4 className="mt-2 text-base font-semibold text-text-strong">\uC0AC\uAC74 \uAE30\uC900 \uBC95\uB960 \uBD84\uC11D \uC790\uB9AC</h4>
+            <p className="mt-2 text-sm text-text-muted">
+              \uC0AC\uAC74 \uC0C1\uC138\uC5D0\uC11C \uC2E4\uC81C \uBD84\uC11D \uD638\uCD9C, \uC2A4\uB0C5\uC0F7 \uC800\uC7A5, \uC7AC\uBD84\uC11D
+              \uBE44\uAD50\uAE4C\uC9C0 \uC5F0\uACB0\uD574 \uB454 \uC0C1\uD0DC\uC785\uB2C8\uB2E4.
+            </p>
+          </Card>
+          <Card muted className="p-4">
+            <p className="ui-kicker">Market Analyze</p>
+            <h4 className="mt-2 text-base font-semibold text-text-strong">\uBCC4\uB3C4 \uD504\uB860\uD2B8 \uAD6C\uC870 \uBC18\uC601</h4>
+            <p className="mt-2 text-sm text-text-muted">
+              \uB85C\uCEEC \uAE30\uC900\uC73C\uB85C dashboard, competitors, hot issues, sentiment, services \uD654\uBA74
+              \uAD6C\uC131\uC774 \uD655\uC778\uB418\uC5B4 \uC788\uC5B4 system \uC548\uC5D0 \uBCF4\uC5EC\uC904 \uC790\uB9AC\uB97C \uB9CC\uB4E4\uC5B4 \uB454
+              \uC0C1\uD0DC\uC785\uB2C8\uB2E4.
+            </p>
+          </Card>
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="ui-kicker">\uCD5C\uADFC \uC8FC\uC694 \uBB38\uC758</p>
+            <h3 className="mt-2 ui-section-title">\uBC14\uB85C \uC5F4\uC5B4\uBCFC \uD56D\uBAA9</h3>
+          </div>
+          <p className="text-sm text-text-muted">\uC0C1\uD0DC\uC640 \uAE34\uAE09\uB3C4\uB97C \uAC19\uC774 \uBCF4\uBA74\uC11C \uBC14\uB85C \uC0C1\uC138 \uD654\uBA74\uC73C\uB85C \uC774\uB3D9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p>
         </div>
 
         {recentIntakes.length > 0 ? (
@@ -356,7 +428,7 @@ export default async function AdminIndexPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-sm text-text-muted">
                     <span className={dashboardToneClassName(getStatusTone(item.status))}>
-                      {item.responsePending ? "응답 대기" : "운영 진행 중"}
+                      {item.responsePending ? "\uC751\uB2F5 \uB300\uAE30" : "\uC6B4\uC601 \uC9C4\uD589 \uC911"}
                     </span>
                     <span>{formatDateTime(item.updatedAt)}</span>
                   </div>
@@ -366,9 +438,9 @@ export default async function AdminIndexPage() {
           </div>
         ) : (
           <EmptyState
-            title="표시할 최근 문의가 없습니다."
-            description="공개 접수나 내부 등록이 생기면 최근 문의 카드가 여기에 정리됩니다."
-            actionLabel="공개 접수 열기"
+            title="\uD45C\uC2DC\uD560 \uCD5C\uADFC \uBB38\uC758\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."
+            description="\uACF5\uAC1C \uC811\uC218\uB098 \uB0B4\uBD80 \uB4F1\uB85D\uC774 \uC0DD\uAE30\uBA74 \uCD5C\uADFC \uBB38\uC758 \uCE74\uB4DC\uAC00 \uC5EC\uAE30\uC5D0 \uC815\uB9AC\uB429\uB2C8\uB2E4."
+            actionLabel="\uACF5\uAC1C \uC811\uC218 \uC5F4\uAE30"
             actionHref="/intake"
             className="mt-5"
           />
@@ -447,4 +519,3 @@ function dashboardToneClassName(tone: "default" | "consult" | "quote" | "risk" |
   if (tone === "won") return "rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary";
   return "rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-text";
 }
-*/

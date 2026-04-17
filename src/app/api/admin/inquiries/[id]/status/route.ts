@@ -19,7 +19,8 @@ export async function PATCH(
     const inquiry = await updateInquiryAdminFields(id, { status: payload.status });
 
     return NextResponse.json({ inquiry });
-  } catch {
-    return NextResponse.json({ error: "Failed to update inquiry status." }, { status: 400 });
+  } catch (error) {
+    console.error("Failed to update inquiry status", error);
+    return NextResponse.json({ error: "문의 상태를 변경하지 못했습니다." }, { status: 400 });
   }
 }

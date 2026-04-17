@@ -49,6 +49,86 @@ import {
 
 export const dynamic = "force-dynamic";
 
+type QuoteWorkspaceResult = Awaited<ReturnType<typeof getQuoteWorkspaceForInquiry>>;
+type ReferenceRecommendationsResult = Awaited<ReturnType<typeof getNotionReferenceRecommendations>>;
+
+async function safeGetQuoteWorkspace(
+  inquiry: NonNullable<Awaited<ReturnType<typeof getInquiryById>>>
+): Promise<QuoteWorkspaceResult> {
+  try {
+    return await getQuoteWorkspaceForInquiry(inquiry.id);
+  } catch (error) {
+    console.error("Failed to load quote workspace", error);
+    return {
+      inquiry: {
+        id: inquiry.id,
+        title: inquiry.title,
+        description: inquiry.description,
+        inquiryType: inquiry.inquiryType,
+        urgencyLevel: inquiry.urgencyLevel,
+        preferredLanguage: inquiry.preferredLanguage,
+        contactName: inquiry.contactName,
+        organizationName: inquiry.organizationName,
+        email: inquiry.email,
+        phone: inquiry.phone,
+        classificationReason: inquiry.classificationReason,
+        serviceTags: parseJsonArray(inquiry.serviceTags).map((entry) => String(entry)),
+        hasPreparedDocuments: inquiry.hasPreparedDocuments,
+        needsTranslation: inquiry.needsTranslation,
+        isCorporateRequest: inquiry.isCorporateRequest,
+        consultationRequired: inquiry.consultationRequired,
+        createdAt: inquiry.createdAt.toISOString(),
+        updatedAt: inquiry.updatedAt.toISOString()
+      },
+      caseAnalysis: analyzeInquiryCase(inquiry),
+      lawbotAnalysis: {
+        status: "error",
+        message: "견적 화면 기준 Lawbot 분석을 불러오지 못했습니다."
+      },
+      masters: {
+        serviceTypes: [],
+        pricingOptions: [],
+        urgencyRules: [],
+        consultRules: [],
+        paymentRules: [],
+        policyRules: []
+      },
+      suggestedServiceLegacyIds: [],
+      suggestedUrgencyRuleCode: "",
+      latestQuote: null
+    } as QuoteWorkspaceResult;
+  }
+}
+
+async function safeGetLawbotAnalysis(inquiry: NonNullable<Awaited<ReturnType<typeof getInquiryById>>>) {
+  try {
+    return await getLawbotCaseAnalysis(inquiry);
+  } catch (error) {
+    console.error("Failed to load lawbot analysis", error);
+    return {
+      status: "error" as const,
+      message: "Lawbot 분석을 불러오지 못했습니다. 저장된 스냅샷이나 내부 판단 기준으로 검토를 이어가세요."
+    };
+  }
+}
+
+async function safeGetReferenceRecommendations(input: {
+  inquiryType: InquiryType;
+  serviceTags: string[];
+  inquiryTitle: string;
+}): Promise<ReferenceRecommendationsResult> {
+  try {
+    return await getNotionReferenceRecommendations(input);
+  } catch (error) {
+    console.error("Failed to load Notion reference recommendations", error);
+    return {
+      keywords: [],
+      materials: [],
+      websites: []
+    } as ReferenceRecommendationsResult;
+  }
+}
+
 function getQuickStatuses(strengthLabel: "강함" | "보통" | "주의" | "불리"): InquiryStatus[] {
   if (strengthLabel === "강함") {
     return ["QUOTE_DRAFTED", "QUOTE_PENDING", "IN_REVIEW"];
@@ -999,15 +1079,15 @@ export default async function AdminInquiryDetailPage({
     inquiryType: inquiry.inquiryType as InquiryType
   });
 
-  const quoteWorkspace = await getQuoteWorkspaceForInquiry(id);
+  const quoteWorkspace = await safeGetQuoteWorkspace(inquiry);
   const tags = parseJsonArray(inquiry.serviceTags);
   const precheckDocs = parseJsonArray(inquiry.precheckRecommendedDocs).map((entry) => String(entry));
   const previews = getInquiryMessagePreviewSet(inquiry);
   const caseAnalysis = analyzeInquiryCase(inquiry);
-  const lawbotAnalysis = await getLawbotCaseAnalysis(inquiry);
+  const lawbotAnalysis = await safeGetLawbotAnalysis(inquiry);
   const lawbotConnectionSnapshot = buildLawbotConnectionSnapshot(inquiry);
   const storedLawbotSnapshot = buildStoredLawbotSnapshot(inquiry);
-  const referenceRecommendations = await getNotionReferenceRecommendations({
+  const referenceRecommendations = await safeGetReferenceRecommendations({
     inquiryType: inquiry.inquiryType,
     serviceTags: tags,
     inquiryTitle: inquiry.title,

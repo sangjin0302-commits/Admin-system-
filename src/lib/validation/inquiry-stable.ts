@@ -1,13 +1,11 @@
-export { createInquirySchema, parseCreateInquiryInput } from "./inquiry-stable";
-/*
 import { z } from "zod";
 
 import {
   clientTypeValues,
-  inquiryTypeValues,
-  urgencyValues,
   formLocaleValues,
-  toLanguageCode
+  inquiryTypeValues,
+  toLanguageCode,
+  urgencyValues
 } from "@/types/inquiry";
 
 const booleanish = z.union([z.boolean(), z.string()]);
@@ -25,19 +23,9 @@ export const createInquirySchema = z.object({
     .trim()
     .min(2, "이름은 2자 이상 입력해 주세요.")
     .max(60, "이름은 60자 이하로 입력해 주세요."),
-  organizationName: z
-    .string()
-    .trim()
-    .max(100, "회사명은 100자 이하로 입력해 주세요.")
-    .optional()
-    .or(z.literal("")),
+  organizationName: z.string().trim().max(100, "회사명은 100자 이하로 입력해 주세요.").optional().or(z.literal("")),
   email: z.string().trim().email("올바른 이메일 주소를 입력해 주세요."),
-  phone: z
-    .string()
-    .trim()
-    .max(30, "전화번호는 30자 이하로 입력해 주세요.")
-    .optional()
-    .or(z.literal("")),
+  phone: z.string().trim().max(30, "전화번호는 30자 이하로 입력해 주세요.").optional().or(z.literal("")),
   title: z
     .string()
     .trim()
@@ -56,12 +44,7 @@ export const createInquirySchema = z.object({
     .or(z.literal("")),
   requestedInquiryType: z.enum(inquiryTypeValues).optional().default("UNKNOWN"),
   declaredUrgency: z.enum(urgencyValues).optional().default("MEDIUM"),
-  nationality: z
-    .string()
-    .trim()
-    .max(80, "국적은 80자 이하로 입력해 주세요.")
-    .optional()
-    .or(z.literal("")),
+  nationality: z.string().trim().max(80, "국적은 80자 이하로 입력해 주세요.").optional().or(z.literal("")),
   currentStatus: z
     .string()
     .trim()
@@ -86,7 +69,7 @@ export const createInquirySchema = z.object({
   isCorporateRequest: booleanish.optional().transform((value) => parseBooleanish(value ?? false)),
   wantsCallback: booleanish.optional().transform((value) => parseBooleanish(value ?? false)),
   consentToPrivacy: booleanish.transform((value) => parseBooleanish(value)).refine(Boolean, {
-    message: "개인정보 수집 동의가 필요합니다."
+    message: "개인정보 수집 및 상담 목적 이용 동의가 필요합니다."
   })
 });
 
@@ -108,4 +91,3 @@ export function parseCreateInquiryInput(payload: unknown) {
     preferredLanguage: toLanguageCode(parsed.preferredLocale)
   };
 }
-*/

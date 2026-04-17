@@ -1,5 +1,3 @@
-export { default } from "./loading-stable";
-/*
 import { LoadingState } from "@/components/ui/state-panel";
 
 export default function AdminInquiryDetailLoading() {
@@ -11,4 +9,3 @@ export default function AdminInquiryDetailLoading() {
     />
   );
 }
-*/

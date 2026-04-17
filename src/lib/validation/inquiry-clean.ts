@@ -1,5 +1,3 @@
-export { createInquirySchema, parseCreateInquiryInput } from "./inquiry-stable";
-/*
 import { z } from "zod";
 
 import {
@@ -86,7 +84,7 @@ export const createInquirySchema = z.object({
   isCorporateRequest: booleanish.optional().transform((value) => parseBooleanish(value ?? false)),
   wantsCallback: booleanish.optional().transform((value) => parseBooleanish(value ?? false)),
   consentToPrivacy: booleanish.transform((value) => parseBooleanish(value)).refine(Boolean, {
-    message: "개인정보 수집 동의가 필요합니다."
+    message: "개인정보 수집 및 이용 동의가 필요합니다."
   })
 });
 
@@ -108,4 +106,3 @@ export function parseCreateInquiryInput(payload: unknown) {
     preferredLanguage: toLanguageCode(parsed.preferredLocale)
   };
 }
-*/
