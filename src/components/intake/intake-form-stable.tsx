@@ -92,28 +92,6 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
   const [result, setResult] = useState<IntakeResponse["inquiry"] | null>(null);
   const copy = useMemo(() => getIntakeCopy(locale), [locale]);
 
-  const intakeGuideItems = useMemo(
-    () => [
-      {
-        label: copy.labels.contactName,
-        ready: form.contactName.trim().length > 0 && form.email.trim().length > 0
-      },
-      {
-        label: copy.labels.description,
-        ready: form.description.trim().length >= 20
-      },
-      {
-        label: copy.labels.requestedOutcome,
-        ready: form.requestedOutcome.trim().length > 0
-      },
-      {
-        label: copy.labels.consentToPrivacy,
-        ready: form.consentToPrivacy
-      }
-    ],
-    [copy, form.contactName, form.email, form.description, form.requestedOutcome, form.consentToPrivacy]
-  );
-
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
@@ -154,7 +132,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+    <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="p-6">
           <FieldGroup className="sm:grid-cols-2">
@@ -381,88 +359,30 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
         </Button>
       </form>
 
-      <div className="space-y-4">
+      {result ? (
         <Card muted className="p-5">
-          <p className="text-lg font-semibold text-text-strong">{copy.guideTitle}</p>
-          <p className="mt-2 text-sm text-text-muted">
-            {locale === "ko"
-              ? "문의 제목은 4자 이상, 상세 내용은 20자 이상 입력해 주세요."
-              : "Please write at least 4 characters for the subject and 20 characters for the details."}
-          </p>
+          <div className="flex flex-wrap gap-2">
+            <Badge>{result.id}</Badge>
+            <Badge>{inquiryTypeLabels[result.inquiryType][locale]}</Badge>
+            <Badge tone="urgency" urgency={result.urgencyLevel}>
+              {urgencyLabels[result.urgencyLevel][locale]}
+            </Badge>
+          </div>
           <div className="mt-4 space-y-3">
-            {copy.guideItems.map((item) => (
-              <div key={item} className="rounded-md border border-line bg-surface px-4 py-3 text-sm text-text">
-                {item}
-              </div>
-            ))}
+            <Card className="p-4">
+              <p className="ui-kicker">{locale === "ko" ? "접수 요약" : "Summary"}</p>
+              <p className="mt-2 text-sm text-text">{result.generatedSummary}</p>
+            </Card>
+            <Card className="p-4">
+              <p className="ui-kicker">{locale === "ko" ? "접수 메시지" : "Receipt message"}</p>
+              <p className="mt-2 text-sm text-text">{result.generatedReceiptMessage}</p>
+            </Card>
+            <Button type="button" variant="secondary" onClick={() => setResult(null)}>
+              {copy.buttons.resetResult}
+            </Button>
           </div>
-          <div className="mt-4 space-y-2">
-            {intakeGuideItems.map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center justify-between rounded-md border border-line bg-surface px-4 py-3"
-              >
-                <p className="text-sm text-text">{item.label}</p>
-                <Badge
-                  className={
-                    item.ready
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                      : "border-line bg-white text-text-muted"
-                  }
-                >
-                  {item.ready ? (locale === "ko" ? "준비됨" : "Ready") : locale === "ko" ? "확인 필요" : "Needs review"}
-                </Badge>
-              </div>
-            ))}
-          </div>
-          <Card className="mt-4 p-4">
-            <p className="ui-kicker">{locale === "ko" ? "주의 사항" : "Important notice"}</p>
-            <p className="mt-2 text-sm leading-6 text-text">{copy.cautionParagraph}</p>
-          </Card>
         </Card>
-
-        <Card muted className="p-5">
-          <p className="text-lg font-semibold text-text-strong">{copy.resultTitle}</p>
-          <p className="mt-2 text-sm text-text-muted">{copy.resultDescription}</p>
-          {result ? (
-            <div className="mt-4 space-y-3">
-              <div className="flex flex-wrap gap-2">
-                <Badge>{result.id}</Badge>
-                <Badge>{inquiryTypeLabels[result.inquiryType][locale]}</Badge>
-                <Badge tone="urgency" urgency={result.urgencyLevel}>
-                  {urgencyLabels[result.urgencyLevel][locale]}
-                </Badge>
-              </div>
-              <Card className="p-4">
-                <p className="ui-kicker">{locale === "ko" ? "요약" : "Summary"}</p>
-                <p className="mt-2 text-sm text-text">{result.generatedSummary}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="ui-kicker">{locale === "ko" ? "준비 권장 자료" : "Suggested preparation"}</p>
-                <p className="mt-2 whitespace-pre-line text-sm text-text">{result.generatedGuidance}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="ui-kicker">{locale === "ko" ? "접수 메시지" : "Receipt message"}</p>
-                <p className="mt-2 text-sm text-text">{result.generatedReceiptMessage}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="ui-kicker">{copy.nextStepTitle}</p>
-                <p className="mt-2 text-sm text-text">
-                  {result.consultationRequired ? copy.nextStepConsult : copy.nextStepReview}
-                </p>
-                {result.riskComplexityHint ? (
-                  <p className="mt-2 text-xs text-text-muted">{result.riskComplexityHint}</p>
-                ) : null}
-              </Card>
-              <Button type="button" variant="secondary" onClick={() => setResult(null)}>
-                {copy.buttons.resetResult}
-              </Button>
-            </div>
-          ) : (
-            <p className="mt-4 text-sm text-text-muted">{copy.emptyResult}</p>
-          )}
-        </Card>
-      </div>
+      ) : null}
     </div>
   );
 }
