@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../../admin-office-mvp-generated/prisma-client"
+  provider      = "prisma-client"
+  output        = "../../admin-office-mvp-generated/prisma-client"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
