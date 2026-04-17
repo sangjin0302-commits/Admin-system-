@@ -34,15 +34,49 @@
 2. Vercel 환경 변수에 `DATABASE_URL` 설정
 3. 관리자 경로 최소 인증(예: Basic Auth 또는 세션 기반 인증) 추가
 
+현재 기본 운영 가드는 middleware 기반 Basic Auth로 반영되어 있으며 아래 환경 변수가 필요합니다.
+
+- `ADMIN_BASIC_AUTH_USER`
+- `ADMIN_BASIC_AUTH_PASSWORD`
+
 ## 4) DB Strategy (Recommended)
 
 - 로컬 개발: SQLite 유지
 - 운영/프리뷰: Postgres 사용
-- 구현 방식: Prisma 스키마를 환경별로 분리해서 운용
-  - 예: `prisma/schema.sqlite.prisma`, `prisma/schema.postgres.prisma`
-  - 로컬은 SQLite 스키마, 배포는 Postgres 스키마로 generate/migrate
+- 구현 방식: `PRISMA_DB_PROVIDER` 기준으로 Prisma 스키마를 렌더링해서 운용
+  - 로컬 예시: `PRISMA_DB_PROVIDER=sqlite`
+  - Railway 예시: `PRISMA_DB_PROVIDER=postgresql`
+  - 자동 생성 스크립트:
+    - `npm run prisma:generate`
+    - `npm run prisma:generate:sqlite`
+    - `npm run prisma:generate:postgres`
+  - DB 반영 스크립트:
+    - `npm run db:push:sqlite`
+    - `npm run db:push:postgres`
+  - `prebuild`와 `postinstall`도 `PRISMA_DB_PROVIDER`를 읽어 맞는 Prisma client를 생성함
 
-## 5) Domain Connection Later
+## 5) Railway Postgres Cutover
+
+1. Railway 프로젝트의 Postgres `DATABASE_URL`을 확인
+2. Railway 서비스 환경 변수에 아래 값 설정
+   - `PRISMA_DB_PROVIDER=postgresql`
+   - `DATABASE_URL=<Railway Postgres URL>`
+   - `ADMIN_BASIC_AUTH_USER=<admin login id>`
+   - `ADMIN_BASIC_AUTH_PASSWORD=<strong password>`
+3. 로컬에서는 `.env`를 계속 SQLite로 유지
+4. 운영 검증 시 `.env.railway.example` 형식으로 값을 맞춰 확인
+5. 배포 빌드 시 `prebuild`가 Postgres용 Prisma client를 자동 생성
+6. 운영 시작 전 백업 정책 확인
+   - Railway backup schedule
+   - 외부 `pg_dump` 백업
+
+## 6) Railway Host Note
+
+- `monorail.proxy.rlwy.net:46311` 같은 주소는 Railway 프록시 호스트 형태라서 정상일 수 있음
+- 중요한 것은 `host` 자체보다 Railway가 제공한 전체 연결 문자열을 그대로 쓰는 것
+- 수동으로 host/port만 따로 조립하기보다 Railway의 `DATABASE_URL` 전체를 사용 권장
+
+## 7) Domain Connection Later
 
 - Vercel 프로젝트 생성 후 preview URL로 기능 검증
 - 운영 전환 시 커스텀 도메인 연결

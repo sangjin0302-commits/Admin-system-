@@ -13,6 +13,14 @@ type AutomationAction = {
   description: string;
   status: InquiryStatus;
   memo: string;
+  recommended?: boolean;
+  recommendationNote?: string;
+};
+
+type QuickStatusOption = {
+  code: string;
+  label: string;
+  recommended?: boolean;
 };
 
 type InquiryOperationalSummaryProps = {
@@ -21,10 +29,14 @@ type InquiryOperationalSummaryProps = {
   strengthScore: number;
   qualificationScore: number;
   recommendedAction: string;
-  quickStatuses: Array<{ code: string; label: string }>;
+  quickStatuses: QuickStatusOption[];
   missingFacts: string[];
   lawbotStatus: "available" | "disabled" | "error";
   automationActions: AutomationAction[];
+  routeRecommendationLabel: string;
+  routeRecommendationReason: string;
+  marketSignalSummary: string;
+  recommendedDraftIds: string[];
 };
 
 export function InquiryOperationalSummary({
@@ -37,6 +49,10 @@ export function InquiryOperationalSummary({
   missingFacts,
   lawbotStatus,
   automationActions,
+  routeRecommendationLabel,
+  routeRecommendationReason,
+  marketSignalSummary,
+  recommendedDraftIds
 }: InquiryOperationalSummaryProps) {
   const router = useRouter();
   const [copiedState, setCopiedState] = useState<"summary" | "checklist" | null>(null);
@@ -86,8 +102,23 @@ export function InquiryOperationalSummary({
       });
 
       if (!response.ok) {
-        setFeedback("자동 액션 반영 중 오류가 발생했습니다.");
+        const result = (await response.json().catch(() => null)) as
+          | { error?: string; blockers?: string[] }
+          | null;
+        setFeedback(
+          result?.blockers?.length
+            ? [result.error ?? "자동 액션 반영 중 오류가 발생했습니다.", ...result.blockers].join(" ")
+            : (result?.error ?? "자동 액션 반영 중 오류가 발생했습니다.")
+        );
         return;
+      }
+
+      if (typeof window !== "undefined") {
+        const focusDraftId = recommendedDraftIds[0];
+        if (focusDraftId) {
+          window.sessionStorage.setItem("lawbot-focus-draft-id", focusDraftId);
+          window.location.hash = "#communication-center";
+        }
       }
 
       setFeedback(`${action.label} 흐름으로 반영했습니다.`);
@@ -110,6 +141,13 @@ export function InquiryOperationalSummary({
       <p className="mt-4 text-sm font-semibold text-text-strong">지금 바로 볼 핵심</p>
       <p className="mt-2 text-sm leading-6 text-text">{recommendedAction}</p>
 
+      <Card muted className="mt-4 p-4">
+        <p className="ui-kicker">Lawbot 기반 추천 경로</p>
+        <p className="mt-2 text-sm font-semibold text-text-strong">{routeRecommendationLabel}</p>
+        <p className="mt-2 text-sm text-text-muted">{routeRecommendationReason}</p>
+        <p className="mt-3 text-xs font-medium text-text-muted">Mock market-analyze 신호: {marketSignalSummary}</p>
+      </Card>
+
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
         <MetricCard label="수임 적합도" value={`${qualificationScore} / 100`} />
         <MetricCard label="우선 확인 항목" value={`${priorityFacts.length}건`} />
@@ -121,9 +159,14 @@ export function InquiryOperationalSummary({
           {quickStatuses.map((status) => (
             <span
               key={status.code}
-              className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-text-strong"
+              className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
+                status.recommended
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-line bg-surface text-text-strong"
+              }`}
             >
               {status.label}
+              {status.recommended ? " 추천" : ""}
             </span>
           ))}
         </div>
@@ -142,12 +185,24 @@ export function InquiryOperationalSummary({
         <p className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">운영 자동 액션</p>
         <div className="mt-3 space-y-3">
           {automationActions.map((action) => (
-            <Card key={`${action.label}-${action.status}`} muted className="p-4">
-              <p className="text-sm font-semibold text-text-strong">{action.label}</p>
+            <Card
+              key={`${action.label}-${action.status}`}
+              muted
+              className={`p-4 ${action.recommended ? "border-emerald-200 bg-emerald-50/60" : ""}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-text-strong">{action.label}</p>
+                {action.recommended || quickStatuses.some((status) => status.code === action.status && status.recommended) ? (
+                  <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">추천</Badge>
+                ) : null}
+              </div>
               <p className="mt-1 text-sm text-text-muted">{action.description}</p>
+              {action.recommendationNote ? (
+                <p className="mt-2 text-xs font-medium text-emerald-700">{action.recommendationNote}</p>
+              ) : null}
               <Button
                 size="sm"
-                variant="secondary"
+                variant={action.recommended ? "primary" : "secondary"}
                 className="mt-3"
                 disabled={isPending}
                 onClick={() => void applyAutomation(action)}

@@ -12,11 +12,11 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: error.issues[0]?.message ?? "Validation error" },
+        { error: error.issues[0]?.message ?? "입력값을 다시 확인해 주세요." },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ error: "Failed to create inquiry." }, { status: 500 });
+    return NextResponse.json({ error: "문의 접수를 처리하지 못했습니다." }, { status: 500 });
   }
 }

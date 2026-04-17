@@ -17,6 +17,8 @@ export type InquiryDashboardSummaryProps = {
   quotePendingCount: number;
   docsPendingCount: number;
   consultationNeededCount: number;
+  responsePendingCount: number;
+  nextContactCount: number;
   actionItems: ActionItem[];
 };
 
@@ -27,6 +29,8 @@ export function InquiryDashboardSummary({
   quotePendingCount,
   docsPendingCount,
   consultationNeededCount,
+  responsePendingCount,
+  nextContactCount,
   actionItems
 }: InquiryDashboardSummaryProps) {
   const items = [
@@ -35,12 +39,14 @@ export function InquiryDashboardSummary({
     { label: "3일 내 마감", value: nextThreeDaysCount, hint: "기한 임박 일정" },
     { label: "견적 대기", value: quotePendingCount, hint: "견적 작성·발송이 필요한 건" },
     { label: "자료 확인 필요", value: docsPendingCount, hint: "기본 서류 미보유 또는 확인 필요" },
-    { label: "상담 필요", value: consultationNeededCount, hint: "상담 연결 또는 후속 응답 필요" }
+    { label: "상담 필요", value: consultationNeededCount, hint: "상담 연결 또는 후속 응답 필요" },
+    { label: "응답 대기", value: responsePendingCount, hint: "고객 답변이나 자료 회신을 기다리는 건" },
+    { label: "다음 연락 예정", value: nextContactCount, hint: "3일 내 다시 연락해야 하는 건" }
   ];
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
         {items.map((item) => (
           <Card key={item.label} muted className="p-5">
             <p className="ui-kicker">{item.label}</p>

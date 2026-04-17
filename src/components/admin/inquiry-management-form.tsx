@@ -5,7 +5,6 @@ import { useState, useTransition, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { StateInline } from "@/components/ui/state-panel";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,22 +14,28 @@ import {
   type InquiryStatus
 } from "@/types/inquiry";
 
+type StatusGuardPreview = {
+  status: InquiryStatus;
+  label: string;
+  allowed: boolean;
+  blockers: string[];
+};
+
 export function InquiryManagementForm({
   inquiryId,
   status: initialStatus,
-  assignee: initialAssignee,
   internalMemo: initialInternalMemo,
-  quickStatuses = []
+  quickStatuses = [],
+  statusGuardPreview = []
 }: {
   inquiryId: string;
   status: InquiryStatus;
-  assignee: string | null;
   internalMemo: string | null;
   quickStatuses?: InquiryStatus[];
+  statusGuardPreview?: StatusGuardPreview[];
 }) {
   const router = useRouter();
   const [status, setStatus] = useState(initialStatus);
-  const [assignee, setAssignee] = useState(initialAssignee ?? "");
   const [internalMemo, setInternalMemo] = useState(initialInternalMemo ?? "");
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"default" | "error" | "success">("default");
@@ -48,14 +53,20 @@ export function InquiryManagementForm({
         },
         body: JSON.stringify({
           status,
-          assignee,
           internalMemo
         })
       });
 
       if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as
+          | { error?: string; blockers?: string[] }
+          | null;
         setMessageTone("error");
-        setMessage("저장 중 오류가 발생했습니다.");
+        setMessage(
+          result?.blockers?.length
+            ? [result.error ?? "저장 중 오류가 발생했습니다.", ...result.blockers].join(" ")
+            : (result?.error ?? "저장 중 오류가 발생했습니다.")
+        );
         return;
       }
 
@@ -77,14 +88,20 @@ export function InquiryManagementForm({
         },
         body: JSON.stringify({
           status: nextStatus,
-          assignee,
           internalMemo
         })
       });
 
       if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as
+          | { error?: string; blockers?: string[] }
+          | null;
         setMessageTone("error");
-        setMessage("상태 변경 중 오류가 발생했습니다.");
+        setMessage(
+          result?.blockers?.length
+            ? [result.error ?? "상태 변경 중 오류가 발생했습니다.", ...result.blockers].join(" ")
+            : (result?.error ?? "상태 변경 중 오류가 발생했습니다.")
+        );
         return;
       }
 
@@ -121,13 +138,24 @@ export function InquiryManagementForm({
               ))}
             </div>
           ) : null}
-        </Field>
-        <Field label="담당자">
-          <Input
-            value={assignee}
-            onChange={(event) => setAssignee(event.target.value)}
-            placeholder="예: 김정우 / 운영담당"
-          />
+          {statusGuardPreview.length > 0 ? (
+            <div className="mt-4 space-y-2 rounded-2xl border border-line bg-surface-muted p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">상태 전환 체크</p>
+              {statusGuardPreview.map((item) => (
+                <div key={item.status} className="rounded-xl border border-line bg-white px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-text-strong">{item.label}</p>
+                    <span className={`text-xs font-semibold ${item.allowed ? "text-emerald-700" : "text-amber-700"}`}>
+                      {item.allowed ? "바로 전환 가능" : "확인 필요"}
+                    </span>
+                  </div>
+                  {!item.allowed && item.blockers.length > 0 ? (
+                    <p className="mt-1 text-xs text-text-muted">{item.blockers[0]}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
         </Field>
         <Field label="내부 메모" hint="고객에게 보이지 않는 관리자 메모입니다.">
           <Textarea

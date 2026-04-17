@@ -39,10 +39,6 @@ function resolveSqlitePath(databaseUrl) {
 
 loadEnvFile(path.join(process.cwd(), ".env"));
 
-if ((process.env.DATABASE_PROVIDER || "").trim() === "postgresql") {
-  throw new Error("db:init only supports local SQLite. Use SQLite env values for local development.");
-}
-
 const dbPath = resolveSqlitePath(process.env.DATABASE_URL);
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
@@ -93,9 +89,35 @@ CREATE TABLE IF NOT EXISTS "Inquiry" (
   "generatedReceiptMessage" TEXT NOT NULL,
   "classificationReason" TEXT NOT NULL,
   "recommendedNextStep" TEXT NOT NULL,
-  "serviceTags" TEXT NOT NULL DEFAULT '[]'
+  "serviceTags" TEXT NOT NULL DEFAULT '[]',
+  "lawbotLastAnalyzedAt" DATETIME,
+  "lawbotSnapshotVersion" INTEGER NOT NULL DEFAULT 1,
+  "lawbotSnapshotStatus" TEXT,
+  "lawbotSnapshotSummary" TEXT,
+  "lawbotSnapshotPayload" TEXT
 )
 `);
+
+const inquiryColumns = new Set(
+  db
+    .prepare(`PRAGMA table_info("Inquiry")`)
+    .all()
+    .map((row) => String(row.name))
+);
+
+const inquiryColumnPatches = [
+  [`"lawbotLastAnalyzedAt" DATETIME`, "lawbotLastAnalyzedAt"],
+  [`"lawbotSnapshotVersion" INTEGER NOT NULL DEFAULT 1`, "lawbotSnapshotVersion"],
+  [`"lawbotSnapshotStatus" TEXT`, "lawbotSnapshotStatus"],
+  [`"lawbotSnapshotSummary" TEXT`, "lawbotSnapshotSummary"],
+  [`"lawbotSnapshotPayload" TEXT`, "lawbotSnapshotPayload"]
+];
+
+for (const [definition, columnName] of inquiryColumnPatches) {
+  if (!inquiryColumns.has(columnName)) {
+    db.exec(`ALTER TABLE "Inquiry" ADD COLUMN ${definition}`);
+  }
+}
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS "ServiceType" (
@@ -263,10 +285,6 @@ CREATE TABLE IF NOT EXISTS "CaseRecord" (
   "contractDraftId" TEXT UNIQUE,
   "currentStage" TEXT NOT NULL DEFAULT 'CONTRACT_PREPARATION',
   "dueDate" DATETIME,
-  "filingDeadline" DATETIME,
-  "supplementDeadline" DATETIME,
-  "stayExpirationDate" DATETIME,
-  "internalDeadline" DATETIME,
   "internalMemo" TEXT,
   "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -274,183 +292,6 @@ CREATE TABLE IF NOT EXISTS "CaseRecord" (
   FOREIGN KEY ("quoteId") REFERENCES "Quote"("id") ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY ("contractDraftId") REFERENCES "ContractDraft"("id") ON DELETE SET NULL ON UPDATE CASCADE
 )
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "CaseDocumentItem" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "caseId" TEXT NOT NULL,
-  "documentType" TEXT NOT NULL,
-  "label" TEXT NOT NULL,
-  "isRequired" BOOLEAN NOT NULL DEFAULT 1,
-  "isReceived" BOOLEAN NOT NULL DEFAULT 0,
-  "receivedAt" DATETIME,
-  "note" TEXT,
-  "sortOrder" INTEGER NOT NULL DEFAULT 0,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE
-)
-`);
-
-db.exec(`
-CREATE UNIQUE INDEX IF NOT EXISTS "CaseDocumentItem_caseId_documentType_key"
-ON "CaseDocumentItem"("caseId", "documentType")
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "CaseStageLog" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "caseId" TEXT NOT NULL,
-  "fromStage" TEXT,
-  "toStage" TEXT NOT NULL,
-  "note" TEXT,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE
-)
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "CaseDocumentFile" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "caseId" TEXT NOT NULL,
-  "caseDocumentItemId" TEXT,
-  "originalFilename" TEXT NOT NULL,
-  "storedFilename" TEXT NOT NULL,
-  "storagePath" TEXT NOT NULL,
-  "mimeType" TEXT NOT NULL,
-  "size" INTEGER NOT NULL,
-  "uploadedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "note" TEXT,
-  "isCurrentVersion" BOOLEAN NOT NULL DEFAULT 1,
-  "versionNumber" INTEGER NOT NULL DEFAULT 1,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY ("caseDocumentItemId") REFERENCES "CaseDocumentItem"("id") ON DELETE SET NULL ON UPDATE CASCADE
-)
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "CaseDocumentFile_caseId_uploadedAt_idx"
-ON "CaseDocumentFile"("caseId", "uploadedAt")
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "CaseDocumentFile_caseDocumentItemId_versionNumber_idx"
-ON "CaseDocumentFile"("caseDocumentItemId", "versionNumber")
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "SubmissionPackage" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "caseId" TEXT NOT NULL,
-  "packageNumber" TEXT NOT NULL,
-  "packageLabel" TEXT,
-  "submittedTo" TEXT,
-  "submittedAt" DATETIME,
-  "status" TEXT NOT NULL DEFAULT 'DRAFT',
-  "note" TEXT,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE
-)
-`);
-
-db.exec(`
-CREATE UNIQUE INDEX IF NOT EXISTS "SubmissionPackage_caseId_packageNumber_key"
-ON "SubmissionPackage"("caseId", "packageNumber")
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "SubmissionPackage_caseId_createdAt_idx"
-ON "SubmissionPackage"("caseId", "createdAt")
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "SubmissionPackageItem" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "submissionPackageId" TEXT NOT NULL,
-  "caseDocumentItemId" TEXT NOT NULL,
-  "caseDocumentFileId" TEXT NOT NULL,
-  "labelSnapshot" TEXT NOT NULL,
-  "versionNumberSnapshot" INTEGER NOT NULL,
-  "documentTypeSnapshot" TEXT NOT NULL,
-  "filenameSnapshot" TEXT NOT NULL,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("submissionPackageId") REFERENCES "SubmissionPackage"("id") ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY ("caseDocumentItemId") REFERENCES "CaseDocumentItem"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-  FOREIGN KEY ("caseDocumentFileId") REFERENCES "CaseDocumentFile"("id") ON DELETE RESTRICT ON UPDATE CASCADE
-)
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "SubmissionPackageItem_submissionPackageId_caseDocumentItemId_idx"
-ON "SubmissionPackageItem"("submissionPackageId", "caseDocumentItemId")
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "SupplementRequest" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "caseId" TEXT NOT NULL,
-  "submissionPackageId" TEXT,
-  "requestedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "dueDate" DATETIME,
-  "requestedBy" TEXT,
-  "summary" TEXT NOT NULL,
-  "status" TEXT NOT NULL DEFAULT 'OPEN',
-  "note" TEXT,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY ("submissionPackageId") REFERENCES "SubmissionPackage"("id") ON DELETE SET NULL ON UPDATE CASCADE
-)
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "SupplementRequest_caseId_requestedAt_idx"
-ON "SupplementRequest"("caseId", "requestedAt")
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "SupplementRequestItem" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "supplementRequestId" TEXT NOT NULL,
-  "caseDocumentItemId" TEXT NOT NULL,
-  "labelSnapshot" TEXT NOT NULL,
-  "sortOrder" INTEGER NOT NULL DEFAULT 0,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("supplementRequestId") REFERENCES "SupplementRequest"("id") ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY ("caseDocumentItemId") REFERENCES "CaseDocumentItem"("id") ON DELETE RESTRICT ON UPDATE CASCADE
-)
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "SupplementRequestItem_supplementRequestId_sortOrder_idx"
-ON "SupplementRequestItem"("supplementRequestId", "sortOrder")
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "FollowUpAction" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "caseId" TEXT NOT NULL,
-  "type" TEXT NOT NULL,
-  "status" TEXT NOT NULL DEFAULT 'PENDING',
-  "title" TEXT NOT NULL,
-  "note" TEXT,
-  "dueDate" DATETIME,
-  "messageDraft" TEXT NOT NULL,
-  "completedAt" DATETIME,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("caseId") REFERENCES "CaseRecord"("id") ON DELETE CASCADE ON UPDATE CASCADE
-)
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "FollowUpAction_caseId_status_dueDate_idx"
-ON "FollowUpAction"("caseId", "status", "dueDate")
 `);
 
 db.exec(`
@@ -462,169 +303,6 @@ CREATE TABLE IF NOT EXISTS "LegacyImportLog" (
   "importedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "createdCount" INTEGER NOT NULL DEFAULT 0
 )
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "User" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "email" TEXT NOT NULL UNIQUE,
-  "name" TEXT NOT NULL,
-  "role" TEXT NOT NULL,
-  "passwordHash" TEXT NOT NULL,
-  "isActive" BOOLEAN NOT NULL DEFAULT 1,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "UserSession" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "userId" TEXT NOT NULL,
-  "sessionToken" TEXT NOT NULL UNIQUE,
-  "expiresAt" DATETIME NOT NULL,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
-)
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "UserSession_userId_expiresAt_idx"
-ON "UserSession"("userId", "expiresAt")
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "AuditLog" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "actorUserId" TEXT,
-  "actionType" TEXT NOT NULL,
-  "entityType" TEXT NOT NULL,
-  "entityId" TEXT NOT NULL,
-  "summary" TEXT NOT NULL,
-  "metadataJson" TEXT,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("actorUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE
-)
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "ExternalIndicatorObservation" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "observationDate" DATETIME NOT NULL,
-  "indicatorKey" TEXT NOT NULL,
-  "category" TEXT,
-  "numericValue" REAL NOT NULL,
-  "source" TEXT NOT NULL,
-  "note" TEXT,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
-`);
-
-db.exec(`
-CREATE UNIQUE INDEX IF NOT EXISTS "ExternalIndicatorObservation_observationDate_indicatorKey_category_key"
-ON "ExternalIndicatorObservation"("observationDate", "indicatorKey", "category")
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "ExternalIndicatorObservation_indicatorKey_observationDate_idx"
-ON "ExternalIndicatorObservation"("indicatorKey", "observationDate")
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "ForecastEventFlag" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "eventDate" DATETIME NOT NULL,
-  "eventType" TEXT NOT NULL,
-  "eventName" TEXT NOT NULL,
-  "category" TEXT,
-  "impactFlag" BOOLEAN NOT NULL DEFAULT 1,
-  "memo" TEXT,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "ForecastEventFlag_category_eventDate_idx"
-ON "ForecastEventFlag"("category", "eventDate")
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "WeeklyForecastDataset" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "weekStartDate" DATETIME NOT NULL,
-  "category" TEXT NOT NULL,
-  "channel" TEXT,
-  "inquiryCount" INTEGER NOT NULL DEFAULT 0,
-  "contractCount" INTEGER NOT NULL DEFAULT 0,
-  "avgProcessingDays" REAL,
-  "revisionRequestCount" INTEGER NOT NULL DEFAULT 0,
-  "externalIndicatorsJson" TEXT NOT NULL DEFAULT '{}',
-  "eventFlagsJson" TEXT NOT NULL DEFAULT '[]',
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
-`);
-
-db.exec(`
-CREATE UNIQUE INDEX IF NOT EXISTS "WeeklyForecastDataset_weekStartDate_category_channel_key"
-ON "WeeklyForecastDataset"("weekStartDate", "category", "channel")
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "WeeklyForecastDataset_category_weekStartDate_idx"
-ON "WeeklyForecastDataset"("category", "weekStartDate")
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "DemandForecastRun" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "targetMetric" TEXT NOT NULL,
-  "targetCategory" TEXT NOT NULL,
-  "targetChannel" TEXT,
-  "horizonWeeks" INTEGER NOT NULL,
-  "modelName" TEXT NOT NULL,
-  "modelVersion" TEXT,
-  "sourceWindowWeeks" INTEGER NOT NULL,
-  "status" TEXT NOT NULL DEFAULT 'PENDING',
-  "contextJson" TEXT,
-  "note" TEXT,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "completedAt" DATETIME,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "DemandForecastRun_targetMetric_targetCategory_createdAt_idx"
-ON "DemandForecastRun"("targetMetric", "targetCategory", "createdAt")
-`);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS "DemandForecastPoint" (
-  "id" TEXT NOT NULL PRIMARY KEY,
-  "runId" TEXT NOT NULL,
-  "targetWeekStart" DATETIME NOT NULL,
-  "predictedValue" REAL NOT NULL,
-  "lowerBound" REAL,
-  "upperBound" REAL,
-  "actualValue" REAL,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY ("runId") REFERENCES "DemandForecastRun"("id") ON DELETE CASCADE ON UPDATE CASCADE
-)
-`);
-
-db.exec(`
-CREATE UNIQUE INDEX IF NOT EXISTS "DemandForecastPoint_runId_targetWeekStart_key"
-ON "DemandForecastPoint"("runId", "targetWeekStart")
-`);
-
-db.exec(`
-CREATE INDEX IF NOT EXISTS "DemandForecastPoint_targetWeekStart_idx"
-ON "DemandForecastPoint"("targetWeekStart")
 `);
 
 const columns = db
@@ -683,67 +361,6 @@ const quoteColumns = db
 
 if (quoteColumns.length > 0 && !quoteColumns.includes("paymentRuleCode")) {
   db.exec(`ALTER TABLE "Quote" ADD COLUMN "paymentRuleCode" TEXT NOT NULL DEFAULT 'PAYMENT_STANDARD'`);
-}
-
-const caseColumns = db
-  .prepare(`PRAGMA table_info("CaseRecord")`)
-  .all()
-  .map((column) => column.name);
-
-if (caseColumns.length > 0 && !caseColumns.includes("filingDeadline")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "filingDeadline" DATETIME`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("supplementDeadline")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "supplementDeadline" DATETIME`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("stayExpirationDate")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "stayExpirationDate" DATETIME`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("internalDeadline")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "internalDeadline" DATETIME`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("closedAt")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "closedAt" DATETIME`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("closeReason")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "closeReason" TEXT`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("outcomeSummary")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "outcomeSummary" TEXT`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("nextFollowUpDate")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "nextFollowUpDate" DATETIME`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("clientRelationshipStatus")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "clientRelationshipStatus" TEXT NOT NULL DEFAULT 'NEUTRAL'`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("reviewRequestedAt")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "reviewRequestedAt" DATETIME`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("reviewCompletedAt")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "reviewCompletedAt" DATETIME`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("referralEligible")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "referralEligible" BOOLEAN NOT NULL DEFAULT 0`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("reengagementEligible")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "reengagementEligible" BOOLEAN NOT NULL DEFAULT 0`);
-}
-
-if (caseColumns.length > 0 && !caseColumns.includes("lastFollowUpAt")) {
-  db.exec(`ALTER TABLE "CaseRecord" ADD COLUMN "lastFollowUpAt" DATETIME`);
 }
 
 db.close();

@@ -45,3 +45,27 @@ export const updateInquiryAdminSchema = z
       message: "At least one field must be provided."
     }
   );
+
+export const communicationChannelValues = [
+  "EMAIL",
+  "PHONE",
+  "KAKAO",
+  "SMS",
+  "VISIT",
+  "INTERNAL"
+] as const;
+
+export const appendInquiryCommunicationLogSchema = z.object({
+  channel: z.enum(communicationChannelValues),
+  summary: z.string().trim().min(2, "연락 요약을 입력해 주세요.").max(400, "연락 요약은 400자 이내로 입력해 주세요."),
+  details: z.string().trim().max(3000, "상세 메모는 3000자 이내로 입력해 주세요.").optional().default(""),
+  responsePending: z.boolean().default(false),
+  nextContactAt: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (value ? value : undefined))
+    .refine((value) => value === undefined || !Number.isNaN(new Date(value).getTime()), {
+      message: "다음 연락 예정일 형식이 올바르지 않습니다."
+    })
+});

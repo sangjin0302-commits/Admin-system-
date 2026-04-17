@@ -1,10 +1,8 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
-import { authErrorResponse } from "@/lib/auth/api";
-import { requireAdminApiSession } from "@/lib/auth/session";
+import { InquiryStatusGuardError, updateInquiryAdminFields } from "@/lib/services/inquiry-service";
 import { updateInquiryAdminSchema } from "@/lib/validation/admin";
-import { updateInquiryAdminFields } from "@/lib/services/inquiry-service";
 
 export async function PATCH(
   request: Request,
@@ -13,21 +11,24 @@ export async function PATCH(
   const { id } = await context.params;
 
   try {
-    const session = await requireAdminApiSession("STAFF");
     const payload = updateInquiryAdminSchema.parse(await request.json());
-    if (payload.status && session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "권한이 부족합니다." }, { status: 403 });
-    }
     const inquiry = await updateInquiryAdminFields(id, payload);
     return NextResponse.json({ inquiry });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: error.issues[0]?.message ?? "Validation error" },
+        { error: error.issues[0]?.message ?? "입력값을 다시 확인해 주세요." },
         { status: 400 }
       );
     }
 
-    return authErrorResponse(error, "Failed to update inquiry.");
+    if (error instanceof InquiryStatusGuardError) {
+      return NextResponse.json(
+        { error: error.message, blockers: error.blockers },
+        { status: 409 }
+      );
+    }
+
+    return NextResponse.json({ error: "문의 정보를 수정하지 못했습니다." }, { status: 400 });
   }
 }

@@ -6,30 +6,30 @@ import type {
 
 export const designTokens = {
   colors: {
-    canvas: "243 245 247",
+    canvas: "244 246 248",
     surface: "255 255 255",
     surfaceMuted: "247 249 251",
     surfaceRaised: "255 255 255",
-    line: "215 222 229",
-    lineStrong: "196 206 216",
-    textStrong: "23 33 43",
-    text: "60 72 84",
-    textMuted: "105 119 132",
+    line: "218 224 230",
+    lineStrong: "197 206 214",
+    textStrong: "22 33 43",
+    text: "58 71 82",
+    textMuted: "103 118 130",
     primary: "24 72 109",
-    primarySoft: "232 239 245",
-    success: "43 107 73",
-    warning: "155 106 40",
-    danger: "161 69 69"
+    primarySoft: "231 240 247",
+    success: "40 112 76",
+    warning: "161 104 36",
+    danger: "166 63 63"
   },
   radius: {
-    sm: "8px",
-    md: "12px",
-    lg: "16px",
-    xl: "20px"
+    sm: "10px",
+    md: "14px",
+    lg: "18px",
+    xl: "22px"
   },
   shadow: {
-    panel: "0 8px 24px rgba(15, 23, 31, 0.045)",
-    floating: "0 16px 34px rgba(15, 23, 31, 0.08)"
+    panel: "0 10px 28px rgba(16, 24, 32, 0.06)",
+    floating: "0 18px 40px rgba(16, 24, 32, 0.1)"
   }
 } as const;
 

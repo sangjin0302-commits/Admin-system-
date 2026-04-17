@@ -20,11 +20,12 @@ type InquiryItem = {
   status: keyof typeof inquiryStatusLabels;
   urgencyLevel: keyof typeof urgencyLabels;
   preferredLanguage: keyof typeof languageCodeLabels;
-  assignee: string | null;
   createdAt: Date;
   updatedAt: Date;
   dueDate?: Date | null;
+  nextContactAt?: Date | null;
   hasPreparedDocuments?: boolean;
+  responsePending?: boolean;
 };
 
 export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
@@ -38,8 +39,9 @@ export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
             <th>상태</th>
             <th>긴급도</th>
             <th>언어</th>
-            <th>담당자</th>
             <th>희망 일정</th>
+            <th>다음 연락</th>
+            <th>응답 대기</th>
             <th>자료 상태</th>
             <th>업데이트</th>
           </tr>
@@ -55,9 +57,9 @@ export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
               <tr key={inquiry.id}>
                 <td>
                   <Link href={`/admin/inquiries/${inquiry.id}`} className="block">
-                    <p className="font-semibold text-text-strong">{inquiry.title}</p>
-                    <p className="mt-1 text-sm text-text">{inquiry.contactName}</p>
-                    <p className="text-sm text-text-muted">
+                    <p className="truncate whitespace-nowrap font-semibold text-text-strong">{inquiry.title}</p>
+                    <p className="mt-1 truncate whitespace-nowrap text-sm text-text">{inquiry.contactName}</p>
+                    <p className="truncate whitespace-nowrap text-sm text-text-muted">
                       {inquiry.organizationName || inquiry.email}
                     </p>
                   </Link>
@@ -78,8 +80,9 @@ export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
                     {languageCodeLabels[inquiryLanguage].ko}
                   </Badge>
                 </td>
-                <td>{inquiry.assignee || "미배정"}</td>
                 <td>{formatDateTime(inquiry.dueDate)}</td>
+                <td>{formatDateTime(inquiry.nextContactAt)}</td>
+                <td>{inquiry.responsePending ? "대기 중" : "-"}</td>
                 <td>{inquiry.hasPreparedDocuments ? "기본 서류 보유" : "자료 확인 필요"}</td>
                 <td>{formatDateTime(inquiry.updatedAt)}</td>
               </tr>

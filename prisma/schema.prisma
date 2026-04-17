@@ -1,39 +1,11 @@
 generator client {
-  provider   = "prisma-client"
-  output     = "../../admin-office-mvp-generated/prisma-client"
-  engineType = "client"
+  provider = "prisma-client"
+  output   = "../../admin-office-mvp-generated/prisma-client"
 }
 
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
-}
-
-enum AdminRole {
-  ADMIN
-  STAFF
-}
-
-enum AuditEntityType {
-  AUTH
-  INQUIRY
-  QUOTE
-  CASE
-  SUBMISSION
-  SUPPLEMENT
-  FOLLOW_UP
-}
-
-enum AuditActionType {
-  LOGIN
-  LOGOUT
-  INQUIRY_STATUS_UPDATED
-  QUOTE_STATUS_UPDATED
-  CASE_STAGE_UPDATED
-  SUBMISSION_STATUS_UPDATED
-  SUPPLEMENT_STATUS_UPDATED
-  FOLLOW_UP_CREATED
-  FOLLOW_UP_UPDATED
 }
 
 enum ClientType {
@@ -117,68 +89,11 @@ enum ContractDraftStatus {
   VOID
 }
 
-enum PaymentCollectionStatus {
-  NOT_REQUESTED
-  REQUESTED
-  PAID
-  CANCELLED
-}
-
 enum CaseStage {
   CONTRACT_PREPARATION
-  DOCUMENT_COLLECTION
-  UNDER_REVIEW
-  SUBMITTED
-  SUPPLEMENT_REQUESTED
-  COMPLETED
+  ACTIVE
   ON_HOLD
   CLOSED
-}
-
-enum ClientRelationshipStatus {
-  NEUTRAL
-  FOLLOW_UP_NEEDED
-  REVIEW_REQUESTED
-  REFERRAL_POTENTIAL
-  RETURNING_CLIENT
-}
-
-enum FollowUpActionType {
-  REVIEW_REQUEST
-  REFERRAL_CHECK
-  REENGAGEMENT
-}
-
-enum FollowUpActionStatus {
-  PENDING
-  COMPLETED
-  CANCELLED
-}
-
-enum SubmissionPackageStatus {
-  DRAFT
-  SUBMITTED
-  SUPPLEMENT_REQUESTED
-  RESUBMITTED
-  CLOSED
-}
-
-enum SupplementRequestStatus {
-  OPEN
-  IN_PROGRESS
-  RESOLVED
-}
-
-enum ForecastMetric {
-  INQUIRY_COUNT
-  CONTRACT_COUNT
-  REVISION_REQUEST_COUNT
-}
-
-enum ForecastRunStatus {
-  PENDING
-  COMPLETED
-  FAILED
 }
 
 model Inquiry {
@@ -211,6 +126,12 @@ model Inquiry {
   dueDate                  DateTime?
   assignee                 String?
   internalMemo             String?
+  communicationLogs        String        @default("[]")
+  latestContactAt          DateTime?
+  latestContactChannel     String?
+  latestContactSummary     String?
+  nextContactAt            DateTime?
+  responsePending          Boolean       @default(false)
   consultationRequired     Boolean       @default(false)
   riskComplexityHint       String?
   precheckRecommendedDocs  String        @default("[]")
@@ -223,26 +144,14 @@ model Inquiry {
   classificationReason     String
   recommendedNextStep      String
   serviceTags              String        @default("[]")
+  lawbotLastAnalyzedAt     DateTime?
+  lawbotSnapshotVersion    Int           @default(1)
+  lawbotSnapshotStatus     String?
+  lawbotSnapshotSummary    String?
+  lawbotSnapshotPayload    String?
   quotes                   Quote[]
   contractDrafts           ContractDraft[]
   cases                    CaseRecord[]
-  issueBotLinks            IssueBotLink[]
-}
-
-model IssueBotLink {
-  id               String   @id @default(cuid())
-  inquiryId        String
-  inquiry          Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
-  botKey           String
-  botLabel         String
-  status           String   @default("PLANNED")
-  connectionNotes  String?
-  externalThreadId String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@unique([inquiryId, botKey])
-  @@index([inquiryId, status])
 }
 
 model ServiceType {
@@ -389,16 +298,6 @@ model ContractDraft {
   paymentSummary       String?
   successFeeRestricted Boolean             @default(false)
   specialTerms         String?
-  contractShareUrl     String?
-  contractSentAt       DateTime?
-  contractSignedAt     DateTime?
-  paymentLinkUrl       String?
-  paymentProvider      String?
-  paymentRequestedAt   DateTime?
-  paymentStatus        PaymentCollectionStatus @default(NOT_REQUESTED)
-  paidAt               DateTime?
-  paymentReference     String?
-  paymentMemo          String?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   caseRecord           CaseRecord?
@@ -412,180 +311,12 @@ model CaseRecord {
   contractDraftId String?   @unique
   currentStage    CaseStage @default(CONTRACT_PREPARATION)
   dueDate         DateTime?
-  filingDeadline  DateTime?
-  supplementDeadline DateTime?
-  stayExpirationDate DateTime?
-  internalDeadline DateTime?
-  googleCalendarDueEventId String?
-  googleCalendarFilingEventId String?
-  googleCalendarSupplementEventId String?
-  googleCalendarStayExpirationEventId String?
-  googleCalendarInternalDeadlineEventId String?
-  googleCalendarNextFollowUpEventId String?
   internalMemo    String?
-  closedAt        DateTime?
-  closeReason     String?
-  outcomeSummary  String?
-  nextFollowUpDate DateTime?
-  clientRelationshipStatus ClientRelationshipStatus @default(NEUTRAL)
-  reviewRequestedAt DateTime?
-  reviewCompletedAt DateTime?
-  referralEligible Boolean @default(false)
-  reengagementEligible Boolean @default(false)
-  lastFollowUpAt  DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   inquiry         Inquiry   @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
   quote           Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   contractDraft   ContractDraft? @relation(fields: [contractDraftId], references: [id], onDelete: SetNull)
-  documents       CaseDocumentItem[]
-  documentFiles   CaseDocumentFile[]
-  submissionPackages SubmissionPackage[]
-  supplementRequests SupplementRequest[]
-  stageLogs       CaseStageLog[]
-  followUpActions FollowUpAction[]
-}
-
-model FollowUpAction {
-  id          String             @id @default(cuid())
-  caseId       String
-  case         CaseRecord         @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  type         FollowUpActionType
-  status       FollowUpActionStatus @default(PENDING)
-  title        String
-  note         String?
-  dueDate      DateTime?
-  googleCalendarEventId String?
-  messageDraft String
-  completedAt  DateTime?
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-
-  @@index([caseId, status, dueDate])
-}
-
-model CaseDocumentItem {
-  id           String   @id @default(cuid())
-  caseId        String
-  case          CaseRecord @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  documentType  String
-  label         String
-  isRequired    Boolean  @default(true)
-  isReceived    Boolean  @default(false)
-  receivedAt    DateTime?
-  note          String?
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  files         CaseDocumentFile[]
-  submissionItems SubmissionPackageItem[]
-  supplementItems SupplementRequestItem[]
-
-  @@unique([caseId, documentType])
-}
-
-model CaseStageLog {
-  id         String    @id @default(cuid())
-  caseId     String
-  case       CaseRecord @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  fromStage  CaseStage?
-  toStage    CaseStage
-  note       String?
-  createdAt  DateTime @default(now())
-}
-
-model CaseDocumentFile {
-  id                 String            @id @default(cuid())
-  caseId             String
-  case               CaseRecord        @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  caseDocumentItemId String?
-  caseDocumentItem   CaseDocumentItem? @relation(fields: [caseDocumentItemId], references: [id], onDelete: SetNull)
-  originalFilename   String
-  storedFilename     String
-  storagePath        String
-  externalUrl        String?
-  externalProvider   String?
-  mimeType           String
-  size               Int
-  uploadedAt         DateTime          @default(now())
-  note               String?
-  isCurrentVersion   Boolean           @default(true)
-  versionNumber      Int               @default(1)
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  submissionItems    SubmissionPackageItem[]
-
-  @@index([caseId, uploadedAt])
-  @@index([caseDocumentItemId, versionNumber])
-}
-
-model SubmissionPackage {
-  id            String                  @id @default(cuid())
-  caseId         String
-  case           CaseRecord             @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  packageNumber  String
-  packageLabel   String?
-  submittedTo    String?
-  submittedAt    DateTime?
-  status         SubmissionPackageStatus @default(DRAFT)
-  note           String?
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
-  items          SubmissionPackageItem[]
-  supplementRequests SupplementRequest[]
-
-  @@index([caseId, createdAt])
-  @@unique([caseId, packageNumber])
-}
-
-model SubmissionPackageItem {
-  id                  String            @id @default(cuid())
-  submissionPackageId String
-  submissionPackage   SubmissionPackage @relation(fields: [submissionPackageId], references: [id], onDelete: Cascade)
-  caseDocumentItemId  String
-  caseDocumentItem    CaseDocumentItem  @relation(fields: [caseDocumentItemId], references: [id])
-  caseDocumentFileId  String
-  caseDocumentFile    CaseDocumentFile  @relation(fields: [caseDocumentFileId], references: [id])
-  labelSnapshot       String
-  versionNumberSnapshot Int
-  documentTypeSnapshot String
-  filenameSnapshot    String
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-
-  @@index([submissionPackageId, caseDocumentItemId])
-}
-
-model SupplementRequest {
-  id                 String                 @id @default(cuid())
-  caseId              String
-  case                CaseRecord            @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  submissionPackageId String?
-  submissionPackage   SubmissionPackage?    @relation(fields: [submissionPackageId], references: [id], onDelete: SetNull)
-  requestedAt         DateTime              @default(now())
-  dueDate             DateTime?
-  requestedBy         String?
-  summary             String
-  status              SupplementRequestStatus @default(OPEN)
-  note                String?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  items               SupplementRequestItem[]
-
-  @@index([caseId, requestedAt])
-}
-
-model SupplementRequestItem {
-  id                  String            @id @default(cuid())
-  supplementRequestId String
-  supplementRequest   SupplementRequest @relation(fields: [supplementRequestId], references: [id], onDelete: Cascade)
-  caseDocumentItemId  String
-  caseDocumentItem    CaseDocumentItem  @relation(fields: [caseDocumentItemId], references: [id])
-  labelSnapshot       String
-  sortOrder           Int               @default(0)
-  createdAt           DateTime          @default(now())
-
-  @@index([supplementRequestId, sortOrder])
 }
 
 model LegacyImportLog {
@@ -595,132 +326,4 @@ model LegacyImportLog {
   payloadJson   String?
   importedAt    DateTime @default(now())
   createdCount  Int      @default(0)
-}
-
-model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  name         String
-  role         AdminRole
-  passwordHash String
-  isActive     Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  sessions     UserSession[]
-  auditLogs    AuditLog[]
-}
-
-model PublicContentSettings {
-  id               String   @id
-  intakeContentJson String  @default("{}")
-  operationsSettingsJson String @default("{}")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-}
-
-model UserSession {
-  id           String   @id @default(cuid())
-  userId       String
-  sessionToken String   @unique
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, expiresAt])
-}
-
-model AuditLog {
-  id          String          @id @default(cuid())
-  actorUserId String?
-  actorUser   User?           @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
-  actionType  AuditActionType
-  entityType  AuditEntityType
-  entityId    String
-  summary     String
-  metadataJson String?
-  createdAt   DateTime        @default(now())
-}
-
-model ExternalIndicatorObservation {
-  id              String   @id @default(cuid())
-  observationDate DateTime
-  indicatorKey    String
-  category        String?
-  numericValue    Float
-  source          String
-  note            String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@unique([observationDate, indicatorKey, category])
-  @@index([indicatorKey, observationDate])
-}
-
-model ForecastEventFlag {
-  id        String   @id @default(cuid())
-  eventDate DateTime
-  eventType String
-  eventName String
-  category  String?
-  impactFlag Boolean @default(true)
-  memo      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([category, eventDate])
-}
-
-model WeeklyForecastDataset {
-  id                     String   @id @default(cuid())
-  weekStartDate          DateTime
-  category               String
-  channel                String?
-  inquiryCount           Int      @default(0)
-  contractCount          Int      @default(0)
-  avgProcessingDays      Float?
-  revisionRequestCount   Int      @default(0)
-  externalIndicatorsJson String   @default("{}")
-  eventFlagsJson         String   @default("[]")
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-
-  @@unique([weekStartDate, category, channel])
-  @@index([category, weekStartDate])
-}
-
-model DemandForecastRun {
-  id                String             @id @default(cuid())
-  targetMetric      ForecastMetric
-  targetCategory    String
-  targetChannel     String?
-  horizonWeeks      Int
-  modelName         String
-  modelVersion      String?
-  sourceWindowWeeks Int
-  status            ForecastRunStatus  @default(PENDING)
-  contextJson       String?
-  note              String?
-  createdAt         DateTime           @default(now())
-  completedAt       DateTime?
-  updatedAt         DateTime           @updatedAt
-  points            DemandForecastPoint[]
-
-  @@index([targetMetric, targetCategory, createdAt])
-}
-
-model DemandForecastPoint {
-  id              String            @id @default(cuid())
-  runId           String
-  run             DemandForecastRun @relation(fields: [runId], references: [id], onDelete: Cascade)
-  targetWeekStart DateTime
-  predictedValue  Float
-  lowerBound      Float?
-  upperBound      Float?
-  actualValue     Float?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@unique([runId, targetWeekStart])
-  @@index([targetWeekStart])
 }

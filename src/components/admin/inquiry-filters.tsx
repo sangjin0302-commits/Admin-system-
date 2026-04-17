@@ -30,7 +30,6 @@ type InquiryFiltersProps = {
     status?: InquiryStatus;
     urgency?: UrgencyLevel;
     language?: LanguageCode;
-    assignee?: string;
     retained?: "all" | "won" | "active";
     sort?: AdminSort;
   };
@@ -40,7 +39,7 @@ export function InquiryFilters({ filters }: InquiryFiltersProps) {
   return (
     <Card className="p-5">
       <form method="get" className="space-y-4">
-        <FieldGroup className="md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]">
+        <FieldGroup className="md:grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr]">
           <Field label="검색어">
             <Input
               name="q"
@@ -89,13 +88,6 @@ export function InquiryFilters({ filters }: InquiryFiltersProps) {
                 </option>
               ))}
             </Select>
-          </Field>
-          <Field label="담당자">
-            <Input
-              name="assignee"
-              defaultValue={filters.assignee ?? ""}
-              placeholder="담당자명으로 필터"
-            />
           </Field>
           <Field label="수임 여부">
             <Select name="retained" defaultValue={filters.retained ?? "all"}>

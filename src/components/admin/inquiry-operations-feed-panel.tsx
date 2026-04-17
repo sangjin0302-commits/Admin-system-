@@ -54,7 +54,14 @@ export function InquiryOperationsFeedPanel({
                   <span className="absolute left-[7px] top-5 h-[calc(100%+8px)] w-px bg-border/70" />
                 ) : null}
                 <span className="absolute left-0 top-1.5 h-4 w-4 rounded-full border border-border-strong bg-white" />
-                <p className="text-sm font-semibold text-text-strong">{item.label}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold text-text-strong">{item.label}</p>
+                  {item.label.includes("추천") ? (
+                    <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                      추천
+                    </span>
+                  ) : null}
+                </div>
                 <p className="mt-1 text-sm text-text-muted">{item.description}</p>
                 <p className="mt-1 text-xs text-text-muted">{item.timestamp}</p>
               </div>

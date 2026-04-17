@@ -10,6 +10,7 @@ import {
   generateReceiptMessage
 } from "@/lib/message-templates/service";
 import { dispatchInitialClientMessage } from "@/lib/services/client-message-service";
+import { getInquiryReceiptCode } from "@/lib/services/inquiry-receipt-code";
 import { formatDate } from "@/lib/utils";
 import { parseCreateInquiryInput } from "@/lib/validation/inquiry";
 import type { AdminSort, InquiryStatus, InquiryType, LanguageCode, UrgencyLevel } from "@/types/inquiry";
@@ -27,6 +28,207 @@ type InquiryListFilters = {
 };
 
 type InquiryListRecord = Awaited<ReturnType<typeof prisma.inquiry.findMany>>[number];
+
+type PersistLawbotSnapshotInput = {
+  inquiryId: string;
+  status: string;
+  summary: string;
+  payload: {
+    input_summary?: string;
+    practical_use_status?: string;
+    confidence_score?: number;
+    confidence_label?: string;
+    match_reason?: string;
+    research_goal?: string;
+    review_required_reasons?: string[];
+    critical_missing_facts?: string[];
+    priority_actions?: string[];
+    risk_flags?: string[];
+    practical_checklist?: string[];
+    document_checklist?: string[];
+  };
+};
+
+type StatusTransitionGuardContext = {
+  currentStatus: InquiryStatus;
+  email: string | null;
+  phone: string | null;
+  description: string;
+  requestedOutcome: string | null;
+  hasPreparedDocuments: boolean;
+  internalMemo: string | null;
+  lawbotSnapshotPayload: string | null;
+  quoteCount: number;
+};
+
+export type InquiryStatusGuardPreview = {
+  status: InquiryStatus;
+  allowed: boolean;
+  blockers: string[];
+};
+
+export class InquiryStatusGuardError extends Error {
+  blockers: string[];
+
+  constructor(message: string, blockers: string[]) {
+    super(message);
+    this.name = "InquiryStatusGuardError";
+    this.blockers = blockers;
+  }
+}
+
+export type InquiryCommunicationChannel = "EMAIL" | "PHONE" | "KAKAO" | "SMS" | "VISIT" | "INTERNAL";
+
+export type InquiryCommunicationLogEntry = {
+  id: string;
+  createdAt: string;
+  channel: InquiryCommunicationChannel;
+  summary: string;
+  details: string;
+  responsePending: boolean;
+  nextContactAt: string | null;
+};
+
+function createLogId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function parseLawbotSnapshotPayload(raw: string | null | undefined) {
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw) as {
+      review_required_reasons?: string[];
+      critical_missing_facts?: string[];
+      risk_flags?: string[];
+      document_checklist?: string[];
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getStatusTransitionBlockers(
+  context: StatusTransitionGuardContext,
+  targetStatus: InquiryStatus,
+  nextInternalMemo?: string | null
+) {
+  const blockers: string[] = [];
+  const lawbotPayload = parseLawbotSnapshotPayload(context.lawbotSnapshotPayload);
+  const documentChecklist = lawbotPayload?.document_checklist ?? [];
+  const missingFacts = lawbotPayload?.critical_missing_facts ?? [];
+  const reviewReasons = lawbotPayload?.review_required_reasons ?? [];
+  const riskFlags = lawbotPayload?.risk_flags ?? [];
+  const memo = (nextInternalMemo ?? context.internalMemo ?? "").trim();
+
+  if (targetStatus === "CONSULTATION_REQUIRED" || targetStatus === "WAITING_CONSULTATION") {
+    if (!context.email?.trim() && !context.phone?.trim()) {
+      blockers.push("상담 진행 전에는 이메일 또는 전화번호 중 최소 한 가지 연락 수단이 필요합니다.");
+    }
+    if (context.description.trim().length < 20) {
+      blockers.push("상담 진행 전에는 고객 문의 상세 내용이 조금 더 구체적으로 입력되어야 합니다.");
+    }
+  }
+
+  if (targetStatus === "ON_HOLD") {
+    if (memo.length < 12) {
+      blockers.push("보류 검토로 전환하려면 내부 메모에 보류 사유를 조금 더 구체적으로 남겨야 합니다.");
+    }
+  }
+
+  if (targetStatus === "QUOTE_DRAFTED" || targetStatus === "QUOTE_PENDING" || targetStatus === "QUOTE_SENT") {
+    if (!context.requestedOutcome?.trim()) {
+      blockers.push("견적 단계로 넘기기 전에 고객의 원하는 결과가 정리되어 있어야 합니다.");
+    }
+    if (!context.hasPreparedDocuments) {
+      blockers.push("현재 보유 서류 여부가 미보유로 되어 있어 견적 전환 전 자료 확인이 필요합니다.");
+    }
+    if (documentChecklist.length > 0) {
+      blockers.push("Lawbot 기준 먼저 받아야 할 자료가 남아 있어 견적 전환 전 보완이 필요합니다.");
+    }
+    if (missingFacts.length > 0 || reviewReasons.length > 0) {
+      blockers.push("Lawbot 기준 빠진 핵심 사실 또는 추가 검토 필요 사유가 남아 있습니다.");
+    }
+  }
+
+  if (targetStatus === "QUOTE_SENT") {
+    if (context.quoteCount === 0) {
+      blockers.push("견적 발송 상태로 바꾸기 전에 최소 한 건의 견적 초안이 생성되어 있어야 합니다.");
+    }
+  }
+
+  if (targetStatus === "WON") {
+    if (context.quoteCount === 0) {
+      blockers.push("수임 상태로 바꾸기 전에 연결된 견적 또는 계약 흐름이 있어야 합니다.");
+    }
+    if (documentChecklist.length > 0 || missingFacts.length > 0 || riskFlags.length > 0) {
+      blockers.push("수임 전환 전에는 남아 있는 자료 부족 또는 리스크 신호를 정리하는 편이 안전합니다.");
+    }
+  }
+
+  if (targetStatus === "CLOSED") {
+    if (memo.length < 12) {
+      blockers.push("종결 처리 전에는 내부 메모에 종결 사유 또는 마무리 내용을 남겨 주세요.");
+    }
+  }
+
+  return blockers;
+}
+
+export function buildInquiryStatusGuardPreview(
+  context: StatusTransitionGuardContext,
+  statuses: InquiryStatus[]
+): InquiryStatusGuardPreview[] {
+  return statuses.map((status) => {
+    const blockers = getStatusTransitionBlockers(context, status);
+    return {
+      status,
+      allowed: blockers.length === 0,
+      blockers
+    };
+  });
+}
+
+export function parseInquiryCommunicationLogs(value: string | null | undefined): InquiryCommunicationLogEntry[] {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((entry): InquiryCommunicationLogEntry | null => {
+        if (!entry || typeof entry !== "object") {
+          return null;
+        }
+
+        const record = entry as Partial<InquiryCommunicationLogEntry>;
+        if (!record.id || !record.createdAt || !record.channel || !record.summary) {
+          return null;
+        }
+
+        return {
+          id: String(record.id),
+          createdAt: String(record.createdAt),
+          channel: String(record.channel) as InquiryCommunicationChannel,
+          summary: String(record.summary),
+          details: String(record.details ?? ""),
+          responsePending: Boolean(record.responsePending),
+          nextContactAt: record.nextContactAt ? String(record.nextContactAt) : null
+        };
+      })
+      .filter((entry): entry is InquiryCommunicationLogEntry => entry !== null)
+      .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+  } catch {
+    return [];
+  }
+}
 
 function buildInquirySummary(input: {
   inquiryType: InquiryType;
@@ -141,7 +343,11 @@ export async function createInquiry(payload: unknown) {
 
   const finalizedMessageInput = {
     ...messageInput,
-    inquiryId: created.id
+    inquiryId: await getInquiryReceiptCode({
+      id: created.id,
+      createdAt: created.createdAt,
+      inquiryType: created.inquiryType as InquiryType
+    })
   };
 
   const guidance = generatePreparationGuidance(finalizedMessageInput);
@@ -239,6 +445,19 @@ export async function getInquiryById(id: string) {
   });
 }
 
+export async function persistLawbotSnapshot(input: PersistLawbotSnapshotInput) {
+  return prisma.inquiry.update({
+    where: { id: input.inquiryId },
+    data: {
+      lawbotLastAnalyzedAt: new Date(),
+      lawbotSnapshotVersion: 1,
+      lawbotSnapshotStatus: input.status,
+      lawbotSnapshotSummary: input.summary,
+      lawbotSnapshotPayload: JSON.stringify(input.payload)
+    }
+  });
+}
+
 export async function updateInquiryAdminFields(
   id: string,
   payload: {
@@ -247,6 +466,51 @@ export async function updateInquiryAdminFields(
     internalMemo?: string;
   }
 ) {
+  const current = await prisma.inquiry.findUnique({
+    where: { id },
+    select: {
+      status: true,
+      email: true,
+      phone: true,
+      description: true,
+      requestedOutcome: true,
+      hasPreparedDocuments: true,
+      internalMemo: true,
+      lawbotSnapshotPayload: true,
+      _count: {
+        select: {
+          quotes: true
+        }
+      }
+    }
+  });
+
+  if (!current) {
+    throw new Error("Inquiry not found.");
+  }
+
+  if (payload.status !== undefined && payload.status !== current.status) {
+    const blockers = getStatusTransitionBlockers(
+      {
+        currentStatus: current.status as InquiryStatus,
+        email: current.email,
+        phone: current.phone,
+        description: current.description,
+        requestedOutcome: current.requestedOutcome,
+        hasPreparedDocuments: current.hasPreparedDocuments,
+        internalMemo: current.internalMemo,
+        lawbotSnapshotPayload: current.lawbotSnapshotPayload,
+        quoteCount: current._count.quotes
+      },
+      payload.status,
+      payload.internalMemo
+    );
+
+    if (blockers.length > 0) {
+      throw new InquiryStatusGuardError("상태 전환 전에 확인해야 할 항목이 남아 있습니다.", blockers);
+    }
+  }
+
   const updated = await prisma.inquiry.update({
     where: { id },
     data: {
@@ -278,6 +542,70 @@ export async function updateInquiryAdminFields(
     });
   } catch (error) {
     console.error("Failed to refresh consultation Notion sync", error);
+  }
+
+  return updated;
+}
+
+export async function appendInquiryCommunicationLog(
+  id: string,
+  payload: {
+    channel: InquiryCommunicationChannel;
+    summary: string;
+    details?: string;
+    responsePending: boolean;
+    nextContactAt?: string;
+  }
+) {
+  const existing = await prisma.inquiry.findUniqueOrThrow({
+    where: { id }
+  });
+
+  const currentLogs = parseInquiryCommunicationLogs(existing.communicationLogs);
+  const createdAt = new Date();
+  const nextContactAt = payload.nextContactAt ? new Date(payload.nextContactAt) : null;
+  const nextEntry: InquiryCommunicationLogEntry = {
+    id: createLogId(),
+    createdAt: createdAt.toISOString(),
+    channel: payload.channel,
+    summary: payload.summary,
+    details: payload.details?.trim() ?? "",
+    responsePending: payload.responsePending,
+    nextContactAt: nextContactAt?.toISOString() ?? null
+  };
+
+  const updated = await prisma.inquiry.update({
+    where: { id },
+    data: {
+      communicationLogs: JSON.stringify([nextEntry, ...currentLogs]),
+      latestContactAt: createdAt,
+      latestContactChannel: payload.channel,
+      latestContactSummary: payload.summary,
+      nextContactAt,
+      responsePending: payload.responsePending
+    }
+  });
+
+  try {
+    await syncConsultationToNotion({
+      inquiryId: updated.id,
+      contactName: updated.contactName,
+      contactPhone: updated.phone,
+      inquiryTitle: updated.title,
+      inquiryType: updated.inquiryType as InquiryType,
+      inquiryStatus: updated.status as InquiryStatus,
+      urgencyLevel: updated.urgencyLevel as UrgencyLevel,
+      qualificationScore: updated.qualificationScore,
+      generatedSummary: updated.generatedSummary,
+      recommendedNextStep: updated.recommendedNextStep,
+      classificationReason: updated.internalMemo ?? updated.classificationReason,
+      recommendedDocuments: JSON.parse(updated.precheckRecommendedDocs || "[]"),
+      serviceTags: JSON.parse(updated.serviceTags || "[]"),
+      createdAt: updated.createdAt.toISOString(),
+      dueDate: updated.dueDate?.toISOString() ?? null
+    });
+  } catch (error) {
+    console.error("Failed to refresh consultation Notion sync after communication log append", error);
   }
 
   return updated;

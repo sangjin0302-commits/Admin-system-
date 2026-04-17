@@ -40,108 +40,81 @@ export type LanguageCode = (typeof languageCodeValues)[number];
 export const clientTypeValues = ["INDIVIDUAL", "COMPANY"] as const;
 export type ClientType = (typeof clientTypeValues)[number];
 
-export const screeningGradeValues = ["A", "B", "C", "D"] as const;
-export type ScreeningGrade = (typeof screeningGradeValues)[number];
-
-export const screeningRouteValues = [
-  "PRIORITY_CONSULT",
-  "PAID_DIAGNOSIS",
-  "DOCS_REVIEW_FIRST",
-  "GUIDANCE_FIRST",
-  "DECLINE_OR_REFER"
-] as const;
-export type ScreeningRoute = (typeof screeningRouteValues)[number];
-
 type LabeledMap<T extends string> = Record<T, Record<Locale, string>>;
 
 export const inquiryTypeLabels: LabeledMap<InquiryType> = {
   FOREIGNER_VISA: {
     ko: "외국인 비자",
     en: "Foreigner Visa",
-    ar: "Foreigner Visa"
+    ar: "تأشيرة الأجانب"
   },
   IMMIGRATION_STAY: {
-    ko: "출입국 / 체류",
+    ko: "출입국·체류",
     en: "Immigration / Stay",
-    ar: "Immigration / Stay"
+    ar: "الهجرة والإقامة"
   },
   APOSTILLE_CONSULAR: {
-    ko: "행정심판",
-    en: "Administrative Appeal",
-    ar: "Administrative Appeal"
+    ko: "아포스티유·영사확인",
+    en: "Apostille / Consular",
+    ar: "الأبوستيل / التصديق القنصلي"
   },
   TRANSLATION_NOTARY: {
-    ko: "기타 행정 상담",
-    en: "Other Administrative Consultation",
-    ar: "Other Administrative Consultation"
+    ko: "번역·공증",
+    en: "Translation / Notary",
+    ar: "الترجمة / التوثيق"
   },
   GENERAL_ADMIN_CIVIL: {
-    ko: "인허가",
-    en: "Licenses / Permits",
-    ar: "Licenses / Permits"
+    ko: "일반 행정민원",
+    en: "General Administrative Service",
+    ar: "الخدمات الإدارية العامة"
   },
   CORPORATE_REQUEST: {
-    ko: "기업 / 법인 행정 지원",
-    en: "Corporate Administrative Support",
-    ar: "Corporate Administrative Support"
+    ko: "기업 의뢰",
+    en: "Corporate Request",
+    ar: "طلبات الشركات"
   },
   UNKNOWN: {
-    ko: "분야 미정 / 추가 확인",
+    ko: "기타·추가 확인",
     en: "Needs Review",
-    ar: "Needs Review"
+    ar: "يحتاج إلى مراجعة"
   }
 };
 
 export const inquiryStatusLabels: LabeledMap<InquiryStatus> = {
-  NEW: { ko: "신규", en: "New", ar: "New" },
-  PRE_DIAGNOSED: { ko: "사전진단 완료", en: "Pre-diagnosed", ar: "Pre-diagnosed" },
-  CONSULTATION_REQUIRED: { ko: "상담 필요", en: "Consultation Required", ar: "Consultation Required" },
-  QUOTE_DRAFTED: { ko: "견적 초안 생성", en: "Quote Drafted", ar: "Quote Drafted" },
-  QUOTE_PENDING: { ko: "견적 발송 대기", en: "Quote Pending", ar: "Quote Pending" },
-  ON_HOLD: { ko: "진행 보류", en: "On Hold", ar: "On Hold" },
-  IN_REVIEW: { ko: "검토중", en: "In Review", ar: "In Review" },
-  WAITING_CONSULTATION: { ko: "상담대기", en: "Waiting", ar: "Waiting" },
-  QUOTE_SENT: { ko: "견적발송", en: "Quote Sent", ar: "Quote Sent" },
-  WON: { ko: "수임", en: "Won", ar: "Won" },
-  CLOSED: { ko: "종결", en: "Closed", ar: "Closed" }
+  NEW: { ko: "신규", en: "New", ar: "جديد" },
+  PRE_DIAGNOSED: { ko: "사전진단 완료", en: "Pre-diagnosed", ar: "تم التشخيص الأولي" },
+  CONSULTATION_REQUIRED: { ko: "상담 필요", en: "Consultation Required", ar: "تحتاج إلى استشارة" },
+  QUOTE_DRAFTED: { ko: "견적 초안 생성", en: "Quote Drafted", ar: "تم إعداد عرض السعر" },
+  QUOTE_PENDING: { ko: "견적 발송 대기", en: "Quote Pending", ar: "بانتظار إرسال العرض" },
+  ON_HOLD: { ko: "진행 보류", en: "On Hold", ar: "معلق" },
+  IN_REVIEW: { ko: "검토 중", en: "In Review", ar: "قيد المراجعة" },
+  WAITING_CONSULTATION: { ko: "상담 대기", en: "Waiting Consultation", ar: "بانتظار الاستشارة" },
+  QUOTE_SENT: { ko: "견적 발송", en: "Quote Sent", ar: "تم إرسال العرض" },
+  WON: { ko: "수임", en: "Won", ar: "تم التعاقد" },
+  CLOSED: { ko: "종결", en: "Closed", ar: "مغلق" }
 };
 
 export const urgencyLabels: LabeledMap<UrgencyLevel> = {
-  LOW: { ko: "낮음", en: "Low", ar: "Low" },
-  MEDIUM: { ko: "보통", en: "Medium", ar: "Medium" },
-  HIGH: { ko: "높음", en: "High", ar: "High" },
-  CRITICAL: { ko: "매우 긴급", en: "Critical", ar: "Critical" }
+  LOW: { ko: "낮음", en: "Low", ar: "منخفض" },
+  MEDIUM: { ko: "보통", en: "Medium", ar: "متوسط" },
+  HIGH: { ko: "높음", en: "High", ar: "مرتفع" },
+  CRITICAL: { ko: "매우 긴급", en: "Critical", ar: "عاجل جدًا" }
 };
 
 export const clientTypeLabels: LabeledMap<ClientType> = {
-  INDIVIDUAL: { ko: "개인", en: "Individual", ar: "Individual" },
-  COMPANY: { ko: "기업", en: "Company", ar: "Company" }
-};
-
-export const screeningGradeLabels: Record<ScreeningGrade, Record<Locale, string>> = {
-  A: { ko: "A급", en: "Grade A", ar: "Grade A" },
-  B: { ko: "B급", en: "Grade B", ar: "Grade B" },
-  C: { ko: "C급", en: "Grade C", ar: "Grade C" },
-  D: { ko: "D급", en: "Grade D", ar: "Grade D" }
-};
-
-export const screeningRouteLabels: Record<ScreeningRoute, Record<Locale, string>> = {
-  PRIORITY_CONSULT: { ko: "우선 상담 연결", en: "Priority Consult", ar: "Priority Consult" },
-  PAID_DIAGNOSIS: { ko: "유료 사전진단 권장", en: "Paid Diagnosis", ar: "Paid Diagnosis" },
-  DOCS_REVIEW_FIRST: { ko: "서류 확인 후 상담", en: "Docs Review First", ar: "Docs Review First" },
-  GUIDANCE_FIRST: { ko: "안내문 우선", en: "Guidance First", ar: "Guidance First" },
-  DECLINE_OR_REFER: { ko: "불수임 / 외부 연계 검토", en: "Decline or Refer", ar: "Decline or Refer" }
+  INDIVIDUAL: { ko: "개인", en: "Individual", ar: "فرد" },
+  COMPANY: { ko: "기업", en: "Company", ar: "شركة" }
 };
 
 export const languageCodeLabels: LabeledMap<LanguageCode> = {
-  KO: { ko: "한국어", en: "Korean", ar: "Korean" },
-  EN: { ko: "영어", en: "English", ar: "English" },
-  AR: { ko: "아랍어", en: "Arabic", ar: "Arabic" }
+  KO: { ko: "한국어", en: "Korean", ar: "الكورية" },
+  EN: { ko: "영어", en: "English", ar: "الإنجليزية" },
+  AR: { ko: "아랍어", en: "Arabic", ar: "العربية" }
 };
 
 export const adminSortLabels: Record<AdminSort, Record<Locale, string>> = {
-  latest: { ko: "최신순", en: "Latest", ar: "Latest" },
-  urgency: { ko: "긴급도순", en: "Urgency", ar: "Urgency" }
+  latest: { ko: "최신순", en: "Latest", ar: "الأحدث" },
+  urgency: { ko: "긴급도순", en: "Urgency", ar: "الأولوية" }
 };
 
 export function toLanguageCode(locale: Locale): LanguageCode {

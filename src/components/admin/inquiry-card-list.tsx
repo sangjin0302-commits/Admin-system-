@@ -21,11 +21,12 @@ type InquiryItem = {
   status: keyof typeof inquiryStatusLabels;
   urgencyLevel: keyof typeof urgencyLabels;
   preferredLanguage: keyof typeof languageCodeLabels;
-  assignee: string | null;
   createdAt: Date;
   updatedAt: Date;
   dueDate?: Date | null;
+  nextContactAt?: Date | null;
   hasPreparedDocuments?: boolean;
+  responsePending?: boolean;
 };
 
 export function InquiryCardList({ inquiries }: { inquiries: InquiryItem[] }) {
@@ -51,18 +52,19 @@ export function InquiryCardList({ inquiries }: { inquiries: InquiryItem[] }) {
                   {languageCodeLabels[inquiryLanguage].ko}
                 </Badge>
               </div>
-              <h3 className="mt-3 text-base font-semibold text-text-strong">{inquiry.title}</h3>
-              <p className="mt-2 max-h-12 overflow-hidden text-sm text-text">{inquiry.generatedSummary}</p>
+              <h3 className="mt-3 truncate whitespace-nowrap text-base font-semibold text-text-strong">{inquiry.title}</h3>
+              <p className="mt-2 truncate whitespace-nowrap text-sm text-text">{inquiry.generatedSummary}</p>
               <div className="mt-3 grid gap-1 text-sm text-text-muted">
-                <p>
+                <p className="truncate whitespace-nowrap">
                   {inquiry.contactName}
                   {inquiry.organizationName ? ` · ${inquiry.organizationName}` : ""}
                 </p>
-                <p>{inquiryTypeLabels[inquiryType].ko}</p>
-                <p>담당자: {inquiry.assignee || "미배정"}</p>
-                <p>접수일: {formatDateTime(inquiry.createdAt)}</p>
-                <p>희망 일정: {formatDateTime(inquiry.dueDate)}</p>
-                <p>자료 준비: {inquiry.hasPreparedDocuments ? "기본 서류 보유" : "자료 확인 필요"}</p>
+                <p className="truncate whitespace-nowrap">{inquiryTypeLabels[inquiryType].ko}</p>
+                <p className="truncate whitespace-nowrap">접수일: {formatDateTime(inquiry.createdAt)}</p>
+                <p className="truncate whitespace-nowrap">희망 일정: {formatDateTime(inquiry.dueDate)}</p>
+                <p className="truncate whitespace-nowrap">다음 연락 예정: {formatDateTime(inquiry.nextContactAt)}</p>
+                <p className="truncate whitespace-nowrap">응답 대기: {inquiry.responsePending ? "대기 중" : "없음"}</p>
+                <p className="truncate whitespace-nowrap">자료 준비: {inquiry.hasPreparedDocuments ? "기본 서류 보유" : "자료 확인 필요"}</p>
               </div>
             </Card>
           </Link>

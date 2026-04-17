@@ -1,15 +1,87 @@
-﻿import { redirect } from "next/navigation";
+import Link from "next/link";
 
-import { getOptionalAdminSession } from "@/lib/auth/session";
+import { getIntakeCopy } from "@/components/intake/copy-clean";
+import { IntakeForm } from "@/components/intake/intake-form-clean";
+import { Card } from "@/components/ui/card";
+import type { Locale } from "@/types/inquiry";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
-  const session = await getOptionalAdminSession();
+export default async function Home({
+  searchParams
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}) {
+  const { lang } = await searchParams;
+  const locale: Locale = lang === "en" ? "en" : "ko";
+  const copy = getIntakeCopy(locale);
 
-  if (!session) {
-    redirect("/admin/login?next=%2Fadmin%2Finquiries");
-  }
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <Card className="p-6">
+          <p className="ui-kicker">{copy.pageKicker}</p>
+          <h2 className="mt-3 ui-page-title">{copy.pageTitle}</h2>
+          <p className="mt-3 max-w-3xl text-base text-text">{copy.pageDescription}</p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Link
+              href={locale === "ko" ? "/?lang=en" : "/"}
+              className="inline-flex h-10 items-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
+            >
+              {locale === "ko" ? "English" : "한국어"}
+            </Link>
+            <Link
+              href="/admin/inquiries"
+              className="inline-flex h-10 items-center rounded-md border border-primary bg-primary px-4 text-sm font-semibold text-white transition hover:bg-[#143d5d]"
+            >
+              {copy.adminLink}
+            </Link>
+          </div>
+        </Card>
 
-  redirect("/admin/inquiries");
+        <Card muted className="p-6">
+          <h3 className="ui-section-title">{copy.infoTitle}</h3>
+          <div className="mt-4 space-y-3">
+            {copy.infoItems.map((item) => (
+              <div key={item} className="rounded-md border border-line bg-surface px-4 py-3">
+                <p className="text-sm text-text">{item}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card muted className="p-6">
+          <h3 className="ui-section-title">{copy.processTitle}</h3>
+          <div className="mt-4 space-y-3">
+            {copy.processSteps.map((item, index) => (
+              <div key={item} className="rounded-md border border-line bg-surface px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">Step {index + 1}</p>
+                <p className="mt-2 text-sm text-text">{item}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card muted className="p-6">
+          <h3 className="ui-section-title">{copy.prepTitle}</h3>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {copy.prepItems.map((item) => (
+              <div key={item} className="rounded-md border border-line bg-surface px-4 py-3 text-sm text-text">
+                {item}
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Card className="p-6">
+        <div className="mb-6">
+          <h3 className="ui-section-title">{copy.formTitle}</h3>
+        </div>
+        <IntakeForm initialLocale={locale} />
+      </Card>
+    </div>
+  );
 }

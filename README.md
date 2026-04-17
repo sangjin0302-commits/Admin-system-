@@ -188,3 +188,14 @@ DATABASE_URL="file:C:/Users/your-user/AppData/Local/admin-office-mvp/dev.db"
 - 상담 예약 일정 연동
 - PostgreSQL 전환
 - 사용자 인증 및 고객 진행상태 조회
+
+## Marketing Sync (Auto-Sns integration)
+- Ingest endpoint: `POST /api/admin/marketing/ingest`
+- Read endpoint: `GET /api/admin/marketing/overview`
+
+Required env (production):
+- `ADMIN_MARKETING_SYNC_TOKEN`: shared secret for webhook auth (`x-admin-sync-token` header)
+- Optional `AUTOPOST_MARKETING_PAYLOAD_PATH`: local snapshot path override
+
+Default snapshot path:
+- `./data/marketing-sync-latest.json`
