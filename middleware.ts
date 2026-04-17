@@ -16,6 +16,10 @@ function getCredentials() {
 }
 
 function isProtectedAdminRoute(pathname: string) {
+  if (pathname === "/") {
+    return true;
+  }
+
   if (pathname.startsWith("/admin")) {
     return true;
   }
@@ -78,9 +82,13 @@ export function middleware(request: NextRequest) {
     return getUnauthorizedResponse(request);
   }
 
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/admin/inquiries", request.url));
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"]
+  matcher: ["/", "/admin/:path*", "/api/admin/:path*"]
 };
