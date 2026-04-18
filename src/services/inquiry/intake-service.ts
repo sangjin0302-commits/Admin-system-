@@ -5,7 +5,7 @@ import {
   generatePreparationGuidance,
   generateReceiptMessage
 } from "@/lib/generation/templates";
-import { parseCreateInquiryInput } from "@/lib/validation/inquiry";
+import { parseCreateInquiryInput } from "@/lib/validation/inquiry-safe";
 import { integrationRegistry } from "@/services/integrations";
 import type { InquiryStatus } from "@/types/inquiry";
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -17,12 +17,12 @@ type WorkflowProgressPanelProps = {
 };
 
 const steps: WorkflowStep[] = [
-  { key: "RECEIVED", title: "접수", description: "문의 기본 정보와 요청 결과를 수집한 단계" },
-  { key: "ANALYZED", title: "분석", description: "AI와 Lawbot 기준으로 검토 포인트를 정리한 단계" },
-  { key: "QUOTING", title: "견적", description: "서비스 범위, 비용, 조건을 조율하는 단계" },
-  { key: "CONTRACT", title: "계약/수임", description: "계약 초안과 수임 전환을 마무리하는 단계" },
-  { key: "CASEWORK", title: "사건 진행", description: "서류 수집, 제출, 보완 대응을 진행하는 단계" },
-  { key: "CLOSED", title: "종결", description: "사건 완료 또는 종결 정리를 마친 단계" }
+  { key: "RECEIVED", title: "?묒닔", description: "臾몄쓽 湲곕낯 ?뺣낫? ?붿껌 寃곌낵瑜??섏쭛???④퀎" },
+  { key: "ANALYZED", title: "遺꾩꽍", description: "AI? Lawbot 湲곗??쇰줈 寃???ъ씤?몃? ?뺣━???④퀎" },
+  { key: "QUOTING", title: "寃ъ쟻", description: "?쒕퉬??踰붿쐞, 鍮꾩슜, 議곌굔??議곗쑉?섎뒗 ?④퀎" },
+  { key: "CONTRACT", title: "怨꾩빟/?섏엫", description: "怨꾩빟 珥덉븞怨??섏엫 ?꾪솚??留덈Т由ы븯???④퀎" },
+  { key: "CASEWORK", title: "?ш굔 吏꾪뻾", description: "?쒕쪟 ?섏쭛, ?쒖텧, 蹂댁셿 ??묒쓣 吏꾪뻾?섎뒗 ?④퀎" },
+  { key: "CLOSED", title: "醫낃껐", description: "?ш굔 ?꾨즺 ?먮뒗 醫낃껐 ?뺣━瑜?留덉튇 ?④퀎" }
 ];
 
 const workflowOrder = steps.map((step) => step.key);
@@ -68,25 +68,25 @@ export function WorkflowProgressPanel({
     <Card className="p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="ui-kicker">진행 흐름</p>
-          <h3 className="mt-2 ui-section-title">현재 사건이 어느 단계에 있는지 한눈에 보입니다</h3>
+          <p className="ui-kicker">吏꾪뻾 ?먮쫫</p>
+          <h3 className="mt-2 ui-section-title">?꾩옱 ?ш굔???대뒓 ?④퀎???덈뒗吏 ?쒕늿??蹂댁엯?덈떎</h3>
           <p className="mt-2 text-sm text-text-muted">
-            현재 단계는 <span className="font-semibold text-text-strong">{currentStep.title}</span>이며, 다음 작업으로 자연스럽게 이어지도록 흐름을 표시합니다.
+            ?꾩옱 ?④퀎??<span className="font-semibold text-text-strong">{currentStep.title}</span>?대ŉ, ?ㅼ쓬 ?묒뾽?쇰줈 ?먯뿰?ㅻ읇寃??댁뼱吏?꾨줉 ?먮쫫???쒖떆?⑸땲??
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className="border-primary/20 bg-primary-soft text-primary">현재 단계 · {currentStep.title}</Badge>
+          <Badge className="border-primary/20 bg-primary-soft text-primary">?꾩옱 ?④퀎 / {currentStep.title}</Badge>
           <Badge className="border-line-strong bg-surface text-text-strong">
             Lawbot {lawbotStatus === "available" ? "연결됨" : lawbotStatus === "error" ? "오류" : "대기"}
           </Badge>
           {quoteStatus ? (
             <Badge className="border-line-strong bg-surface text-text-strong">
-              견적 상태 · {quoteStatusLabels[quoteStatus] ?? quoteStatus}
+              寃ъ쟻 ?곹깭 / {quoteStatusLabels[quoteStatus] ?? quoteStatus}
             </Badge>
           ) : null}
           {caseStage ? (
             <Badge className="border-line-strong bg-surface text-text-strong">
-              사건 단계 · {caseStageLabels[caseStage] ?? caseStage}
+              ?ш굔 ?④퀎 / {caseStageLabels[caseStage] ?? caseStage}
             </Badge>
           ) : null}
         </div>
@@ -126,3 +126,4 @@ export function WorkflowProgressPanel({
     </Card>
   );
 }
+

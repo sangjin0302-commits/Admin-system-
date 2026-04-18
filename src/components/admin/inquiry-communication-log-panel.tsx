@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition, type FormEvent } from "react";
@@ -78,12 +78,12 @@ export function InquiryCommunicationLogPanel({
       const payload = await response.json();
       if (!response.ok) {
         setTone("error");
-        setMessage(payload.error ?? "커뮤니케이션 로그를 저장하지 못했습니다.");
+        setMessage(payload.error ?? "而ㅻ??덉??댁뀡 濡쒓렇瑜???ν븯吏 紐삵뻽?듬땲??");
         return;
       }
 
       setTone("success");
-      setMessage("커뮤니케이션 로그를 저장했습니다.");
+      setMessage("而ㅻ??덉??댁뀡 濡쒓렇瑜???ν뻽?듬땲??");
       setSummary("");
       setDetails("");
       router.refresh();
@@ -94,24 +94,24 @@ export function InquiryCommunicationLogPanel({
     <Card className="p-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h3 className="ui-section-title">고객 커뮤니케이션 로그</h3>
+          <h3 className="ui-section-title">怨좉컼 而ㅻ??덉??댁뀡 濡쒓렇</h3>
           <p className="mt-2 text-sm text-text-muted">
-            최근 연락 내역, 응답 대기 여부, 다음 연락 예정일을 함께 남겨서 상담 흐름이 끊기지 않게 관리합니다.
+            理쒓렐 ?곕씫 ?댁뿭, ?묐떟 ?湲??щ?, ?ㅼ쓬 ?곕씫 ?덉젙?쇱쓣 ?④퍡 ?④꺼???곷떞 ?먮쫫???딄린吏 ?딄쾶 愿由ы빀?덈떎.
           </p>
         </div>
         <Card muted className="p-4 lg:min-w-[260px]">
-          <p className="ui-kicker">현재 연락 상태</p>
+          <p className="ui-kicker">?꾩옱 ?곕씫 ?곹깭</p>
           <p className="mt-2 text-sm font-semibold text-text-strong">
-            {latestContactAt ? formatDateTime(latestContactAt) : "아직 기록 없음"}
+            {latestContactAt ? formatDateTime(latestContactAt) : "?꾩쭅 湲곕줉 ?놁쓬"}
           </p>
           <p className="mt-1 text-sm text-text-muted">
-            최근 채널: {latestContactChannel ? channelLabels[latestContactChannel as InquiryCommunicationChannel] ?? latestContactChannel : "-"}
+            理쒓렐 梨꾨꼸: {latestContactChannel ? channelLabels[latestContactChannel as InquiryCommunicationChannel] ?? latestContactChannel : "-"}
           </p>
           <p className="mt-1 text-sm text-text-muted">
             응답 대기: {responsePending ? "예" : "아니오"}
           </p>
           <p className="mt-1 text-sm text-text-muted">
-            다음 연락 예정: {nextContactAt ? formatDateTime(nextContactAt) : "-"}
+            ?ㅼ쓬 ?곕씫 ?덉젙: {nextContactAt ? formatDateTime(nextContactAt) : "-"}
           </p>
           {latestContactSummary ? <p className="mt-3 text-sm text-text">{latestContactSummary}</p> : null}
         </Card>
@@ -135,28 +135,28 @@ export function InquiryCommunicationLogPanel({
                     </span>
                     {item.responsePending ? (
                       <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning">
-                        응답 대기
+                        ?묐떟 ?湲?
                       </span>
                     ) : null}
                   </div>
                   {item.details ? <p className="mt-1 whitespace-pre-line text-sm text-text-muted">{item.details}</p> : null}
                   <p className="mt-1 text-xs text-text-muted">
-                    기록 시점: {formatDateTime(item.createdAt)}
-                    {item.nextContactAt ? ` · 다음 연락 예정 ${formatDateTime(item.nextContactAt)}` : ""}
+                    湲곕줉 ?쒖젏: {formatDateTime(item.createdAt)}
+                    {item.nextContactAt ? ` / ?ㅼ쓬 ?곕씫 ?덉젙 ${formatDateTime(item.nextContactAt)}` : ""}
                   </p>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-text-muted">아직 저장된 연락 로그가 없습니다. 첫 안내나 자료 요청을 보낸 뒤 바로 기록해 두면 흐름 파악이 쉬워집니다.</p>
+              <p className="text-sm text-text-muted">?꾩쭅 ??λ맂 ?곕씫 濡쒓렇媛 ?놁뒿?덈떎. 泥??덈궡???먮즺 ?붿껌??蹂대궦 ??諛붾줈 湲곕줉???먮㈃ ?먮쫫 ?뚯븙???ъ썙吏묐땲??</p>
             )}
           </div>
         </Card>
 
         <Card muted className="p-5">
-          <p className="ui-kicker">새 연락 로그 추가</p>
+          <p className="ui-kicker">???곕씫 濡쒓렇 異붽?</p>
           <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
             <FieldGroup className="md:grid-cols-2">
-              <Field label="연락 채널">
+              <Field label="?곕씫 梨꾨꼸">
                 <Select value={channel} onChange={(event) => setChannel(event.target.value as InquiryCommunicationChannel)}>
                   {Object.entries(channelLabels).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -165,7 +165,7 @@ export function InquiryCommunicationLogPanel({
                   ))}
                 </Select>
               </Field>
-              <Field label="다음 연락 예정">
+              <Field label="?ㅼ쓬 ?곕씫 ?덉젙">
                 <Input
                   type="datetime-local"
                   value={nextContactValue}
@@ -174,20 +174,20 @@ export function InquiryCommunicationLogPanel({
               </Field>
             </FieldGroup>
 
-            <Field label="연락 요약">
+            <Field label="?곕씫 ?붿빟">
               <Input
                 value={summary}
                 onChange={(event) => setSummary(event.target.value)}
-                placeholder="예: 보완 서류 3종 요청, 상담 일정 조율, 견적 발송 안내"
+                placeholder="?? 蹂댁셿 ?쒕쪟 3醫??붿껌, ?곷떞 ?쇱젙 議곗쑉, 寃ъ쟻 諛쒖넚 ?덈궡"
               />
             </Field>
 
-            <Field label="상세 메모" hint="고객 반응, 약속한 내용, 다음에 확인할 포인트를 함께 적어두면 좋습니다.">
+            <Field label="?곸꽭 硫붾え" hint="怨좉컼 諛섏쓳, ?쎌냽???댁슜, ?ㅼ쓬???뺤씤???ъ씤?몃? ?④퍡 ?곸뼱?먮㈃ 醫뗭뒿?덈떎.">
               <Textarea
                 rows={6}
                 value={details}
                 onChange={(event) => setDetails(event.target.value)}
-                placeholder="예: 내일 오후까지 여권 사본과 기존 체류자격 증빙을 보내기로 안내함. 추가로 출입국 민원 이력도 확인 필요."
+                placeholder="?? ?댁씪 ?ㅽ썑源뚯? ?ш텒 ?щ낯怨?湲곗〈 泥대쪟?먭꺽 利앸튃??蹂대궡湲곕줈 ?덈궡?? 異붽?濡?異쒖엯援?誘쇱썝 ?대젰???뺤씤 ?꾩슂."
               />
             </Field>
 
@@ -198,12 +198,12 @@ export function InquiryCommunicationLogPanel({
                 onChange={(event) => setNeedsReply(event.target.checked)}
                 className="h-4 w-4 rounded border-line-strong text-primary focus:ring-primary/20"
               />
-              고객 답변이나 추가 자료를 기다리는 상태로 표시합니다.
+              怨좉컼 ?듬??대굹 異붽? ?먮즺瑜?湲곕떎由щ뒗 ?곹깭濡??쒖떆?⑸땲??
             </label>
 
             {suggestedChecklist.length > 0 ? (
               <Card className="p-4">
-                <p className="ui-kicker">지금 같이 확인하면 좋은 항목</p>
+                <p className="ui-kicker">吏湲?媛숈씠 ?뺤씤?섎㈃ 醫뗭? ??ぉ</p>
                 <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-text">
                   {suggestedChecklist.map((item) => (
                     <li key={item}>{item}</li>
@@ -223,3 +223,4 @@ export function InquiryCommunicationLogPanel({
     </Card>
   );
 }
+

@@ -1,8 +1,14 @@
-import { NextResponse, type NextRequest } from "next/server";
+﻿import { NextResponse, type NextRequest } from "next/server";
 
 const ADMIN_AUTH_USER_ENV = "ADMIN_BASIC_AUTH_USER";
 const ADMIN_AUTH_PASSWORD_ENV = "ADMIN_BASIC_AUTH_PASSWORD";
 const ADMIN_REALM = 'Basic realm="admin-office-mvp"';
+
+const KO_AUTH_REQUIRED = "\uAD00\uB9AC\uC790 \uC778\uC99D\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.";
+const KO_AUTH_CONFIG_REQUIRED =
+  "ADMIN_BASIC_AUTH_USER / ADMIN_BASIC_AUTH_PASSWORD \uD658\uACBD\uBCC0\uC218 \uC124\uC815\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.";
+const KO_AUTH_CONFIG_MISSING =
+  "\uAD00\uB9AC\uC790 \uC778\uC99D \uD658\uACBD\uBCC0\uC218\uAC00 \uC544\uC9C1 \uC124\uC815\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
 
 function getCredentials() {
   const username = process.env[ADMIN_AUTH_USER_ENV]?.trim();
@@ -16,25 +22,16 @@ function getCredentials() {
 }
 
 function isProtectedAdminRoute(pathname: string) {
-  if (pathname === "/") {
-    return true;
-  }
-
-  if (pathname.startsWith("/admin")) {
-    return true;
-  }
-
-  if (pathname.startsWith("/api/admin") && pathname !== "/api/admin/marketing/ingest") {
-    return true;
-  }
-
+  if (pathname === "/") return true;
+  if (pathname.startsWith("/admin")) return true;
+  if (pathname.startsWith("/api/admin") && pathname !== "/api/admin/marketing/ingest") return true;
   return false;
 }
 
 function getUnauthorizedResponse(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.json(
-      { error: "Unauthorized", message: "관리자 인증이 필요합니다." },
+      { error: "Unauthorized", message: KO_AUTH_REQUIRED },
       {
         status: 401,
         headers: { "WWW-Authenticate": ADMIN_REALM }
@@ -42,7 +39,7 @@ function getUnauthorizedResponse(request: NextRequest) {
     );
   }
 
-  return new NextResponse("관리자 인증이 필요합니다.", {
+  return new NextResponse(KO_AUTH_REQUIRED, {
     status: 401,
     headers: { "WWW-Authenticate": ADMIN_REALM }
   });
@@ -53,13 +50,13 @@ function getConfigurationMissingResponse(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Admin auth not configured",
-        message: "ADMIN_BASIC_AUTH_USER / ADMIN_BASIC_AUTH_PASSWORD 환경변수가 필요합니다."
+        message: KO_AUTH_CONFIG_REQUIRED
       },
       { status: 503 }
     );
   }
 
-  return new NextResponse("관리자 인증 환경변수가 아직 설정되지 않았습니다.", { status: 503 });
+  return new NextResponse(KO_AUTH_CONFIG_MISSING, { status: 503 });
 }
 
 export function middleware(request: NextRequest) {
@@ -70,7 +67,6 @@ export function middleware(request: NextRequest) {
   }
 
   const credentials = getCredentials();
-
   if (!credentials) {
     return getConfigurationMissingResponse(request);
   }

@@ -12,7 +12,7 @@ import {
 import { dispatchInitialClientMessage } from "@/lib/services/client-message-service";
 import { getInquiryReceiptCode } from "@/lib/services/inquiry-receipt-code";
 import { formatDate } from "@/lib/utils";
-import { parseCreateInquiryInput } from "@/lib/validation/inquiry";
+import { parseCreateInquiryInput } from "@/lib/validation/inquiry-safe";
 import type { AdminSort, InquiryStatus, InquiryType, LanguageCode, UrgencyLevel } from "@/types/inquiry";
 import { getUrgencyRank, inquiryTypeLabels, toLocale, type Locale } from "@/types/inquiry";
 

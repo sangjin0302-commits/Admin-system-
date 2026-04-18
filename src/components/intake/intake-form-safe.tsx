@@ -1,21 +1,21 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState, type FormEvent } from "react";
 
+import { getIntakeCopy } from "@/components/intake/copy-safe";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { StateInline } from "@/components/ui/state-panel";
 import { Select } from "@/components/ui/select";
+import { StateInline } from "@/components/ui/state-panel";
 import { Textarea } from "@/components/ui/textarea";
-import { getIntakeCopy } from "@/components/intake/copy-clean";
 import {
-  inquiryTypeValues,
   inquiryTypeLabels,
-  urgencyValues,
+  inquiryTypeValues,
   urgencyLabels,
+  urgencyValues,
   type Locale
 } from "@/types/inquiry";
 
@@ -80,37 +80,17 @@ const initialState: FormState = {
   consentToPrivacy: false
 };
 
-export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
-  const [locale, setLocale] = useState<FormState["preferredLocale"]>(initialLocale === "en" ? "en" : "ko");
+export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
+  const normalizedLocale = initialLocale === "en" ? "en" : "ko";
+  const [locale, setLocale] = useState<FormState["preferredLocale"]>(normalizedLocale);
   const [form, setForm] = useState<FormState>({
     ...initialState,
-    preferredLocale: initialLocale === "en" ? "en" : "ko"
+    preferredLocale: normalizedLocale
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<IntakeResponse["inquiry"] | null>(null);
   const copy = useMemo(() => getIntakeCopy(locale), [locale]);
-  const intakeGuideItems = useMemo(
-    () => [
-      {
-        label: copy.labels.contactName,
-        ready: form.contactName.trim().length > 0 && form.email.trim().length > 0
-      },
-      {
-        label: copy.labels.description,
-        ready: form.description.trim().length >= 20
-      },
-      {
-        label: copy.labels.requestedOutcome,
-        ready: form.requestedOutcome.trim().length > 0
-      },
-      {
-        label: copy.labels.consentToPrivacy,
-        ready: form.consentToPrivacy
-      }
-    ],
-    [copy, form.contactName, form.email, form.description, form.requestedOutcome, form.consentToPrivacy]
-  );
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -127,12 +107,12 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          preferredLocale: locale
+          preferredLocale: locale,
+          isCorporateRequest: form.clientType === "COMPANY" || form.isCorporateRequest
         })
       });
 
       const data = (await response.json()) as IntakeResponse & { error?: string };
-
       if (!response.ok) {
         setError(data.error ?? copy.errorGeneric);
         return;
@@ -151,7 +131,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+    <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="p-6">
           <FieldGroup className="sm:grid-cols-2">
@@ -168,7 +148,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
                       updateField("preferredLocale", value);
                     }}
                   >
-                    {value === "ko" ? "한국어" : "English"}
+                    {value === "ko" ? "\uD55C\uAD6D\uC5B4" : "English"}
                   </Button>
                 ))}
               </div>
@@ -177,9 +157,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
             <Field label={copy.labels.clientType}>
               <Select
                 value={form.clientType}
-                onChange={(event) =>
-                  updateField("clientType", event.target.value as FormState["clientType"])
-                }
+                onChange={(event) => updateField("clientType", event.target.value as FormState["clientType"])}
               >
                 <option value="INDIVIDUAL">{copy.clientTypeOptions.INDIVIDUAL}</option>
                 <option value="COMPANY">{copy.clientTypeOptions.COMPANY}</option>
@@ -193,13 +171,15 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
                 placeholder={copy.placeholders.contactName}
               />
             </Field>
-            <Field label={copy.labels.organizationName}>
-              <Input
-                value={form.organizationName}
-                onChange={(event) => updateField("organizationName", event.target.value)}
-                placeholder={copy.placeholders.organizationName}
-              />
-            </Field>
+            {form.clientType === "COMPANY" ? (
+              <Field label={copy.labels.organizationName}>
+                <Input
+                  value={form.organizationName}
+                  onChange={(event) => updateField("organizationName", event.target.value)}
+                  placeholder={copy.placeholders.organizationName}
+                />
+              </Field>
+            ) : null}
             <Field label={copy.labels.email}>
               <Input
                 required
@@ -245,15 +225,16 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
               <Select
                 value={form.requestedInquiryType}
                 onChange={(event) =>
-                  updateField(
-                    "requestedInquiryType",
-                    event.target.value as FormState["requestedInquiryType"]
-                  )
+                  updateField("requestedInquiryType", event.target.value as FormState["requestedInquiryType"])
                 }
               >
                 {inquiryTypeValues.map((value) => (
                   <option key={value} value={value}>
-                    {value === "UNKNOWN" ? (locale === "ko" ? "미선택" : "Not selected") : inquiryTypeLabels[value][locale]}
+                    {value === "UNKNOWN"
+                      ? locale === "ko"
+                        ? "\uBBF8\uC120\uD0DD"
+                        : "Not selected"
+                      : inquiryTypeLabels[value][locale]}
                   </option>
                 ))}
               </Select>
@@ -319,9 +300,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
                 onChange={(event) => updateField("isCorporateRequest", event.target.checked)}
                 className="mt-1 h-4 w-4 rounded border-line text-primary"
               />
-              <span className="text-sm font-semibold text-text-strong">
-                {copy.labels.isCorporateRequest} / {copy.optionLabels.corporateYes}
-              </span>
+              <span className="text-sm font-semibold text-text-strong">{copy.optionLabels.corporateYes}</span>
             </label>
             <label className="flex items-start gap-3">
               <input
@@ -330,9 +309,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
                 onChange={(event) => updateField("needsTranslation", event.target.checked)}
                 className="mt-1 h-4 w-4 rounded border-line text-primary"
               />
-              <span className="text-sm font-semibold text-text-strong">
-                {copy.labels.needsTranslation} / {copy.optionLabels.translationYes}
-              </span>
+              <span className="text-sm font-semibold text-text-strong">{copy.optionLabels.translationYes}</span>
             </label>
             <label className="flex items-start gap-3">
               <input
@@ -341,9 +318,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
                 onChange={(event) => updateField("hasPreparedDocuments", event.target.checked)}
                 className="mt-1 h-4 w-4 rounded border-line text-primary"
               />
-              <span className="text-sm font-semibold text-text-strong">
-                {copy.labels.hasPreparedDocuments} / {copy.optionLabels.documentsReady}
-              </span>
+              <span className="text-sm font-semibold text-text-strong">{copy.optionLabels.documentsReady}</span>
             </label>
           </div>
         </Card>
@@ -357,9 +332,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
               className="mt-1 h-4 w-4 rounded border-line text-primary"
             />
             <span>
-              <span className="block text-sm font-semibold text-text-strong">
-                {copy.labels.wantsCallback}
-              </span>
+              <span className="block text-sm font-semibold text-text-strong">{copy.labels.wantsCallback}</span>
               <span className="mt-1 block text-sm text-text-muted">{copy.callbackHelp}</span>
             </span>
           </label>
@@ -374,9 +347,7 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
               onChange={(event) => updateField("consentToPrivacy", event.target.checked)}
               className="mt-1 h-4 w-4 rounded border-line text-primary"
             />
-            <span className="text-sm font-semibold text-text-strong">
-              {copy.labels.consentToPrivacy}
-            </span>
+            <span className="text-sm font-semibold text-text-strong">{copy.labels.consentToPrivacy}</span>
           </label>
         </Card>
 
@@ -387,52 +358,30 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
         </Button>
       </form>
 
-      <div className="space-y-4">
+      {result ? (
         <Card muted className="p-5">
-          <p className="text-lg font-semibold text-text-strong">{copy.resultTitle}</p>
-          <p className="mt-2 text-sm text-text-muted">{copy.resultDescription}</p>
-          {result ? (
-            <div className="mt-4 space-y-3">
-              <div className="flex flex-wrap gap-2">
-                <Badge>{result.id}</Badge>
-                <Badge>{inquiryTypeLabels[result.inquiryType][locale]}</Badge>
-                <Badge tone="urgency" urgency={result.urgencyLevel}>
-                  {urgencyLabels[result.urgencyLevel][locale]}
-                </Badge>
-              </div>
-              <Card className="p-4">
-                <p className="ui-kicker">?붿빟</p>
-                <p className="mt-2 text-sm text-text">{result.generatedSummary}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="ui-kicker">以鍮?沅뚯옣 ?쒕쪟</p>
-                <p className="mt-2 whitespace-pre-line text-sm text-text">{result.generatedGuidance}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="ui-kicker">?묒닔 硫붿떆吏</p>
-                <p className="mt-2 text-sm text-text">{result.generatedReceiptMessage}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="ui-kicker">?ъ쟾吏꾨떒 硫붾え</p>
-                <p className="mt-2 text-sm text-text">
-                  {result.consultationRequired
-                    ? "?곷떞 ?꾩슂濡?遺꾨쪟?섏뿀?듬땲??"
-                    : "湲곕낯 ?쒕쪟 ?뺤씤 ??寃ъ쟻 珥덉븞 ?④퀎濡?吏꾪뻾?????덉뒿?덈떎."}
-                </p>
-                {result.riskComplexityHint ? (
-                  <p className="mt-2 text-xs text-text-muted">{result.riskComplexityHint}</p>
-                ) : null}
-              </Card>
-              <Button type="button" variant="secondary" onClick={() => setResult(null)}>
-                {copy.buttons.resetResult}
-              </Button>
-            </div>
-          ) : (
-            <p className="mt-4 text-sm text-text-muted">{copy.emptyResult}</p>
-          )}
+          <div className="flex flex-wrap gap-2">
+            <Badge>{result.id}</Badge>
+            <Badge>{inquiryTypeLabels[result.inquiryType][locale]}</Badge>
+            <Badge tone="urgency" urgency={result.urgencyLevel}>
+              {urgencyLabels[result.urgencyLevel][locale]}
+            </Badge>
+          </div>
+          <div className="mt-4 space-y-3">
+            <Card className="p-4">
+              <p className="ui-kicker">{locale === "ko" ? "\uC811\uC218 \uC694\uC57D" : "Summary"}</p>
+              <p className="mt-2 text-sm text-text">{result.generatedSummary}</p>
+            </Card>
+            <Card className="p-4">
+              <p className="ui-kicker">{locale === "ko" ? "\uC811\uC218 \uBA54\uC2DC\uC9C0" : "Receipt message"}</p>
+              <p className="mt-2 text-sm text-text">{result.generatedReceiptMessage}</p>
+            </Card>
+            <Button type="button" variant="secondary" onClick={() => setResult(null)}>
+              {copy.buttons.resetResult}
+            </Button>
+          </div>
         </Card>
-      </div>
+      ) : null}
     </div>
   );
 }
-

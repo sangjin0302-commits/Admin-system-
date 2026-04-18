@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
 
@@ -28,6 +28,41 @@ function getLawbotStatus() {
   };
 }
 
+const ossUpgradeCandidates = [
+  {
+    key: "twenty",
+    name: "twentyhq/twenty",
+    href: "https://github.com/twentyhq/twenty",
+    priority: "\uC6B0\uC120 \uB3C4\uC785",
+    summary:
+      "CRM \uD30C\uC774\uD504\uB77C\uC778/\uACE0\uAC1D \uD0C0\uC784\uB77C\uC778 \uAD6C\uC870\uAC00 \uC798 \uC815\uB9AC\uB41C \uB808\uD37C\uB7F0\uC2A4\uB85C, \uBB38\uC758-\uC0C1\uB2F4-\uACAC\uC801-\uC218\uC784 \uD750\uB984 \uACE0\uB3C4\uD654\uC5D0 \uC801\uD569\uD569\uB2C8\uB2E4."
+  },
+  {
+    key: "plane",
+    name: "makeplane/plane",
+    href: "https://github.com/makeplane/plane",
+    priority: "\uC911\uAE30 \uB3C4\uC785",
+    summary:
+      "\uBCF4\uB4DC/\uC2A4\uD504\uB9B0\uD2B8 \uC911\uC2EC \uC5C5\uBB34 \uAD00\uB9AC \uD328\uD134\uC744 \uCC38\uACE0\uD558\uAE30 \uC88B\uC544 \uC0AC\uAC74 \uC9C4\uD589 \uBCF4\uB4DC\uC640 \uB2F4\uB2F9 \uD050 \uD655\uC7A5\uC5D0 \uC720\uB9AC\uD569\uB2C8\uB2E4."
+  },
+  {
+    key: "refine",
+    name: "refinedev/refine",
+    href: "https://github.com/refinedev/refine",
+    priority: "\uC989\uC2DC \uCC38\uACE0",
+    summary:
+      "\uAD00\uB9AC\uC790 \uD654\uBA74\uC758 CRUD, \uD544\uD130, \uB370\uC774\uD130 \uD14C\uC774\uBE14 \uD328\uD134\uC774 \uC131\uC219\uD574 \uC815\uBCF4 \uC9D1\uC57D/\uC0C1\uC138 \uD3B8\uC9D1 UX \uAC1C\uC120\uC5D0 \uB3C4\uC6C0\uC774 \uB429\uB2C8\uB2E4."
+  },
+  {
+    key: "n8n",
+    name: "n8n-io/n8n",
+    href: "https://github.com/n8n-io/n8n",
+    priority: "\uC120\uD0DD \uB3C4\uC785",
+    summary:
+      "\uBB38\uC758 \uC811\uC218 \uC54C\uB9BC, \uBC31\uC5C5, \uB178\uC158 \uB3D9\uAE30\uD654 \uAC19\uC740 \uC6CC\uD06C\uD50C\uB85C \uC790\uB3D9\uD654\uC5D0 \uAC15\uC810\uC774 \uC788\uC73C\uBA70 \uBC84\uC804/\uBCF4\uC548 \uD328\uCE58 \uC6B4\uC601 \uCCB4\uACC4\uB97C \uD568\uAED8 \uAC00\uC838\uAC00\uC57C \uD569\uB2C8\uB2E4."
+  }
+] as const;
+
 export default function AdminIntegrationsPage() {
   const lawbotStatus = getLawbotStatus();
 
@@ -35,7 +70,7 @@ export default function AdminIntegrationsPage() {
     <div className="space-y-6">
       <Card className="ui-analysis-hero p-6">
         <p className="ui-kicker">\uC5F0\uB3D9 \uC13C\uD130</p>
-        <h2 className="mt-2 ui-page-title">Lawbot · Market Analyze \uD1B5\uD569 \uD654\uBA74</h2>
+        <h2 className="mt-2 ui-page-title">Lawbot / Market Analyze \uD1B5\uD569 \uD654\uBA74</h2>
         <p className="mt-2 max-w-3xl text-sm text-text-muted">
           \uD604\uC7AC system\uC5D0\uC11C\uB294 Lawbot\uACFC Market Analyze\uB97C \uC9C1\uC811 \uD558\uB098\uB85C \uBB36\uC5B4 \uC6B4\uC601\uD558\uB294
           \uB2E8\uACC4\uB294 \uC544\uB2C8\uACE0, \uAC01\uAC01\uC758 \uBD84\uC11D \uACB0\uACFC\uB97C system \uC5C5\uBB34 \uD750\uB984\uC5D0 \uD761\uC218\uD558\uB294
@@ -100,6 +135,36 @@ export default function AdminIntegrationsPage() {
       </div>
 
       <Card className="p-6">
+        <p className="ui-kicker">\uCD94\uCC9C \uB808\uD37C\uB7F0\uC2A4</p>
+        <h3 className="mt-2 ui-section-title">\uBAA9\uC801 \uB9DE\uCDA4 \uC624\uD508\uC18C\uC2A4 \uB3C4\uC785 \uB85C\uB4DC\uB9F5</h3>
+        <p className="mt-3 text-sm text-text-muted">
+          \uC9C0\uAE08 system \uAD6C\uC870\uB97C \uAE68\uC9C0 \uC54A\uACE0 \uC5C5\uADF8\uB808\uC774\uB4DC\uD560 \uC218 \uC788\uB294 \uC2E4\uC804 \uCC38\uACE0 \uB808\uD3EC \uBAA9\uB85D\uC785\uB2C8\uB2E4.
+          \uD654\uBA74 \uD328\uD134\uC740 \uCC38\uACE0\uD558\uB418, \uB370\uC774\uD130 \uC6D0\uBCF8\uC740 \uD604\uC7AC system DB \uAE30\uC900\uC73C\uB85C \uC720\uC9C0\uD558\uB294 \uBC29\uD5A5\uC744 \uAD8C\uC7A5\uD569\uB2C8\uB2E4.
+        </p>
+        <div className="mt-5 grid gap-3 xl:grid-cols-2">
+          {ossUpgradeCandidates.map((repo) => (
+            <Card key={repo.key} muted className="p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-text-strong">{repo.name}</p>
+                <span className="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+                  {repo.priority}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-text-muted">{repo.summary}</p>
+              <a
+                href={repo.href}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex text-sm font-medium text-primary"
+              >
+                GitHub \uBC14\uB85C\uAC00\uAE30
+              </a>
+            </Card>
+          ))}
+        </div>
+      </Card>
+
+      <Card className="p-6">
         <p className="ui-kicker">\uC5F0\uACB0 \uBC29\uC2DD</p>
         <h3 className="mt-2 ui-section-title">\uC9C0\uAE08 \uB2F9\uC7A5 \uAC00\uB2A5\uD55C \uBC29\uD5A5</h3>
         <div className="mt-4 space-y-3 text-sm text-text-muted">
@@ -111,3 +176,4 @@ export default function AdminIntegrationsPage() {
     </div>
   );
 }
+

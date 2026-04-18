@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -114,6 +114,15 @@ export default async function AdminDashboardContent() {
   const consultationCount = activeInquiries.filter((item) =>
     ["CONSULTATION_REQUIRED", "WAITING_CONSULTATION", "PRE_DIAGNOSED"].includes(item.status)
   ).length;
+  const operationalRiskIndex =
+    urgentCount * 8 + docsPendingCount * 5 + responsePendingCount * 4 + quotePendingCount * 3;
+  const operationalHealthScore = Math.max(0, Math.min(100, 100 - operationalRiskIndex));
+  const operationalHealthDescription =
+    operationalHealthScore >= 80
+      ? "\uC6B4\uC601 \uD750\uB984\uC774 \uC548\uC815\uC801\uC785\uB2C8\uB2E4."
+      : operationalHealthScore >= 60
+        ? "\uC8FC\uC694 \uD56D\uBAA9 \uC810\uAC80\uC774 \uD544\uC694\uD569\uB2C8\uB2E4."
+        : "\uAE34\uAE09 \uC21C\uC11C \uC7AC\uC815\uB82C\uACFC \uD6C4\uC18D \uC870\uCE58\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.";
 
   const dueSoonItems = activeInquiries
     .filter((item) => isWithinDays(item.dueDate, 3))
@@ -274,11 +283,16 @@ export default async function AdminDashboardContent() {
         </div>
       </Card>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <DashboardMetric label="\uBB38\uC758" value={inquiries.length} description="\uB204\uC801 \uC811\uC218\uC640 \uC0AC\uAC74 \uD6C4\uBCF4" />
         <DashboardMetric label="\uACAC\uC801" value={quoteCount} description="\uC0DD\uC131\uB41C \uACAC\uC801 \uBC0F \uD6C4\uC18D \uD750\uB984" />
         <DashboardMetric label="\uACC4\uC57D \uCD08\uC548" value={contractDraftCount} description="\uACC4\uC57D \uBB38\uC548 \uBC0F \uC815\uB9AC \uB2E8\uACC4" />
         <DashboardMetric label="\uC0AC\uAC74" value={caseCount} description="\uC2E4\uC81C \uC9C4\uD589 \uC911\uC778 \uC0AC\uAC74 \uB808\uCF54\uB4DC" />
+        <DashboardMetric
+          label="\uC6B4\uC601 \uAC74\uC804\uB3C4"
+          value={operationalHealthScore}
+          description={operationalHealthDescription}
+        />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
@@ -325,8 +339,8 @@ export default async function AdminDashboardContent() {
             id: item.id,
             href: `/admin/inquiries/${item.id}`,
             title: item.title,
-            meta: `${urgencyLabels[item.urgencyLevel].ko} · ${formatDateTime(item.dueDate)}`,
-            description: `${item.contactName}${item.organizationName ? ` · ${item.organizationName}` : ""}`
+            meta: `${urgencyLabels[item.urgencyLevel].ko} / ${formatDateTime(item.dueDate)}`,
+            description: `${item.contactName}${item.organizationName ? ` / ${item.organizationName}` : ""}`
           }))}
         />
 
@@ -342,7 +356,7 @@ export default async function AdminDashboardContent() {
             meta: item.responsePending
               ? "\uACE0\uAC1D \uC751\uB2F5 \uB300\uAE30"
               : `\uB2E4\uC74C \uC5F0\uB77D ${formatDateTime(item.nextContactAt)}`,
-            description: `${inquiryStatusLabels[item.status].ko} · ${item.contactName}`
+            description: `${inquiryStatusLabels[item.status].ko} / ${item.contactName}`
           }))}
         />
 
@@ -355,8 +369,8 @@ export default async function AdminDashboardContent() {
             id: item.id,
             href: `/admin/inquiries/${item.id}`,
             title: item.title,
-            meta: `${inquiryTypeLabels[item.inquiryType].ko} · ${formatDateTime(item.createdAt)}`,
-            description: `${item.contactName} · ${languageCodeLabels[item.preferredLanguage].ko}`
+            meta: `${inquiryTypeLabels[item.inquiryType].ko} / ${formatDateTime(item.createdAt)}`,
+            description: `${item.contactName} / ${languageCodeLabels[item.preferredLanguage].ko}`
           }))}
         />
       </div>
@@ -365,7 +379,7 @@ export default async function AdminDashboardContent() {
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="ui-kicker">\uC5F0\uB3D9 \uC5C5\uBB34\uC2E4</p>
-            <h3 className="mt-2 ui-section-title">Lawbot · Market Analyze \uC790\uB9AC</h3>
+            <h3 className="mt-2 ui-section-title">Lawbot / Market Analyze \uC790\uB9AC</h3>
           </div>
           <Link href="/admin/integrations" className="text-sm font-medium text-primary">
             \uC5F0\uB3D9 \uC13C\uD130 \uC5F4\uAE30
@@ -422,7 +436,7 @@ export default async function AdminDashboardContent() {
                     <p className="mt-3 truncate text-base font-semibold text-text-strong">{item.title}</p>
                     <p className="mt-1 truncate text-sm text-text-muted">
                       {item.contactName}
-                      {item.organizationName ? ` · ${item.organizationName}` : ""} ·{" "}
+                      {item.organizationName ? ` / ${item.organizationName}` : ""} /{" "}
                       {inquiryTypeLabels[item.inquiryType].ko}
                     </p>
                   </div>
@@ -519,3 +533,4 @@ function dashboardToneClassName(tone: "default" | "consult" | "quote" | "risk" |
   if (tone === "won") return "rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary";
   return "rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-text";
 }
+
