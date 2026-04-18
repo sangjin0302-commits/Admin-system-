@@ -1,5 +1,8 @@
 "use client";
 
+export { IntakeFormSafeV3 as IntakeFormSafe } from "./intake-form-safe-v3";
+/*
+
 import { useMemo, useState, type FormEvent } from "react";
 
 import { getIntakeCopy } from "@/components/intake/copy-safe";
@@ -11,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StateInline } from "@/components/ui/state-panel";
 import { Textarea } from "@/components/ui/textarea";
+import { parseClientApiError } from "@/lib/http/client-api";
 import {
   inquiryTypeLabels,
   inquiryTypeValues,
@@ -20,6 +24,7 @@ import {
 } from "@/types/inquiry";
 
 type IntakeResponse = {
+  deduplicated?: boolean;
   inquiry: {
     id: string;
     inquiryType: keyof typeof inquiryTypeLabels;
@@ -80,6 +85,8 @@ const initialState: FormState = {
   consentToPrivacy: false
 };
 
+const INTAKE_SUBMIT_TIMEOUT_MS = 12_000;
+
 export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
   const normalizedLocale = initialLocale === "en" ? "en" : "ko";
   const [locale, setLocale] = useState<FormState["preferredLocale"]>(normalizedLocale);
@@ -89,6 +96,7 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [result, setResult] = useState<IntakeResponse["inquiry"] | null>(null);
   const copy = useMemo(() => getIntakeCopy(locale), [locale]);
 
@@ -100,11 +108,16 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
     event.preventDefault();
     setIsSubmitting(true);
     setError("");
+    setNotice("");
+    let timeoutId: number | undefined;
 
     try {
+      const controller = new AbortController();
+      timeoutId = window.setTimeout(() => controller.abort(), INTAKE_SUBMIT_TIMEOUT_MS);
       const response = await fetch("/api/inquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           ...form,
           preferredLocale: locale,
@@ -112,20 +125,46 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
         })
       });
 
-      const data = (await response.json()) as IntakeResponse & { error?: string };
       if (!response.ok) {
-        setError(data.error ?? copy.errorGeneric);
+        setError(await parseClientApiError(response, copy.errorGeneric));
+        return;
+      }
+
+      const data = (await response.json().catch(() => null)) as IntakeResponse | null;
+      if (!data?.inquiry) {
+        setError(copy.errorGeneric);
         return;
       }
 
       setResult(data.inquiry);
+      if (false) {
+        setNotice("동일 내용이 이미 접수되어 기존 접수 건으로 연결했습니다.");
+      }
+      if (data.deduplicated) {
+        setNotice(copy.notices.deduplicated);
+      }
       setForm({
         ...initialState,
         preferredLocale: locale
       });
-    } catch {
+    } catch (error) {
+      if (false) {
+        setError(copy.errorTimeout);
+        return;
+      }
+
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setError(copy.errorTimeout);
+        return;
+        setError("요청 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.");
+        return;
+      }
+
       setError(copy.errorGeneric);
     } finally {
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
       setIsSubmitting(false);
     }
   }
@@ -157,7 +196,16 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
             <Field label={copy.labels.clientType}>
               <Select
                 value={form.clientType}
-                onChange={(event) => updateField("clientType", event.target.value as FormState["clientType"])}
+                onChange={(event) => {
+                  const nextClientType = event.target.value as FormState["clientType"];
+                  setForm((current) => ({
+                    ...current,
+                    clientType: nextClientType,
+                    organizationName: nextClientType === "COMPANY" ? current.organizationName : "",
+                    isCorporateRequest:
+                      nextClientType === "COMPANY" ? true : false
+                  }));
+                }}
               >
                 <option value="INDIVIDUAL">{copy.clientTypeOptions.INDIVIDUAL}</option>
                 <option value="COMPANY">{copy.clientTypeOptions.COMPANY}</option>
@@ -166,6 +214,8 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
             <Field label={copy.labels.contactName}>
               <Input
                 required
+                minLength={2}
+                maxLength={60}
                 value={form.contactName}
                 onChange={(event) => updateField("contactName", event.target.value)}
                 placeholder={copy.placeholders.contactName}
@@ -174,6 +224,7 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
             {form.clientType === "COMPANY" ? (
               <Field label={copy.labels.organizationName}>
                 <Input
+                  maxLength={100}
                   value={form.organizationName}
                   onChange={(event) => updateField("organizationName", event.target.value)}
                   placeholder={copy.placeholders.organizationName}
@@ -184,6 +235,7 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
               <Input
                 required
                 type="email"
+                maxLength={254}
                 value={form.email}
                 onChange={(event) => updateField("email", event.target.value)}
                 placeholder={copy.placeholders.email}
@@ -191,6 +243,7 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
             </Field>
             <Field label={copy.labels.phone}>
               <Input
+                maxLength={30}
                 value={form.phone}
                 onChange={(event) => updateField("phone", event.target.value)}
                 placeholder={copy.placeholders.phone}
@@ -199,6 +252,8 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
             <Field label={copy.labels.title} className="sm:col-span-2">
               <Input
                 required
+                minLength={4}
+                maxLength={120}
                 value={form.title}
                 onChange={(event) => updateField("title", event.target.value)}
                 placeholder={copy.placeholders.title}
@@ -208,6 +263,8 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
               <Textarea
                 required
                 rows={7}
+                minLength={20}
+                maxLength={2000}
                 value={form.description}
                 onChange={(event) => updateField("description", event.target.value)}
                 placeholder={copy.placeholders.description}
@@ -216,6 +273,7 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
             <Field label={copy.labels.requestedOutcome} className="sm:col-span-2">
               <Textarea
                 rows={3}
+                maxLength={400}
                 value={form.requestedOutcome}
                 onChange={(event) => updateField("requestedOutcome", event.target.value)}
                 placeholder={copy.placeholders.requestedOutcome}
@@ -255,6 +313,7 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
             </Field>
             <Field label={copy.labels.nationality}>
               <Input
+                maxLength={80}
                 value={form.nationality}
                 onChange={(event) => updateField("nationality", event.target.value)}
                 placeholder={copy.placeholders.nationality}
@@ -262,6 +321,7 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
             </Field>
             <Field label={copy.labels.currentStatus}>
               <Input
+                maxLength={120}
                 value={form.currentStatus}
                 onChange={(event) => updateField("currentStatus", event.target.value)}
                 placeholder={copy.placeholders.currentStatus}
@@ -269,6 +329,7 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
             </Field>
             <Field label={copy.labels.documentCountry}>
               <Input
+                maxLength={80}
                 value={form.documentCountry}
                 onChange={(event) => updateField("documentCountry", event.target.value)}
                 placeholder={copy.placeholders.documentCountry}
@@ -276,6 +337,7 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
             </Field>
             <Field label={copy.labels.targetAgency}>
               <Input
+                maxLength={120}
                 value={form.targetAgency}
                 onChange={(event) => updateField("targetAgency", event.target.value)}
                 placeholder={copy.placeholders.targetAgency}
@@ -352,6 +414,7 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
         </Card>
 
         {error ? <StateInline tone="error">{error}</StateInline> : null}
+        {!error && notice ? <StateInline tone="success">{notice}</StateInline> : null}
 
         <Button type="submit" disabled={isSubmitting} size="lg">
           {isSubmitting ? copy.buttons.submitting : copy.buttons.submit}
@@ -385,3 +448,4 @@ export function IntakeFormSafe({ initialLocale }: { initialLocale: Locale }) {
     </div>
   );
 }
+*/

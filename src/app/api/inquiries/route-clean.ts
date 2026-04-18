@@ -1,9 +1,8 @@
-import { ZodError } from "zod";
-import { NextResponse } from "next/server";
+export { GET, POST } from "./route-safe-v3";
 
-import { createInquiry } from "@/lib/services/inquiry-service";
 
-export async function POST(request: Request) {
+/*
+async function POST_LEGACY_UNUSED(request: Request) {
   try {
     const payload = await request.json();
     const inquiry = await createInquiry(payload);
@@ -21,3 +20,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "문의 접수를 처리하지 못했습니다." }, { status: 500 });
   }
 }
+*/

@@ -1,8 +1,19 @@
 ﻿"use client";
 
-import { useMemo, useState, useTransition, type ReactNode } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import {
+  CollapsibleSection,
+  FieldBlock,
+  InfoPanel,
+} from "@/components/admin/quote-workspace-ui";
+import {
+  QuoteAnalysisSection,
+  QuoteContractSection,
+  QuoteMessagesSection,
+  QuoteSummarySection
+} from "@/components/admin/quote-workspace-sections";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,182 +21,20 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { EmptyState, StateInline } from "@/components/ui/state-panel";
 import { Textarea } from "@/components/ui/textarea";
+import { parseClientApiError } from "@/lib/http/client-api";
 import { formatCurrency } from "@/lib/quote-engine/utils";
 import type { QuoteSummarySnapshot, QuoteWorkspace } from "@/lib/quote-engine/types";
-import type { LawbotCaseAnalysisResult } from "@/lib/services/lawbot-case-analysis-service";
-
-const stageKindLabels: Record<string, string> = {
-  RETAINER: "착수금",
-  MIDTERM: "중도금",
-  SUCCESS: "성공보수"
-};
-
-const quoteStatusLabels: Record<string, string> = {
-  DRAFT: "초안",
-  READY_TO_SEND: "발송 준비",
-  SENT: "발송 완료",
-  ACCEPTED: "수락",
-  REJECTED: "거절",
-  EXPIRED: "만료"
-};
-
-const caseStageLabels: Record<string, string> = {
-  CONTRACT_PREPARATION: "계약 준비",
-  DOCUMENT_COLLECTION: "서류 수집",
-  UNDER_REVIEW: "검토 중",
-  ACTIVE: "진행 중",
-  SUBMITTED: "제출 완료",
-  SUPPLEMENT_REQUESTED: "보완 요청",
-  COMPLETED: "완료",
-  ON_HOLD: "보류",
-  CLOSED: "종결"
-};
-
-function formatRange(min: number, max: number) {
-  if (min === max) {
-    return formatCurrency(min);
-  }
-
-  return `${formatCurrency(min)} ~ ${formatCurrency(max)}`;
-}
-
-function buildCaseAnalysisDraft(workspace: QuoteWorkspace) {
-  const analysis = workspace.caseAnalysis;
-  return [
-    "[AI 사건 분석 요약]",
-    `- 사건 강도: ${analysis.strengthLabel} (${analysis.strengthScore}점)`,
-    `- 해결 가능성: ${analysis.resolutionOutlook} (${analysis.resolutionProbabilityPercent}/100)`,
-    `- 사건 요약: ${analysis.summary}`,
-    "",
-    "[핵심 쟁점]",
-    ...analysis.issues.map((item) => `- ${item}`),
-    "",
-    "[유리 요소]",
-    ...analysis.favorableFactors.map((item) => `- ${item}`),
-    "",
-    "[불리 요소]",
-    ...analysis.riskFactors.map((item) => `- ${item}`),
-    "",
-    "[추가 확인 필요 사실]",
-    ...analysis.missingFacts.map((item) => `- ${item}`),
-    "",
-    "[즉시 확인할 항목]",
-    ...analysis.immediateActions.map((item) => `- ${item}`),
-    "",
-    "[권장 다음 조치]",
-    `- ${analysis.recommendedAction}`,
-    "",
-    "[고객 안내 초안]",
-    analysis.communicationGuidance.clientSummary,
-    "",
-    "[자료 요청 초안]",
-    analysis.communicationGuidance.documentRequest,
-    "",
-    "[참고 법령]",
-    ...analysis.lawReferences.map((item) => `- ${item.title}: ${item.summary}`),
-    "",
-    "[판례 검색어]",
-    ...analysis.precedentReferences.map((item) => `- ${item.query}`)
-  ].join("\n");
-}
-
-function buildLawbotAnalysisDraft(result: LawbotCaseAnalysisResult) {
-  if (result.status !== "available") {
-    return null;
-  }
-
-  const data = result.data;
-  return [
-    "[Lawbot 참고 분석]",
-    `- 입력 요약: ${data.input_summary}`,
-    "",
-    "[Lawbot 핵심 쟁점]",
-    ...(data.key_issues.length > 0 ? data.key_issues.map((item) => `- ${item}`) : ["- 원문 명시 없음"]),
-    "",
-    "[Lawbot 추가 확인 사실]",
-    ...(data.followup_facts.length > 0 ? data.followup_facts.map((item) => `- ${item}`) : ["- 원문 명시 없음"]),
-    "",
-    "[Lawbot 참고 법령]",
-    ...(data.applicable_laws.length > 0 ? data.applicable_laws.map((item) => `- ${item.law}: ${item.summary}`) : ["- 원문 명시 없음"]),
-    "",
-    "[Lawbot 참고 판례]",
-    ...(data.related_precedents?.length
-      ? data.related_precedents.map((item) =>
-          `- ${item.case_name} / ${item.case_number}${item.court_name ? ` / ${item.court_name}` : ""}${item.decision_date ? ` / ${item.decision_date}` : ""}`
-        )
-      : ["- 원문 명시 없음"])
-  ].join("\n");
-}
-
-function buildActionChecklist(workspace: QuoteWorkspace) {
-  const actions = [
-    workspace.caseAnalysis.recommendedAction,
-    ...workspace.caseAnalysis.missingFacts.slice(0, 3).map((item) => `${item} 확인`),
-  ];
-
-  if (workspace.lawbotAnalysis.status === "available") {
-    actions.push(...workspace.lawbotAnalysis.data.next_search_recommendations.slice(0, 3));
-  }
-
-  return [...new Set(actions.filter(Boolean))];
-}
-
-function buildActionTemplates(workspace: QuoteWorkspace, quote: QuoteSummarySnapshot | null) {
-  const missingFacts = workspace.caseAnalysis.missingFacts.slice(0, 3);
-  const lawbotMissingFacts =
-    workspace.lawbotAnalysis.status === "available"
-      ? workspace.lawbotAnalysis.data.followup_facts.slice(0, 3)
-      : [];
-
-  const combinedMissingFacts = [...new Set([...missingFacts, ...lawbotMissingFacts])].slice(0, 4);
-  const documentRequest = [
-    `${workspace.inquiry.contactName}님, 문의 내용 검토 결과 우선 아래 자료를 먼저 확인하면 다음 단계 판단이 훨씬 빨라집니다.`,
-    "",
-    ...combinedMissingFacts.map((item, index) => `${index + 1}. ${item}`),
-    "",
-    "자료를 보내주시면 확인 후 상담 또는 견적 진행 방향을 순차적으로 안내드리겠습니다."
-  ].join("\n");
-
-  const cautiousReview = [
-    `${workspace.inquiry.contactName}님, 현재 내용만으로는 바로 진행 판단을 확정하기보다 추가 사실 확인이 먼저 필요한 상태입니다.`,
-    workspace.caseAnalysis.recommendedAction,
-    "",
-    "관련 자료를 보완해 주시면 가능 범위와 주의할 점을 정리해서 다시 안내드리겠습니다."
-  ].join("\n");
-
-  const quoteAdvance = [
-    `${workspace.inquiry.contactName}님, 현재 검토 기준으로는 견적 또는 수임 검토 단계로 이어갈 수 있는 여지가 있습니다.`,
-    quote ? `예상 견적 범위는 ${formatRange(quote.totalMin, quote.totalMax)}입니다.` : "세부 견적은 자료 확인 후 확정됩니다.",
-    workspace.caseAnalysis.recommendedAction,
-    "",
-    "원하시면 바로 견적 설명과 다음 준비 절차를 안내드리겠습니다."
-  ].join("\n");
-
-  return { documentRequest, cautiousReview, quoteAdvance };
-}
-
-function buildRecommendedSpecialTerms(workspace: QuoteWorkspace) {
-  const missingFacts = workspace.caseAnalysis.missingFacts.slice(0, 3);
-  const lawbotFollowups =
-    workspace.lawbotAnalysis.status === "available"
-      ? workspace.lawbotAnalysis.data.followup_facts.slice(0, 3)
-      : [];
-
-  const factChecklist = [...new Set([...missingFacts, ...lawbotFollowups])];
-
-  return [
-    "[권장 특약 초안]",
-    "1. 의뢰인은 사실관계와 제출자료를 정확하게 제공하고, 추가 확인 요청이 있는 경우 지체 없이 협조합니다.",
-    "2. 행정기관 또는 관계기관의 심사 기준, 재량 판단, 보완 요구, 제도 변경에 따라 결과와 소요 기간이 달라질 수 있습니다.",
-    "3. 업무 범위에 포함되지 않은 번역, 공증, 외부 수수료, 추가 보완 대응, 현장 방문은 별도 협의 또는 추가 비용 대상이 될 수 있습니다.",
-    "4. 실제 제출 전 사실관계 또는 서류 상태가 달라질 경우 보수와 진행 전략이 조정될 수 있습니다.",
-    factChecklist.length > 0 ? "" : null,
-    factChecklist.length > 0 ? "[추가 확인 필요 사항]" : null,
-    ...factChecklist.map((item, index) => `${index + 1}. ${item}`)
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
+import {
+  buildActionChecklist,
+  buildActionTemplates,
+  buildCaseAnalysisDraft,
+  buildLawbotAnalysisDraft,
+  buildRecommendedSpecialTerms,
+  caseStageLabels,
+  formatRange,
+  quoteStatusLabels,
+  stageKindLabels
+} from "@/lib/services/quote-workspace-helpers";
 
 type QuoteWorkspaceProps = {
   inquiryId: string;
@@ -299,6 +148,31 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
     setTone(nextTone);
   }
 
+  async function readQuotePayload(
+    response: Response,
+    fallbackMessage: string
+  ): Promise<{ ok: true; quote: QuoteSummarySnapshot } | { ok: false; message: string }> {
+    if (!response.ok) {
+      return {
+        ok: false,
+        message: await parseClientApiError(response, fallbackMessage)
+      };
+    }
+
+    const payload = (await response.json().catch(() => null)) as { quote?: QuoteSummarySnapshot } | null;
+    if (!payload?.quote) {
+      return {
+        ok: false,
+        message: "서버 응답 형식이 올바르지 않아 처리하지 못했습니다."
+      };
+    }
+
+    return {
+      ok: true,
+      quote: payload.quote
+    };
+  }
+
   function toggleSelection(values: string[], setValues: (nextValues: string[]) => void, target: string) {
     if (values.includes(target)) {
       setValues(values.filter((value) => value !== target));
@@ -310,19 +184,24 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
   async function handleCreateQuote() {
     setFeedback("", "default");
     startTransition(async () => {
-      const response = await fetch(`/api/admin/inquiries/${inquiryId}/quotes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ create: true })
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        setFeedback(payload.error ?? "견적 초안을 만들지 못했습니다.", "error");
+      try {
+        const response = await fetch(`/api/admin/inquiries/${inquiryId}/quotes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ create: true })
+        });
+        const parsed = await readQuotePayload(response, "견적 초안을 만들지 못했습니다.");
+        if (!parsed.ok) {
+          setFeedback(parsed.message, "error");
+          return;
+        }
+        applyQuote(parsed.quote);
+        setFeedback("견적 초안을 생성했습니다.", "success");
+        router.refresh();
+      } catch {
+        setFeedback("견적 초안 생성 중 네트워크 오류가 발생했습니다.", "error");
         return;
       }
-      applyQuote(payload.quote);
-      setFeedback("견적 초안을 생성했습니다.", "success");
-      router.refresh();
     });
   }
 
@@ -330,30 +209,35 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
     if (!quote) return;
     setFeedback("", "default");
     startTransition(async () => {
-      const response = await fetch(`/api/admin/quotes/${quote.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          selectedServiceLegacyIds: selectedServices,
-          selectedOptionLegacyIds: selectedOptions,
-          urgencyRuleCode,
-          consultRuleCode,
-          paymentRuleCode,
-          rangeMode,
-          draftNotes,
-          stageOverrides: Object.fromEntries(
-            paymentPlans.map((plan) => [plan.stageKind, { percentage: Number(plan.percentage), dueText: plan.dueText }])
-          )
-        })
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        setFeedback(payload.error ?? "견적을 다시 계산하지 못했습니다.", "error");
+      try {
+        const response = await fetch(`/api/admin/quotes/${quote.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            selectedServiceLegacyIds: selectedServices,
+            selectedOptionLegacyIds: selectedOptions,
+            urgencyRuleCode,
+            consultRuleCode,
+            paymentRuleCode,
+            rangeMode,
+            draftNotes,
+            stageOverrides: Object.fromEntries(
+              paymentPlans.map((plan) => [plan.stageKind, { percentage: Number(plan.percentage), dueText: plan.dueText }])
+            )
+          })
+        });
+        const parsed = await readQuotePayload(response, "견적을 다시 계산하지 못했습니다.");
+        if (!parsed.ok) {
+          setFeedback(parsed.message, "error");
+          return;
+        }
+        applyQuote(parsed.quote);
+        setFeedback("견적 계산을 갱신했습니다.", "success");
+        router.refresh();
+      } catch {
+        setFeedback("견적 계산 중 네트워크 오류가 발생했습니다.", "error");
         return;
       }
-      applyQuote(payload.quote);
-      setFeedback("견적 계산을 갱신했습니다.", "success");
-      router.refresh();
     });
   }
 
@@ -361,46 +245,51 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
     if (!quote) return;
     setFeedback("", "default");
     startTransition(async () => {
-      const response = await fetch(`/api/admin/quotes/${quote.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "manual",
-          draftNotes,
-          specialTerms: quote.contractDraft ? specialTerms : undefined,
-          lineItems: lineItems.map((line, index) => ({
-            id: line.id,
-            label: line.label,
-            description: line.description,
-            amountMin: Number(line.amountMin),
-            amountMax: Number(line.amountMax),
-            sortOrder: index
-          })),
-          adjustments: adjustments.map((adjustment, index) => ({
-            id: adjustment.id,
-            label: adjustment.label,
-            description: adjustment.description,
-            computedMin: Number(adjustment.computedMin),
-            computedMax: Number(adjustment.computedMax),
-            sortOrder: index
-          })),
-          paymentPlans: paymentPlans.map((plan, index) => ({
-            id: plan.id,
-            stageKind: plan.stageKind,
-            percentage: Number(plan.percentage),
-            dueText: plan.dueText,
-            sortOrder: index
-          }))
-        })
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        setFeedback(payload.error ?? "수정 내용을 저장하지 못했습니다.", "error");
+      try {
+        const response = await fetch(`/api/admin/quotes/${quote.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "manual",
+            draftNotes,
+            specialTerms: quote.contractDraft ? specialTerms : undefined,
+            lineItems: lineItems.map((line, index) => ({
+              id: line.id,
+              label: line.label,
+              description: line.description,
+              amountMin: Number(line.amountMin),
+              amountMax: Number(line.amountMax),
+              sortOrder: index
+            })),
+            adjustments: adjustments.map((adjustment, index) => ({
+              id: adjustment.id,
+              label: adjustment.label,
+              description: adjustment.description,
+              computedMin: Number(adjustment.computedMin),
+              computedMax: Number(adjustment.computedMax),
+              sortOrder: index
+            })),
+            paymentPlans: paymentPlans.map((plan, index) => ({
+              id: plan.id,
+              stageKind: plan.stageKind,
+              percentage: Number(plan.percentage),
+              dueText: plan.dueText,
+              sortOrder: index
+            }))
+          })
+        });
+        const parsed = await readQuotePayload(response, "수정 내용을 저장하지 못했습니다.");
+        if (!parsed.ok) {
+          setFeedback(parsed.message, "error");
+          return;
+        }
+        applyQuote(parsed.quote);
+        setFeedback("수정 내용을 저장했습니다.", "success");
+        router.refresh();
+      } catch {
+        setFeedback("수정 내용 저장 중 네트워크 오류가 발생했습니다.", "error");
         return;
       }
-      applyQuote(payload.quote);
-      setFeedback("수정 내용을 저장했습니다.", "success");
-      router.refresh();
     });
   }
 
@@ -408,19 +297,24 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
     if (!quote) return;
     setFeedback("", "default");
     startTransition(async () => {
-      const response = await fetch(`/api/admin/quotes/${quote.id}/contract-draft`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ create: true })
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        setFeedback(payload.error ?? "계약 초안을 만들지 못했습니다.", "error");
+      try {
+        const response = await fetch(`/api/admin/quotes/${quote.id}/contract-draft`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ create: true })
+        });
+        const parsed = await readQuotePayload(response, "계약 초안을 만들지 못했습니다.");
+        if (!parsed.ok) {
+          setFeedback(parsed.message, "error");
+          return;
+        }
+        applyQuote(parsed.quote);
+        setFeedback("계약 초안을 생성했습니다.", "success");
+        router.refresh();
+      } catch {
+        setFeedback("계약 초안 생성 중 네트워크 오류가 발생했습니다.", "error");
         return;
       }
-      applyQuote(payload.quote);
-      setFeedback("계약 초안을 생성했습니다.", "success");
-      router.refresh();
     });
   }
 
@@ -428,24 +322,29 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
     if (!quote) return;
     setFeedback("", "default");
     startTransition(async () => {
-      const response = await fetch(`/api/admin/quotes/${quote.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "status",
-          status: quoteStatus,
-          caseDueDate,
-          caseInternalMemo
-        })
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        setFeedback(payload.error ?? "상태를 바꾸지 못했습니다.", "error");
+      try {
+        const response = await fetch(`/api/admin/quotes/${quote.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "status",
+            status: quoteStatus,
+            caseDueDate,
+            caseInternalMemo
+          })
+        });
+        const parsed = await readQuotePayload(response, "상태를 바꾸지 못했습니다.");
+        if (!parsed.ok) {
+          setFeedback(parsed.message, "error");
+          return;
+        }
+        applyQuote(parsed.quote);
+        setFeedback("상태를 반영했습니다.", "success");
+        router.refresh();
+      } catch {
+        setFeedback("상태 반영 중 네트워크 오류가 발생했습니다.", "error");
         return;
       }
-      applyQuote(payload.quote);
-      setFeedback("상태를 반영했습니다.", "success");
-      router.refresh();
     });
   }
 
@@ -513,84 +412,22 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
             </div>
           </Card>
 
-          <Card id="quote-analysis" className="p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge>사건 분석</Badge>
-                  <Badge className="border-primary/20 bg-primary-soft text-primary">{workspace.caseAnalysis.strengthLabel} · {workspace.caseAnalysis.strengthScore}점</Badge>
-                </div>
-                <h3 className="mt-4 ui-section-title">견적 전 사건 분석</h3>
-                <p className="mt-2 text-sm text-text-muted">사건 분석 요약을 견적 메모와 계약 초안 특약에 바로 반영할 수 있습니다.</p>
-              </div>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  setDraftNotes((current) => {
-                    const sections = [current?.trim(), caseAnalysisDraft, lawbotAnalysisDraft].filter(Boolean);
-                    return sections.join("\n\n");
-                  })
-                }
-              >
-                메모에 반영
-              </Button>
-            </div>
-            <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              <ListCard title="핵심 쟁점" items={workspace.caseAnalysis.issues} />
-              <ListCard title="추가 확인 필요 사실" items={workspace.caseAnalysis.missingFacts} />
-            </div>
-            <div className="mt-5">
-              <ListCard title="권장 액션" items={actionChecklist} />
-            </div>
-            {workspace.lawbotAnalysis.status === "available" ? (
-              <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                <ListCard title="Lawbot 핵심 쟁점" items={workspace.lawbotAnalysis.data.key_issues} />
-                <ListCard
-                  title="Lawbot 참고 판례"
-                  items={
-                    workspace.lawbotAnalysis.data.related_precedents?.map(
-                      (item) =>
-                        `${item.case_name} / ${item.case_number}${item.court_name ? ` / ${item.court_name}` : ""}${item.decision_date ? ` / ${item.decision_date}` : ""}`
-                    ) ?? []
-                  }
-                />
-              </div>
-            ) : null}
-            <div className="mt-5 grid gap-4 xl:grid-cols-3">
-              <MessageCard
-                title="추가서류 요청"
-                message={actionTemplates.documentRequest}
-                onCopy={() => handleCopyMessage(actionTemplates.documentRequest, "추가서류 요청")}
-              />
-              <MessageCard
-                title="보수 검토 안내"
-                message={actionTemplates.cautiousReview}
-                onCopy={() => handleCopyMessage(actionTemplates.cautiousReview, "보수 검토 안내")}
-              />
-              <MessageCard
-                title="견적 진행 안내"
-                message={actionTemplates.quoteAdvance}
-                onCopy={() => handleCopyMessage(actionTemplates.quoteAdvance, "견적 진행 안내")}
-              />
-            </div>
-          </Card>
+          <QuoteAnalysisSection
+            workspace={workspace}
+            caseAnalysisDraft={caseAnalysisDraft}
+            lawbotAnalysisDraft={lawbotAnalysisDraft}
+            actionChecklist={actionChecklist}
+            actionTemplates={actionTemplates}
+            onAppendDraftNotes={() =>
+              setDraftNotes((current) => {
+                const sections = [current?.trim(), caseAnalysisDraft, lawbotAnalysisDraft].filter(Boolean);
+                return sections.join("\n\n");
+              })
+            }
+            onCopyMessage={handleCopyMessage}
+          />
 
-          <Card className="p-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge>견적 관리</Badge>
-              <Badge className="border-primary/20 bg-primary-soft text-primary">상태: {quoteStatusLabels[quote.status]}</Badge>
-            </div>
-            <h3 className="mt-4 ui-section-title">견적 요약</h3>
-            <p className="mt-2 whitespace-pre-line text-sm text-text-muted">{quote.calculationSummary ?? "계산 요약이 아직 없습니다."}</p>
-            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <InfoPanel label="서비스 기본가" value={formatRange(quote.serviceBaseMin, quote.serviceBaseMax)} />
-              <InfoPanel label="소계" value={formatRange(quote.subtotalMin, quote.subtotalMax)} />
-              <InfoPanel label="VAT" value={formatRange(quote.vatAmountMin, quote.vatAmountMax)} />
-              <InfoPanel label="총액" value={formatRange(quote.totalMin, quote.totalMax)} />
-              <InfoPanel label="상담료" value={quote.consultFee > 0 ? `${formatCurrency(quote.consultFee)} (수임 시 공제)` : "없음"} />
-              <InfoPanel label="최종 수정" value={new Date(quote.updatedAt).toLocaleString("ko-KR")} />
-            </div>
-          </Card>
+          <QuoteSummarySection quote={quote} />
 
           <CollapsibleSection
             title="견적 조건 조정"
@@ -778,112 +615,24 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
             ) : null}
           </CollapsibleSection>
 
-          <Card id="quote-contract" className="p-6">
-            <h3 className="ui-section-title">상태 변경 및 계약 초안</h3>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <FieldBlock label="견적 상태">
-                <Select value={quoteStatus} onChange={(event) => setQuoteStatus(event.target.value as QuoteSummarySnapshot["status"])}>
-                  {Object.entries(quoteStatusLabels).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </Select>
-              </FieldBlock>
-              <FieldBlock label="사건 기한">
-                <Input type="date" value={caseDueDate} onChange={(event) => setCaseDueDate(event.target.value)} />
-              </FieldBlock>
-            </div>
-            <div className="mt-4">
-              <FieldBlock label="사건 내부 메모">
-                <Textarea rows={4} value={caseInternalMemo} onChange={(event) => setCaseInternalMemo(event.target.value)} />
-              </FieldBlock>
-            </div>
-            <div className="mt-4">
-              <FieldBlock label="특약 직접 편집">
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => setSpecialTerms((current) => [current?.trim(), recommendedSpecialTerms].filter(Boolean).join("\n\n"))}
-                    disabled={!quote.contractDraft}
-                  >
-                    권장 특약 불러오기
-                  </Button>
-                </div>
-                <Textarea
-                  rows={8}
-                  value={specialTerms}
-                  onChange={(event) => setSpecialTerms(event.target.value)}
-                  placeholder={
-                    quote.contractDraft
-                      ? "환불 기준, 추가 비용 정산, 자료 제출 협조, 업무 제외 범위 등 사건별 특약을 직접 적어둘 수 있습니다."
-                      : "계약 초안을 먼저 생성하면 사건별 특약을 직접 편집할 수 있습니다."
-                  }
-                  disabled={!quote.contractDraft}
-                />
-              </FieldBlock>
-              <p className="mt-2 text-xs text-text-muted">
-                계약 초안이 이미 생성된 경우 이 특약은 수정 내용 저장 후 유지됩니다. 자동 분석 참고는 아래 문서 미리보기에도 함께 반영됩니다.
-              </p>
-            </div>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Button onClick={handleUpdateQuoteStatus} disabled={isPending}>{isPending ? "반영 중..." : "상태 반영"}</Button>
-              <Button variant="secondary" onClick={handleCreateContractDraft} disabled={isPending}>{isPending ? "생성 중..." : "계약 초안 생성"}</Button>
-            </div>
-
-            {quote.contractDraft ? (
-              <Card muted className="mt-5 p-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-text-strong">{quote.contractDraft.title}</p>
-                    <p className="mt-2 text-xs text-text-muted">최근 수정: {new Date(quote.contractDraft.updatedAt).toLocaleString("ko-KR")}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    <a
-                      href={`/api/admin/quotes/${quote.id}/contract-draft/export`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white transition hover:opacity-90"
-                    >
-                      계약 초안 열기
-                    </a>
-                    <a
-                      href={`/api/admin/quotes/${quote.id}/contract-draft/export?download=1`}
-                      className="inline-flex h-11 items-center justify-center rounded-md border border-line-strong px-4 text-sm font-medium text-text-strong transition hover:bg-surface"
-                    >
-                      파일 다운로드
-                    </a>
-                  </div>
-                </div>
-                <div className="mt-5 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-                  <DocumentBlock title="계약 본문" content={quote.contractDraft.bodyText} />
-                  <div className="space-y-4">
-                    {quote.contractDraft.scopeText ? (
-                      <DocumentBlock title="업무 범위" content={quote.contractDraft.scopeText} compact />
-                    ) : null}
-                    {quote.contractDraft.paymentSummary ? (
-                      <DocumentBlock title="결제 안내" content={quote.contractDraft.paymentSummary} compact />
-                    ) : null}
-                    {quote.contractDraft.specialTerms ? (
-                      <DocumentBlock title="특약 및 사건 분석 참고" content={quote.contractDraft.specialTerms} compact />
-                    ) : null}
-                  </div>
-                </div>
-              </Card>
-            ) : (
-              <EmptyState title="계약 초안이 아직 없습니다." description="계약 초안 생성 버튼을 누르면 화면 미리보기와 다운로드 파일이 함께 준비됩니다." className="mt-5" />
-            )}
-
-            {quote.caseRecord ? (
-              <Card muted className="mt-4 p-5">
-                <p className="text-sm font-semibold text-text-strong">사건 번호: {quote.caseRecord.caseNumber}</p>
-                <div className="mt-3 grid gap-2 text-sm text-text-muted sm:grid-cols-2">
-                  <p>현재 단계: {caseStageLabels[quote.caseRecord.currentStage]}</p>
-                  <p>기한: {quote.caseRecord.dueDate ? quote.caseRecord.dueDate.slice(0, 10) : "-"}</p>
-                  <p className="sm:col-span-2">내부 메모: {quote.caseRecord.internalMemo || "-"}</p>
-                </div>
-              </Card>
-            ) : null}
-          </Card>
+          <QuoteContractSection
+            quote={quote}
+            quoteStatus={quoteStatus}
+            caseDueDate={caseDueDate}
+            caseInternalMemo={caseInternalMemo}
+            specialTerms={specialTerms}
+            recommendedSpecialTerms={recommendedSpecialTerms}
+            isPending={isPending}
+            onQuoteStatusChange={setQuoteStatus}
+            onCaseDueDateChange={setCaseDueDate}
+            onCaseInternalMemoChange={setCaseInternalMemo}
+            onSpecialTermsChange={setSpecialTerms}
+            onAppendSpecialTerms={() =>
+              setSpecialTerms((current) => [current?.trim(), recommendedSpecialTerms].filter(Boolean).join("\n\n"))
+            }
+            onUpdateStatus={handleUpdateQuoteStatus}
+            onCreateContractDraft={handleCreateContractDraft}
+          />
 
           <CollapsibleSection
             id="quote-messages"
@@ -892,12 +641,7 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
             open={showMessages}
             onToggle={() => setShowMessages((current) => !current)}
           >
-            <div className="grid gap-4 xl:grid-cols-2">
-              <MessageCard title="견적 발송 문구 (KO)" message={quote.messageDrafts.quoteSendKo} onCopy={() => handleCopyMessage(quote.messageDrafts.quoteSendKo, "견적 발송 문구")}/>
-              <MessageCard title="견적 발송 문구 (EN)" message={quote.messageDrafts.quoteSendEn} onCopy={() => handleCopyMessage(quote.messageDrafts.quoteSendEn, "영문 견적 발송 문구")}/>
-              <MessageCard title="수락 안내 문구 (KO)" message={quote.messageDrafts.acceptedKo} onCopy={() => handleCopyMessage(quote.messageDrafts.acceptedKo, "수락 안내 문구")}/>
-              <MessageCard title="수락 안내 문구 (EN)" message={quote.messageDrafts.acceptedEn} onCopy={() => handleCopyMessage(quote.messageDrafts.acceptedEn, "영문 수락 안내 문구")}/>
-            </div>
+            <QuoteMessagesSection quote={quote} onCopyMessage={handleCopyMessage} />
           </CollapsibleSection>
 
           {message ? <StateInline tone={tone}>{message}</StateInline> : null}
@@ -907,93 +651,3 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
   );
 }
 
-function FieldBlock({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <p className="mb-2 text-sm font-medium text-text-strong">{label}</p>
-      {children}
-    </div>
-  );
-}
-
-function CollapsibleSection({
-  id,
-  title,
-  description,
-  open,
-  onToggle,
-  children
-}: {
-  id?: string;
-  title: string;
-  description: string;
-  open: boolean;
-  onToggle: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <Card id={id} className="p-6 scroll-mt-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h3 className="ui-section-title">{title}</h3>
-          <p className="mt-2 text-sm text-text-muted">{description}</p>
-        </div>
-        <Button variant="secondary" onClick={onToggle}>
-          {open ? "접기" : "펼쳐서 보기"}
-        </Button>
-      </div>
-      {open ? <div className="mt-5">{children}</div> : null}
-    </Card>
-  );
-}
-
-function InfoPanel({ label, value }: { label: string; value: string }) {
-  return (
-    <Card muted className="p-4">
-      <p className="ui-kicker">{label}</p>
-      <p className="mt-2 text-sm font-medium text-text-strong">{value}</p>
-    </Card>
-  );
-}
-
-function ListCard({ title, items }: { title: string; items: string[] }) {
-  return (
-    <Card muted className="p-5">
-      <p className="ui-kicker">{title}</p>
-      <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-text">
-        {items.map((item) => (
-          <li key={`${title}-${item}`}>{item}</li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
-
-function DocumentBlock({
-  title,
-  content,
-  compact = false
-}: {
-  title: string;
-  content: string;
-  compact?: boolean;
-}) {
-  return (
-    <Card muted className={compact ? "p-4" : "p-5"}>
-      <p className="ui-kicker">{title}</p>
-      <pre className="mt-3 whitespace-pre-wrap text-sm text-text">{content}</pre>
-    </Card>
-  );
-}
-
-function MessageCard({ title, message, onCopy }: { title: string; message: string; onCopy: () => void }) {
-  return (
-    <Card muted className="p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-text-strong">{title}</p>
-        <Button size="sm" variant="secondary" onClick={onCopy}>복사</Button>
-      </div>
-      <pre className="mt-3 whitespace-pre-wrap text-sm text-text">{message}</pre>
-    </Card>
-  );
-}

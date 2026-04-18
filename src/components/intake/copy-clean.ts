@@ -1,3 +1,5 @@
+export { getIntakeCopy } from "./copy-safe";
+/*
 import type { Locale } from "@/types/inquiry";
 
 const copy = {
@@ -194,3 +196,4 @@ const copy = {
 export function getIntakeCopy(locale: Locale) {
   return locale === "en" ? copy.en : copy.ko;
 }
+*/

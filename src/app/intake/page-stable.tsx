@@ -1,3 +1,6 @@
+export { default } from "./page-safe";
+/*
+
 import Link from "next/link";
 
 import { IntakeForm } from "@/components/intake/intake-form-stable";
@@ -30,3 +33,4 @@ export default async function IntakePage({
     </div>
   );
 }
+*/

@@ -1,29 +1,20 @@
-import { NextResponse } from "next/server";
-
+import { createAdminRequestContext } from "@/lib/http/admin-api";
 import { readMarketingSnapshot } from "@/lib/services/marketing-sync-service";
 
 export async function GET() {
+  const api = createAdminRequestContext("admin.marketing.overview.get");
   try {
     const snapshot = await readMarketingSnapshot();
     if (!snapshot) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "저장된 마케팅 스냅샷이 없습니다.",
-          snapshot: null
-        },
-        { status: 404 }
-      );
+      return api.error(404, "저장된 마케팅 스냅샷이 없습니다.", {
+        code: "MARKETING_SNAPSHOT_NOT_FOUND"
+      });
     }
-    return NextResponse.json({ ok: true, snapshot });
+    return api.ok({ ok: true, snapshot });
   } catch (error) {
-    console.error("Failed to load marketing snapshot", error);
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "마케팅 스냅샷을 불러오지 못했습니다."
-      },
-      { status: 500 }
-    );
+    api.logError(error);
+    return api.error(500, "마케팅 스냅샷을 불러오지 못했습니다.", {
+      code: "LOAD_MARKETING_SNAPSHOT_FAILED"
+    });
   }
 }

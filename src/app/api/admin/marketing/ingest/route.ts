@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createAdminRequestContext } from "@/lib/http/admin-api";
 import { consumeRateLimit, getClientIpFromHeaders, getEnvInt } from "@/lib/security/rate-limit";
 import { saveMarketingSnapshot, verifyMarketingSyncToken } from "@/lib/services/marketing-sync-service";
 
@@ -16,8 +15,9 @@ function isPayloadTooLarge(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const api = createAdminRequestContext("admin.marketing.ingest.post");
   if (isPayloadTooLarge(request)) {
-    return NextResponse.json({ ok: false, error: "요청 본문이 너무 큽니다." }, { status: 413 });
+    return api.error(413, "요청 본문이 너무 큽니다.", { code: "PAYLOAD_TOO_LARGE" });
   }
 
   const ip = getClientIpFromHeaders(request.headers);
@@ -29,30 +29,35 @@ export async function POST(request: Request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { ok: false, error: "요청이 너무 많아 잠시 차단되었습니다." },
-      { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSec) } }
+    return api.error(
+      429,
+      "요청이 너무 많아 잠시 차단되었습니다.",
+      {
+        code: "RATE_LIMITED",
+        headers: {
+          "Retry-After": String(rateLimit.retryAfterSec)
+        }
+      }
     );
   }
 
   const token = request.headers.get("x-admin-sync-token");
   if (!verifyMarketingSyncToken(token)) {
-    return NextResponse.json({ ok: false, error: "인증되지 않은 요청입니다." }, { status: 401 });
+    return api.error(401, "인증되지 않은 요청입니다.", { code: "UNAUTHORIZED_TOKEN" });
   }
 
   try {
     const payload = await request.json();
     if (!payload || typeof payload !== "object") {
-      return NextResponse.json({ ok: false, error: "유효한 마케팅 스냅샷 본문이 필요합니다." }, { status: 400 });
+      return api.error(400, "유효한 마케팅 스냅샷 본문이 필요합니다.", { code: "INVALID_BODY" });
     }
 
     const result = await saveMarketingSnapshot(payload);
-    return NextResponse.json({ ok: true, ...result }, { status: 201 });
+    return api.ok({ ok: true, ...result }, { status: 201 });
   } catch (error) {
-    console.error("Failed to ingest marketing snapshot", error);
-    return NextResponse.json(
-      { ok: false, error: "마케팅 스냅샷 저장에 실패했습니다." },
-      { status: 500 }
-    );
+    api.logError(error);
+    return api.error(500, "마케팅 스냅샷 저장에 실패했습니다.", {
+      code: "SAVE_MARKETING_SNAPSHOT_FAILED"
+    });
   }
 }

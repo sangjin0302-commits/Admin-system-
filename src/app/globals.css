@@ -24,6 +24,12 @@
   --radius-xl: 22px;
   --shadow-panel: 0 10px 28px rgba(16, 24, 32, 0.06);
   --shadow-floating: 0 18px 40px rgba(16, 24, 32, 0.1);
+  --motion-fast: 160ms;
+  --motion-base: 220ms;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -42,6 +48,27 @@ a {
   @apply bg-primary-soft text-text-strong;
 }
 
+:where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(24, 72, 109, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer base {
   h1,
   h2,
@@ -56,6 +83,16 @@ a {
 }
 
 @layer components {
+  .ui-skip-link {
+    @apply absolute left-4 top-2 z-[1200] rounded-md border border-primary bg-white px-3 py-2 text-sm font-semibold text-primary shadow-panel;
+    transform: translateY(-180%);
+    transition: transform var(--motion-fast) ease;
+  }
+
+  .ui-skip-link:focus-visible {
+    transform: translateY(0%);
+  }
+
   .ui-shell {
     @apply mx-auto min-h-screen max-w-[1280px] px-4 pb-12 pt-5 sm:px-6 lg:px-8;
   }
@@ -131,7 +168,7 @@ a {
   }
 
   .ui-analysis-panel {
-    @apply rounded-[18px] border border-line bg-white/75 backdrop-blur;
+    @apply rounded-[18px] border border-line bg-white/75 backdrop-blur transition-shadow duration-200 hover:shadow-panel;
   }
 
   .ui-analysis-chip {

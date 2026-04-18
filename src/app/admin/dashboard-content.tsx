@@ -1,18 +1,34 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
+import {
+  DashboardListCard,
+  DashboardMetric,
+  dashboardToneClassName
+} from "@/components/admin/dashboard-shared";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
 import { prisma } from "@/lib/prisma/client";
-import { readMarketingSnapshot } from "@/lib/services/marketing-sync-service";
+import { buildAdminDashboardPageData } from "@/lib/services/admin-dashboard-page-data";
+import {
+  getOperationalHealthToneClass,
+  getPriorityScore,
+  getPriorityReason,
+  getStatusTone
+} from "@/lib/services/admin-dashboard-helpers";
 import { listInquiries } from "@/lib/services/inquiry-service";
+import { readMarketingSnapshot } from "@/lib/services/marketing-sync-service";
+import {
+  getPublicIntakeControlSnapshot,
+  type PublicIntakeControlSnapshot
+} from "@/lib/services/public-intake-control-service-safe-v3";
+import { getSystemHealthSnapshot } from "@/lib/services/system-health-service-safe-v3";
 import { formatDateTime } from "@/lib/utils";
 import {
-  inquiryStatusLabels,
-  inquiryTypeLabels,
-  languageCodeLabels,
-  urgencyLabels,
-  type InquiryStatus
+  getInquiryStatusLabel,
+  getInquiryTypeLabel,
+  getLanguageCodeLabel,
+  getUrgencyLabel
 } from "@/types/inquiry";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +53,31 @@ async function safeReadMarketingSnapshot() {
   }
 }
 
+async function safeGetSystemHealthSnapshot() {
+  try {
+    return await getSystemHealthSnapshot();
+  } catch (error) {
+    console.error("Failed to load system health snapshot for admin dashboard", error);
+    return null;
+  }
+}
+
+async function safeGetPublicIntakeControlSnapshot(): Promise<PublicIntakeControlSnapshot> {
+  try {
+    return await getPublicIntakeControlSnapshot();
+  } catch (error) {
+    console.error("Failed to load public intake control snapshot for admin dashboard", error);
+    return {
+      maintenanceMode: false,
+      maintenanceMessage: "공개 접수 상태를 읽지 못해 기본 값으로 표시합니다.",
+      retryAfterSec: 300,
+      source: "env",
+      updatedAt: null,
+      updatedBy: null
+    };
+  }
+}
+
 async function safeCount<T>(label: string, task: Promise<T>, fallback: T) {
   try {
     return await task;
@@ -46,152 +87,55 @@ async function safeCount<T>(label: string, task: Promise<T>, fallback: T) {
   }
 }
 
-function isWithinDays(date: Date | null | undefined, days: number) {
-  if (!date) return false;
-  const now = new Date();
-  const distance = date.getTime() - now.getTime();
-  return distance >= 0 && distance <= days * 24 * 60 * 60 * 1000;
-}
-
-function getLawbotStatus() {
-  const hasAnalyzeUrl = Boolean(process.env.LAWBOT_ANALYZE_URL?.trim());
-  const hasAnalyzeToken = Boolean(process.env.LAWBOT_ANALYZE_TOKEN?.trim());
-
-  if (hasAnalyzeUrl && hasAnalyzeToken) {
-    return {
-      label: "\uC2E4\uC5F0\uACB0 \uC900\uBE44 \uC644\uB8CC",
-      toneClassName: "bg-success/10 text-success",
-      description:
-        "\uC0AC\uAC74 \uC0C1\uC138\uC5D0\uC11C \uC2E4\uC81C \uBD84\uC11D \uD638\uCD9C\uACFC \uC2A4\uB0C5\uC0F7 \uC800\uC7A5\uAE4C\uC9C0 \uC774\uC5B4\uC9C8 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
-    };
-  }
-
-  if (hasAnalyzeUrl) {
-    return {
-      label: "\uC8FC\uC18C\uB9CC \uC5F0\uACB0\uB428",
-      toneClassName: "bg-warning/10 text-warning",
-      description:
-        "\uBD84\uC11D \uC8FC\uC18C\uB294 \uC788\uC9C0\uB9CC \uD1A0\uD070\uC774 \uC5C6\uC5B4 \uC6B4\uC601 \uAE30\uC900\uC5D0\uC11C\uB294 \uC810\uAC80\uC774 \uB354 \uD544\uC694\uD569\uB2C8\uB2E4."
-    };
-  }
-
-  return {
-    label: "\uBBF8\uC5F0\uACB0",
-    toneClassName: "bg-danger/10 text-danger",
-    description:
-      "UI\uC640 \uC800\uC7A5 \uAD6C\uC870\uB294 \uC900\uBE44\uB3FC \uC788\uC9C0\uB9CC \uC2E4\uC81C \uD638\uCD9C\uC740 \uC544\uC9C1 \uAEBC\uC838 \uC788\uC2B5\uB2C8\uB2E4."
-  };
-}
-
-function getStatusTone(status: InquiryStatus) {
-  if (["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(status)) return "quote";
-  if (["CONSULTATION_REQUIRED", "WAITING_CONSULTATION"].includes(status)) return "consult";
-  if (status === "ON_HOLD") return "risk";
-  if (status === "WON") return "won";
-  return "default";
-}
-
 export default async function AdminDashboardContent() {
-  const [inquiries, marketingSnapshot, quoteCount, contractDraftCount, caseCount] = await Promise.all([
+  const [
+    inquiries,
+    marketingSnapshot,
+    systemHealthSnapshot,
+    publicIntakeControl,
+    quoteCount,
+    contractDraftCount,
+    caseCount
+  ] = await Promise.all([
     safeListInquiries(),
     safeReadMarketingSnapshot(),
+    safeGetSystemHealthSnapshot(),
+    safeGetPublicIntakeControlSnapshot(),
     safeCount("quote count", prisma.quote.count(), 0),
     safeCount("contract draft count", prisma.contractDraft.count(), 0),
     safeCount("case count", prisma.caseRecord.count(), 0)
   ]);
 
-  const activeInquiries = inquiries.filter((item) => item.status !== "CLOSED");
-  const urgentCount = activeInquiries.filter(
-    (item) => item.urgencyLevel === "CRITICAL" || isWithinDays(item.dueDate, 1)
-  ).length;
-  const docsPendingCount = activeInquiries.filter(
-    (item) => !item.hasPreparedDocuments && item.status !== "WON"
-  ).length;
-  const responsePendingCount = activeInquiries.filter((item) => item.responsePending).length;
-  const quotePendingCount = activeInquiries.filter((item) =>
-    ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)
-  ).length;
-  const consultationCount = activeInquiries.filter((item) =>
-    ["CONSULTATION_REQUIRED", "WAITING_CONSULTATION", "PRE_DIAGNOSED"].includes(item.status)
-  ).length;
-  const operationalRiskIndex =
-    urgentCount * 8 + docsPendingCount * 5 + responsePendingCount * 4 + quotePendingCount * 3;
-  const operationalHealthScore = Math.max(0, Math.min(100, 100 - operationalRiskIndex));
-  const operationalHealthDescription =
-    operationalHealthScore >= 80
-      ? "\uC6B4\uC601 \uD750\uB984\uC774 \uC548\uC815\uC801\uC785\uB2C8\uB2E4."
-      : operationalHealthScore >= 60
-        ? "\uC8FC\uC694 \uD56D\uBAA9 \uC810\uAC80\uC774 \uD544\uC694\uD569\uB2C8\uB2E4."
-        : "\uAE34\uAE09 \uC21C\uC11C \uC7AC\uC815\uB82C\uACFC \uD6C4\uC18D \uC870\uCE58\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.";
-
-  const dueSoonItems = activeInquiries
-    .filter((item) => isWithinDays(item.dueDate, 3))
-    .sort((left, right) => (left.dueDate?.getTime() ?? Infinity) - (right.dueDate?.getTime() ?? Infinity))
-    .slice(0, 5);
-  const nextContactItems = activeInquiries
-    .filter((item) => isWithinDays(item.nextContactAt, 3) || item.responsePending)
-    .sort((left, right) => (left.nextContactAt?.getTime() ?? Infinity) - (right.nextContactAt?.getTime() ?? Infinity))
-    .slice(0, 5);
-  const recentIntakes = inquiries.slice(0, 5);
-
-  const pipeline = [
-    {
-      key: "NEW",
-      label: "\uC2E0\uADDC",
-      count: activeInquiries.filter((item) => item.status === "NEW").length,
-      description: "\uAC00\uC7A5 \uBA3C\uC800 \uD559\uC778\uD558\uB294 \uC811\uC218 \uAD6C\uAC04"
-    },
-    {
-      key: "PRE_DIAGNOSED",
-      label: "\uC0AC\uC804\uC9C4\uB2E8",
-      count: activeInquiries.filter((item) => item.status === "PRE_DIAGNOSED").length,
-      description: "\uCD08\uAE30 \uBD84\uB958\uC640 \uAC80\uD1A0 \uBC29\uD5A5\uC744 \uC815\uB9AC\uD55C \uAD6C\uAC04"
-    },
-    {
-      key: "CONSULTATION_REQUIRED",
-      label: "\uC0C1\uB2F4",
-      count: activeInquiries.filter((item) =>
-        ["CONSULTATION_REQUIRED", "WAITING_CONSULTATION"].includes(item.status)
-      ).length,
-      description: "\uC0C1\uB2F4 \uC5F0\uACB0 \uB610\uB294 \uC0C1\uB2F4 \uB300\uAE30 \uD750\uB984"
-    },
-    {
-      key: "QUOTE_PENDING",
-      label: "\uACAC\uC801",
-      count: activeInquiries.filter((item) =>
-        ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)
-      ).length,
-      description: "\uACAC\uC801 \uC791\uC131\u00B7\uAC80\uD1A0\u00B7\uBC1C\uC1A1 \uAD6C\uAC04"
-    },
-    {
-      key: "WON",
-      label: "\uC218\uC784",
-      count: activeInquiries.filter((item) => item.status === "WON").length,
-      description: "\uACC4\uC57D \uB610\uB294 \uC0AC\uAC74 \uC9C4\uD589\uC73C\uB85C \uB118\uC5B4\uAC04 \uAC74"
-    },
-    {
-      key: "ON_HOLD",
-      label: "\uBCF4\uB958",
-      count: activeInquiries.filter((item) => item.status === "ON_HOLD").length,
-      description: "\uC0AC\uC720 \uD655\uC778\uACFC \uC7AC\uC815\uB9AC\uAC00 \uD544\uC694\uD55C \uAC74"
-    }
-  ];
-
-  const lawbotStatus = getLawbotStatus();
-  const marketingStatus = marketingSnapshot
-    ? {
-        label: "\uC2A4\uB0C5\uC0F7 \uC218\uC2E0 \uC911",
-        toneClassName: "bg-success/10 text-success",
-        description: `\uCD5C\uADFC \uB9C8\uCF00\uD305 \uB370\uC774\uD130\uAC00 ${formatDateTime(
-          marketingSnapshot.received_at ?? marketingSnapshot.generated_at ?? null
-        )} \uAE30\uC900\uC73C\uB85C \uC800\uC7A5\uB3FC \uC788\uC2B5\uB2C8\uB2E4.`
-      }
-    : {
-        label: "\uC2A4\uB0C5\uC0F7 \uC5C6\uC74C",
-        toneClassName: "bg-warning/10 text-warning",
-        description:
-          "\uD604\uC7AC\uB294 mock/\uAE30\uBCF8 \uC2E0\uD638 \uC911\uC2EC\uC774\uBA70, \uC2E4\uC2DC\uAC04 market engine \uC5F0\uB3D9\uC740 \uC544\uC9C1 \uC544\uB2D9\uB2C8\uB2E4."
-      };
+  const {
+    checklistCoverageCount,
+    checklistAvgPercent,
+    checklistLowReadinessCount,
+    urgentCount,
+    docsPendingCount,
+    responsePendingCount,
+    quotePendingCount,
+    consultationCount,
+    operationalHealthScore,
+    operationalHealthDescription,
+    dueSoonItems,
+    nextContactItems,
+    recentIntakes,
+    immediateActionItemsWithProgress,
+    pipeline,
+    lawbotStatus,
+    publicIntakeStatus,
+    marketingStatus,
+    healthTone,
+    healthDescription,
+    healthScore,
+    healthAlertCount,
+    healthCriticalCount
+  } = buildAdminDashboardPageData({
+    inquiries,
+    marketingSnapshot,
+    systemHealthSnapshot,
+    publicIntakeControl
+  });
 
   return (
     <div className="space-y-6">
@@ -199,12 +143,11 @@ export default async function AdminDashboardContent() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div>
-              <p className="ui-kicker">\uC5C5\uBB34 \uAD00\uB9AC \uD5C8\uBE0C</p>
-              <h2 className="mt-2 ui-page-title">\uAD00\uB9AC\uC790 \uB300\uC2DC\uBCF4\uB4DC</h2>
+              <p className="ui-kicker">업무 관리 허브</p>
+              <h2 className="mt-2 ui-page-title">관리자 대시보드</h2>
               <p className="mt-2 max-w-3xl text-sm text-text-muted">
-                \uBB38\uC758 \uC811\uC218, \uC0C1\uB2F4 \uC900\uBE44, \uACAC\uC801 \uD6C4\uC18D, \uC0AC\uAC74 \uC9C4\uD589,
-                \uBD84\uC11D \uC5D4\uC9C4 \uC5F0\uACB0 \uC0C1\uD0DC\uB97C \uD55C \uD654\uBA74\uC5D0\uC11C \uBCF4\uACE0 \uBC14\uB85C
-                \uB2E4\uC74C \uD589\uB3D9\uC73C\uB85C \uB118\uC5B4\uAC08 \uC218 \uC788\uAC8C \uC815\uB9AC\uD588\uC2B5\uB2C8\uB2E4.
+                문의 접수, 상담 준비, 견적 후속, 사건 진행, 분석 엔진 연결 상태를 한 화면에서 보고 바로
+                다음 행동으로 넘어갈 수 있게 정리했습니다.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -212,44 +155,66 @@ export default async function AdminDashboardContent() {
                 href="/admin/inquiries"
                 className="inline-flex items-center justify-center rounded-full border border-primary bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-[#143d5d]"
               >
-                \uBB38\uC758 \uBAA9\uB85D \uC5F4\uAE30
+                문의 목록 열기
               </Link>
               <Link
                 href="/admin/integrations"
                 className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
               >
-                \uC5F0\uB3D9 \uC13C\uD130
+                연동 센터
               </Link>
               <Link
                 href="/admin/monitoring"
                 className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
               >
-                \uBAA8\uB2C8\uD130\uB9C1
+                모니터링
               </Link>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <span className="ui-analysis-chip">\uC624\uB298 \uC6B0\uC120 \uD655\uC778 {urgentCount}\uAC74</span>
-            <span className="ui-analysis-chip">\uC790\uB8CC \uD655\uC778 \uD544\uC694 {docsPendingCount}\uAC74</span>
-            <span className="ui-analysis-chip">\uC751\uB2F5 \uB300\uAE30 {responsePendingCount}\uAC74</span>
-            <span className="ui-analysis-chip">\uACAC\uC801 \uD6C4\uC18D {quotePendingCount}\uAC74</span>
+            <span className="ui-analysis-chip">오늘 우선 확인 {urgentCount}건</span>
+            <span className="ui-analysis-chip">자료 확인 필요 {docsPendingCount}건</span>
+            <span className="ui-analysis-chip">응답 대기 {responsePendingCount}건</span>
+            <span className="ui-analysis-chip">견적 후속 {quotePendingCount}건</span>
+            <span className="ui-analysis-chip">헬스 경고 {healthAlertCount}건</span>
+            <span className="ui-analysis-chip">중대 이슈 {healthCriticalCount}건</span>
+            <span className="ui-analysis-chip">체크리스트 평균 준비도 {checklistAvgPercent}%</span>
+            <span className="ui-analysis-chip">준비도 낮음 {checklistLowReadinessCount}건</span>
           </div>
 
-          <div className="grid gap-3 xl:grid-cols-4">
+          <div className="grid gap-3 xl:grid-cols-5">
             <Card className="ui-analysis-panel p-4">
-              <p className="ui-kicker">System Core</p>
-              <h3 className="mt-3 text-base font-semibold text-text-strong">\uC6B4\uC601 \uAE30\uC900</h3>
-              <p className="mt-2 text-sm text-text-muted">
-                \uBB38\uC758, \uACAC\uC801, \uACC4\uC57D \uCD08\uC548, \uC0AC\uAC74 \uAD00\uB9AC\uB294 system DB\uB97C \uAE30\uC900\uC73C\uB85C \uC6B4\uC601\uD569\uB2C8\uB2E4.
-              </p>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="ui-kicker">Public Intake</p>
+                  <h3 className="mt-2 text-base font-semibold text-text-strong">공개 접수 상태</h3>
+                </div>
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${publicIntakeStatus.toneClassName}`}>
+                  {publicIntakeStatus.label}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-text-muted">{publicIntakeStatus.description}</p>
+            </Card>
+
+            <Card className="ui-analysis-panel p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="ui-kicker">System Health</p>
+                  <h3 className="mt-2 text-base font-semibold text-text-strong">안정성 지표</h3>
+                </div>
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${healthTone.toneClassName}`}>
+                  {healthTone.label} {healthScore}점
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-text-muted">{healthDescription}</p>
             </Card>
 
             <Card className="ui-analysis-panel p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="ui-kicker">Lawbot</p>
-                  <h3 className="mt-2 text-base font-semibold text-text-strong">\uBC95\uB960 \uBD84\uC11D</h3>
+                  <h3 className="mt-2 text-base font-semibold text-text-strong">법률 분석</h3>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${lawbotStatus.toneClassName}`}>
                   {lawbotStatus.label}
@@ -262,7 +227,7 @@ export default async function AdminDashboardContent() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="ui-kicker">Market Analyze</p>
-                  <h3 className="mt-2 text-base font-semibold text-text-strong">\uC2DC\uC7A5 \uC778\uC0AC\uC774\uD2B8</h3>
+                  <h3 className="mt-2 text-base font-semibold text-text-strong">시장 인사이트</h3>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${marketingStatus.toneClassName}`}>
                   {marketingStatus.label}
@@ -273,37 +238,126 @@ export default async function AdminDashboardContent() {
 
             <Card className="ui-analysis-panel p-4">
               <p className="ui-kicker">Workspace</p>
-              <h3 className="mt-3 text-base font-semibold text-text-strong">\uBCC4\uB3C4 \uD654\uBA74 \uC5F0\uACB0</h3>
+              <h3 className="mt-3 text-base font-semibold text-text-strong">별도 화면 연결</h3>
               <p className="mt-2 text-sm text-text-muted">
-                market-analyze \uD504\uB860\uD2B8 \uAD6C\uC870\uB97C \uAE30\uC900\uC73C\uB85C \uC5F0\uB3D9 \uC13C\uD130\uC5D0
-                \uC2A4\uD06C\uB9B0 \uC790\uB9AC\uB97C \uBBF8\uB9AC \uB9CC\uB4E4\uC5B4 \uB46C \uC0C1\uD0DC\uC785\uB2C8\uB2E4.
+                market-analyze 프론트 구조를 기준으로 연동 센터에 스크린 자리를 미리 만들어 둔 상태입니다.
               </p>
             </Card>
           </div>
         </div>
       </Card>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <DashboardMetric label="\uBB38\uC758" value={inquiries.length} description="\uB204\uC801 \uC811\uC218\uC640 \uC0AC\uAC74 \uD6C4\uBCF4" />
-        <DashboardMetric label="\uACAC\uC801" value={quoteCount} description="\uC0DD\uC131\uB41C \uACAC\uC801 \uBC0F \uD6C4\uC18D \uD750\uB984" />
-        <DashboardMetric label="\uACC4\uC57D \uCD08\uC548" value={contractDraftCount} description="\uACC4\uC57D \uBB38\uC548 \uBC0F \uC815\uB9AC \uB2E8\uACC4" />
-        <DashboardMetric label="\uC0AC\uAC74" value={caseCount} description="\uC2E4\uC81C \uC9C4\uD589 \uC911\uC778 \uC0AC\uAC74 \uB808\uCF54\uB4DC" />
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+        <DashboardMetric label="문의" value={inquiries.length} description="누적 접수와 사건 후보" />
+        <DashboardMetric label="견적" value={quoteCount} description="생성된 견적 및 후속 흐름" />
+        <DashboardMetric label="계약 초안" value={contractDraftCount} description="계약 문안 및 정리 단계" />
+        <DashboardMetric label="사건" value={caseCount} description="실제 진행 중인 사건 레코드" />
+        <DashboardMetric label="체크리스트 적용" value={checklistCoverageCount} description="즉시 조치 체크를 적용 중인 건" />
+        <DashboardMetric label="평균 준비도" value={checklistAvgPercent} description="실행 체크리스트 평균 완료율(%)" />
+        <DashboardMetric label="준비도 낮음" value={checklistLowReadinessCount} description="완료율 40% 이하 우선 점검 건" />
         <DashboardMetric
-          label="\uC6B4\uC601 \uAC74\uC804\uB3C4"
+          label="운영 건전도"
           value={operationalHealthScore}
           description={operationalHealthDescription}
         />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <Card className="p-6">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="ui-kicker">Execution Queue</p>
+              <h3 className="mt-2 ui-section-title">오늘 바로 처리할 순서</h3>
+            </div>
+            <Link href="/admin/inquiries" className="text-sm font-medium text-primary">
+              전체 문의 열기
+            </Link>
+          </div>
+
+          {immediateActionItemsWithProgress.length > 0 ? (
+            <div className="mt-5 space-y-3">
+              {immediateActionItemsWithProgress.map((item) => (
+                <Link
+                  key={`action-${item.id}`}
+                  href={`/admin/inquiries/${item.id}`}
+                  className="block rounded-2xl border border-line bg-surface px-4 py-4 transition hover:border-line-strong hover:bg-surface-muted"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-text-strong">{item.title}</p>
+                      <p className="mt-1 text-xs text-text-muted">
+                        {getInquiryStatusLabel(item.status)} / {getUrgencyLabel(item.urgencyLevel)} / 업데이트{" "}
+                        {formatDateTime(item.updatedAt)}
+                      </p>
+                      <p className="mt-2 text-sm text-text">{getPriorityReason(item)}</p>
+                      <p className="mt-1 text-xs text-text-muted">
+                        실행 준비도{" "}
+                        {item.checklistTotalCount > 0
+                          ? `${item.checklistProgressPercent}% (남음 ${item.checklistPendingCount}건)`
+                          : "체크리스트 준비 중"}
+                      </p>
+                    </div>
+                    <span className={dashboardToneClassName(getStatusTone(item.status))}>
+                      우선점수 {getPriorityScore(item)}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              className="mt-5"
+              title="지금 즉시 처리할 우선 항목이 없습니다."
+              description="신규 접수나 회신 대기가 생기면 이 영역에 자동으로 정렬됩니다."
+            />
+          )}
+        </Card>
+
+        <Card className="p-6">
+          <p className="ui-kicker">Ops Health</p>
+          <h3 className="mt-2 ui-section-title">운영 건전도 점검</h3>
+          <p className="mt-2 text-sm text-text-muted">{operationalHealthDescription}</p>
+
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between text-xs text-text-muted">
+              <span>건전도 점수</span>
+              <span className="font-semibold text-text-strong">{operationalHealthScore} / 100</span>
+            </div>
+            <div
+              className="h-2 rounded-full bg-surface-muted"
+              role="progressbar"
+              aria-label="운영 건전도"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={operationalHealthScore}
+            >
+              <div
+                className={`h-full rounded-full ${getOperationalHealthToneClass(operationalHealthScore)}`}
+                style={{ width: `${operationalHealthScore}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-2 text-sm text-text-muted">
+            <p>• 긴급/당일 확인 건: {urgentCount}건</p>
+            <p>• 자료 확인 필요 건: {docsPendingCount}건</p>
+            <p>• 회신 또는 연락 대기 건: {responsePendingCount}건</p>
+            <p>• 견적 후속 처리 건: {quotePendingCount}건</p>
+            <p>• 체크리스트 적용 건: {checklistCoverageCount}건</p>
+            <p>• 준비도 낮음(40% 이하): {checklistLowReadinessCount}건</p>
+          </div>
+        </Card>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
         <Card className="p-6">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="ui-kicker">\uD30C\uC774\uD504\uB77C\uC778</p>
-              <h3 className="mt-2 ui-section-title">\uC0C1\uD0DC\uBCC4 \uC6B4\uC601 \uD750\uB984</h3>
+              <p className="ui-kicker">파이프라인</p>
+              <h3 className="mt-2 ui-section-title">상태별 운영 흐름</h3>
             </div>
             <Link href="/admin/inquiries" className="text-sm font-medium text-primary">
-              \uC804\uCCB4 \uBAA9\uB85D \uBCF4\uAE30
+              전체 목록 보기
             </Link>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -318,59 +372,57 @@ export default async function AdminDashboardContent() {
         </Card>
 
         <Card className="p-6">
-          <p className="ui-kicker">\uC624\uB298\uC758 \uD3EC\uC778\uD2B8</p>
-          <h3 className="mt-2 ui-section-title">\uC6B0\uC120 \uD655\uC778 \uC694\uC57D</h3>
+          <p className="ui-kicker">오늘의 포인트</p>
+          <h3 className="mt-2 ui-section-title">우선 확인 요약</h3>
           <div className="mt-4 space-y-3 text-sm text-text-muted">
-            <p>\u2022 \uAE34\uAE09\u00B7\uB2F9\uC77C \uAE30\uC900\uC73C\uB85C \uBA3C\uC800 \uBCFC \uBB38\uC758\uB294 {urgentCount}\uAC74\uC785\uB2C8\uB2E4.</p>
-            <p>\u2022 \uC790\uB8CC \uD655\uBCF4\uAC00 \uBA3C\uC800 \uD544\uC694\uD55C \uBB38\uC758\uB294 {docsPendingCount}\uAC74\uC785\uB2C8\uB2E4.</p>
-            <p>\u2022 \uC0C1\uB2F4 \uC5F0\uACB0 \uB610\uB294 \uB300\uAE30 \uD750\uB984\uC740 {consultationCount}\uAC74\uC785\uB2C8\uB2E4.</p>
-            <p>\u2022 \uACE0\uAC1D \uD68C\uC2E0 \uB610\uB294 \uB2E4\uC74C \uC5F0\uB77D \uB300\uAE30\uB294 {responsePendingCount}\uAC74\uC785\uB2C8\uB2E4.</p>
+            <p>• 긴급·당일 기준으로 먼저 볼 문의는 {urgentCount}건입니다.</p>
+            <p>• 자료 확보가 먼저 필요한 문의는 {docsPendingCount}건입니다.</p>
+            <p>• 상담 연결 또는 대기 흐름은 {consultationCount}건입니다.</p>
+            <p>• 고객 회신 또는 다음 연락 대기는 {responsePendingCount}건입니다.</p>
           </div>
         </Card>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
         <DashboardListCard
-          kicker="\uAE30\uD55C \uC784\uBC15"
-          title="\uAE30\uD55C \uC784\uBC15 \uBB38\uC758"
-          emptyTitle="\uC784\uBC15 \uC77C\uC815\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."
-          emptyDescription="3\uC77C \uB0B4 \uD76C\uB9DD \uC77C\uC815 \uB610\uB294 \uAE30\uD55C\uC774 \uC0DD\uAE30\uBA74 \uC5EC\uAE30\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4."
+          kicker="기한 임박"
+          title="기한 임박 문의"
+          emptyTitle="임박 일정이 없습니다."
+          emptyDescription="3일 내 희망 일정 또는 기한이 생기면 여기에 표시됩니다."
           items={dueSoonItems.map((item) => ({
             id: item.id,
             href: `/admin/inquiries/${item.id}`,
             title: item.title,
-            meta: `${urgencyLabels[item.urgencyLevel].ko} / ${formatDateTime(item.dueDate)}`,
+            meta: `${getUrgencyLabel(item.urgencyLevel)} / ${formatDateTime(item.dueDate)}`,
             description: `${item.contactName}${item.organizationName ? ` / ${item.organizationName}` : ""}`
           }))}
         />
 
         <DashboardListCard
-          kicker="\uD6C4\uC18D \uC5F0\uB77D"
-          title="\uC5F0\uB77D\u00B7\uD68C\uC2E0 \uD655\uC778"
-          emptyTitle="\uD6C4\uC18D \uC5F0\uB77D \uB300\uAE30 \uAC74\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."
-          emptyDescription="\uC751\uB2F5 \uB300\uAE30\uB098 \uB2E4\uC74C \uC5F0\uB77D \uC77C\uC815\uC774 \uC0DD\uAE30\uBA74 \uC774 \uC601\uC5ED\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4."
+          kicker="후속 연락"
+          title="연락·회신 확인"
+          emptyTitle="후속 연락 대기 건이 없습니다."
+          emptyDescription="응답 대기나 다음 연락 일정이 생기면 이 영역에 표시됩니다."
           items={nextContactItems.map((item) => ({
             id: item.id,
             href: `/admin/inquiries/${item.id}`,
             title: item.title,
-            meta: item.responsePending
-              ? "\uACE0\uAC1D \uC751\uB2F5 \uB300\uAE30"
-              : `\uB2E4\uC74C \uC5F0\uB77D ${formatDateTime(item.nextContactAt)}`,
-            description: `${inquiryStatusLabels[item.status].ko} / ${item.contactName}`
+            meta: item.responsePending ? "고객 응답 대기" : `다음 연락 ${formatDateTime(item.nextContactAt)}`,
+            description: `${getInquiryStatusLabel(item.status)} / ${item.contactName}`
           }))}
         />
 
         <DashboardListCard
-          kicker="\uCD5C\uADFC \uC811\uC218"
-          title="\uCD5C\uADFC \uC811\uC218"
-          emptyTitle="\uC544\uC9C1 \uC811\uC218\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."
-          emptyDescription="\uC0C8 \uBB38\uC758\uAC00 \uC811\uC218\uB418\uBA74 \uAC00\uC7A5 \uCD5C\uADFC \uAC74\uC774 \uC5EC\uAE30\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4."
+          kicker="최근 접수"
+          title="최근 접수"
+          emptyTitle="아직 접수가 없습니다."
+          emptyDescription="새 문의가 접수되면 가장 최근 건이 여기에 표시됩니다."
           items={recentIntakes.map((item) => ({
             id: item.id,
             href: `/admin/inquiries/${item.id}`,
             title: item.title,
-            meta: `${inquiryTypeLabels[item.inquiryType].ko} / ${formatDateTime(item.createdAt)}`,
-            description: `${item.contactName} / ${languageCodeLabels[item.preferredLanguage].ko}`
+            meta: `${getInquiryTypeLabel(item.inquiryType)} / ${formatDateTime(item.createdAt)}`,
+            description: `${item.contactName} / ${getLanguageCodeLabel(item.preferredLanguage)}`
           }))}
         />
       </div>
@@ -378,29 +430,27 @@ export default async function AdminDashboardContent() {
       <Card className="p-6">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="ui-kicker">\uC5F0\uB3D9 \uC5C5\uBB34\uC2E4</p>
-            <h3 className="mt-2 ui-section-title">Lawbot / Market Analyze \uC790\uB9AC</h3>
+            <p className="ui-kicker">연동 업무실</p>
+            <h3 className="mt-2 ui-section-title">Lawbot / Market Analyze 자리</h3>
           </div>
           <Link href="/admin/integrations" className="text-sm font-medium text-primary">
-            \uC5F0\uB3D9 \uC13C\uD130 \uC5F4\uAE30
+            연동 센터 열기
           </Link>
         </div>
         <div className="mt-5 grid gap-4 xl:grid-cols-2">
           <Card muted className="p-4">
             <p className="ui-kicker">Lawbot</p>
-            <h4 className="mt-2 text-base font-semibold text-text-strong">\uC0AC\uAC74 \uAE30\uC900 \uBC95\uB960 \uBD84\uC11D \uC790\uB9AC</h4>
+            <h4 className="mt-2 text-base font-semibold text-text-strong">사건 기준 법률 분석 자리</h4>
             <p className="mt-2 text-sm text-text-muted">
-              \uC0AC\uAC74 \uC0C1\uC138\uC5D0\uC11C \uC2E4\uC81C \uBD84\uC11D \uD638\uCD9C, \uC2A4\uB0C5\uC0F7 \uC800\uC7A5, \uC7AC\uBD84\uC11D
-              \uBE44\uAD50\uAE4C\uC9C0 \uC5F0\uACB0\uD574 \uB454 \uC0C1\uD0DC\uC785\uB2C8\uB2E4.
+              사건 상세에서 실제 분석 호출, 스냅샷 저장, 재분석 비교까지 연결해 둔 상태입니다.
             </p>
           </Card>
           <Card muted className="p-4">
             <p className="ui-kicker">Market Analyze</p>
-            <h4 className="mt-2 text-base font-semibold text-text-strong">\uBCC4\uB3C4 \uD504\uB860\uD2B8 \uAD6C\uC870 \uBC18\uC601</h4>
+            <h4 className="mt-2 text-base font-semibold text-text-strong">별도 프론트 구조 반영</h4>
             <p className="mt-2 text-sm text-text-muted">
-              \uB85C\uCEEC \uAE30\uC900\uC73C\uB85C dashboard, competitors, hot issues, sentiment, services \uD654\uBA74
-              \uAD6C\uC131\uC774 \uD655\uC778\uB418\uC5B4 \uC788\uC5B4 system \uC548\uC5D0 \uBCF4\uC5EC\uC904 \uC790\uB9AC\uB97C \uB9CC\uB4E4\uC5B4 \uB454
-              \uC0C1\uD0DC\uC785\uB2C8\uB2E4.
+              로컬 기준으로 dashboard, competitors, hot issues, sentiment, services 화면 구성이 확인되어
+              system 안에 보여줄 자리를 만들어 둔 상태입니다.
             </p>
           </Card>
         </div>
@@ -409,10 +459,10 @@ export default async function AdminDashboardContent() {
       <Card className="p-6">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="ui-kicker">\uCD5C\uADFC \uC8FC\uC694 \uBB38\uC758</p>
-            <h3 className="mt-2 ui-section-title">\uBC14\uB85C \uC5F4\uC5B4\uBCFC \uD56D\uBAA9</h3>
+            <p className="ui-kicker">최근 주요 문의</p>
+            <h3 className="mt-2 ui-section-title">바로 열어볼 항목</h3>
           </div>
-          <p className="text-sm text-text-muted">\uC0C1\uD0DC\uC640 \uAE34\uAE09\uB3C4\uB97C \uAC19\uC774 \uBCF4\uBA74\uC11C \uBC14\uB85C \uC0C1\uC138 \uD654\uBA74\uC73C\uB85C \uC774\uB3D9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p>
+          <p className="text-sm text-text-muted">상태와 긴급도를 같이 보면서 바로 상세 화면으로 이동할 수 있습니다.</p>
         </div>
 
         {recentIntakes.length > 0 ? (
@@ -427,22 +477,22 @@ export default async function AdminDashboardContent() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge tone="urgency" urgency={item.urgencyLevel}>
-                        {urgencyLabels[item.urgencyLevel].ko}
+                        {getUrgencyLabel(item.urgencyLevel)}
                       </Badge>
                       <Badge tone="status" status={item.status}>
-                        {inquiryStatusLabels[item.status].ko}
+                        {getInquiryStatusLabel(item.status)}
                       </Badge>
                     </div>
                     <p className="mt-3 truncate text-base font-semibold text-text-strong">{item.title}</p>
                     <p className="mt-1 truncate text-sm text-text-muted">
                       {item.contactName}
                       {item.organizationName ? ` / ${item.organizationName}` : ""} /{" "}
-                      {inquiryTypeLabels[item.inquiryType].ko}
+                      {getInquiryTypeLabel(item.inquiryType)}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-sm text-text-muted">
                     <span className={dashboardToneClassName(getStatusTone(item.status))}>
-                      {item.responsePending ? "\uC751\uB2F5 \uB300\uAE30" : "\uC6B4\uC601 \uC9C4\uD589 \uC911"}
+                      {item.responsePending ? "응답 대기" : "운영 진행 중"}
                     </span>
                     <span>{formatDateTime(item.updatedAt)}</span>
                   </div>
@@ -452,9 +502,9 @@ export default async function AdminDashboardContent() {
           </div>
         ) : (
           <EmptyState
-            title="\uD45C\uC2DC\uD560 \uCD5C\uADFC \uBB38\uC758\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."
-            description="\uACF5\uAC1C \uC811\uC218\uB098 \uB0B4\uBD80 \uB4F1\uB85D\uC774 \uC0DD\uAE30\uBA74 \uCD5C\uADFC \uBB38\uC758 \uCE74\uB4DC\uAC00 \uC5EC\uAE30\uC5D0 \uC815\uB9AC\uB429\uB2C8\uB2E4."
-            actionLabel="\uACF5\uAC1C \uC811\uC218 \uC5F4\uAE30"
+            title="표시할 최근 문의가 없습니다."
+            description="공개 접수나 내부 등록이 생기면 최근 문의 카드가 여기에 정리됩니다."
+            actionLabel="공개 접수 열기"
             actionHref="/intake"
             className="mt-5"
           />
@@ -463,74 +513,3 @@ export default async function AdminDashboardContent() {
     </div>
   );
 }
-
-function DashboardMetric({
-  label,
-  value,
-  description
-}: {
-  label: string;
-  value: number;
-  description: string;
-}) {
-  return (
-    <Card muted className="p-5">
-      <p className="ui-kicker">{label}</p>
-      <p className="mt-2 text-3xl font-semibold text-text-strong">{value}</p>
-      <p className="mt-2 text-xs text-text-muted">{description}</p>
-    </Card>
-  );
-}
-
-function DashboardListCard({
-  kicker,
-  title,
-  emptyTitle,
-  emptyDescription,
-  items
-}: {
-  kicker: string;
-  title: string;
-  emptyTitle: string;
-  emptyDescription: string;
-  items: Array<{
-    id: string;
-    href: string;
-    title: string;
-    meta: string;
-    description: string;
-  }>;
-}) {
-  return (
-    <Card className="p-6">
-      <p className="ui-kicker">{kicker}</p>
-      <h3 className="mt-2 ui-section-title">{title}</h3>
-      {items.length > 0 ? (
-        <div className="mt-5 space-y-3">
-          {items.map((item) => (
-            <Link
-              key={item.id}
-              href={item.href}
-              className="block rounded-2xl border border-line bg-surface px-4 py-4 transition hover:border-line-strong hover:bg-surface-muted"
-            >
-              <p className="truncate text-sm font-semibold text-text-strong">{item.title}</p>
-              <p className="mt-2 text-xs text-text-muted">{item.meta}</p>
-              <p className="mt-1 truncate text-sm text-text">{item.description}</p>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <EmptyState title={emptyTitle} description={emptyDescription} className="mt-5" />
-      )}
-    </Card>
-  );
-}
-
-function dashboardToneClassName(tone: "default" | "consult" | "quote" | "risk" | "won") {
-  if (tone === "consult") return "rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success";
-  if (tone === "quote") return "rounded-full bg-info/10 px-3 py-1 text-xs font-semibold text-info";
-  if (tone === "risk") return "rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold text-warning";
-  if (tone === "won") return "rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary";
-  return "rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-text";
-}
-

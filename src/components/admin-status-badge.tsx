@@ -1,5 +1,12 @@
 import { cn } from "@/lib/utils";
-import { inquiryStatusLabels, urgencyLabels, type InquiryStatus, type UrgencyLevel } from "@/types/inquiry";
+import {
+  getInquiryStatusLabel,
+  getUrgencyLabel,
+  normalizeInquiryStatus,
+  normalizeUrgencyLevel,
+  type InquiryStatus,
+  type UrgencyLevel
+} from "@/types/inquiry";
 
 const statusStyles: Record<InquiryStatus, string> = {
   NEW: "bg-slate-100 text-slate-700",
@@ -26,21 +33,23 @@ export function AdminStatusBadge({
   status,
   urgency
 }: {
-  status?: InquiryStatus;
-  urgency?: UrgencyLevel;
+  status?: InquiryStatus | string;
+  urgency?: UrgencyLevel | string;
 }) {
   if (status) {
+    const normalizedStatus = normalizeInquiryStatus(status);
     return (
-      <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", statusStyles[status])}>
-        {inquiryStatusLabels[status].ko}
+      <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", statusStyles[normalizedStatus])}>
+        {getInquiryStatusLabel(normalizedStatus)}
       </span>
     );
   }
 
   if (urgency) {
+    const normalizedUrgency = normalizeUrgencyLevel(urgency);
     return (
-      <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", urgencyStyles[urgency])}>
-        {urgencyLabels[urgency].ko}
+      <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", urgencyStyles[normalizedUrgency])}>
+        {getUrgencyLabel(normalizedUrgency)}
       </span>
     );
   }

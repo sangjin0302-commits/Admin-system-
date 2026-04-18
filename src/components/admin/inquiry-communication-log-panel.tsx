@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StateInline } from "@/components/ui/state-panel";
 import { Textarea } from "@/components/ui/textarea";
+import { parseClientApiError } from "@/lib/http/client-api";
 import { formatDateTime, stringifyDateTimeLocalInput } from "@/lib/utils";
 import type {
   InquiryCommunicationChannel,
@@ -24,6 +25,35 @@ const channelLabels: Record<InquiryCommunicationChannel, string> = {
   VISIT: "대면",
   INTERNAL: "내부 메모"
 };
+
+type CommunicationPreset = {
+  id: "doc-request" | "consult-confirm" | "quote-followup" | "response-reminder";
+  label: string;
+  description: string;
+};
+
+const communicationPresets: CommunicationPreset[] = [
+  {
+    id: "doc-request",
+    label: "자료 요청",
+    description: "누락 자료 확인 요청과 재연락 일정을 함께 기록합니다."
+  },
+  {
+    id: "consult-confirm",
+    label: "상담 일정 확정",
+    description: "상담 일시 확정과 사전 준비 안내를 기록합니다."
+  },
+  {
+    id: "quote-followup",
+    label: "견적 후속 안내",
+    description: "견적 확인 요청과 회신 마감 안내를 기록합니다."
+  },
+  {
+    id: "response-reminder",
+    label: "회신 재요청",
+    description: "응답 대기 건에 대한 리마인드를 빠르게 남깁니다."
+  }
+];
 
 export function InquiryCommunicationLogPanel({
   inquiryId,
@@ -55,6 +85,70 @@ export function InquiryCommunicationLogPanel({
   const [isPending, startTransition] = useTransition();
 
   const timeline = useMemo(() => logs.slice(0, 8), [logs]);
+  const checklistSnippet = useMemo(
+    () =>
+      suggestedChecklist.length > 0
+        ? suggestedChecklist
+            .slice(0, 3)
+            .map((item, index) => `${index + 1}. ${item}`)
+            .join("\n")
+        : "",
+    [suggestedChecklist]
+  );
+
+  function getNextContactValue(hoursFromNow: number) {
+    const date = new Date();
+    date.setHours(date.getHours() + hoursFromNow);
+    date.setMinutes(0, 0, 0);
+    return stringifyDateTimeLocalInput(date);
+  }
+
+  function applyCommunicationPreset(presetId: CommunicationPreset["id"]) {
+    setMessage("");
+
+    if (presetId === "doc-request") {
+      setChannel("KAKAO");
+      setSummary("보완 자료 요청 및 제출 일정 안내");
+      setDetails(
+        [
+          "요청 자료와 제출 일정(다음 연락 기준)을 안내했습니다.",
+          checklistSnippet ? `우선 확인 자료\n${checklistSnippet}` : "우선 확인 자료 목록을 함께 전달했습니다."
+        ].join("\n\n")
+      );
+      setNeedsReply(true);
+      setNextContactValue(getNextContactValue(24));
+      return;
+    }
+
+    if (presetId === "consult-confirm") {
+      setChannel("PHONE");
+      setSummary("상담 일정 확정 및 사전 준비 안내");
+      setDetails(
+        [
+          "상담 일정/연락 채널을 확정했습니다.",
+          checklistSnippet ? `상담 전 준비 요청 항목\n${checklistSnippet}` : "상담 전에 필요한 기본 자료를 안내했습니다."
+        ].join("\n\n")
+      );
+      setNeedsReply(false);
+      setNextContactValue(getNextContactValue(48));
+      return;
+    }
+
+    if (presetId === "quote-followup") {
+      setChannel("EMAIL");
+      setSummary("견적 안내 후 확인 요청");
+      setDetails("견적 주요 항목을 안내했고 확인 회신 및 보완 문의 수신 경로를 전달했습니다.");
+      setNeedsReply(true);
+      setNextContactValue(getNextContactValue(48));
+      return;
+    }
+
+    setChannel("KAKAO");
+    setSummary("회신 재요청 및 다음 연락 예고");
+    setDetails("응답 대기 상태를 안내하고 다음 연락 예정 시점을 공유했습니다.");
+    setNeedsReply(true);
+    setNextContactValue(getNextContactValue(24));
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,15 +169,14 @@ export function InquiryCommunicationLogPanel({
         })
       });
 
-      const payload = await response.json();
       if (!response.ok) {
         setTone("error");
-        setMessage(payload.error ?? "而ㅻ??덉??댁뀡 濡쒓렇瑜???ν븯吏 紐삵뻽?듬땲??");
+        setMessage(await parseClientApiError(response, "커뮤니케이션 로그를 저장하지 못했습니다."));
         return;
       }
 
       setTone("success");
-      setMessage("而ㅻ??덉??댁뀡 濡쒓렇瑜???ν뻽?듬땲??");
+      setMessage("커뮤니케이션 로그를 저장했습니다.");
       setSummary("");
       setDetails("");
       router.refresh();
@@ -94,24 +187,24 @@ export function InquiryCommunicationLogPanel({
     <Card className="p-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h3 className="ui-section-title">怨좉컼 而ㅻ??덉??댁뀡 濡쒓렇</h3>
+          <h3 className="ui-section-title">고객 커뮤니케이션 로그</h3>
           <p className="mt-2 text-sm text-text-muted">
-            理쒓렐 ?곕씫 ?댁뿭, ?묐떟 ?湲??щ?, ?ㅼ쓬 ?곕씫 ?덉젙?쇱쓣 ?④퍡 ?④꺼???곷떞 ?먮쫫???딄린吏 ?딄쾶 愿由ы빀?덈떎.
+            최근 연락 이력, 응답 대기 여부, 다음 연락 일정을 함께 관리해서 상담 흐름이 끊기지 않도록 정리합니다.
           </p>
         </div>
         <Card muted className="p-4 lg:min-w-[260px]">
-          <p className="ui-kicker">?꾩옱 ?곕씫 ?곹깭</p>
+          <p className="ui-kicker">현재 연락 상태</p>
           <p className="mt-2 text-sm font-semibold text-text-strong">
-            {latestContactAt ? formatDateTime(latestContactAt) : "?꾩쭅 湲곕줉 ?놁쓬"}
+            {latestContactAt ? formatDateTime(latestContactAt) : "아직 기록 없음"}
           </p>
           <p className="mt-1 text-sm text-text-muted">
-            理쒓렐 梨꾨꼸: {latestContactChannel ? channelLabels[latestContactChannel as InquiryCommunicationChannel] ?? latestContactChannel : "-"}
+            최근 채널: {latestContactChannel ? channelLabels[latestContactChannel as InquiryCommunicationChannel] ?? latestContactChannel : "-"}
           </p>
           <p className="mt-1 text-sm text-text-muted">
             응답 대기: {responsePending ? "예" : "아니오"}
           </p>
           <p className="mt-1 text-sm text-text-muted">
-            ?ㅼ쓬 ?곕씫 ?덉젙: {nextContactAt ? formatDateTime(nextContactAt) : "-"}
+            다음 연락 일정: {nextContactAt ? formatDateTime(nextContactAt) : "-"}
           </p>
           {latestContactSummary ? <p className="mt-3 text-sm text-text">{latestContactSummary}</p> : null}
         </Card>
@@ -135,28 +228,53 @@ export function InquiryCommunicationLogPanel({
                     </span>
                     {item.responsePending ? (
                       <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning">
-                        ?묐떟 ?湲?
+                        응답 대기
                       </span>
                     ) : null}
                   </div>
                   {item.details ? <p className="mt-1 whitespace-pre-line text-sm text-text-muted">{item.details}</p> : null}
                   <p className="mt-1 text-xs text-text-muted">
-                    湲곕줉 ?쒖젏: {formatDateTime(item.createdAt)}
-                    {item.nextContactAt ? ` / ?ㅼ쓬 ?곕씫 ?덉젙 ${formatDateTime(item.nextContactAt)}` : ""}
+                    기록 시점: {formatDateTime(item.createdAt)}
+                    {item.nextContactAt ? ` / 다음 연락 일정 ${formatDateTime(item.nextContactAt)}` : ""}
                   </p>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-text-muted">?꾩쭅 ??λ맂 ?곕씫 濡쒓렇媛 ?놁뒿?덈떎. 泥??덈궡???먮즺 ?붿껌??蹂대궦 ??諛붾줈 湲곕줉???먮㈃ ?먮쫫 ?뚯븙???ъ썙吏묐땲??</p>
+              <p className="text-sm text-text-muted">아직 등록된 연락 로그가 없습니다. 초기 안내나 자료 요청을 보낸 뒤 바로 기록해 두면 다음 대응이 훨씬 수월해집니다.</p>
             )}
           </div>
         </Card>
 
         <Card muted className="p-5">
-          <p className="ui-kicker">???곕씫 濡쒓렇 異붽?</p>
+          <p className="ui-kicker">새 연락 로그 추가</p>
           <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
+            <Card className="p-4">
+              <p className="ui-kicker">원클릭 실행 프리셋</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {communicationPresets.map((preset) => (
+                  <Button
+                    key={preset.id}
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => applyCommunicationPreset(preset.id)}
+                    disabled={isPending}
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+              <div className="mt-3 space-y-1 text-xs text-text-muted">
+                {communicationPresets.map((preset) => (
+                  <p key={`preset-desc-${preset.id}`}>
+                    • {preset.label}: {preset.description}
+                  </p>
+                ))}
+              </div>
+            </Card>
+
             <FieldGroup className="md:grid-cols-2">
-              <Field label="?곕씫 梨꾨꼸">
+              <Field label="연락 채널">
                 <Select value={channel} onChange={(event) => setChannel(event.target.value as InquiryCommunicationChannel)}>
                   {Object.entries(channelLabels).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -165,7 +283,7 @@ export function InquiryCommunicationLogPanel({
                   ))}
                 </Select>
               </Field>
-              <Field label="?ㅼ쓬 ?곕씫 ?덉젙">
+              <Field label="다음 연락 일정">
                 <Input
                   type="datetime-local"
                   value={nextContactValue}
@@ -174,20 +292,20 @@ export function InquiryCommunicationLogPanel({
               </Field>
             </FieldGroup>
 
-            <Field label="?곕씫 ?붿빟">
+            <Field label="연락 요약">
               <Input
                 value={summary}
                 onChange={(event) => setSummary(event.target.value)}
-                placeholder="?? 蹂댁셿 ?쒕쪟 3醫??붿껌, ?곷떞 ?쇱젙 議곗쑉, 寃ъ쟻 諛쒖넚 ?덈궡"
+                placeholder="예: 보완 서류 3종 요청, 상담 일정 조율, 견적 발송 안내"
               />
             </Field>
 
-            <Field label="?곸꽭 硫붾え" hint="怨좉컼 諛섏쓳, ?쎌냽???댁슜, ?ㅼ쓬???뺤씤???ъ씤?몃? ?④퍡 ?곸뼱?먮㈃ 醫뗭뒿?덈떎.">
+            <Field label="상세 메모" hint="고객 반응, 약속한 내용, 다음에 확인할 사항을 함께 적어두면 좋습니다.">
               <Textarea
                 rows={6}
                 value={details}
                 onChange={(event) => setDetails(event.target.value)}
-                placeholder="?? ?댁씪 ?ㅽ썑源뚯? ?ш텒 ?щ낯怨?湲곗〈 泥대쪟?먭꺽 利앸튃??蹂대궡湲곕줈 ?덈궡?? 異붽?濡?異쒖엯援?誘쇱썝 ?대젰???뺤씤 ?꾩슂."
+                placeholder="예: 내일 오후까지 기존 체류자격 증빙을 보내기로 안내함. 추가로 출입국 민원 이력 확인이 필요함."
               />
             </Field>
 
@@ -198,12 +316,12 @@ export function InquiryCommunicationLogPanel({
                 onChange={(event) => setNeedsReply(event.target.checked)}
                 className="h-4 w-4 rounded border-line-strong text-primary focus:ring-primary/20"
               />
-              怨좉컼 ?듬??대굹 異붽? ?먮즺瑜?湲곕떎由щ뒗 ?곹깭濡??쒖떆?⑸땲??
+              고객 응답이나 추가 자료를 기다리는 상태로 표시합니다.
             </label>
 
             {suggestedChecklist.length > 0 ? (
               <Card className="p-4">
-                <p className="ui-kicker">吏湲?媛숈씠 ?뺤씤?섎㈃ 醫뗭? ??ぉ</p>
+                <p className="ui-kicker">지금 같이 확인하면 좋은 항목</p>
                 <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-text">
                   {suggestedChecklist.map((item) => (
                     <li key={item}>{item}</li>

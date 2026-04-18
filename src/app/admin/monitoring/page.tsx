@@ -1,4 +1,17 @@
-﻿import { Card } from "@/components/ui/card";
+export { default } from "./page-safe-v4";
+/*
+
+import Link from "next/link";
+
+import { Card } from "@/components/ui/card";
+import {
+  type HealthLevel,
+  type SystemHealthSnapshot,
+  getSystemHealthSnapshot
+} from "@/lib/services/system-health-service";
+import { formatDateTime } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 const lawTargets = [
   "출입국관리법",
@@ -21,26 +34,122 @@ const precedentTargets = [
   "민원 처리에 관한 법률 보완요구"
 ];
 
-export default function AdminMonitoringPage() {
+function levelBadgeClass(level: HealthLevel) {
+  if (level === "ok") return "bg-success/10 text-success";
+  if (level === "warn") return "bg-warning/10 text-warning";
+  return "bg-danger/10 text-danger";
+}
+
+function levelLabel(level: HealthLevel) {
+  if (level === "ok") return "정상";
+  if (level === "warn") return "주의";
+  return "위험";
+}
+
+async function safeGetSystemHealthSnapshot(): Promise<SystemHealthSnapshot> {
+  try {
+    return await getSystemHealthSnapshot();
+  } catch (error) {
+    console.error("Failed to load monitoring snapshot", error);
+
+    return {
+      generatedAt: new Date().toISOString(),
+      overallLevel: "critical",
+      score: 0,
+      items: [
+        {
+          key: "snapshot-load",
+          title: "시스템 헬스 로딩",
+          level: "critical",
+          summary: "헬스 데이터를 불러오는 중 오류가 발생했습니다.",
+          details: [error instanceof Error ? error.message : String(error)]
+        }
+      ],
+      recommendedActions: [
+        "서버 로그에서 에러 digest를 확인하고 DATABASE_URL, ENV 설정, 배포 상태를 점검하세요."
+      ]
+    };
+  }
+}
+
+export default async function AdminMonitoringPage() {
+  const snapshot = await safeGetSystemHealthSnapshot();
+
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <p className="ui-kicker">법령 모니터링</p>
-        <h2 className="mt-2 ui-page-title">법령·판례 모니터링 허브</h2>
-        <p className="mt-2 text-sm text-text-muted">
-          현재 모니터링은 Lawbot 텔레그램 명령과 Notion 저장을 기준으로 운영됩니다. 변경이 실제로
-          감지되어 저장되었을 때만 텔레그램 브리핑이 오도록 구성되어 있습니다.
-        </p>
+      <Card className="ui-analysis-hero p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="ui-kicker">System Health</p>
+            <h2 className="mt-2 ui-page-title">운영 안정성 모니터링</h2>
+            <p className="mt-2 max-w-3xl text-sm text-text-muted">
+              관리자 보안, DB 연결, Lawbot/Notion 연동, 스토리지 위험도를 한 화면에서 점검합니다.
+              점수는 즉시 운영 상태를 파악하는 참고값이며, 세부 항목은 아래 카드에서 확인할 수 있습니다.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${levelBadgeClass(snapshot.overallLevel)}`}>
+              상태: {levelLabel(snapshot.overallLevel)}
+            </span>
+            <span className="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+              점수: {snapshot.score} / 100
+            </span>
+            <span className="rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-text">
+              기준 시각: {formatDateTime(snapshot.generatedAt)}
+            </span>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href="/admin/integrations"
+            className="inline-flex items-center justify-center rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-text transition hover:bg-surface-muted"
+          >
+            연동 센터
+          </Link>
+          <Link
+            href="/admin/inquiries"
+            className="inline-flex items-center justify-center rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-text transition hover:bg-surface-muted"
+          >
+            문의 운영 화면
+          </Link>
+          <Link
+            href="/api/admin/system/health"
+            className="inline-flex items-center justify-center rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-text transition hover:bg-surface-muted"
+          >
+            헬스 API 확인
+          </Link>
+        </div>
       </Card>
 
+      <div className="grid gap-4 xl:grid-cols-2">
+        {snapshot.items.map((item) => (
+          <Card key={item.key} className="p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="ui-kicker">{item.title}</p>
+                <p className="mt-2 text-sm text-text">{item.summary}</p>
+              </div>
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${levelBadgeClass(item.level)}`}>
+                {levelLabel(item.level)}
+              </span>
+            </div>
+            <ul className="mt-4 space-y-2 text-sm text-text-muted">
+              {item.details.map((detail) => (
+                <li key={detail}>• {detail}</li>
+              ))}
+            </ul>
+          </Card>
+        ))}
+      </div>
+
       <Card className="p-6">
-        <h3 className="text-base font-semibold text-text">자동화 상태</h3>
-        <div className="mt-3 space-y-2 text-sm text-text-muted">
-          <p>• 자동화 이름: <strong className="text-text">Lawbot Legal Briefing</strong></p>
-          <p>• 실행 기준: 매일 오전 9시 KST</p>
-          <p>• 알림 조건: <strong className="text-text">created / updated_existing</strong> 결과가 있을 때만 전송</p>
-          <p>• 변경이 없으면 텔레그램 알림은 오지 않습니다.</p>
-        </div>
+        <p className="ui-kicker">권장 조치</p>
+        <h3 className="mt-2 ui-section-title">운영 안정화 체크리스트</h3>
+        <ul className="mt-4 space-y-2 text-sm text-text-muted">
+          {snapshot.recommendedActions.map((action) => (
+            <li key={action}>• {action}</li>
+          ))}
+        </ul>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -76,17 +185,7 @@ export default function AdminMonitoringPage() {
           </div>
         </Card>
       </div>
-
-      <Card className="p-6">
-        <h3 className="text-base font-semibold text-text">웹페이지에서 나중에 붙일 항목</h3>
-        <div className="mt-3 space-y-2 text-sm text-text-muted">
-          <p>• 모니터링 대상 법령/검색어 추가 및 삭제</p>
-          <p>• lookback 일수 조정</p>
-          <p>• 수동 실행 버튼과 최근 실행 결과 표시</p>
-          <p>• Telegram 브리핑 on/off</p>
-          <p>• 최근 감지된 법령 변경 / 판례 카드 요약</p>
-        </div>
-      </Card>
     </div>
   );
 }
+*/

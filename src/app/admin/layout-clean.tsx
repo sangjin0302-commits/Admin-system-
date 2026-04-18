@@ -1,6 +1,8 @@
 import Link from "next/link";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+import { AdminOpsBanner } from "@/components/admin/admin-ops-banner";
+
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="space-y-6">
       <section className="rounded-[20px] border border-line bg-surface px-5 py-5 shadow-panel">
@@ -43,6 +45,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
         </div>
       </section>
+
+      <AdminOpsBanner />
 
       {children}
     </div>

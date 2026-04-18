@@ -1,1 +1,1 @@
-export { POST } from "./route-safe";
+export { GET, POST } from "./route-safe-v3";

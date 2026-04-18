@@ -1,6 +1,10 @@
 import type { Locale } from "@/types/inquiry";
 
 const ko = {
+  sections: {
+    basic: "\uC0C1\uB2F4 \uC811\uC218 \uD544\uC218 \uC815\uBCF4",
+    optional: "\uCD94\uAC00 \uC815\uBCF4(\uC120\uD0DD)"
+  },
   labels: {
     preferredLocale: "\uD76C\uB9DD \uC751\uB2F5 \uC5B8\uC5B4",
     clientType: "\uC758\uB8B0 \uD615\uD0DC",
@@ -42,7 +46,19 @@ const ko = {
   buttons: {
     submit: "\uC811\uC218\uD558\uAE30",
     submitting: "\uC811\uC218 \uC911...",
-    resetResult: "\uACB0\uACFC \uB2EB\uAE30"
+    resetResult: "\uACB0\uACFC \uB2EB\uAE30",
+    showOptional: "\uCD94\uAC00 \uC815\uBCF4 \uC785\uB825",
+    hideOptional: "\uCD94\uAC00 \uC815\uBCF4 \uC811\uAE30"
+  },
+  hints: {
+    titleMin: "\uBB38\uC758 \uC81C\uBAA9\uC740 \uCD5C\uC18C 4\uC790 \uC774\uC0C1 \uC785\uB825\uD574 \uC8FC\uC138\uC694.",
+    descriptionMin: "\uC0C1\uC138 \uB0B4\uC6A9\uC740 \uCD5C\uC18C 20\uC790 \uC774\uC0C1 \uC785\uB825\uD574 \uC8FC\uC138\uC694.",
+    optional: "\uCD94\uAC00 \uD56D\uBAA9\uC740 \uC120\uD0DD \uC0AC\uD56D\uC785\uB2C8\uB2E4. \uBAA8\uB974\uBA74 \uBE44\uC6CC \uB450\uC154\uB3C4 \uB429\uB2C8\uB2E4."
+  },
+  resultLabels: {
+    summary: "\uC811\uC218 \uC694\uC57D",
+    receipt: "\uC811\uC218 \uBA54\uC2DC\uC9C0",
+    notSelected: "\uBBF8\uC120\uD0DD"
   },
   clientTypeOptions: {
     INDIVIDUAL: "\uAC1C\uC778",
@@ -56,10 +72,22 @@ const ko = {
     documentsReady: "\uAE30\uBCF8 \uC790\uB8CC\uB97C \uC774\uBBF8 \uBCF4\uC720\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4."
   },
   errorGeneric:
-    "\uBB38\uC758 \uC811\uC218 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694."
+    "\uBB38\uC758 \uC811\uC218 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
+  errorMaintenance:
+    "\uD604\uC7AC \uC811\uC218 \uC2DC\uC2A4\uD15C \uC810\uAC80 \uC911\uC73C\uB85C \uC811\uC218\uAC00 \uC77C\uC2DC \uC911\uC9C0\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  errorTimeout:
+    "\uC694\uCCAD \uC2DC\uAC04\uC774 \uCD08\uACFC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
+  notices: {
+    deduplicated:
+      "\uB3D9\uC77C \uB0B4\uC6A9 \uBB38\uC758\uAC00 \uCD5C\uADFC \uC811\uC218\uB418\uC5B4 \uAE30\uC874 \uC811\uC218 \uAC74\uC73C\uB85C \uC5F0\uACB0\uD588\uC2B5\uB2C8\uB2E4."
+  }
 } as const;
 
 const en = {
+  sections: {
+    basic: "Required intake details",
+    optional: "Optional details"
+  },
   labels: {
     preferredLocale: "Preferred response language",
     clientType: "Client type",
@@ -100,7 +128,19 @@ const en = {
   buttons: {
     submit: "Submit Inquiry",
     submitting: "Submitting...",
-    resetResult: "Close Result"
+    resetResult: "Close Result",
+    showOptional: "Add optional details",
+    hideOptional: "Hide optional details"
+  },
+  hints: {
+    titleMin: "Please enter at least 4 characters for the subject.",
+    descriptionMin: "Please enter at least 20 characters for details.",
+    optional: "Optional fields can be skipped if you are unsure."
+  },
+  resultLabels: {
+    summary: "Summary",
+    receipt: "Receipt message",
+    notSelected: "Not selected"
   },
   clientTypeOptions: {
     INDIVIDUAL: "Individual",
@@ -112,7 +152,12 @@ const en = {
     translationYes: "Translation is required.",
     documentsReady: "I already have base documents."
   },
-  errorGeneric: "There was an error while submitting. Please review the form and try again."
+  errorGeneric: "There was an error while submitting. Please review the form and try again.",
+  errorMaintenance: "The intake system is currently under maintenance.",
+  errorTimeout: "The request timed out. Please try again in a moment.",
+  notices: {
+    deduplicated: "A similar inquiry was received recently, so we linked this request to the existing case."
+  }
 } as const;
 
 export function getIntakeCopy(locale: Locale) {

@@ -1,6 +1,12 @@
 ﻿import Link from "next/link";
 
+import { PublicIntakeControlCard } from "@/components/admin/public-intake-control-card";
 import { Card } from "@/components/ui/card";
+import {
+  getPublicIntakeControlCapabilities,
+  getPublicIntakeControlSnapshot,
+  listPublicIntakeControlHistory
+} from "@/lib/services/public-intake-control-service-safe-v3";
 
 export const dynamic = "force-dynamic";
 
@@ -63,8 +69,54 @@ const ossUpgradeCandidates = [
   }
 ] as const;
 
-export default function AdminIntegrationsPage() {
+const githubPatternAdoption = [
+  {
+    key: "pipeline-board",
+    title: "GitHub Projects형 파이프라인 보드",
+    status: "applied",
+    detail: "/admin/inquiries 에 보드 뷰와 목록 뷰 전환을 추가했습니다."
+  },
+  {
+    key: "preset-filters",
+    title: "라벨형 빠른 필터 프리셋",
+    status: "applied",
+    detail: "긴급, 상담, 견적, 검토, 비자, 언어 기준 프리셋을 바로 적용할 수 있습니다."
+  },
+  {
+    key: "status-group-filter",
+    title: "상태 그룹 필터(상담/견적/검토)",
+    status: "applied",
+    detail: "단일 상태가 아니라 업무 흐름 단위로 한 번에 필터링할 수 있습니다."
+  },
+  {
+    key: "runtime-bridge",
+    title: "Lawbot/Market Analyze 런타임 브리지",
+    status: "ready",
+    detail: "UI/저장 구조는 준비되었고, 실제 API URL/토큰 연결만 남아 있습니다."
+  }
+] as const;
+
+function getAdoptionTone(status: "applied" | "ready") {
+  if (status === "applied") {
+    return {
+      label: "적용 완료",
+      className: "bg-success/10 text-success"
+    };
+  }
+
+  return {
+    label: "연결 준비",
+    className: "bg-info/10 text-info"
+  };
+}
+
+export default async function AdminIntegrationsPage() {
   const lawbotStatus = getLawbotStatus();
+  const [publicIntakeControl, publicIntakeHistory, publicIntakeCapabilities] = await Promise.all([
+    getPublicIntakeControlSnapshot(),
+    listPublicIntakeControlHistory(20),
+    Promise.resolve(getPublicIntakeControlCapabilities())
+  ]);
 
   return (
     <div className="space-y-6">
@@ -76,6 +128,34 @@ export default function AdminIntegrationsPage() {
           \uB2E8\uACC4\uB294 \uC544\uB2C8\uACE0, \uAC01\uAC01\uC758 \uBD84\uC11D \uACB0\uACFC\uB97C system \uC5C5\uBB34 \uD750\uB984\uC5D0 \uD761\uC218\uD558\uB294
           \uAD6C\uC870\uB85C \uAC00\uACE0 \uC788\uC2B5\uB2C8\uB2E4.
         </p>
+      </Card>
+
+      <PublicIntakeControlCard
+        initialSnapshot={publicIntakeControl}
+        initialHistory={publicIntakeHistory}
+        initialCapabilities={publicIntakeCapabilities}
+      />
+
+      <Card className="p-6">
+        <p className="ui-kicker">GitHub Pattern Adoption</p>
+        <h3 className="mt-2 ui-section-title">참고 레포 반영 현황</h3>
+        <p className="mt-2 text-sm text-text-muted">
+          외부 GitHub 레퍼런스에서 가져온 운영 패턴 중 현재 system에 반영된 항목을 표시합니다.
+        </p>
+        <div className="mt-4 grid gap-3 xl:grid-cols-3">
+          {githubPatternAdoption.map((item) => {
+            const tone = getAdoptionTone(item.status);
+            return (
+              <Card key={item.key} muted className="p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-strong">{item.title}</p>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone.className}`}>{tone.label}</span>
+                </div>
+                <p className="mt-2 text-sm text-text-muted">{item.detail}</p>
+              </Card>
+            );
+          })}
+        </div>
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">

@@ -1,9 +1,11 @@
+export { GET, POST } from "./route-safe-v3";
+/*
 import { ZodError } from "zod";
 import { NextResponse } from "next/server";
 
 import { createInquiry } from "@/lib/services/inquiry-service";
 
-export async function POST(request: Request) {
+async function POST_LEGACY_UNUSED(request: Request) {
   try {
     const payload = await request.json();
     const inquiry = await createInquiry(payload);
@@ -26,7 +28,7 @@ export async function POST(request: Request) {
       { status: 500 }
     );
 
-    /*
+    //
     if (error instanceof ZodError) {
       return NextResponse.json(
         { error: error.issues[0]?.message ?? "입력값을 다시 확인해 주세요." },
@@ -39,6 +41,7 @@ export async function POST(request: Request) {
       { error: "문의 접수를 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." },
       { status: 500 }
     );
-    */
+    //
   }
 }
+*/

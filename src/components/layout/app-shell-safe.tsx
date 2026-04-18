@@ -13,6 +13,9 @@ export function AppShellSafe({ children }: Readonly<{ children: React.ReactNode 
 
   return (
     <div className="ui-shell">
+      <a href="#main-content" className="ui-skip-link">
+        본문으로 바로 이동
+      </a>
       {hideGlobalHeader ? null : (
         <header className="mb-6 rounded-lg border border-line bg-surface px-5 py-4 shadow-panel">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -37,7 +40,9 @@ export function AppShellSafe({ children }: Readonly<{ children: React.ReactNode 
           </div>
         </header>
       )}
-      <main>{children}</main>
+      <main id="main-content" tabIndex={-1}>
+        {children}
+      </main>
     </div>
   );
 }

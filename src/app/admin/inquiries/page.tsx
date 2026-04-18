@@ -1,17 +1,24 @@
 ﻿import Link from "next/link";
 
 import { InquiryCardList } from "@/components/admin/inquiry-card-list";
+import { InquiryFlowAlerts } from "@/components/admin/inquiry-flow-alerts";
+import { InquiryKanbanBoard } from "@/components/admin/inquiry-kanban-board";
 import { InquiryDashboardSummary } from "@/components/admin/inquiry-dashboard-summary";
 import { InquiryFilters } from "@/components/admin/inquiry-filters";
+import { InquiryQuickPresets } from "@/components/admin/inquiry-quick-presets";
 import { InquiryTable } from "@/components/admin/inquiry-table";
-import { InquiryWorkQueuesClean } from "@/components/admin/inquiry-work-queues-clean";
+import { InquiryWorkQueuesSafeV2 } from "@/components/admin/inquiry-work-queues-safe-v2";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
+import {
+  buildInquiryListHref,
+  getPriorityScoreTone,
+  parseInquiryViewMode
+} from "@/lib/services/admin-inquiry-list-helpers";
+import { buildAdminInquiryPageData } from "@/lib/services/admin-inquiry-page-data";
 import { readMarketingSnapshot } from "@/lib/services/marketing-sync-service";
-import { parseAdminInquiryQuery } from "@/lib/validation/admin";
+import { parseAdminInquiryQuery } from "@/lib/validation/admin-safe-v2";
 import { listInquiries } from "@/lib/services/inquiry-service";
-import type { InquiryDashboardSummaryProps } from "@/components/admin/inquiry-dashboard-summary";
-import { formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -35,221 +42,39 @@ async function safeReadMarketingSnapshot() {
   }
 }
 
-function isWithinDays(date: Date | null | undefined, days: number) {
-  if (!date) return false;
-  const now = new Date();
-  const distance = date.getTime() - now.getTime();
-  return distance >= 0 && distance <= days * 24 * 60 * 60 * 1000;
-}
-
-function getInquiryActionScore(item: InquiryListItem) {
-  let score = 0;
-
-  if (item.urgencyLevel === "CRITICAL") score += 100;
-  if (item.responsePending) score += 35;
-  if (isWithinDays(item.dueDate, 1)) score += 30;
-  if (isWithinDays(item.nextContactAt, 1)) score += 26;
-  if (["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)) score += 22;
-  if (["CONSULTATION_REQUIRED", "WAITING_CONSULTATION"].includes(item.status)) score += 18;
-  if (!item.hasPreparedDocuments && item.status !== "WON" && item.status !== "CLOSED") score += 16;
-  if (item.status === "IN_REVIEW") score += 8;
-
-  return score;
-}
-
-function buildQueueDescription(item: InquiryListItem) {
-  if (item.urgencyLevel === "CRITICAL" || isWithinDays(item.dueDate, 1)) {
-    return "긴급도나 일정 기준으로 가장 먼저 확인할 건입니다.";
-  }
-
-  if (!item.hasPreparedDocuments && item.status !== "WON" && item.status !== "CLOSED") {
-    return "기본 서류 확보 여부부터 먼저 확인하는 흐름이 좋습니다.";
-  }
-
-  if (["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)) {
-    return "견적 작성 또는 발송 후속조치를 이어가야 합니다.";
-  }
-
-  if (["CONSULTATION_REQUIRED", "WAITING_CONSULTATION"].includes(item.status)) {
-    return "상담 연결 또는 후속 응답이 필요한 상태입니다.";
-  }
-
-  if (item.responsePending) {
-    return "고객 회신 또는 다음 연락 시점 확인이 필요합니다.";
-  }
-
-  return "운영 우선순위 기준으로 상단에 배치된 건입니다.";
-}
-
-function getLawbotConnectionStatus() {
-  const hasAnalyzeUrl = Boolean(process.env.LAWBOT_ANALYZE_URL?.trim());
-  const hasAnalyzeToken = Boolean(process.env.LAWBOT_ANALYZE_TOKEN?.trim());
-
-  if (hasAnalyzeUrl && hasAnalyzeToken) {
-    return {
-      label: "실제 분석 연결 가능",
-      toneClassName: "bg-success/10 text-success",
-      detail: "사건 상세에서 Lawbot 분석 호출과 저장 스냅샷 갱신을 바로 시도할 수 있습니다."
-    };
-  }
-
-  if (hasAnalyzeUrl) {
-    return {
-      label: "주소만 연결됨",
-      toneClassName: "bg-warning/10 text-warning",
-      detail: "분석 주소는 잡혀 있지만 토큰이 없어 운영 환경에서는 안정적인 호출 전 점검이 더 필요합니다."
-    };
-  }
-
-  return {
-    label: "아직 미연결",
-    toneClassName: "bg-danger/10 text-danger",
-    detail: "Lawbot UI와 저장 구조는 준비돼 있지만 실제 API 호출은 아직 비활성 상태입니다."
-  };
-}
-
 export default async function AdminInquiryListPage({
   searchParams
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const rawParams = await searchParams;
+  const viewMode = parseInquiryViewMode(typeof rawParams.view === "string" ? rawParams.view : undefined);
+  const listViewHref = buildInquiryListHref(rawParams, "list");
+  const boardViewHref = buildInquiryListHref(rawParams, "board");
   const filters = parseAdminInquiryQuery(rawParams);
   const [allInquiries, inquiries, marketingSnapshot] = await Promise.all([
     safeListInquiries(),
     safeListInquiries(filters),
     safeReadMarketingSnapshot()
   ]);
-  const activeInquiries = allInquiries.filter((item: InquiryListItem) => item.status !== "CLOSED");
-  const quotePendingCount = activeInquiries.filter((item: InquiryListItem) =>
-    ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)
-  ).length;
-  const consultationNeededCount = activeInquiries.filter((item: InquiryListItem) =>
-    ["CONSULTATION_REQUIRED", "WAITING_CONSULTATION", "PRE_DIAGNOSED"].includes(item.status)
-  ).length;
-  const nextThreeDaysCount = activeInquiries.filter((item: InquiryListItem) => isWithinDays(item.dueDate, 3)).length;
-  const nextContactCount = activeInquiries.filter((item: InquiryListItem) => isWithinDays(item.nextContactAt, 3)).length;
-  const responsePendingCount = activeInquiries.filter((item: InquiryListItem) => item.responsePending).length;
-  const docsPendingCount = activeInquiries.filter(
-    (item: InquiryListItem) => !item.hasPreparedDocuments && item.status !== "WON"
-  ).length;
-  const lawbotStatus = getLawbotConnectionStatus();
-  const marketingStatus = marketingSnapshot
-    ? {
-        label: "스냅샷 수신 중",
-        toneClassName: "bg-success/10 text-success",
-        detail: `최근 마케팅 요약이 ${formatDateTime(marketingSnapshot.received_at ?? marketingSnapshot.generated_at ?? null)} 기준으로 저장돼 있습니다. 아직 실시간 엔진 연동은 아닙니다.`
-      }
-    : {
-        label: "아직 스냅샷 없음",
-        toneClassName: "bg-warning/10 text-warning",
-        detail: "marketing-analyze는 현재 저장된 스냅샷이 없어서 상단 허브와 추천 흐름에서 실시간 대신 기본 신호만 참고합니다."
-      };
-  const prioritizedInquiries = [...inquiries].sort((left, right) => {
-    const scoreDiff = getInquiryActionScore(right) - getInquiryActionScore(left);
-    if (scoreDiff !== 0) return scoreDiff;
-    return right.updatedAt.getTime() - left.updatedAt.getTime();
+  const {
+    activeInquiries,
+    prioritizedInquiries,
+    lawbotStatus,
+    marketingStatus,
+    focusSummary,
+    immediateExecutionItems,
+    quickActionLinks,
+    queueGroups,
+    flowAlerts,
+    summaryProps
+  } = buildAdminInquiryPageData({
+    allInquiries,
+    inquiries,
+    filters,
+    viewMode,
+    marketingSnapshot
   });
-  const todayActionCount = activeInquiries.filter(
-    (item: InquiryListItem) =>
-      item.urgencyLevel === "CRITICAL" ||
-      isWithinDays(item.dueDate, 1) ||
-      isWithinDays(item.nextContactAt, 1) ||
-      item.responsePending ||
-      ["QUOTE_DRAFTED", "QUOTE_PENDING", "CONSULTATION_REQUIRED"].includes(item.status)
-  ).length;
-  const actionItems: InquiryDashboardSummaryProps["actionItems"] = activeInquiries
-    .filter(
-      (item: InquiryListItem) =>
-        item.urgencyLevel === "CRITICAL" ||
-        isWithinDays(item.dueDate, 3) ||
-        isWithinDays(item.nextContactAt, 3) ||
-        item.responsePending ||
-        ["QUOTE_DRAFTED", "QUOTE_PENDING", "CONSULTATION_REQUIRED", "WAITING_CONSULTATION"].includes(item.status) ||
-        !item.hasPreparedDocuments
-    )
-    .slice(0, 6)
-    .map((item: InquiryListItem) => ({
-      id: item.id,
-      title: item.title,
-      href: `/admin/inquiries/${item.id}`,
-      tone:
-        item.urgencyLevel === "CRITICAL"
-          ? "urgent"
-          : isWithinDays(item.dueDate, 3)
-            ? "deadline"
-            : ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)
-              ? "quote"
-              : !item.hasPreparedDocuments
-                ? "docs"
-                : "consult",
-      description:
-        item.urgencyLevel === "CRITICAL"
-          ? "매우 긴급으로 분류된 건입니다. 사실관계와 일정부터 바로 확인해 주세요."
-          : isWithinDays(item.dueDate, 3)
-            ? "3일 이내 희망 일정 또는 마감이 잡혀 있습니다."
-            : item.responsePending
-              ? "고객 답변 또는 자료 회신을 기다리는 상태입니다. 다음 연락 여부를 확인해 주세요."
-              : isWithinDays(item.nextContactAt, 3)
-                ? "다음 연락 예정일이 가까워졌습니다. 후속 연락을 놓치지 않게 확인해 주세요."
-            : ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status)
-              ? "견적 작성, 검토 또는 발송 후속조치가 필요한 상태입니다."
-              : !item.hasPreparedDocuments
-                ? "기본 서류 보유 여부가 미확인 상태입니다. 자료 요청 흐름을 먼저 확인해 주세요."
-                : "상담 연결이나 다음 응답이 필요한 상태입니다."
-    }));
-  const queueGroups = [
-    {
-      key: "urgent",
-      title: "긴급 확인",
-      hint: "당일 또는 매우 긴급 기준으로 먼저 봐야 하는 건",
-      tone: "urgent" as const,
-      items: prioritizedInquiries
-        .filter((item) => item.urgencyLevel === "CRITICAL" || isWithinDays(item.dueDate, 1))
-        .slice(0, 3)
-    },
-    {
-      key: "docs",
-      title: "자료 요청",
-      hint: "서류 보유 여부나 기본 자료 확인이 먼저 필요한 건",
-      tone: "docs" as const,
-      items: prioritizedInquiries
-        .filter((item) => !item.hasPreparedDocuments && item.status !== "WON" && item.status !== "CLOSED")
-        .slice(0, 3)
-    },
-    {
-      key: "consult",
-      title: "상담 연결",
-      hint: "상담 진행이나 다음 응답이 필요한 건",
-      tone: "consult" as const,
-      items: prioritizedInquiries
-        .filter((item) => ["CONSULTATION_REQUIRED", "WAITING_CONSULTATION", "PRE_DIAGNOSED"].includes(item.status))
-        .slice(0, 3)
-    },
-    {
-      key: "quote",
-      title: "견적 후속",
-      hint: "견적 작성, 검토, 발송 흐름을 이어가야 하는 건",
-      tone: "quote" as const,
-      items: prioritizedInquiries
-        .filter((item) => ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"].includes(item.status))
-        .slice(0, 3)
-    }
-  ].map((group) => ({
-    ...group,
-    count: group.items.length,
-    items: group.items.map((item) => ({
-      id: item.id,
-      title: item.title,
-      href: `/admin/inquiries/${item.id}`,
-      description: buildQueueDescription(item)
-    }))
-  }));
-  const focusSummary = [
-    todayActionCount > 0 ? `오늘 먼저 볼 건 ${todayActionCount}건` : "오늘 급한 건은 적은 편",
-    docsPendingCount > 0 ? `자료 확인 필요 ${docsPendingCount}건` : "자료 확인 병목은 적은 편",
-    quotePendingCount > 0 ? `견적 후속 ${quotePendingCount}건` : "견적 후속은 비교적 안정적"
-  ];
 
   return (
     <div className="space-y-6">
@@ -341,6 +166,94 @@ export default async function AdminInquiryListPage({
         </div>
       </Card>
 
+      <Card className="p-4">
+        <nav aria-label="문의 운영 빠른 이동" className="flex flex-wrap items-center gap-2">
+          <span className="ui-kicker mr-1">빠른 이동</span>
+          <a href="#inquiry-quick-actions" className="ui-analysis-chip">
+            즉시 실행 큐
+          </a>
+          <a href="#inquiry-summary" className="ui-analysis-chip">
+            요약 지표
+          </a>
+          <a href="#inquiry-filters" className="ui-analysis-chip">
+            필터
+          </a>
+          <a href="#inquiry-results" className="ui-analysis-chip">
+            목록/보드
+          </a>
+        </nav>
+      </Card>
+
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]" id="inquiry-quick-actions">
+        <Card className="p-6">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="ui-kicker">Execution Queue</p>
+              <h3 className="mt-2 ui-section-title">지금 바로 처리할 순서</h3>
+            </div>
+            <span className="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+              상위 {immediateExecutionItems.length}건
+            </span>
+          </div>
+          {immediateExecutionItems.length > 0 ? (
+            <div className="mt-5 space-y-3">
+              {immediateExecutionItems.map((item) => (
+                <Link
+                  key={`priority-${item.id}`}
+                  href={item.href}
+                  className="block rounded-2xl border border-line bg-surface px-4 py-4 transition hover:border-line-strong hover:bg-surface-muted"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-text-strong">{item.title}</p>
+                      <p className="mt-1 text-xs text-text-muted">{item.meta}</p>
+                      <p className="mt-2 text-sm text-text">{item.statusLabel}</p>
+                      <p className="mt-1 text-xs text-text-muted">실행 준비도 {item.readiness}</p>
+                    </div>
+                    <span className={dashboardToneClassName(getPriorityScoreTone(item.score))}>
+                      우선점수 {item.score}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              className="mt-5"
+              title="즉시 실행 큐가 비어 있습니다."
+              description="신규 접수 또는 응답 대기 건이 생기면 우선순위 기준으로 자동 정렬됩니다."
+            />
+          )}
+        </Card>
+
+        <Card className="p-6">
+          <p className="ui-kicker">Quick Actions</p>
+          <h3 className="mt-2 ui-section-title">운영 단축 이동</h3>
+          <p className="mt-2 text-sm text-text-muted">
+            자주 보는 필터 조합을 한 번에 열 수 있게 구성했습니다.
+          </p>
+          <div className="mt-5 space-y-3">
+            {quickActionLinks.map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="block rounded-2xl border border-line bg-surface px-4 py-4 transition hover:border-line-strong hover:bg-surface-muted"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-strong">{item.label}</p>
+                    <p className="mt-2 text-sm text-text-muted">{item.description}</p>
+                  </div>
+                  <span className="rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-text-strong">
+                    {item.count}건
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </Card>
+      </div>
+
       <Card className="p-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -353,35 +266,82 @@ export default async function AdminInquiryListPage({
         </div>
       </Card>
 
-      <InquiryDashboardSummary
-        totalCount={allInquiries.length}
-        todayActionCount={todayActionCount}
-        nextThreeDaysCount={nextThreeDaysCount}
-        quotePendingCount={quotePendingCount}
-        docsPendingCount={docsPendingCount}
-        consultationNeededCount={consultationNeededCount}
-        responsePendingCount={responsePendingCount}
-        nextContactCount={nextContactCount}
-        actionItems={actionItems}
-      />
+      <div id="inquiry-summary">
+        <InquiryDashboardSummary {...summaryProps} />
+      </div>
 
-      <InquiryWorkQueuesClean groups={queueGroups} />
+      <InquiryFlowAlerts alerts={flowAlerts} />
 
-      <InquiryFilters filters={filters} />
+      <InquiryWorkQueuesSafeV2 groups={queueGroups} />
 
-      {prioritizedInquiries.length > 0 ? (
-        <>
-          <InquiryCardList inquiries={prioritizedInquiries} />
-          <InquiryTable inquiries={prioritizedInquiries} />
-        </>
-      ) : (
-        <EmptyState
-          title="조건에 맞는 문의가 없습니다."
-          description="검색어 또는 필터 조건을 조정해 보세요. 초기화하면 전체 문의를 다시 볼 수 있습니다."
-          actionLabel="필터 초기화"
-          actionHref="/admin/inquiries"
-        />
-      )}
+      <Card className="p-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="ui-kicker">View Mode</p>
+            <h3 className="mt-1 text-lg font-semibold text-text-strong">보드/목록 전환</h3>
+            <p className="mt-1 text-sm text-text-muted">
+              GitHub 프로젝트 보드처럼 상태 흐름으로 보거나, 기존 목록/테이블로 볼 수 있습니다.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={boardViewHref}
+              className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium transition ${
+                viewMode === "board"
+                  ? "border-primary bg-primary text-white"
+                  : "border-border bg-surface text-text hover:border-border-strong hover:bg-surface-muted"
+              }`}
+            >
+              파이프라인 보드
+            </Link>
+            <Link
+              href={listViewHref}
+              className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium transition ${
+                viewMode === "list"
+                  ? "border-primary bg-primary text-white"
+                  : "border-border bg-surface text-text hover:border-border-strong hover:bg-surface-muted"
+              }`}
+            >
+              목록/테이블
+            </Link>
+          </div>
+        </div>
+      </Card>
+
+      <InquiryQuickPresets viewMode={viewMode} filters={filters} />
+
+      <div id="inquiry-filters">
+        <InquiryFilters filters={filters} viewMode={viewMode} />
+      </div>
+
+      <div id="inquiry-results">
+        {prioritizedInquiries.length > 0 ? (
+          viewMode === "board" ? (
+            <InquiryKanbanBoard inquiries={prioritizedInquiries} />
+          ) : (
+            <>
+              <InquiryCardList inquiries={prioritizedInquiries} />
+              <InquiryTable inquiries={prioritizedInquiries} />
+            </>
+          )
+        ) : (
+          <EmptyState
+            title="조건에 맞는 문의가 없습니다."
+            description="검색어 또는 필터 조건을 조정해 보세요. 초기화하면 전체 문의를 다시 볼 수 있습니다."
+            actionLabel="필터 초기화"
+            actionHref="/admin/inquiries"
+          />
+        )}
+      </div>
     </div>
   );
+}
+
+function dashboardToneClassName(tone: "default" | "consult" | "quote" | "risk" | "won" | "urgent") {
+  if (tone === "urgent") return "rounded-full bg-danger/10 px-3 py-1 text-xs font-semibold text-danger";
+  if (tone === "consult") return "rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success";
+  if (tone === "quote") return "rounded-full bg-info/10 px-3 py-1 text-xs font-semibold text-info";
+  if (tone === "risk") return "rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold text-warning";
+  if (tone === "won") return "rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary";
+  return "rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-text";
 }

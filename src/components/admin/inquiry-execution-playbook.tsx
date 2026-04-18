@@ -32,17 +32,17 @@ export function InquiryExecutionPlaybook({
   ].filter((item, index, list) => item && list.indexOf(item) === index);
 
   const referenceSteps = [
-    ...references.materials.slice(0, 2).map((item) => `?대? ?먮즺 ?뺤씤: ${item.title}`),
-    ...references.websites.slice(0, 2).map((item) => `湲곌? ?덊럹?댁? ?뺤씤: ${item.title}`),
-    ...lawbotQueries.map((item) => `Lawbot ?꾩냽 寃?? ${item}`),
+    ...references.materials.slice(0, 2).map((item) => `내부 자료 확인: ${item.title}`),
+    ...references.websites.slice(0, 2).map((item) => `기관 홈페이지 확인: ${item.title}`),
+    ...lawbotQueries.map((item) => `Lawbot 후속 검색: ${item}`),
   ];
 
   return (
     <Card className="p-6">
       <div>
-        <h3 className="ui-section-title">?ㅽ뻾 ?뚮젅?대턿</h3>
+        <h3 className="ui-section-title">실행 플레이북</h3>
         <p className="mt-2 text-sm text-text-muted">
-          ?ш굔 ?먮떒 寃곌낵瑜?諛붾줈 ?ㅽ뻾?쇰줈 ??만 ???덈룄濡??ㅻ뒛 ???? 怨좉컼 ?꾨떖 臾몄븞, 李멸퀬 由ъ꽌移섎? ?쒓납??紐⑥븯?듬땲??
+          사건 판단 결과를 바로 실행으로 옮기기 위해 오늘 해야 할 일, 고객 전달 문안, 참고 리서치 루트를 모아봅니다.
         </p>
       </div>
 

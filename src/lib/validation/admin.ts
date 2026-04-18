@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   adminSortValues,
+  inquiryStatusGroupValues,
   inquiryStatusValues,
   inquiryTypeValues,
   languageCodeValues,
@@ -12,6 +13,7 @@ export const adminInquiryQuerySchema = z.object({
   q: z.string().trim().optional().catch(""),
   inquiryType: z.enum(inquiryTypeValues).optional(),
   status: z.enum(inquiryStatusValues).optional(),
+  statusGroup: z.enum(inquiryStatusGroupValues).optional(),
   urgency: z.enum(urgencyValues).optional(),
   language: z.enum(languageCodeValues).optional(),
   assignee: z.string().trim().optional().catch(""),
@@ -24,6 +26,7 @@ export function parseAdminInquiryQuery(params: Record<string, string | string[] 
     q: typeof params.q === "string" ? params.q : undefined,
     inquiryType: typeof params.inquiryType === "string" ? params.inquiryType : undefined,
     status: typeof params.status === "string" ? params.status : undefined,
+    statusGroup: typeof params.statusGroup === "string" ? params.statusGroup : undefined,
     urgency: typeof params.urgency === "string" ? params.urgency : undefined,
     language: typeof params.language === "string" ? params.language : undefined,
     assignee: typeof params.assignee === "string" ? params.assignee : undefined,
@@ -55,7 +58,7 @@ export const communicationChannelValues = [
   "INTERNAL"
 ] as const;
 
-export const appendInquiryCommunicationLogSchema = z.object({
+const appendInquiryCommunicationLogSchemaLegacy = z.object({
   channel: z.enum(communicationChannelValues),
   summary: z.string().trim().min(2, "연락 요약을 입력해 주세요.").max(400, "연락 요약은 400자 이내로 입력해 주세요."),
   details: z.string().trim().max(3000, "상세 메모는 3000자 이내로 입력해 주세요.").optional().default(""),

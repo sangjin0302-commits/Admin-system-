@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { IntakeFormSafe } from "@/components/intake/intake-form-safe";
+import { IntakeFormSafeV3 } from "@/components/intake/intake-form-safe-v3";
 import { Card } from "@/components/ui/card";
 import type { Locale } from "@/types/inquiry";
 
@@ -25,7 +25,7 @@ export default async function IntakePageSafe({
         </Link>
       </div>
       <Card className="p-6">
-        <IntakeFormSafe initialLocale={locale} />
+        <IntakeFormSafeV3 initialLocale={locale} />
       </Card>
     </div>
   );

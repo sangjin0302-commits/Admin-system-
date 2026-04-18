@@ -8,6 +8,8 @@ import { Select } from "@/components/ui/select";
 import {
   adminSortLabels,
   adminSortValues,
+  inquiryStatusGroupLabels,
+  inquiryStatusGroupValues,
   inquiryStatusLabels,
   inquiryStatusValues,
   inquiryTypeLabels,
@@ -17,6 +19,7 @@ import {
   urgencyLabels,
   urgencyValues,
   type AdminSort,
+  type InquiryStatusGroup,
   type InquiryStatus,
   type InquiryType,
   type LanguageCode,
@@ -28,18 +31,21 @@ type InquiryFiltersProps = {
     q?: string;
     inquiryType?: InquiryType;
     status?: InquiryStatus;
+    statusGroup?: InquiryStatusGroup;
     urgency?: UrgencyLevel;
     language?: LanguageCode;
     retained?: "all" | "won" | "active";
     sort?: AdminSort;
   };
+  viewMode?: "list" | "board";
 };
 
-export function InquiryFilters({ filters }: InquiryFiltersProps) {
+export function InquiryFilters({ filters, viewMode = "list" }: InquiryFiltersProps) {
   return (
     <Card className="p-5">
       <form method="get" className="space-y-4">
-        <FieldGroup className="md:grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr]">
+        <input type="hidden" name="view" value={viewMode} />
+        <FieldGroup className="md:grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr]">
           <Field label="검색어">
             <Input
               name="q"
@@ -65,6 +71,16 @@ export function InquiryFilters({ filters }: InquiryFiltersProps) {
               {inquiryStatusValues.map((value) => (
                 <option key={value} value={value}>
                   {inquiryStatusLabels[value].ko}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="상태 그룹">
+            <Select name="statusGroup" defaultValue={filters.statusGroup ?? ""}>
+              <option value="">전체</option>
+              {inquiryStatusGroupValues.map((value) => (
+                <option key={value} value={value}>
+                  {inquiryStatusGroupLabels[value].ko}
                 </option>
               ))}
             </Select>

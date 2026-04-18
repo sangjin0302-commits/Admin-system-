@@ -77,6 +77,7 @@ export const createInquirySchema = z.object({
   documentCountry: textSchema(z.string().max(80, validationMessages.documentCountryMax)).optional().or(z.literal("")),
   targetAgency: textSchema(z.string().max(120, validationMessages.targetAgencyMax)).optional().or(z.literal("")),
   dueDate: textSchema(z.string()).optional().or(z.literal("")),
+  website: textSchema(z.string().max(200)).optional().or(z.literal("")),
   hasPreparedDocuments: booleanish.optional().transform((value) => parseBooleanish(value ?? false)),
   needsTranslation: booleanish.optional().transform((value) => parseBooleanish(value ?? false)),
   isCorporateRequest: booleanish.optional().transform((value) => parseBooleanish(value ?? false)),
@@ -92,6 +93,7 @@ export function parseCreateInquiryInput(payload: unknown) {
 
   return {
     ...parsed,
+    email: parsed.email.trim().toLowerCase(),
     organizationName: parsed.organizationName?.trim() || undefined,
     phone: parsed.phone?.trim() || undefined,
     nationality: parsed.nationality?.trim() || undefined,

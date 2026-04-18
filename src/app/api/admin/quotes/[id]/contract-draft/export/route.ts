@@ -1,11 +1,11 @@
-﻿import { NextResponse } from "next/server";
-
+﻿import { createAdminRequestContext } from "@/lib/http/admin-api";
 import { exportContractDraftDocument } from "@/lib/services/quote-service";
 
 export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  const api = createAdminRequestContext("admin.quotes.contract_draft.export.get");
   const { id } = await context.params;
 
   try {
@@ -184,26 +184,20 @@ export async function GET(
   </body>
 </html>`;
 
-      return new NextResponse(html, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8"
-        }
-      });
+      return api.text(html, { status: 200 }, "text/html; charset=utf-8");
     }
 
-    return new NextResponse(document.content, {
+    return api.text(document.content, {
       status: 200,
       headers: {
-        "Content-Type": "text/markdown; charset=utf-8",
         "Content-Disposition": `attachment; filename="${encodeURIComponent(document.fileName)}"`
       }
-    });
+    }, "text/markdown; charset=utf-8");
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "계약 초안 파일을 만들지 못했습니다." },
-      { status: 400 }
-    );
+    api.logError(error);
+    return api.error(500, error instanceof Error ? error.message : "계약 초안 파일을 만들지 못했습니다.", {
+      code: "EXPORT_CONTRACT_DRAFT_FAILED"
+    });
   }
 }
 

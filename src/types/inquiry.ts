@@ -31,6 +31,16 @@ export const inquiryStatusValues = [
 ] as const;
 export type InquiryStatus = (typeof inquiryStatusValues)[number];
 
+export const inquiryStatusGroupValues = [
+  "INTAKE",
+  "CONSULTATION",
+  "QUOTE",
+  "REVIEW",
+  "WON",
+  "RISK"
+] as const;
+export type InquiryStatusGroup = (typeof inquiryStatusGroupValues)[number];
+
 export const urgencyValues = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
 export type UrgencyLevel = (typeof urgencyValues)[number];
 
@@ -94,6 +104,15 @@ export const inquiryStatusLabels: LabeledMap<InquiryStatus> = {
   CLOSED: { ko: "종결", en: "Closed", ar: "مغلق" }
 };
 
+export const inquiryStatusGroupLabels: LabeledMap<InquiryStatusGroup> = {
+  INTAKE: { ko: "초기 분류", en: "Intake", ar: "الفرز الأولي" },
+  CONSULTATION: { ko: "상담 연결", en: "Consultation", ar: "مسار الاستشارة" },
+  QUOTE: { ko: "견적 진행", en: "Quote", ar: "مسار عرض السعر" },
+  REVIEW: { ko: "검토·보류", en: "Review / Hold", ar: "المراجعة / التعليق" },
+  WON: { ko: "수임", en: "Won", ar: "تم التعاقد" },
+  RISK: { ko: "리스크 우선", en: "Risk Focus", ar: "مخاطر أولوية" }
+};
+
 export const urgencyLabels: LabeledMap<UrgencyLevel> = {
   LOW: { ko: "낮음", en: "Low", ar: "منخفض" },
   MEDIUM: { ko: "보통", en: "Medium", ar: "متوسط" },
@@ -136,4 +155,65 @@ export function getUrgencyRank(level: UrgencyLevel) {
     MEDIUM: 2,
     LOW: 1
   }[level];
+}
+
+function isValueInArray<T extends readonly string[]>(value: unknown, values: T): value is T[number] {
+  return typeof value === "string" && (values as readonly string[]).includes(value);
+}
+
+export function normalizeInquiryType(value: unknown): InquiryType {
+  return isValueInArray(value, inquiryTypeValues) ? value : "UNKNOWN";
+}
+
+export function normalizeInquiryStatus(value: unknown): InquiryStatus {
+  return isValueInArray(value, inquiryStatusValues) ? value : "NEW";
+}
+
+export function normalizeInquiryStatusGroup(value: unknown): InquiryStatusGroup {
+  return isValueInArray(value, inquiryStatusGroupValues) ? value : "INTAKE";
+}
+
+export function normalizeUrgencyLevel(value: unknown): UrgencyLevel {
+  return isValueInArray(value, urgencyValues) ? value : "MEDIUM";
+}
+
+export function normalizeLanguageCode(value: unknown): LanguageCode {
+  return isValueInArray(value, languageCodeValues) ? value : "KO";
+}
+
+export function normalizeClientType(value: unknown): ClientType {
+  return isValueInArray(value, clientTypeValues) ? value : "INDIVIDUAL";
+}
+
+export function getInquiryTypeLabel(value: unknown, locale: Locale = "ko") {
+  return inquiryTypeLabels[normalizeInquiryType(value)][locale];
+}
+
+export function getInquiryStatusLabel(value: unknown, locale: Locale = "ko") {
+  return inquiryStatusLabels[normalizeInquiryStatus(value)][locale];
+}
+
+export function getInquiryStatusGroupLabel(value: unknown, locale: Locale = "ko") {
+  return inquiryStatusGroupLabels[normalizeInquiryStatusGroup(value)][locale];
+}
+
+export function getUrgencyLabel(value: unknown, locale: Locale = "ko") {
+  return urgencyLabels[normalizeUrgencyLevel(value)][locale];
+}
+
+export function getLanguageCodeLabel(value: unknown, locale: Locale = "ko") {
+  return languageCodeLabels[normalizeLanguageCode(value)][locale];
+}
+
+export function getClientTypeLabel(value: unknown, locale: Locale = "ko") {
+  return clientTypeLabels[normalizeClientType(value)][locale];
+}
+
+export function getInquiryStatusGroupStatuses(group: InquiryStatusGroup): InquiryStatus[] {
+  if (group === "INTAKE") return ["NEW", "PRE_DIAGNOSED"];
+  if (group === "CONSULTATION") return ["CONSULTATION_REQUIRED", "WAITING_CONSULTATION"];
+  if (group === "QUOTE") return ["QUOTE_DRAFTED", "QUOTE_PENDING", "QUOTE_SENT"];
+  if (group === "REVIEW") return ["IN_REVIEW", "ON_HOLD"];
+  if (group === "WON") return ["WON"];
+  return ["ON_HOLD", "IN_REVIEW", "QUOTE_PENDING", "CONSULTATION_REQUIRED"];
 }

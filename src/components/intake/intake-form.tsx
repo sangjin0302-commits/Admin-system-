@@ -1,5 +1,7 @@
 ﻿"use client";
 
+export { IntakeFormSafeV3 as IntakeForm } from "./intake-form-safe-v3";
+/*
 import { useMemo, useState, type FormEvent } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -401,23 +403,23 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
                 </Badge>
               </div>
               <Card className="p-4">
-                <p className="ui-kicker">?붿빟</p>
+                <p className="ui-kicker">요약</p>
                 <p className="mt-2 text-sm text-text">{result.generatedSummary}</p>
               </Card>
               <Card className="p-4">
-                <p className="ui-kicker">以鍮?沅뚯옣 ?쒕쪟</p>
+                <p className="ui-kicker">준비 권장 서류</p>
                 <p className="mt-2 whitespace-pre-line text-sm text-text">{result.generatedGuidance}</p>
               </Card>
               <Card className="p-4">
-                <p className="ui-kicker">?묒닔 硫붿떆吏</p>
+                <p className="ui-kicker">접수 메시지</p>
                 <p className="mt-2 text-sm text-text">{result.generatedReceiptMessage}</p>
               </Card>
               <Card className="p-4">
-                <p className="ui-kicker">?ъ쟾吏꾨떒 硫붾え</p>
+                <p className="ui-kicker">사전진단 메모</p>
                 <p className="mt-2 text-sm text-text">
                   {result.consultationRequired
-                    ? "?곷떞 ?꾩슂濡?遺꾨쪟?섏뿀?듬땲??"
-                    : "湲곕낯 ?쒕쪟 ?뺤씤 ??寃ъ쟻 珥덉븞 ?④퀎濡?吏꾪뻾?????덉뒿?덈떎."}
+                    ? "상담 필요로 분류했습니다."
+                    : "기본 서류 확인 후 견적 초안 단계로 진행할 수 있습니다."}
                 </p>
                 {result.riskComplexityHint ? (
                   <p className="mt-2 text-xs text-text-muted">{result.riskComplexityHint}</p>
@@ -435,4 +437,5 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
     </div>
   );
 }
+*/
 

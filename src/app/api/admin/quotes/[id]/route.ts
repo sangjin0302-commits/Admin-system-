@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { createAdminRequestContext, firstZodMessage, safeReadJsonBody } from "@/lib/http/admin-api";
 import {
   recalculateQuoteDraft,
   saveQuoteManualEdits,
@@ -16,15 +16,20 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  const api = createAdminRequestContext("admin.quotes.patch");
   const { id } = await context.params;
 
   try {
-    const body = await request.json();
+    const bodyResult = await safeReadJsonBody(request);
+    if (!bodyResult.ok) {
+      return api.error(400, "요청 본문(JSON)을 확인해 주세요.", { code: "INVALID_JSON_BODY" });
+    }
+    const body = bodyResult.body;
 
     if (body?.mode === "manual") {
       const payload = saveQuoteManualEditsSchema.parse(body);
       const quote = await saveQuoteManualEdits(id, payload);
-      return NextResponse.json({ quote });
+      return api.ok({ ok: true, quote });
     }
 
     if (body?.mode === "status") {
@@ -34,23 +39,22 @@ export async function PATCH(
         caseDueDate: payload.caseDueDate ? new Date(payload.caseDueDate) : undefined,
         caseInternalMemo: payload.caseInternalMemo
       });
-      return NextResponse.json({ quote });
+      return api.ok({ ok: true, quote });
     }
 
     const payload = recalculateQuoteSchema.parse(body);
     const quote = await recalculateQuoteDraft(id, payload);
-    return NextResponse.json({ quote });
+    return api.ok({ ok: true, quote });
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: error.issues[0]?.message ?? "입력값을 다시 확인해 주세요." },
-        { status: 400 }
-      );
+      return api.error(400, firstZodMessage(error, "입력값을 다시 확인해 주세요."), {
+        code: "VALIDATION_ERROR"
+      });
     }
 
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "견적 정보를 수정하지 못했습니다." },
-      { status: 400 }
-    );
+    api.logError(error);
+    return api.error(500, error instanceof Error ? error.message : "견적 정보를 수정하지 못했습니다.", {
+      code: "PATCH_QUOTE_FAILED"
+    });
   }
 }

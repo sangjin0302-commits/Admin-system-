@@ -1,3 +1,5 @@
+export { GET, POST } from "./route-safe-v3";
+/*
 import { ZodError } from "zod";
 import { NextResponse } from "next/server";
 
@@ -8,19 +10,110 @@ import {
 } from "@/lib/security/rate-limit";
 import { createInquiry } from "@/lib/services/inquiry-service";
 
+const KO_INVALID_JSON_SAFE =
+  "\uC694\uCCAD \uBCF8\uBB38\uC774 \uC62C\uBC14\uB978 JSON \uD615\uC2DD\uC774 \uC544\uB2D9\uB2C8\uB2E4. \uC785\uB825 \uB0B4\uC6A9\uC744 \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.";
+
 const KO_BAD_REQUEST_DEFAULT = "\uC785\uB825 \uAC12\uC744 \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.";
 const KO_INTERNAL_ERROR =
   "\uBB38\uC758 \uC811\uC218\uB97C \uCC98\uB9AC\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.";
 const KO_TOO_MANY_REQUESTS =
   "\uC694\uCCAD\uC774 \uB108\uBB34 \uB9CE\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.";
+const KO_ORIGIN_REJECTED =
+  "\uD5C8\uC6A9\uB418\uC9C0 \uC54A\uC740 \uCD9C\uCC98 \uC694\uCCAD\uC774 \uCC28\uB2E8\uB418\uC5C8\uC2B5\uB2C8\uB2E4.";
 const KO_INVALID_CONTENT_TYPE =
   "JSON \uD615\uC2DD\uC73C\uB85C \uC694\uCCAD\uD574 \uC8FC\uC138\uC694.";
 const KO_REQUEST_TOO_LARGE =
   "\uC694\uCCAD \uBCF8\uBB38\uC774 \uB108\uBB34 \uD07D\uB2C8\uB2E4. \uC785\uB825 \uB0B4\uC6A9\uC744 \uC904\uC5EC \uC8FC\uC138\uC694.";
+const KO_INVALID_JSON =
+  "요청 본문이 올바른 JSON 형식이 아닙니다. 입력 내용을 다시 확인해 주세요.";
 
 const RATE_LIMIT_WINDOW_MS = getEnvInt("PUBLIC_INTAKE_RATE_LIMIT_WINDOW_MS", 5 * 60 * 1000, 60_000, 3_600_000);
 const RATE_LIMIT_MAX_REQUESTS = getEnvInt("PUBLIC_INTAKE_RATE_LIMIT_MAX_REQUESTS", 25, 5, 200);
 const MAX_BODY_BYTES = getEnvInt("PUBLIC_INTAKE_MAX_BODY_BYTES", 64 * 1024, 8 * 1024, 512 * 1024);
+const REQUIRE_SAME_ORIGIN = getEnvBoolean("PUBLIC_INTAKE_REQUIRE_SAME_ORIGIN", true);
+const ALLOW_MISSING_ORIGIN = getEnvBoolean("PUBLIC_INTAKE_ALLOW_MISSING_ORIGIN", false);
+const ALLOWED_ORIGINS = parseAllowedOrigins(process.env.PUBLIC_INTAKE_ALLOWED_ORIGINS);
+
+function getEnvBoolean(name: string, defaultValue: boolean) {
+  const raw = process.env[name]?.trim().toLowerCase();
+  if (!raw) return defaultValue;
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+}
+
+function parseAllowedOrigins(raw: string | undefined) {
+  return new Set(
+    (raw ?? "")
+      .split(",")
+      .map((entry) => entry.trim().toLowerCase())
+      .filter(Boolean)
+      .map((entry) => {
+        if (!entry.includes("://")) {
+          return entry;
+        }
+
+        try {
+          return new URL(entry).origin.toLowerCase();
+        } catch {
+          return entry;
+        }
+      })
+  );
+}
+
+function getRequestHost(request: Request) {
+  return (
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    new URL(request.url).host
+  ).toLowerCase();
+}
+
+function getOriginCandidate(request: Request) {
+  const origin = request.headers.get("origin")?.trim();
+  if (origin) return origin;
+
+  const referer = request.headers.get("referer")?.trim();
+  if (!referer) return null;
+
+  try {
+    return new URL(referer).origin;
+  } catch {
+    return null;
+  }
+}
+
+function isAllowedOrigin(originCandidate: string, request: Request) {
+  let origin: URL;
+  try {
+    origin = new URL(originCandidate);
+  } catch {
+    return false;
+  }
+
+  const originHost = origin.host.toLowerCase();
+  if (originHost === getRequestHost(request)) {
+    return true;
+  }
+
+  if (ALLOWED_ORIGINS.has("*")) {
+    return true;
+  }
+
+  return ALLOWED_ORIGINS.has(origin.origin.toLowerCase()) || ALLOWED_ORIGINS.has(originHost);
+}
+
+function isSameOriginAllowed(request: Request) {
+  if (!REQUIRE_SAME_ORIGIN) {
+    return true;
+  }
+
+  const originCandidate = getOriginCandidate(request);
+  if (!originCandidate) {
+    return ALLOW_MISSING_ORIGIN;
+  }
+
+  return isAllowedOrigin(originCandidate, request);
+}
 
 function isJsonRequest(request: Request) {
   const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
@@ -35,13 +128,49 @@ function isBodyTooLarge(request: Request) {
   return parsed > MAX_BODY_BYTES;
 }
 
+function isJsonParseError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  return (
+    error.name === "SyntaxError" ||
+    error.message.toLowerCase().includes("json")
+  );
+}
+
+function withRequestId(headers: HeadersInit | undefined, requestId: string) {
+  const merged = new Headers(headers);
+  merged.set("X-Request-Id", requestId);
+  return merged;
+}
+
+function jsonWithRequestId(
+  body: Record<string, unknown>,
+  status: number,
+  requestId: string,
+  headers?: HeadersInit
+) {
+  return NextResponse.json(
+    { ...body, requestId },
+    {
+      status,
+      headers: withRequestId(headers, requestId)
+    }
+  );
+}
+
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
+  const requestStartedAt = Date.now();
+
+  if (!isSameOriginAllowed(request)) {
+    return jsonWithRequestId({ error: KO_ORIGIN_REJECTED }, 403, requestId);
+  }
+
   if (!isJsonRequest(request)) {
-    return NextResponse.json({ error: KO_INVALID_CONTENT_TYPE }, { status: 415 });
+    return jsonWithRequestId({ error: KO_INVALID_CONTENT_TYPE }, 415, requestId);
   }
 
   if (isBodyTooLarge(request)) {
-    return NextResponse.json({ error: KO_REQUEST_TOO_LARGE }, { status: 413 });
+    return jsonWithRequestId({ error: KO_REQUEST_TOO_LARGE }, 413, requestId);
   }
 
   const clientIp = getClientIpFromHeaders(request.headers);
@@ -52,37 +181,52 @@ export async function POST(request: Request) {
     windowMs: RATE_LIMIT_WINDOW_MS
   });
   if (!rateLimit.allowed) {
-    return NextResponse.json(
+    return jsonWithRequestId(
       { error: KO_TOO_MANY_REQUESTS },
+      429,
+      requestId,
       {
-        status: 429,
-        headers: {
-          "Retry-After": String(rateLimit.retryAfterSec),
-          "X-RateLimit-Remaining": String(rateLimit.remaining)
-        }
+        "Retry-After": String(rateLimit.retryAfterSec),
+        "X-RateLimit-Remaining": String(rateLimit.remaining)
       }
     );
   }
 
   try {
-    const payload = await request.json();
+    const rawBody = await request.text();
+    const bodySizeBytes = new TextEncoder().encode(rawBody).length;
+    if (bodySizeBytes > MAX_BODY_BYTES) {
+      return jsonWithRequestId({ error: KO_REQUEST_TOO_LARGE }, 413, requestId);
+    }
+
+    const payload = rawBody ? JSON.parse(rawBody) : {};
     const inquiry = await createInquiry(payload);
 
-    return NextResponse.json(
-      { inquiry },
+    const deduplicated = inquiry.createdAt.getTime() < requestStartedAt;
+    return jsonWithRequestId(
+      { inquiry, deduplicated },
+      201,
+      requestId,
       {
-        status: 201,
-        headers: {
-          "X-RateLimit-Remaining": String(rateLimit.remaining)
-        }
+        "X-Intake-Deduplicated": deduplicated ? "1" : "0",
+        "X-RateLimit-Remaining": String(rateLimit.remaining)
       }
     );
   } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json({ error: error.issues[0]?.message ?? KO_BAD_REQUEST_DEFAULT }, { status: 400 });
+    if (isJsonParseError(error)) {
+      return jsonWithRequestId({ error: KO_INVALID_JSON_SAFE }, 400, requestId);
     }
 
-    console.error("Failed to create inquiry", error);
-    return NextResponse.json({ error: KO_INTERNAL_ERROR }, { status: 500 });
+    if (error instanceof ZodError) {
+      return jsonWithRequestId(
+        { error: error.issues[0]?.message ?? KO_BAD_REQUEST_DEFAULT },
+        400,
+        requestId
+      );
+    }
+
+    console.error("Failed to create inquiry", { requestId, error });
+    return jsonWithRequestId({ error: KO_INTERNAL_ERROR }, 500, requestId);
   }
 }
+*/

@@ -1,4 +1,8 @@
+export { default } from "./page-admin-redirect";
+/*
+
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { getIntakeCopy } from "@/components/intake/copy-clean";
 import { Card } from "@/components/ui/card";
@@ -14,6 +18,7 @@ export default async function Home({
   const { lang } = await searchParams;
   const locale: Locale = lang === "en" ? "en" : "ko";
   const copy = getIntakeCopy(locale);
+  redirect("/admin");
 
   return (
     <div className="space-y-6">
@@ -105,3 +110,4 @@ export default async function Home({
     </div>
   );
 }
+*/

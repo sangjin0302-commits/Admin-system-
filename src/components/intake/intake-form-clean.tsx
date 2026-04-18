@@ -1,4 +1,5 @@
-"use client";
+export { IntakeFormSafeV3 as IntakeForm } from "./intake-form-safe-v3";
+/*
 
 import { useMemo, useState, type FormEvent } from "react";
 
@@ -366,3 +367,4 @@ export function IntakeForm({ initialLocale }: { initialLocale: Locale }) {
     </div>
   );
 }
+*/

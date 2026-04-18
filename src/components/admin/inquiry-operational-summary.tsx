@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { parseClientApiError } from "@/lib/http/client-api";
 import type { InquiryStatus } from "@/types/inquiry";
 
 type AutomationAction = {
@@ -25,6 +26,7 @@ type QuickStatusOption = {
 
 type InquiryOperationalSummaryProps = {
   inquiryId: string;
+  inquiryUpdatedAt: string;
   strengthLabel: string;
   strengthScore: number;
   qualificationScore: number;
@@ -41,6 +43,7 @@ type InquiryOperationalSummaryProps = {
 
 export function InquiryOperationalSummary({
   inquiryId,
+  inquiryUpdatedAt,
   strengthLabel,
   strengthScore,
   qualificationScore,
@@ -97,19 +100,17 @@ export function InquiryOperationalSummary({
         },
         body: JSON.stringify({
           status: action.status,
-          internalMemo: action.memo
+          internalMemo: action.memo,
+          statusChangeNote: `자동 액션 반영: ${action.label}`,
+          expectedUpdatedAt: inquiryUpdatedAt
         })
       });
 
       if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as
-          | { error?: string; blockers?: string[] }
-          | null;
-        setFeedback(
-          result?.blockers?.length
-            ? [result.error ?? "자동 액션 반영 중 오류가 발생했습니다.", ...result.blockers].join(" ")
-            : (result?.error ?? "자동 액션 반영 중 오류가 발생했습니다.")
-        );
+        setFeedback(await parseClientApiError(response, "자동 액션 반영 중 오류가 발생했습니다."));
+        if (response.status === 409 && response.headers.get("X-Current-Updated-At")) {
+          router.refresh();
+        }
         return;
       }
 

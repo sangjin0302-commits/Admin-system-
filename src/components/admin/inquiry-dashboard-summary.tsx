@@ -19,6 +19,9 @@ export type InquiryDashboardSummaryProps = {
   consultationNeededCount: number;
   responsePendingCount: number;
   nextContactCount: number;
+  checklistCoverageCount: number;
+  checklistAvgPercent: number;
+  checklistLowReadinessCount: number;
   actionItems: ActionItem[];
 };
 
@@ -31,6 +34,9 @@ export function InquiryDashboardSummary({
   consultationNeededCount,
   responsePendingCount,
   nextContactCount,
+  checklistCoverageCount,
+  checklistAvgPercent,
+  checklistLowReadinessCount,
   actionItems
 }: InquiryDashboardSummaryProps) {
   const items = [
@@ -41,12 +47,15 @@ export function InquiryDashboardSummary({
     { label: "자료 확인 필요", value: docsPendingCount, hint: "기본 서류 미보유 또는 확인 필요" },
     { label: "상담 필요", value: consultationNeededCount, hint: "상담 연결 또는 후속 응답 필요" },
     { label: "응답 대기", value: responsePendingCount, hint: "고객 답변이나 자료 회신을 기다리는 건" },
-    { label: "다음 연락 예정", value: nextContactCount, hint: "3일 내 다시 연락해야 하는 건" }
+    { label: "다음 연락 예정", value: nextContactCount, hint: "3일 내 다시 연락해야 하는 건" },
+    { label: "체크리스트 적용", value: checklistCoverageCount, hint: "즉시 조치 체크가 가능한 건" },
+    { label: "평균 준비도", value: checklistAvgPercent, hint: "실행 체크리스트 평균 완료율(%)" },
+    { label: "준비도 낮음", value: checklistLowReadinessCount, hint: "완료율 40% 이하 사건" }
   ];
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-11">
         {items.map((item) => (
           <Card key={item.label} muted className="p-5">
             <p className="ui-kicker">{item.label}</p>
