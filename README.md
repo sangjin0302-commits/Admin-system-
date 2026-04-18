@@ -192,6 +192,7 @@ DATABASE_URL="file:C:/Users/your-user/AppData/Local/admin-office-mvp/dev.db"
 ## Marketing Sync (Auto-Sns integration)
 - Ingest endpoint: `POST /api/admin/marketing/ingest`
 - Read endpoint: `GET /api/admin/marketing/overview`
+- Security hardening guide: `docs/security-hardening.md`
 
 Required env (production):
 - `ADMIN_MARKETING_SYNC_TOKEN`: shared secret for webhook auth (`x-admin-sync-token` header)

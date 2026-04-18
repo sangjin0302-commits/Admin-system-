@@ -4,7 +4,7 @@ import { InquiryCaseAnalysisPanel } from "@/components/admin/inquiry-case-analys
 import { InquiryCaseTimeline, type InquiryCaseTimelineItem } from "@/components/admin/inquiry-case-timeline";
 import { InquiryCommunicationCenter } from "@/components/admin/inquiry-communication-center";
 import { InquiryDecisionBoard } from "@/components/admin/inquiry-decision-board";
-import { InquiryExecutionPlaybook } from "@/components/admin/inquiry-execution-playbook";
+import { InquiryExecutionPlaybookSafeV2 } from "@/components/admin/inquiry-execution-playbook-safe-v2";
 import { LawbotCaseAnalysisPanel } from "@/components/admin/lawbot-case-analysis-panel";
 import { LawbotSnapshotCompare } from "@/components/admin/lawbot-snapshot-compare";
 import { InquiryManagementForm } from "@/components/admin/inquiry-management-form";
@@ -13,7 +13,7 @@ import { InquiryOperationsFeedPanel } from "@/components/admin/inquiry-operation
 import { InquiryOperationalSummary } from "@/components/admin/inquiry-operational-summary";
 import { ReferenceRecommendationsPanel } from "@/components/admin/reference-recommendations-panel";
 import { QuoteWorkspacePanel } from "@/components/admin/quote-workspace";
-import { WorkflowProgressPanel } from "@/components/admin/workflow-progress-panel-clean";
+import { WorkflowProgressPanelSafeV2 } from "@/components/admin/workflow-progress-panel-safe-v2";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getNotionReferenceRecommendations } from "@/lib/integrations/notion";
@@ -1486,7 +1486,7 @@ export default async function AdminInquiryDetailPage({
         </div>
       </Card>
 
-      <WorkflowProgressPanel
+      <WorkflowProgressPanelSafeV2
         currentKey={workflowStep}
         lawbotStatus={lawbotAnalysis.status}
         quoteStatus={quoteWorkspace.latestQuote?.status ?? null}
@@ -1620,7 +1620,7 @@ export default async function AdminInquiryDetailPage({
             references={referenceRecommendations}
             qualificationScore={inquiry.qualificationScore}
           />
-          <InquiryExecutionPlaybook
+          <InquiryExecutionPlaybookSafeV2
             analysis={caseAnalysis}
             lawbotAnalysis={lawbotAnalysis}
             references={referenceRecommendations}

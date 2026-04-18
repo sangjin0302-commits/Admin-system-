@@ -26,11 +26,16 @@ const CHECK_TARGETS = [
   "src/app/intake/loading-safe-v2.tsx",
   "src/components/intake/copy-safe.ts",
   "src/components/intake/intake-form-safe.tsx",
+  "src/components/admin/workflow-progress-panel-safe-v2.tsx",
+  "src/components/admin/inquiry-execution-playbook-safe-v2.tsx",
+  "src/app/admin/inquiries/[id]/page.tsx",
   "src/app/api/inquiries/route.ts",
   "src/app/api/inquiries/route-safe.ts",
+  "src/app/api/admin/marketing/ingest/route.ts",
   "src/lib/validation/inquiry-safe.ts",
   "src/lib/validation/inquiry.ts",
-  "src/lib/services/inquiry-service.ts"
+  "src/lib/services/inquiry-service.ts",
+  "src/lib/services/marketing-sync-service.ts"
 ];
 
 const checks = [
@@ -40,14 +45,19 @@ const checks = [
     reason: "U+FFFD replacement character detected"
   },
   {
-    name: "suspicious-string-literal-question-marks",
-    test: (text) => /["'`][^"'`\n]*\?[^"'`\n]*\?[^"'`\n]*["'`]/u.test(text),
-    reason: "suspicious repeated '?' detected in a string literal"
+    name: "suspicious-string-literal-triple-question-marks",
+    test: (text) => /["'`][^"'`\n]*\?\?\?[^"'`\n]*["'`]/u.test(text),
+    reason: "suspicious '???' sequence detected in a string literal"
   },
   {
     name: "literal-unicode-escape-in-jsx-text",
     test: (text) => />[^<{]*\\u[0-9A-Fa-f]{4}[^<}]*</u.test(text),
     reason: "literal \\uXXXX sequence appears in JSX text node"
+  },
+  {
+    name: "possible-mojibake-cjk-hangul-mix",
+    test: (text) => /[\u4E00-\u9FFF][\uAC00-\uD7A3]|[\uAC00-\uD7A3][\u4E00-\u9FFF]/u.test(text),
+    reason: "possible mojibake pattern (CJK/Hangul mixed sequence) detected"
   }
 ];
 
