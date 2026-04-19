@@ -13,3 +13,4 @@ src/generated
 tsconfig.tsbuildinfo
 build.err.log
 build.out.log
+data/marketing-sync-latest.json

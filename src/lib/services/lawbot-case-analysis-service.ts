@@ -28,7 +28,7 @@ export async function getLawbotCaseAnalysis(
   if (!analyzeUrl) {
     return {
       status: "disabled",
-      message: "Lawbot 분석 주소가 아직 설정되지 않아 내부 사건 분석만 표시합니다."
+      message: "Lawbot 분석 URL이 설정되지 않아 내부 사건 분석만 표시합니다."
     };
   }
 
@@ -66,7 +66,7 @@ export async function getLawbotCaseAnalysis(
   } catch {
     return {
       status: "error",
-      message: "Lawbot 분석 서버에 연결하지 못했습니다. 주소 또는 서비스 상태를 확인해 주세요."
+      message: "Lawbot 분석 서버에 연결하지 못했습니다. URL 또는 서비스 상태를 확인해 주세요."
     };
   } finally {
     clearTimeout(timeoutId);

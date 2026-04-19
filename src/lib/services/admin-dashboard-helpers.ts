@@ -24,9 +24,9 @@ export function getLawbotStatus() {
 
   if (hasAnalyzeUrl && hasAnalyzeToken) {
     return {
-      label: "실연결 준비 완료",
+      label: "연동 준비 완료",
       toneClassName: "bg-success/10 text-success",
-      description: "사건 상세에서 실제 분석 호출과 스냅샷 저장까지 이어질 수 있습니다."
+      description: "사건 상세에서 Lawbot 분석 호출과 결과 동기화까지 가능한 상태입니다."
     };
   }
 
@@ -34,14 +34,14 @@ export function getLawbotStatus() {
     return {
       label: "주소만 연결됨",
       toneClassName: "bg-warning/10 text-warning",
-      description: "분석 주소는 있지만 토큰이 없어 운영 기준에서는 점검이 더 필요합니다."
+      description: "분석 주소는 설정되었지만 토큰이 없어 운영 기준에서는 추가 설정이 필요합니다."
     };
   }
 
   return {
     label: "미연결",
     toneClassName: "bg-danger/10 text-danger",
-    description: "UI와 저장 구조는 준비되어 있지만 실제 호출은 아직 꺼져 있습니다."
+    description: "UI 구조는 준비되어 있지만 실제 분석 호출은 아직 비활성 상태입니다."
   };
 }
 
@@ -65,9 +65,9 @@ export function getPublicIntakeStatus(control: PublicIntakeControlSnapshot) {
 
   if (!sameOriginEnabled || !honeypotEnabled) {
     return {
-      label: "보안 점검 필요",
+      label: "보안 조치 필요",
       toneClassName: "bg-danger/10 text-danger",
-      description: "공개 접수 보안 옵션이 완전하지 않아 운영 점검이 필요합니다."
+      description: "공개 접수 보안 옵션이 완전하지 않아 운영 보강이 필요합니다."
     };
   }
 
@@ -124,7 +124,7 @@ export function getPriorityReason(item: DashboardPrioritySource) {
     return "긴급도 또는 일정 기준으로 즉시 확인이 필요합니다.";
   }
   if (item.responsePending || isWithinDays(item.nextContactAt, 1)) {
-    return "고객 회신·다음 연락 시점이 가까워 커뮤니케이션 우선 처리 대상입니다.";
+    return "고객 회신 또는 다음 연락 시점이 가까워 커뮤니케이션 우선 처리가 필요합니다.";
   }
   if (!item.hasPreparedDocuments && item.status !== "WON") {
     return "자료 미확보 상태라 진행 병목을 막기 위해 먼저 서류 요청이 필요합니다.";

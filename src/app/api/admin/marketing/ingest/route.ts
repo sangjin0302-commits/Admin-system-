@@ -17,7 +17,7 @@ function isPayloadTooLarge(request: Request) {
 export async function POST(request: Request) {
   const api = createAdminRequestContext("admin.marketing.ingest.post");
   if (isPayloadTooLarge(request)) {
-    return api.error(413, "요청 본문이 너무 큽니다.", { code: "PAYLOAD_TOO_LARGE" });
+    return api.error(413, "요청 본문이 허용 크기를 초과했습니다.", { code: "PAYLOAD_TOO_LARGE" });
   }
 
   const ip = getClientIpFromHeaders(request.headers);
@@ -29,16 +29,12 @@ export async function POST(request: Request) {
   });
 
   if (!rateLimit.allowed) {
-    return api.error(
-      429,
-      "요청이 너무 많아 잠시 차단되었습니다.",
-      {
-        code: "RATE_LIMITED",
-        headers: {
-          "Retry-After": String(rateLimit.retryAfterSec)
-        }
+    return api.error(429, "요청이 너무 많아 일시적으로 차단되었습니다.", {
+      code: "RATE_LIMITED",
+      headers: {
+        "Retry-After": String(rateLimit.retryAfterSec)
       }
-    );
+    });
   }
 
   const token = request.headers.get("x-admin-sync-token");

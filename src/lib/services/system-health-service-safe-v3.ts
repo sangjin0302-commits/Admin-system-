@@ -1,4 +1,5 @@
 import {
+  buildAdminRuntimeGuardItem,
   buildAdminSecurityItem,
   buildDatabaseItem,
   buildLawbotItem,
@@ -22,6 +23,7 @@ export type { HealthCheckItem, HealthLevel, SystemHealthSnapshot };
 export async function getSystemHealthSnapshot(): Promise<SystemHealthSnapshot> {
   const items: HealthCheckItem[] = [
     buildAdminSecurityItem(),
+    buildAdminRuntimeGuardItem(),
     await buildPublicIntakeSecurityItem(),
     await buildDatabaseItem(),
     buildLawbotItem(),

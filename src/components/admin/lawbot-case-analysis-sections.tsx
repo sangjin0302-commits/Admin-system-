@@ -34,22 +34,25 @@ export function MatchedLawCard({
       <div className="mt-3 space-y-3">
         {items.length > 0 ? (
           items.map((item) => (
-            <div key={`${item.law}-${item.match_type ?? "unknown"}`} className="rounded-2xl border border-border/60 bg-white/70 p-4">
+            <div
+              key={`${item.law}-${item.match_type ?? "unknown"}`}
+              className="rounded-2xl border border-border/60 bg-white/70 p-4"
+            >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-text">{item.law}</p>
                   <p className="mt-1 text-xs text-text-muted">
                     {[
-                      item.exact_name && item.exact_name !== item.law ? `정확명 ${item.exact_name}` : null,
+                      item.exact_name && item.exact_name !== item.law ? `정확명: ${item.exact_name}` : null,
                       item.kind,
                       item.match_type,
                       item.score !== undefined ? `${Math.round(item.score)}점` : null,
-                      item.confidence !== undefined ? `${Math.round(item.confidence)}점` : null
+                      item.confidence !== undefined ? `${Math.round(item.confidence)}%` : null
                     ]
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
-                  {(item.ministry || item.effective_date || item.promulgation_date) ? (
+                  {item.ministry || item.effective_date || item.promulgation_date ? (
                     <p className="mt-1 text-xs text-text-muted">
                       {[item.ministry, item.effective_date, item.promulgation_date].filter(Boolean).join(" · ")}
                     </p>
@@ -104,14 +107,14 @@ export function MatchedArticleCard({
                     {item.law_name ?? item.law} {item.article_label ?? item.article}
                   </p>
                   <p className="mt-1 text-xs text-text-muted">
-                    {[item.article_key, item.jo, item.confidence !== undefined ? `${Math.round(item.confidence)}점` : null]
+                    {[item.article_key, item.jo, item.confidence !== undefined ? `${Math.round(item.confidence)}%` : null]
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
                   {item.summary ?? item.article_text ? (
                     <p className="mt-2 text-sm text-text-muted">{item.summary ?? item.article_text}</p>
                   ) : null}
-                  {item.full_text ? <p className="mt-2 text-sm leading-6 text-text">{item.full_text}</p> : null}
+                  {item.full_text ? <p className="mt-2 whitespace-pre-line text-sm leading-6 text-text">{item.full_text}</p> : null}
                   {item.match_reason ? <p className="mt-2 text-sm text-text">{item.match_reason}</p> : null}
                 </div>
                 <SearchActions
@@ -155,7 +158,7 @@ export function RefreshButton({
       disabled={isRefreshing}
       className="inline-flex items-center rounded-full border border-border/70 px-4 py-2 text-xs font-medium text-text transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {isRefreshing ? "다시 분석 중..." : idleLabel}
+      {isRefreshing ? "재분석 중..." : idleLabel}
     </button>
   );
 }
@@ -165,11 +168,7 @@ export function SimpleListCard({ title, items }: { title: string; items: string[
     <Card muted className="p-5">
       <p className="ui-kicker">{title}</p>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-text">
-        {items.length > 0 ? (
-          items.map((item) => <li key={`${title}-${item}`}>{item}</li>)
-        ) : (
-          <li>표시할 항목이 없습니다.</li>
-        )}
+        {items.length > 0 ? items.map((item) => <li key={`${title}-${item}`}>{item}</li>) : <li>표시할 항목이 없습니다.</li>}
       </ul>
     </Card>
   );
@@ -197,9 +196,9 @@ export function LawbotConnectionReadinessCard({
     <Card muted className={`${className} p-5`.trim()}>
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="ui-kicker">고객 사건 기준 Lawbot 연결 준비</p>
+          <p className="ui-kicker">사건 기반 Lawbot 연결 준비</p>
           <p className="mt-3 text-sm text-text">
-            고객 사건 상세에 저장된 정보로 바로 Lawbot 분석을 보낼 수 있도록, 현재 사건 데이터와 환경설정 준비 상태를 함께 표시합니다.
+            현재 사건 데이터로 바로 분석을 실행할 수 있는지 환경변수와 입력 컨텍스트 상태를 함께 표시합니다.
           </p>
         </div>
         <Badge className={snapshot.connectionReady ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}>
@@ -211,25 +210,25 @@ export function LawbotConnectionReadinessCard({
         <MiniSummaryCard label="분석 URL" value={snapshot.hasAnalyzeUrl ? "설정됨" : "미설정"} />
         <MiniSummaryCard label="분석 토큰" value={snapshot.hasAnalyzeToken ? "설정됨" : "미설정"} />
         <MiniSummaryCard
-          label="사건 입력 컨텍스트"
-          value={snapshot.availableContextLabels.length > 0 ? `${snapshot.availableContextLabels.length}개 확보` : "기본 정보만 있음"}
+          label="입력 컨텍스트"
+          value={snapshot.availableContextLabels.length > 0 ? `${snapshot.availableContextLabels.length}개` : "기본 정보만 있음"}
         />
       </div>
 
       {storedSnapshot ? (
         <div className="mt-4 grid gap-4 xl:grid-cols-3">
           <MiniSummaryCard
-            label="마지막 저장 시각"
+            label="마지막 분석 시각"
             value={storedSnapshot.analyzedAt ? new Date(storedSnapshot.analyzedAt).toLocaleString("ko-KR") : "기록 없음"}
           />
-          <MiniSummaryCard label="저장된 상태" value={storedSnapshot.status ?? "기록 없음"} />
+          <MiniSummaryCard label="저장 상태" value={storedSnapshot.status ?? "기록 없음"} />
           <MiniSummaryCard label="스냅샷 버전" value={`v${storedSnapshot.version}`} />
         </div>
       ) : null}
 
       {storedSnapshot?.summary ? (
         <div className="mt-4 rounded-2xl border border-border/60 bg-white/70 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">마지막 저장 요약</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">마지막 분석 요약</p>
           <p className="mt-2 text-sm text-text">{storedSnapshot.summary}</p>
           {storedSnapshot.payload?.practical_use_status ? (
             <p className="mt-2 text-xs text-text-muted">실전 사용 상태: {storedSnapshot.payload.practical_use_status}</p>
@@ -239,7 +238,7 @@ export function LawbotConnectionReadinessCard({
 
       {snapshot.recommendedMissingFields.length > 0 ? (
         <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">연결 전 보강 추천</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">연결 전 보강 권장</p>
           <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-text">
             {snapshot.recommendedMissingFields.map((item) => (
               <li key={`lawbot-missing-${item}`}>{item}</li>
@@ -249,7 +248,7 @@ export function LawbotConnectionReadinessCard({
       ) : null}
 
       <div className="mt-4 rounded-2xl border border-border/60 bg-white/70 p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">Lawbot 전송 미리보기</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">Lawbot 입력 미리보기</p>
         <pre className="mt-3 whitespace-pre-wrap text-xs leading-6 text-text">{snapshot.factInputPreview}</pre>
       </div>
     </Card>
@@ -270,7 +269,7 @@ export function LawbotExecutionFlowCard({
 }) {
   return (
     <Card muted className={`${className} p-5`.trim()}>
-      <p className="ui-kicker">고객 사건 기준 실행 흐름</p>
+      <p className="ui-kicker">사건 기반 실행 흐름</p>
       <p className="mt-3 text-sm font-medium text-text">{executionFlow.headline}</p>
       <p className="mt-2 text-sm text-text-muted">{executionFlow.description}</p>
       <div className="mt-4 grid gap-3 xl:grid-cols-3">
@@ -295,7 +294,7 @@ export function SearchQueryCard({ title, items }: { title: string; items: string
           items.map((item) => (
             <div key={`${title}-${item}`} className="rounded-2xl border border-border/60 bg-white/70 p-4">
               <p className="text-sm font-semibold text-text">{item}</p>
-              <SearchActions query={item} label="판례 검색" className="mt-3" />
+              <SearchActions query={item} label="관련 검색" className="mt-3" />
             </div>
           ))
         ) : (
@@ -348,14 +347,13 @@ export function SupplementalSourcesCard({
   sources: Record<string, Array<Record<string, unknown>>>;
 }) {
   const entries = Object.entries(sources).filter(([, items]) => Array.isArray(items) && items.length > 0);
-
   if (entries.length === 0) {
     return null;
   }
 
   return (
     <Card muted className="mt-5 p-5">
-      <p className="ui-kicker">보조 참고 자료</p>
+      <p className="ui-kicker">보조 참고자료</p>
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         {entries.map(([category, items]) => (
           <div key={category} className="rounded-2xl border border-border/60 bg-white/70 p-4">
@@ -384,9 +382,9 @@ function labelSupplementalCategory(category: string) {
   if (category === "laws") return "법령 보조 자료";
   if (category === "precedents") return "판례 보조 자료";
   if (category === "interpretations") return "해석례 보조 자료";
-  if (category === "admin_rules") return "행정규칙·고시";
+  if (category === "admin_rules") return "행정규칙/고시";
   if (category === "ordinances") return "자치법규";
-  if (category === "admin_appeals") return "행정심판·재결례";
+  if (category === "admin_appeals") return "행정심판/재결례";
   return category;
 }
 
