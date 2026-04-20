@@ -41,7 +41,11 @@ export async function safeGetQuoteWorkspace(inquiry: InquiryDetailRecord): Promi
       caseAnalysis: analyzeInquiryCase(inquiry),
       lawbotAnalysis: {
         status: "error",
-        message: "견적 화면 기준 Lawbot 분석을 불러오지 못했습니다."
+        message: "Failed to load Lawbot analysis for quote workspace.",
+        outcome: {
+          status: "failed",
+          reasonCode: "network_error"
+        }
       },
       masters: {
         serviceTypes: [],
@@ -65,7 +69,11 @@ export async function safeGetLawbotAnalysis(inquiry: InquiryDetailRecord) {
     console.error("Failed to load lawbot analysis", error);
     return {
       status: "error" as const,
-      message: "Lawbot 분석을 불러오지 못했습니다. 저장된 스냅샷이나 내부 판단 기준으로 검토를 이어가세요."
+      message: "Failed to load Lawbot analysis. Continue with internal checklist first.",
+      outcome: {
+        status: "failed" as const,
+        reasonCode: "network_error" as const
+      }
     };
   }
 }
@@ -97,7 +105,7 @@ export async function safeGetInquiryForDetail(id: string) {
     console.error("Failed to load inquiry detail", error);
     return {
       inquiry: null,
-      errorMessage: error instanceof Error ? error.message : "알 수 없는 오류"
+      errorMessage: error instanceof Error ? error.message : "Unknown error"
     };
   }
 }

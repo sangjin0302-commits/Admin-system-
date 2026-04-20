@@ -36,6 +36,22 @@ export type {
 } from "@/lib/services/lawbot-case-analysis-structure-types";
 export type { LawbotSyncPayload } from "@/lib/services/lawbot-case-analysis-sync-types";
 
+export type LawbotOperationStatus = "success" | "skipped_by_policy" | "failed";
+
+export type LawbotOperationReasonCode =
+  | "analysis_completed"
+  | "missing_analyze_url"
+  | "automatic_calls_disabled"
+  | "request_timeout"
+  | "upstream_http_error"
+  | "contract_validation_failed"
+  | "network_error";
+
+export type LawbotOperationOutcome = {
+  status: LawbotOperationStatus;
+  reasonCode: LawbotOperationReasonCode;
+};
+
 export type LawbotResponse = {
   input_summary: string;
   key_issues: string[];
@@ -102,12 +118,15 @@ export type LawbotCaseAnalysisResult =
   | {
       status: "available";
       data: LawbotResponse;
+      outcome?: LawbotOperationOutcome;
     }
   | {
       status: "disabled";
       message: string;
+      outcome?: LawbotOperationOutcome;
     }
   | {
       status: "error";
       message: string;
+      outcome?: LawbotOperationOutcome;
     };

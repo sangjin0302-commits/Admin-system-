@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "postinstall": "node scripts/prisma-generate-auto.mjs && node scripts/prepare-prisma-client.mjs",
-    "prebuild": "node scripts/prisma-generate-auto.mjs && node scripts/prepare-prisma-client.mjs",
+    "build:prepare": "node scripts/prisma-generate-auto.mjs && node scripts/prepare-prisma-client.mjs",
     "build": "next build",
     "typecheck": "tsc --noEmit",
     "text:check": "node scripts/check-text-integrity-safe.mjs",
@@ -14,7 +14,7 @@
     "ops:smoke:local": "node scripts/smoke-admin-runtime-local.mjs",
     "verify:ops": "npm run verify && npm run ops:env:check && npm run ops:smoke",
     "quickcheck": "npm run typecheck",
-    "verify": "npm run prebuild && npm run text:check && npm run typecheck && npm run build",
+    "verify": "npm run build:prepare && npm run text:check && npm run typecheck && npm run build",
     "clean": "node scripts/clean-build.mjs",
     "rebuild": "npm run clean && npm run build",
     "start": "next start",

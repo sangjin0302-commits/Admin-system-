@@ -10,6 +10,10 @@ function asInt(value, fallback) {
   return parsed;
 }
 
+function asBool(value) {
+  return /^(1|true|yes|on)$/i.test(value ?? "");
+}
+
 const targetEnv = (process.env.RUNTIME_ENV || process.env.NODE_ENV || "development").toLowerCase();
 const isProduction = targetEnv === "production";
 
@@ -23,6 +27,10 @@ const marketingTokenMin = asInt(getEnv("ADMIN_MARKETING_SYNC_TOKEN_MIN_LENGTH"),
 
 const weakPassword = password && password.length < minPasswordLength;
 const weakMarketingToken = marketingToken && marketingToken.length < marketingTokenMin;
+const lawbotAutomaticCalls = asBool(getEnv("LAWBOT_ENABLE_AUTOMATIC_CALLS"));
+const lawbotAnalyzeUrl = getEnv("LAWBOT_ANALYZE_URL");
+const lawbotAnalyzeToken = getEnv("LAWBOT_ANALYZE_TOKEN");
+const lawbotAnalyzeTimeoutMs = asInt(getEnv("LAWBOT_ANALYZE_TIMEOUT_MS"), 8000);
 
 if (!isProduction) {
   console.log(
@@ -40,6 +48,15 @@ if (weakPassword) {
 }
 if (weakMarketingToken) {
   errors.push(`ADMIN_MARKETING_SYNC_TOKEN must be at least ${marketingTokenMin} characters.`);
+}
+if (lawbotAutomaticCalls && !lawbotAnalyzeUrl) {
+  errors.push("LAWBOT_ENABLE_AUTOMATIC_CALLS=true requires LAWBOT_ANALYZE_URL.");
+}
+if (lawbotAutomaticCalls && !lawbotAnalyzeToken) {
+  errors.push("LAWBOT_ENABLE_AUTOMATIC_CALLS=true requires LAWBOT_ANALYZE_TOKEN.");
+}
+if (lawbotAnalyzeTimeoutMs < 1000 || lawbotAnalyzeTimeoutMs > 60000) {
+  errors.push("LAWBOT_ANALYZE_TIMEOUT_MS must be between 1000 and 60000.");
 }
 
 if (errors.length > 0) {

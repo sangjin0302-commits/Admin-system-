@@ -32,7 +32,7 @@ export async function GET(
       );
     }
 
-    const result = await getLawbotCaseAnalysis(inquiry);
+    const result = await getLawbotCaseAnalysis(inquiry, { trigger: "manual" });
 
     if (result.status === "available") {
       const data = result.data;

@@ -1,4 +1,5 @@
 import type { InquiryRecord } from "@/lib/services/inquiry-service";
+import { normalizeLawbotResponse } from "@/lib/services/lawbot-case-analysis-contract";
 import {
   buildFactInput,
   buildLawbotConnectionSnapshot,
@@ -6,6 +7,7 @@ import {
 } from "@/lib/services/lawbot-case-analysis-snapshot-helpers";
 import type {
   LawbotCaseAnalysisResult,
+  LawbotOperationOutcome,
   LawbotResponse
 } from "@/lib/services/lawbot-case-analysis-types";
 
@@ -19,16 +21,39 @@ export type {
   StoredLawbotSnapshot
 } from "@/lib/services/lawbot-case-analysis-types";
 
+type GetLawbotCaseAnalysisOptions = {
+  trigger?: "automatic" | "manual";
+};
+
+function buildOutcome(
+  status: LawbotOperationOutcome["status"],
+  reasonCode: LawbotOperationOutcome["reasonCode"]
+): LawbotOperationOutcome {
+  return { status, reasonCode };
+}
+
 export async function getLawbotCaseAnalysis(
-  inquiry: NonNullable<InquiryRecord>
+  inquiry: NonNullable<InquiryRecord>,
+  options: GetLawbotCaseAnalysisOptions = {}
 ): Promise<LawbotCaseAnalysisResult> {
+  const trigger = options.trigger ?? "automatic";
+  const automaticCallsEnabled = process.env.LAWBOT_ENABLE_AUTOMATIC_CALLS?.trim().toLowerCase() === "true";
   const analyzeUrl = process.env.LAWBOT_ANALYZE_URL?.trim();
   const analyzeToken = process.env.LAWBOT_ANALYZE_TOKEN?.trim();
 
   if (!analyzeUrl) {
     return {
       status: "disabled",
-      message: "Lawbot 분석 URL이 설정되지 않아 내부 사건 분석만 표시합니다."
+      message: "Lawbot analyze URL is not configured.",
+      outcome: buildOutcome("skipped_by_policy", "missing_analyze_url")
+    };
+  }
+
+  if (trigger !== "manual" && !automaticCallsEnabled) {
+    return {
+      status: "disabled",
+      message: "Automatic Lawbot calls are disabled by policy.",
+      outcome: buildOutcome("skipped_by_policy", "automatic_calls_disabled")
     };
   }
 
@@ -53,20 +78,40 @@ export async function getLawbotCaseAnalysis(
     if (!response.ok) {
       return {
         status: "error",
-        message: `Lawbot 분석 호출에 실패했습니다. (${response.status})`
+        message: `Lawbot analyze request failed (${response.status}).`,
+        outcome: buildOutcome("failed", "upstream_http_error")
       };
     }
 
-    const json = (await response.json()) as LawbotResponse;
+    const rawJson = (await response.json()) as unknown;
+    const normalized = normalizeLawbotResponse(rawJson);
+    if (!normalized.ok) {
+      return {
+        status: "error",
+        message: `Lawbot response contract validation failed: ${normalized.reason}`,
+        outcome: buildOutcome("failed", "contract_validation_failed")
+      };
+    }
+    const json = normalized.data as LawbotResponse;
 
     return {
       status: "available",
-      data: json
+      data: json,
+      outcome: buildOutcome("success", "analysis_completed")
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return {
+        status: "error",
+        message: "Lawbot analyze request timed out.",
+        outcome: buildOutcome("failed", "request_timeout")
+      };
+    }
+
     return {
       status: "error",
-      message: "Lawbot 분석 서버에 연결하지 못했습니다. URL 또는 서비스 상태를 확인해 주세요."
+      message: "Unable to reach Lawbot analyze service.",
+      outcome: buildOutcome("failed", "network_error")
     };
   } finally {
     clearTimeout(timeoutId);

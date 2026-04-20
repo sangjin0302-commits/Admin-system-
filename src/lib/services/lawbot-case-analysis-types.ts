@@ -1,4 +1,7 @@
 export type {
+  LawbotOperationOutcome,
+  LawbotOperationReasonCode,
+  LawbotOperationStatus,
   LawbotCaseAnalysisResult,
   LawbotResponse
 } from "@/lib/services/lawbot-case-analysis-response-types";
