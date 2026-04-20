@@ -24,6 +24,9 @@
     ],
     "baseUrl": ".",
     "paths": {
+      "@generated/prisma-client/*": [
+        "./generated/prisma-client-next/*"
+      ],
       "@/*": [
         "./src/*"
       ],

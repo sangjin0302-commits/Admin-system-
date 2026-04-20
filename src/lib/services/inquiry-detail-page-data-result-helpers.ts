@@ -10,6 +10,7 @@ export function buildInquiryDetailPageResult(context: InquiryDetailPageContext) 
     quoteWorkspace: context.quoteWorkspace,
     lawbotAnalysis: context.lawbotAnalysis,
     referenceRecommendations: context.referenceRecommendations,
+    latestCaseMatter: context.latestCaseMatter,
     lawbotConnectionSnapshot: context.lawbotConnectionSnapshot,
     storedLawbotSnapshot: context.storedLawbotSnapshot,
     inquiryStatus: context.normalizedMeta.inquiryStatus,

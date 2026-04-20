@@ -540,7 +540,310 @@ async function seedQuoteFlow() {
   });
 }
 
+async function seedCaseMatterFlow() {
+  const [visaInquiry, corporateInquiry, urgentInquiry] = await Promise.all([
+    prisma.inquiry.findFirst({ where: { email: "minji@example.com" } }),
+    prisma.inquiry.findFirst({ where: { email: "ops@hanbitmedical.co.kr" } }),
+    prisma.inquiry.findFirst({ where: { email: "laila.hassan@example.com" } })
+  ]);
+
+  if (!visaInquiry || !corporateInquiry || !urgentInquiry) {
+    return;
+  }
+
+  const [visaCaseRecord, visaAcceptedQuote, visaContractDraft] = await Promise.all([
+    prisma.caseRecord.findFirst({ where: { inquiryId: visaInquiry.id } }),
+    prisma.quote.findFirst({ where: { inquiryId: visaInquiry.id, status: "ACCEPTED" } }),
+    prisma.contractDraft.findFirst({ where: { inquiryId: visaInquiry.id } })
+  ]);
+
+  const visaMatter = await prisma.caseMatter.create({
+    data: {
+      caseNo: "MAT-20260419-001",
+      title: "E-7 체류자격 변경 사건",
+      matterType: "immigration_status_change",
+      status: "DOCUMENT_COLLECTING",
+      priority: "HIGH",
+      riskLevel: "HIGH",
+      inquiryId: visaInquiry.id,
+      legacyCaseRecordId: visaCaseRecord?.id,
+      openedAt: new Date("2026-04-14T09:00:00.000Z"),
+      dueDate: new Date("2026-04-25T09:00:00.000Z"),
+      nextActionAt: new Date("2026-04-20T10:00:00.000Z"),
+      assignedTo: "김수정 행정사",
+      summary: "D-10에서 E-7 변경 예정. 회사 제출 자료와 신청인 경력 입증이 핵심.",
+      internalMemo: "기한 촉박 건. 준비서류 누락 시 즉시 보완 요청.",
+      parties: {
+        create: [
+          {
+            role: "CLIENT",
+            name: visaInquiry.contactName,
+            email: visaInquiry.email,
+            phone: visaInquiry.phone,
+            nationality: visaInquiry.nationality,
+            memo: "주요 연락 채널: 전화 우선"
+          },
+          {
+            role: "EMPLOYER",
+            name: "채용 예정 회사 담당자",
+            organization: "국내 IT 회사",
+            memo: "고용계약서/사업자자료 제출 담당"
+          }
+        ]
+      },
+      requiredDocuments: {
+        create: [
+          {
+            name: "여권 사본",
+            required: true,
+            status: "APPROVED",
+            requestedAt: new Date("2026-04-14T12:00:00.000Z"),
+            receivedAt: new Date("2026-04-15T09:00:00.000Z"),
+            reviewedAt: new Date("2026-04-15T13:00:00.000Z")
+          },
+          {
+            name: "외국인등록증 사본",
+            required: true,
+            status: "RECEIVED",
+            requestedAt: new Date("2026-04-14T12:00:00.000Z"),
+            receivedAt: new Date("2026-04-16T09:00:00.000Z")
+          },
+          {
+            name: "고용계약서",
+            required: true,
+            status: "REQUESTED",
+            dueDate: new Date("2026-04-21T09:00:00.000Z"),
+            requestedAt: new Date("2026-04-16T16:00:00.000Z")
+          }
+        ]
+      },
+      tasks: {
+        create: [
+          {
+            title: "회사 제출서류 수신 확인",
+            status: "IN_PROGRESS",
+            priority: "HIGH",
+            dueDate: new Date("2026-04-20T10:00:00.000Z"),
+            assignedTo: "김수정 행정사"
+          },
+          {
+            title: "체류기한 임박 여부 재확인",
+            status: "TODO",
+            priority: "URGENT",
+            dueDate: new Date("2026-04-19T18:00:00.000Z"),
+            assignedTo: "김수정 행정사"
+          }
+        ]
+      },
+      events: {
+        create: [
+          {
+            eventType: "CASE_CREATED",
+            actorName: "system",
+            message: "문의에서 사건으로 전환됨",
+            payloadJson: JSON.stringify({ inquiryId: visaInquiry.id })
+          },
+          {
+            eventType: "DOC_REQUESTED",
+            actorName: "김수정 행정사",
+            message: "기본 제출서류 요청 발송",
+            payloadJson: JSON.stringify({ channel: "phone", requestedCount: 3 })
+          }
+        ]
+      }
+    }
+  });
+
+  const passportDoc = await prisma.caseDocument.create({
+    data: {
+      caseId: visaMatter.id,
+      title: "여권 사본",
+      docType: "passport_copy",
+      status: "APPROVED",
+      originalFileName: "passport_copy.pdf",
+      uploadedBy: "client",
+      receivedAt: new Date("2026-04-15T09:00:00.000Z"),
+      reviewedAt: new Date("2026-04-15T13:00:00.000Z")
+    }
+  });
+
+  const passportVersion = await prisma.documentVersion.create({
+    data: {
+      documentId: passportDoc.id,
+      versionNo: 1,
+      status: "APPROVED_FOR_SUBMISSION",
+      fileName: "passport_copy_v1.pdf",
+      createdBy: "client",
+      approvedBy: "김수정 행정사",
+      approvedAt: new Date("2026-04-15T13:00:00.000Z")
+    }
+  });
+
+  await prisma.caseDocument.update({
+    where: { id: passportDoc.id },
+    data: { currentVersionId: passportVersion.id }
+  });
+
+  const submissionPackage = await prisma.submissionPackage.create({
+    data: {
+      caseId: visaMatter.id,
+      title: "1차 출입국 제출 패키지",
+      status: "READY",
+      targetAgency: "서울출입국·외국인청",
+      targetOffice: "체류관리과",
+      preparedAt: new Date("2026-04-17T11:00:00.000Z"),
+      reviewedAt: new Date("2026-04-17T14:00:00.000Z"),
+      items: {
+        create: [
+          {
+            documentId: passportDoc.id,
+            versionId: passportVersion.id,
+            orderNo: 1
+          }
+        ]
+      }
+    }
+  });
+
+  const submission = await prisma.agencySubmission.create({
+    data: {
+      caseId: visaMatter.id,
+      packageId: submissionPackage.id,
+      agencyName: "서울출입국·외국인청",
+      officeName: "체류관리과",
+      method: "VISIT",
+      status: "SUPPLEMENT_REQUESTED",
+      submittedAt: new Date("2026-04-18T10:00:00.000Z"),
+      receiptNo: "IMM-2026-0418-001"
+    }
+  });
+
+  await prisma.supplementRequest.create({
+    data: {
+      caseId: visaMatter.id,
+      submissionId: submission.id,
+      title: "고용계약서 원본 보완 요청",
+      description: "계약서 서명본과 회사 사업자 증빙 보완",
+      status: "DOCS_REQUESTED",
+      receivedAt: new Date("2026-04-18T17:00:00.000Z"),
+      dueDate: new Date("2026-04-22T18:00:00.000Z"),
+      requestedDocsJson: JSON.stringify(["고용계약서 서명본", "사업자등록증"])
+    }
+  });
+
+  if (visaAcceptedQuote) {
+    await prisma.quote.update({
+      where: { id: visaAcceptedQuote.id },
+      data: { caseMatterId: visaMatter.id }
+    });
+  }
+
+  if (visaContractDraft) {
+    await prisma.contractDraft.update({
+      where: { id: visaContractDraft.id },
+      data: { caseMatterId: visaMatter.id }
+    });
+  }
+
+  await prisma.caseMatter.create({
+    data: {
+      caseNo: "MAT-20260419-002",
+      title: "기업 국제문서 패키지 사건",
+      matterType: "corporate_apostille_translation",
+      status: "DOCUMENT_REVIEWING",
+      priority: "NORMAL",
+      riskLevel: "NORMAL",
+      inquiryId: corporateInquiry.id,
+      openedAt: new Date("2026-04-12T09:00:00.000Z"),
+      dueDate: new Date("2026-05-02T09:00:00.000Z"),
+      nextActionAt: new Date("2026-04-21T10:00:00.000Z"),
+      assignedTo: "운영 담당",
+      summary: "미국 문서 아포스티유/번역공증 패키지 견적 후 문서 검토 단계",
+      parties: {
+        create: [
+          {
+            role: "CLIENT",
+            name: corporateInquiry.organizationName ?? corporateInquiry.contactName,
+            email: corporateInquiry.email,
+            phone: corporateInquiry.phone,
+            organization: corporateInquiry.organizationName
+          }
+        ]
+      },
+      tasks: {
+        create: [
+          {
+            title: "국가별 요구 형식 체크리스트 검토",
+            status: "TODO",
+            priority: "NORMAL",
+            dueDate: new Date("2026-04-21T10:00:00.000Z"),
+            assignedTo: "운영 담당"
+          }
+        ]
+      },
+      events: {
+        create: [
+          {
+            eventType: "CASE_CREATED",
+            actorName: "system",
+            message: "기업 문의 기반 사건 생성",
+            payloadJson: JSON.stringify({ inquiryId: corporateInquiry.id })
+          }
+        ]
+      }
+    }
+  });
+
+  await prisma.caseMatter.create({
+    data: {
+      caseNo: "MAT-20260419-003",
+      title: "체류기간 만료 임박 사전검토",
+      matterType: "immigration_extension",
+      status: "INTAKE_REVIEW",
+      priority: "URGENT",
+      riskLevel: "CRITICAL",
+      inquiryId: urgentInquiry.id,
+      dueDate: urgentInquiry.dueDate,
+      nextActionAt: new Date("2026-04-19T15:00:00.000Z"),
+      assignedTo: "김수정 행정사",
+      summary: "만료 3일 전 긴급 문의, 사건화 전 사실관계 확인 단계",
+      parties: {
+        create: [
+          {
+            role: "CLIENT",
+            name: urgentInquiry.contactName,
+            email: urgentInquiry.email,
+            phone: urgentInquiry.phone,
+            nationality: urgentInquiry.nationality
+          }
+        ]
+      },
+      events: {
+        create: [
+          {
+            eventType: "INTAKE_ESCALATED",
+            actorName: "system",
+            message: "긴급 사건 후보로 분류",
+            payloadJson: JSON.stringify({ urgency: "CRITICAL" })
+          }
+        ]
+      }
+    }
+  });
+}
+
 async function main() {
+  await prisma.caseEvent.deleteMany();
+  await prisma.caseTask.deleteMany();
+  await prisma.supplementRequest.deleteMany();
+  await prisma.agencySubmission.deleteMany();
+  await prisma.submissionPackageItem.deleteMany();
+  await prisma.submissionPackage.deleteMany();
+  await prisma.documentVersion.deleteMany();
+  await prisma.caseDocument.deleteMany();
+  await prisma.requiredDocument.deleteMany();
+  await prisma.caseParty.deleteMany();
+  await prisma.caseMatter.deleteMany();
   await prisma.caseRecord.deleteMany();
   await prisma.contractDraft.deleteMany();
   await prisma.paymentPlan.deleteMany();
@@ -556,6 +859,7 @@ async function main() {
   await seedLegacyPricing();
   await seedInquiries();
   await seedQuoteFlow();
+  await seedCaseMatterFlow();
 }
 
 main()

@@ -31,6 +31,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               \uBB38\uC758 \uBAA9\uB85D
             </Link>
             <Link
+              href="/admin/cases"
+              className="inline-flex h-10 items-center rounded-full border border-line-strong bg-surface px-4 text-sm font-medium text-text-strong transition hover:bg-surface-muted"
+            >
+              \uC0AC\uAC74 \uBAA9\uB85D
+            </Link>
+            <Link
               href="/admin/integrations"
               className="inline-flex h-10 items-center rounded-full border border-line-strong bg-surface px-4 text-sm font-medium text-text-strong transition hover:bg-surface-muted"
             >

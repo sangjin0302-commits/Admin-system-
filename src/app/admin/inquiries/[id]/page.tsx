@@ -80,6 +80,7 @@ export default async function AdminInquiryDetailPage({
       quoteWorkspace,
       lawbotAnalysis,
       referenceRecommendations,
+      latestCaseMatter,
       lawbotConnectionSnapshot,
       storedLawbotSnapshot,
       inquiryStatus,
@@ -199,7 +200,9 @@ export default async function AdminInquiryDetailPage({
             currentKey={workflowStep}
             lawbotStatus={lawbotAnalysis.status}
             quoteStatus={quoteWorkspace.latestQuote?.status ?? null}
-            caseStage={quoteWorkspace.latestQuote?.caseRecord?.currentStage ?? null}
+            caseStage={
+              latestCaseMatter?.status ?? quoteWorkspace.latestQuote?.caseRecord?.currentStage ?? null
+            }
           />
         </div>
 

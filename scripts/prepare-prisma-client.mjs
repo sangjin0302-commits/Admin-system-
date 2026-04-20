@@ -4,9 +4,10 @@ import process from "node:process";
 
 const rootDir = process.cwd();
 const generatedDir = path.join(rootDir, "generated");
+const generatedClientNextDir = path.join(generatedDir, "prisma-client-next");
 const generatedClientDir = path.join(rootDir, "..", "admin-office-mvp-generated", "prisma-client");
 const legacyClientDir = path.join(generatedDir, "prisma-v4");
-const targetClientDir = path.join(generatedDir, "prisma-client");
+const targetClientDir = generatedClientNextDir;
 
 async function exists(targetPath) {
   try {
@@ -18,13 +19,34 @@ async function exists(targetPath) {
 }
 
 async function main() {
-  const sourceClientDir = (await exists(generatedClientDir)) ? generatedClientDir : legacyClientDir;
+  const sourceCandidates = [
+    generatedClientNextDir,
+    process.env.PRISMA_CLIENT_SOURCE?.trim(),
+    generatedClientDir,
+    legacyClientDir,
+    targetClientDir
+  ].filter(Boolean);
 
-  if (!(await exists(sourceClientDir))) {
-    throw new Error(`Prisma client source not found: ${sourceClientDir}`);
+  const sourceClientDir =
+    (await (async () => {
+      for (const candidate of sourceCandidates) {
+        if (await exists(candidate)) {
+          return candidate;
+        }
+      }
+      return null;
+    })()) ?? null;
+
+  if (!sourceClientDir) {
+    throw new Error(`Prisma client source not found. Checked: ${sourceCandidates.join(", ")}`);
   }
 
   await mkdir(generatedDir, { recursive: true });
+
+  if (path.resolve(sourceClientDir) === path.resolve(targetClientDir)) {
+    console.log(`Prisma client already prepared at ${targetClientDir}`);
+    return;
+  }
 
   if (await exists(targetClientDir)) {
     await rm(targetClientDir, { recursive: true, force: true });

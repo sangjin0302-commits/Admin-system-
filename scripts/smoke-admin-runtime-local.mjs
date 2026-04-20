@@ -13,20 +13,31 @@ const adminPassword = process.env.ADMIN_BASIC_AUTH_PASSWORD?.trim() ?? "";
 const marketingSyncToken = process.env.ADMIN_MARKETING_SYNC_TOKEN?.trim() ?? "";
 
 async function runWithTimeout() {
-  await Promise.race([
-    runSmokeRuntime({
-      baseUrl,
-      strictProduction,
-      allowSkip,
-      requestTimeoutMs,
-      adminUser,
-      adminPassword,
-      marketingSyncToken
-    }),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(`local smoke timed out after ${totalTimeoutMs}ms`)), totalTimeoutMs)
-    )
-  ]);
+  let timeoutId;
+  try {
+    await Promise.race([
+      runSmokeRuntime({
+        baseUrl,
+        strictProduction,
+        allowSkip,
+        requestTimeoutMs,
+        adminUser,
+        adminPassword,
+        marketingSyncToken
+      }),
+      new Promise((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error(`local smoke timed out after ${totalTimeoutMs}ms`)),
+          totalTimeoutMs
+        );
+        timeoutId.unref?.();
+      })
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
 }
 
 runWithTimeout().catch((error) => {

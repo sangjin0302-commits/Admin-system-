@@ -17,6 +17,7 @@ import {
   buildLawbotConnectionSnapshot,
   buildStoredLawbotSnapshot
 } from "@/lib/services/lawbot-case-analysis-service";
+import { getLatestCaseMatterForInquiry } from "@/lib/services/case-matter-service";
 import { getInquiryMessagePreviewSet } from "@/lib/services/inquiry-service";
 import { getInquiryStatusLabel, normalizeInquiryType } from "@/types/inquiry";
 
@@ -31,14 +32,15 @@ export async function loadInquiryDetailPageContext(inquiry: InquiryDetailRecord)
   const previews = getInquiryMessagePreviewSet(inquiry);
   const caseAnalysis = analyzeInquiryCase(inquiry);
 
-  const [quoteWorkspace, lawbotAnalysis, referenceRecommendations] = await Promise.all([
+  const [quoteWorkspace, lawbotAnalysis, referenceRecommendations, latestCaseMatter] = await Promise.all([
     safeGetQuoteWorkspace(inquiry),
     safeGetLawbotAnalysis(inquiry),
     safeGetReferenceRecommendations({
       inquiryType: inquiry.inquiryType,
       serviceTags: tags,
       inquiryTitle: inquiry.title
-    })
+    }),
+    getLatestCaseMatterForInquiry(inquiry.id)
   ]);
 
   const lawbotConnectionSnapshot = buildLawbotConnectionSnapshot(inquiry);
@@ -91,6 +93,7 @@ export async function loadInquiryDetailPageContext(inquiry: InquiryDetailRecord)
     quoteWorkspace,
     lawbotAnalysis,
     referenceRecommendations,
+    latestCaseMatter,
     lawbotConnectionSnapshot,
     storedLawbotSnapshot,
     normalizedMeta,

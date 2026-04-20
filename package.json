@@ -15,6 +15,7 @@
     "verify:ops": "npm run verify && npm run ops:env:check && npm run ops:smoke",
     "quickcheck": "npm run typecheck",
     "verify": "npm run build:prepare && npm run text:check && npm run typecheck && npm run build",
+    "test:case-phase1": "tsx scripts/tests/case-matter-phase1-check.ts",
     "clean": "node scripts/clean-build.mjs",
     "rebuild": "npm run clean && npm run build",
     "start": "next start",
