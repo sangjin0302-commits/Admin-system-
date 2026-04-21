@@ -35,7 +35,7 @@ export function CaseMatterStatusForm({
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canSubmit) {
-      setMessage("No status change to submit.");
+      setMessage("변경할 상태가 없습니다.");
       return;
     }
 
@@ -56,14 +56,14 @@ export function CaseMatterStatusForm({
       });
 
       if (!response.ok) {
-        setMessage(await parseClientApiError(response, "Failed to change case status."));
+        setMessage(await parseClientApiError(response, "사건 상태를 변경하지 못했습니다."));
         if (response.status === 409 && response.headers.get("X-Current-Updated-At")) {
           router.refresh();
         }
         return;
       }
 
-      setMessage("Case status updated. Reloading latest snapshot...");
+      setMessage("사건 상태가 변경되었습니다. 최신 상태를 다시 불러옵니다...");
       router.refresh();
     });
   }
@@ -71,9 +71,9 @@ export function CaseMatterStatusForm({
   return (
     <form onSubmit={onSubmit} className="space-y-3 rounded-2xl border border-line bg-surface-muted p-4">
       <div>
-        <p className="text-sm font-semibold text-text-strong">Case status transition</p>
+        <p className="text-sm font-semibold text-text-strong">사건 상태 전이</p>
         <p className="mt-1 text-xs text-text-muted">
-          Current: <span className="font-medium text-text-strong">{getCaseMatterStatusLabel(currentStatus)}</span>
+          현재 상태: <span className="font-medium text-text-strong">{getCaseMatterStatusLabel(currentStatus)}</span>
         </p>
       </div>
 
@@ -94,7 +94,7 @@ export function CaseMatterStatusForm({
           disabled={!canSubmit}
           className="h-10 rounded-xl bg-ink px-4 text-sm font-semibold text-white transition hover:bg-trust disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isPending ? "Updating..." : "Apply"}
+          {isPending ? "변경 중..." : "적용"}
         </button>
       </div>
 
@@ -103,7 +103,7 @@ export function CaseMatterStatusForm({
         onChange={(event) => setStatusChangeNote(event.target.value)}
         rows={3}
         className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-text outline-none focus:border-line-strong"
-        placeholder="Optional reason for audit log"
+        placeholder="감사 로그용 사유(선택)"
       />
 
       {message ? <p className="text-xs text-text-muted">{message}</p> : null}

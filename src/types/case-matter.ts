@@ -33,33 +33,33 @@ export const requiredDocumentStatusValues = [
 export type RequiredDocumentStatusValue = (typeof requiredDocumentStatusValues)[number];
 
 const caseMatterStatusLabelMap: Record<CaseMatterStatusValue, string> = {
-  INTAKE_REVIEW: "Intake Review",
-  CONSULTING: "Consulting",
-  QUOTED: "Quoted",
-  CONTRACT_PENDING: "Contract Pending",
-  OPEN: "Open",
-  DOCUMENT_COLLECTING: "Document Collecting",
-  DOCUMENT_REVIEWING: "Document Reviewing",
-  READY_TO_SUBMIT: "Ready To Submit",
-  SUBMITTED: "Submitted",
-  SUPPLEMENT_REQUESTED: "Supplement Requested",
-  WAITING_AGENCY: "Waiting Agency",
-  RESULT_RECEIVED: "Result Received",
-  CLOSING: "Closing",
-  CLOSED: "Closed",
-  CANCELLED: "Cancelled",
-  ON_HOLD: "On Hold"
+  INTAKE_REVIEW: "접수 검토",
+  CONSULTING: "상담 진행",
+  QUOTED: "견적 제안",
+  CONTRACT_PENDING: "계약 대기",
+  OPEN: "사건 진행",
+  DOCUMENT_COLLECTING: "서류 수집",
+  DOCUMENT_REVIEWING: "서류 검토",
+  READY_TO_SUBMIT: "제출 준비 완료",
+  SUBMITTED: "제출 완료",
+  SUPPLEMENT_REQUESTED: "보완 요청",
+  WAITING_AGENCY: "기관 심사 대기",
+  RESULT_RECEIVED: "결과 수신",
+  CLOSING: "종결 처리",
+  CLOSED: "종결",
+  CANCELLED: "취소",
+  ON_HOLD: "보류"
 };
 
 const requiredDocumentStatusLabelMap: Record<RequiredDocumentStatusValue, string> = {
-  NEEDED: "Needed",
-  REQUESTED: "Requested",
-  RECEIVED: "Received",
-  IN_REVIEW: "Reviewing",
-  APPROVED: "Approved",
-  NEEDS_FIX: "Needs Fix",
-  REJECTED: "Rejected",
-  NOT_APPLICABLE: "Not Applicable"
+  NEEDED: "필요",
+  REQUESTED: "요청됨",
+  RECEIVED: "수신됨",
+  IN_REVIEW: "검토 중",
+  APPROVED: "승인됨",
+  NEEDS_FIX: "보완 필요",
+  REJECTED: "반려",
+  NOT_APPLICABLE: "해당 없음"
 };
 
 function isCaseMatterStatus(value: unknown): value is CaseMatterStatusValue {

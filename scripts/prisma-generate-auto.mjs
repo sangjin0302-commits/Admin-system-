@@ -50,6 +50,7 @@ async function main() {
     }
 
     if (result.status === 0) {
+      console.log("[prisma-generate-auto] RESULT=PASS");
       return;
     }
 
@@ -74,9 +75,11 @@ async function main() {
       `[prisma-generate-auto] generation failed with a retriable filesystem error. ` +
         `Using existing client at ${fallbackClientPath}.`
     );
+    console.warn("[prisma-generate-auto] RESULT=FALLBACK");
     return;
   }
 
+  console.error("[prisma-generate-auto] RESULT=FAILED");
   process.exit(lastStatus);
 }
 

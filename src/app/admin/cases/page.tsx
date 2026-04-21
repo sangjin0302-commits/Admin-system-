@@ -33,23 +33,23 @@ export default async function AdminCasesPage() {
       <Card className="p-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="ui-kicker">CaseMatter</p>
-            <h2 className="mt-2 ui-page-title">Case operations</h2>
+            <p className="ui-kicker">사건 관리</p>
+            <h2 className="mt-2 ui-page-title">사건 운영</h2>
             <p className="mt-2 text-sm text-text-muted">
-              This board is the minimum operational path for case-centered handling in Phase 1.
+              이 보드는 Phase 1에서 사건 중심 운영을 위한 최소 운영 경로입니다.
             </p>
           </div>
           <div className="rounded-full bg-surface-muted px-4 py-2 text-sm font-semibold text-text-strong">
-            Active records: {cases.length}
+            활성 사건: {cases.length}
           </div>
         </div>
       </Card>
 
       {cases.length === 0 ? (
         <EmptyState
-          title="No case matters yet."
-          description="Convert inquiries to case matters first. They will appear here for operational handling."
-          actionLabel="Go to inquiries"
+          title="등록된 사건이 아직 없습니다."
+          description="먼저 문의를 사건으로 전환하세요. 전환된 사건이 이 운영 보드에 표시됩니다."
+          actionLabel="문의 화면으로 이동"
           actionHref="/admin/inquiries"
         />
       ) : (
@@ -58,12 +58,12 @@ export default async function AdminCasesPage() {
             <table className="min-w-full divide-y divide-line text-sm">
               <thead className="bg-surface-muted text-left text-xs uppercase tracking-wide text-text-muted">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Case</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Next action</th>
-                  <th className="px-4 py-3 font-semibold">Due</th>
-                  <th className="px-4 py-3 font-semibold">Doc backlog</th>
-                  <th className="px-4 py-3 font-semibold">Updated</th>
+                  <th className="px-4 py-3 font-semibold">사건</th>
+                  <th className="px-4 py-3 font-semibold">상태</th>
+                  <th className="px-4 py-3 font-semibold">다음 액션</th>
+                  <th className="px-4 py-3 font-semibold">마감일</th>
+                  <th className="px-4 py-3 font-semibold">미처리 문서</th>
+                  <th className="px-4 py-3 font-semibold">업데이트</th>
                   <th className="px-4 py-3 font-semibold" />
                 </tr>
               </thead>
@@ -73,7 +73,7 @@ export default async function AdminCasesPage() {
                     <td className="px-4 py-3">
                       <p className="font-semibold text-text-strong">{item.title}</p>
                       <p className="mt-1 text-xs text-text-muted">
-                        {item.caseNo ?? "No caseNo"} | {item.matterType}
+                        {item.caseNo ?? "사건번호 없음"} | {item.matterType}
                       </p>
                     </td>
                     <td className="px-4 py-3 text-text">{getCaseMatterStatusLabel(item.status)}</td>
@@ -91,7 +91,7 @@ export default async function AdminCasesPage() {
                         href={`/admin/cases/${item.id}`}
                         className="inline-flex h-9 items-center rounded-lg border border-line bg-surface px-3 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
                       >
-                        Open
+                        열기
                       </Link>
                     </td>
                   </tr>

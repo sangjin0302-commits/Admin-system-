@@ -96,7 +96,7 @@ export function RequiredDocumentStatusPanel({
     };
     const statusChanged = draft.status !== snapshot.status;
     if (!statusChanged) {
-      setRowMessage(documentId, "No status change to submit.");
+      setRowMessage(documentId, "변경할 상태가 없습니다.");
       return;
     }
 
@@ -122,7 +122,7 @@ export function RequiredDocumentStatusPanel({
       );
 
       if (!response.ok) {
-        setRowMessage(documentId, await parseClientApiError(response, "Failed to update document status."));
+        setRowMessage(documentId, await parseClientApiError(response, "문서 상태를 변경하지 못했습니다."));
         if (response.status === 409 && response.headers.get("X-Current-Updated-At")) {
           router.refresh();
         }
@@ -130,7 +130,7 @@ export function RequiredDocumentStatusPanel({
         return;
       }
 
-      setRowMessage(documentId, "Document status updated. Reloading latest snapshot...");
+      setRowMessage(documentId, "문서 상태가 변경되었습니다. 최신 상태를 다시 불러옵니다...");
       setPendingDocumentId(null);
       router.refresh();
     });
@@ -140,7 +140,7 @@ export function RequiredDocumentStatusPanel({
     event.preventDefault();
     const name = createName.trim();
     if (!name) {
-      setCreateMessage("Required document name is required.");
+      setCreateMessage("필수서류 이름은 반드시 입력해야 합니다.");
       return;
     }
 
@@ -161,14 +161,14 @@ export function RequiredDocumentStatusPanel({
       });
 
       if (!response.ok) {
-        setCreateMessage(await parseClientApiError(response, "Failed to create required document."));
+        setCreateMessage(await parseClientApiError(response, "필수서류를 생성하지 못했습니다."));
         if (response.status === 409 && response.headers.get("X-Current-Updated-At")) {
           router.refresh();
         }
         return;
       }
 
-      setCreateMessage("Required document created. Reloading latest snapshot...");
+      setCreateMessage("필수서류가 생성되었습니다. 최신 상태를 다시 불러옵니다...");
       setCreateName("");
       setCreateDescription("");
       setCreateDueDate("");
@@ -193,7 +193,7 @@ export function RequiredDocumentStatusPanel({
       );
 
       if (!response.ok) {
-        setCreateMessage(await parseClientApiError(response, "Failed to start checklist starter."));
+        setCreateMessage(await parseClientApiError(response, "체크리스트 스타터를 실행하지 못했습니다."));
         if (response.status === 409 && response.headers.get("X-Current-Updated-At")) {
           router.refresh();
         }
@@ -206,7 +206,7 @@ export function RequiredDocumentStatusPanel({
       const createdCount = payload?.createdCount ?? 0;
       const skippedCount = payload?.skippedCount ?? 0;
       setCreateMessage(
-        `Checklist starter applied. Created ${createdCount} item(s), skipped ${skippedCount} existing item(s).`
+        `체크리스트 스타터를 적용했습니다. ${createdCount}건 생성, 기존 ${skippedCount}건은 건너뛰었습니다.`
       );
       router.refresh();
     });
@@ -215,9 +215,9 @@ export function RequiredDocumentStatusPanel({
   return (
     <div className="rounded-2xl border border-line bg-surface-muted p-4">
       <div className="mb-3">
-        <p className="text-sm font-semibold text-text-strong">Required documents</p>
+        <p className="text-sm font-semibold text-text-strong">필수서류</p>
         <p className="mt-1 text-xs text-text-muted">
-          Every status change goes through deterministic transition rules and audit events.
+          모든 상태 변경은 결정적 전이 규칙과 감사 이벤트를 거칩니다.
         </p>
       </div>
 
@@ -225,13 +225,13 @@ export function RequiredDocumentStatusPanel({
         onSubmit={onCreateDocument}
         className="mb-4 space-y-3 rounded-xl border border-line bg-surface p-3"
       >
-        <p className="text-sm font-semibold text-text-strong">Add checklist item</p>
+        <p className="text-sm font-semibold text-text-strong">체크리스트 항목 추가</p>
         <div className="grid gap-3 lg:grid-cols-[1fr_1fr]">
           <input
             value={createName}
             onChange={(event) => setCreateName(event.target.value)}
             className="h-10 rounded-xl border border-line bg-surface px-3 text-sm text-text-strong outline-none focus:border-line-strong"
-            placeholder="Document name"
+            placeholder="서류명"
             maxLength={120}
           />
           <input
@@ -246,7 +246,7 @@ export function RequiredDocumentStatusPanel({
           onChange={(event) => setCreateDescription(event.target.value)}
           rows={2}
           className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-text outline-none focus:border-line-strong"
-          placeholder="Optional document memo"
+          placeholder="문서 메모(선택)"
           maxLength={300}
         />
         <label className="flex items-center gap-2 text-sm text-text">
@@ -256,7 +256,7 @@ export function RequiredDocumentStatusPanel({
             onChange={(event) => setCreateRequired(event.target.checked)}
             className="h-4 w-4 rounded border-line"
           />
-          Required item
+          필수 항목
         </label>
         <div className="flex flex-wrap gap-2">
           <button
@@ -264,7 +264,7 @@ export function RequiredDocumentStatusPanel({
             disabled={isCreatePending}
             className="h-10 rounded-xl bg-ink px-4 text-sm font-semibold text-white transition hover:bg-trust disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isCreatePending ? "Creating..." : "Create item"}
+            {isCreatePending ? "생성 중..." : "항목 생성"}
           </button>
           <button
             type="button"
@@ -272,7 +272,7 @@ export function RequiredDocumentStatusPanel({
             disabled={isStarterPending}
             className="h-10 rounded-xl border border-line bg-surface px-4 text-sm font-semibold text-text-strong transition hover:border-line-strong hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isStarterPending ? "Applying..." : "Start with checklist starter"}
+            {isStarterPending ? "적용 중..." : "체크리스트 스타터로 시작"}
           </button>
         </div>
         {createMessage ? <p className="text-xs text-text-muted">{createMessage}</p> : null}
@@ -281,7 +281,7 @@ export function RequiredDocumentStatusPanel({
       {documents.length === 0 ? (
         <div className="rounded-xl border border-line bg-surface p-3">
           <p className="text-sm text-text-muted">
-            No required documents yet. Create an item manually or start with the checklist starter.
+            아직 필수서류 항목이 없습니다. 직접 항목을 추가하거나 체크리스트 스타터로 시작하세요.
           </p>
         </div>
       ) : (
@@ -301,11 +301,11 @@ export function RequiredDocumentStatusPanel({
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-text-strong">{document.name}</p>
                     <p className="mt-1 text-xs text-text-muted">
-                      {document.required ? "Required" : "Optional"} | Current:{" "}
+                      {document.required ? "필수" : "선택"} | 현재 상태:{" "}
                       <span className="font-medium text-text-strong">
                         {getRequiredDocumentStatusLabel(document.status)}
                       </span>{" "}
-                      | Due: {formatDate(document.dueDate)}
+                      | 마감: {formatDate(document.dueDate)}
                     </p>
                   </div>
                 </div>
@@ -332,7 +332,7 @@ export function RequiredDocumentStatusPanel({
                     disabled={!changed || rowBusy}
                     className="h-10 rounded-xl bg-ink px-4 text-sm font-semibold text-white transition hover:bg-trust disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {rowBusy ? "Updating..." : "Apply"}
+                    {rowBusy ? "변경 중..." : "적용"}
                   </button>
                 </div>
 
@@ -341,7 +341,7 @@ export function RequiredDocumentStatusPanel({
                   onChange={(event) => setRowDraft(document.id, { note: event.target.value })}
                   rows={2}
                   className="mt-3 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-text outline-none focus:border-line-strong"
-                  placeholder="Optional reason for audit log"
+                  placeholder="감사 로그용 사유(선택)"
                 />
 
                 {rowMessages[document.id] ? (

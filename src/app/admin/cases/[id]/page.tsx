@@ -31,13 +31,13 @@ export default async function AdminCaseMatterDetailPage({
   if (!caseMatterId) {
     return (
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-text-strong">Invalid case id</h2>
-        <p className="mt-2 text-sm text-text-muted">The case id format is not valid.</p>
+        <h2 className="text-lg font-semibold text-text-strong">유효하지 않은 사건 ID입니다.</h2>
+        <p className="mt-2 text-sm text-text-muted">사건 ID 형식이 올바르지 않습니다.</p>
         <Link
           href="/admin/cases"
           className="mt-4 inline-flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
         >
-          Back to case list
+          사건 목록으로 돌아가기
         </Link>
       </Card>
     );
@@ -47,15 +47,15 @@ export default async function AdminCaseMatterDetailPage({
   if (!caseMatter) {
     return (
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-text-strong">Case not found</h2>
+        <h2 className="text-lg font-semibold text-text-strong">사건을 찾을 수 없습니다.</h2>
         <p className="mt-2 text-sm text-text-muted">
-          This case may have been removed, or you may be using an outdated link.
+          이 사건은 삭제되었거나 오래된 링크일 수 있습니다.
         </p>
         <Link
           href="/admin/cases"
           className="mt-4 inline-flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
         >
-          Back to case list
+          사건 목록으로 돌아가기
         </Link>
       </Card>
     );
@@ -87,35 +87,35 @@ export default async function AdminCaseMatterDetailPage({
       <Card className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="ui-kicker">CaseMatter Detail</p>
+            <p className="ui-kicker">사건 상세</p>
             <h2 className="mt-2 text-2xl font-semibold text-text-strong">{caseMatter.title}</h2>
             <p className="mt-2 text-sm text-text-muted">
-              {caseMatter.caseNo ?? "No caseNo"} | {caseMatter.matterType}
+              {caseMatter.caseNo ?? "사건번호 없음"} | {caseMatter.matterType}
             </p>
           </div>
           <Link
             href="/admin/cases"
             className="inline-flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
           >
-            Back to case list
+            사건 목록으로 돌아가기
           </Link>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-line bg-surface-muted p-3">
-            <p className="text-xs text-text-muted">Status</p>
+            <p className="text-xs text-text-muted">상태</p>
             <p className="mt-1 text-sm font-semibold text-text-strong">{getCaseMatterStatusLabel(currentStatus)}</p>
           </div>
           <div className="rounded-xl border border-line bg-surface-muted p-3">
-            <p className="text-xs text-text-muted">Next action</p>
+            <p className="text-xs text-text-muted">다음 액션</p>
             <p className="mt-1 text-sm font-semibold text-text-strong">{caseMatter.nextAction.message}</p>
           </div>
           <div className="rounded-xl border border-line bg-surface-muted p-3">
-            <p className="text-xs text-text-muted">Due date</p>
+            <p className="text-xs text-text-muted">마감일</p>
             <p className="mt-1 text-sm font-semibold text-text-strong">{formatDate(caseMatter.dueDate)}</p>
           </div>
           <div className="rounded-xl border border-line bg-surface-muted p-3">
-            <p className="text-xs text-text-muted">Updated</p>
+            <p className="text-xs text-text-muted">업데이트</p>
             <p className="mt-1 text-sm font-semibold text-text-strong">{formatDateTime(caseMatter.updatedAt)}</p>
           </div>
         </div>

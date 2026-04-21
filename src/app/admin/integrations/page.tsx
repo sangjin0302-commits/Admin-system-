@@ -16,20 +16,20 @@ function getLawbotStatus() {
 
   if (hasAnalyzeUrl && hasAnalyzeToken) {
     return {
-      label: "\uC2E4\uC5F0\uACB0 \uAC00\uB2A5",
+      label: "실연결 가능",
       toneClassName: "bg-success/10 text-success"
     };
   }
 
   if (hasAnalyzeUrl) {
     return {
-      label: "\uC8FC\uC18C\uB9CC \uC5F0\uACB0",
+      label: "주소만 연결",
       toneClassName: "bg-warning/10 text-warning"
     };
   }
 
   return {
-    label: "\uBBF8\uC5F0\uACB0",
+    label: "미연결",
     toneClassName: "bg-danger/10 text-danger"
   };
 }
@@ -39,33 +39,33 @@ const ossUpgradeCandidates = [
     key: "twenty",
     name: "twentyhq/twenty",
     href: "https://github.com/twentyhq/twenty",
-    priority: "\uC6B0\uC120 \uB3C4\uC785",
+    priority: "우선 도입",
     summary:
-      "CRM \uD30C\uC774\uD504\uB77C\uC778/\uACE0\uAC1D \uD0C0\uC784\uB77C\uC778 \uAD6C\uC870\uAC00 \uC798 \uC815\uB9AC\uB41C \uB808\uD37C\uB7F0\uC2A4\uB85C, \uBB38\uC758-\uC0C1\uB2F4-\uACAC\uC801-\uC218\uC784 \uD750\uB984 \uACE0\uB3C4\uD654\uC5D0 \uC801\uD569\uD569\uB2C8\uB2E4."
+      "CRM 파이프라인/고객 타임라인 구조가 잘 정리된 레퍼런스로, 문의-상담-견적-수임 흐름 고도화에 적합합니다."
   },
   {
     key: "plane",
     name: "makeplane/plane",
     href: "https://github.com/makeplane/plane",
-    priority: "\uC911\uAE30 \uB3C4\uC785",
+    priority: "중기 도입",
     summary:
-      "\uBCF4\uB4DC/\uC2A4\uD504\uB9B0\uD2B8 \uC911\uC2EC \uC5C5\uBB34 \uAD00\uB9AC \uD328\uD134\uC744 \uCC38\uACE0\uD558\uAE30 \uC88B\uC544 \uC0AC\uAC74 \uC9C4\uD589 \uBCF4\uB4DC\uC640 \uB2F4\uB2F9 \uD050 \uD655\uC7A5\uC5D0 \uC720\uB9AC\uD569\uB2C8\uB2E4."
+      "보드/스프린트 중심 업무 관리 패턴을 참고하기 좋아 사건 진행 보드와 담당 큐 확장에 유리합니다."
   },
   {
     key: "refine",
     name: "refinedev/refine",
     href: "https://github.com/refinedev/refine",
-    priority: "\uC989\uC2DC \uCC38\uACE0",
+    priority: "즉시 참고",
     summary:
-      "\uAD00\uB9AC\uC790 \uD654\uBA74\uC758 CRUD, \uD544\uD130, \uB370\uC774\uD130 \uD14C\uC774\uBE14 \uD328\uD134\uC774 \uC131\uC219\uD574 \uC815\uBCF4 \uC9D1\uC57D/\uC0C1\uC138 \uD3B8\uC9D1 UX \uAC1C\uC120\uC5D0 \uB3C4\uC6C0\uC774 \uB429\uB2C8\uB2E4."
+      "관리자 화면의 CRUD, 필터, 데이터 테이블 패턴이 성숙해 정보 집약/상세 편집 UX 개선에 도움이 됩니다."
   },
   {
     key: "n8n",
     name: "n8n-io/n8n",
     href: "https://github.com/n8n-io/n8n",
-    priority: "\uC120\uD0DD \uB3C4\uC785",
+    priority: "선택 도입",
     summary:
-      "\uBB38\uC758 \uC811\uC218 \uC54C\uB9BC, \uBC31\uC5C5, \uB178\uC158 \uB3D9\uAE30\uD654 \uAC19\uC740 \uC6CC\uD06C\uD50C\uB85C \uC790\uB3D9\uD654\uC5D0 \uAC15\uC810\uC774 \uC788\uC73C\uBA70 \uBC84\uC804/\uBCF4\uC548 \uD328\uCE58 \uC6B4\uC601 \uCCB4\uACC4\uB97C \uD568\uAED8 \uAC00\uC838\uAC00\uC57C \uD569\uB2C8\uB2E4."
+      "문의 접수 알림, 백업, 노션 동기화 같은 워크플로 자동화에 강점이 있으며 버전/보안 패치 운영 체계를 함께 가져가야 합니다."
   }
 ] as const;
 
@@ -121,12 +121,12 @@ export default async function AdminIntegrationsPage() {
   return (
     <div className="space-y-6">
       <Card className="ui-analysis-hero p-6">
-        <p className="ui-kicker">\uC5F0\uB3D9 \uC13C\uD130</p>
-        <h2 className="mt-2 ui-page-title">Lawbot / Market Analyze \uD1B5\uD569 \uD654\uBA74</h2>
+        <p className="ui-kicker">연동 센터</p>
+        <h2 className="mt-2 ui-page-title">Lawbot / Market Analyze 통합 화면</h2>
         <p className="mt-2 max-w-3xl text-sm text-text-muted">
-          \uD604\uC7AC system\uC5D0\uC11C\uB294 Lawbot\uACFC Market Analyze\uB97C \uC9C1\uC811 \uD558\uB098\uB85C \uBB36\uC5B4 \uC6B4\uC601\uD558\uB294
-          \uB2E8\uACC4\uB294 \uC544\uB2C8\uACE0, \uAC01\uAC01\uC758 \uBD84\uC11D \uACB0\uACFC\uB97C system \uC5C5\uBB34 \uD750\uB984\uC5D0 \uD761\uC218\uD558\uB294
-          \uAD6C\uC870\uB85C \uAC00\uACE0 \uC788\uC2B5\uB2C8\uB2E4.
+          현재 system에서는 Lawbot과 Market Analyze를 직접 하나로 묶어 운영하는
+          단계는 아니고, 각각의 분석 결과를 system 업무 흐름에 흡수하는
+          구조로 가고 있습니다.
         </p>
       </Card>
 
@@ -163,48 +163,48 @@ export default async function AdminIntegrationsPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="ui-kicker">Lawbot</p>
-              <h3 className="mt-2 ui-section-title">\uBC95\uB960 \uBD84\uC11D \uC5D4\uC9C4</h3>
+              <h3 className="mt-2 ui-section-title">법률 분석 엔진</h3>
             </div>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${lawbotStatus.toneClassName}`}>
               {lawbotStatus.label}
             </span>
           </div>
           <div className="mt-4 space-y-3 text-sm text-text-muted">
-            <p>\u2022 \uC2E4\uC81C API \uD638\uCD9C \uCF54\uB4DC\uB294 system \uC548\uC5D0 \uC774\uBBF8 \uB4E4\uC5B4\uC788\uC2B5\uB2C8\uB2E4.</p>
-            <p>\u2022 \uC0AC\uAC74 \uC0C1\uC138\uC5D0\uC11C \uC2A4\uB0C5\uC0F7 \uC800\uC7A5, \uC7AC\uBD84\uC11D, fallback \uD45C\uC2DC \uAD6C\uC870\uAE4C\uC9C0 \uC900\uBE44\uB410\uC2B5\uB2C8\uB2E4.</p>
-            <p>\u2022 \uB2E4\uC74C \uB2E8\uACC4\uB294 \uC2E4\uC81C \uC11C\uBC84 \uC548\uC815\uD654\uC640 \uACB0\uACFC \uD488\uC9C8 \uD655\uC778\uC785\uB2C8\uB2E4.</p>
+            <p>• 실제 API 호출 코드는 system 안에 이미 들어있습니다.</p>
+            <p>• 사건 상세에서 스냅샷 저장, 재분석, fallback 표시 구조까지 준비됐습니다.</p>
+            <p>• 다음 단계는 실제 서버 안정화와 결과 품질 확인입니다.</p>
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
             <Link
               href="/admin/inquiries"
               className="inline-flex items-center justify-center rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-text-strong transition hover:bg-surface-muted"
             >
-              \uC0AC\uAC74 \uC0C1\uC138\uC5D0\uC11C \uD655\uC778
+              사건 상세에서 확인
             </Link>
             <Link
               href="/admin/monitoring"
               className="inline-flex items-center justify-center rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-text-strong transition hover:bg-surface-muted"
             >
-              \uBC95\uB839 \uBAA8\uB2C8\uD130\uB9C1
+              법령 모니터링
             </Link>
           </div>
         </Card>
 
         <Card className="p-6">
           <p className="ui-kicker">Market Analyze</p>
-          <h3 className="mt-2 ui-section-title">\uC2DC\uC7A5 \uC778\uC0AC\uC774\uD2B8 \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4</h3>
+          <h3 className="mt-2 ui-section-title">시장 인사이트 워크스페이스</h3>
           <div className="mt-4 space-y-3 text-sm text-text-muted">
-            <p>\u2022 \uBCC4\uB3C4 frontend \uAD6C\uC131\uC740 \uD655\uC778\uB41C \uC0C1\uD0DC\uC785\uB2C8\uB2E4.</p>
-            <p>\u2022 \uD655\uC778\uB41C \uD654\uBA74: dashboard, competitors, hot issues, sentiment, services</p>
-            <p>\u2022 \uC9C0\uAE08 system \uC548\uC5D0\uC11C\uB294 \uC2E4\uC2DC\uAC04 \uB0B4\uC7A5 \uD655\uC7A5\uBCF4\uB2E4, \uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4 \uC790\uB9AC\uB97C \uBA3C\uC800 \uBCF4\uC5EC\uC8FC\uB294 \uB2E8\uACC4\uC785\uB2C8\uB2E4.</p>
+            <p>• 별도 frontend 구성은 확인된 상태입니다.</p>
+            <p>• 확인된 화면: dashboard, competitors, hot issues, sentiment, services</p>
+            <p>• 지금 system 안에서는 실시간 내장 확장보다, 워크스페이스 자리를 먼저 보여주는 단계입니다.</p>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {[
-              "\uB300\uC2DC\uBCF4\uB4DC",
-              "\uACBD\uC7C1\uC0AC",
-              "\uD56B\uC774\uC288",
-              "\uAC10\uC131 \uBD84\uC11D",
-              "\uC11C\uBE44\uC2A4 \uBD84\uC11D"
+              "대시보드",
+              "경쟁사",
+              "핫이슈",
+              "감성 분석",
+              "서비스 분석"
             ].map((item) => (
               <div key={item} className="rounded-2xl border border-line bg-surface-muted px-4 py-4 text-sm text-text-strong">
                 {item}
@@ -215,11 +215,11 @@ export default async function AdminIntegrationsPage() {
       </div>
 
       <Card className="p-6">
-        <p className="ui-kicker">\uCD94\uCC9C \uB808\uD37C\uB7F0\uC2A4</p>
-        <h3 className="mt-2 ui-section-title">\uBAA9\uC801 \uB9DE\uCDA4 \uC624\uD508\uC18C\uC2A4 \uB3C4\uC785 \uB85C\uB4DC\uB9F5</h3>
+        <p className="ui-kicker">추천 레퍼런스</p>
+        <h3 className="mt-2 ui-section-title">목적 맞춤 오픈소스 도입 로드맵</h3>
         <p className="mt-3 text-sm text-text-muted">
-          \uC9C0\uAE08 system \uAD6C\uC870\uB97C \uAE68\uC9C0 \uC54A\uACE0 \uC5C5\uADF8\uB808\uC774\uB4DC\uD560 \uC218 \uC788\uB294 \uC2E4\uC804 \uCC38\uACE0 \uB808\uD3EC \uBAA9\uB85D\uC785\uB2C8\uB2E4.
-          \uD654\uBA74 \uD328\uD134\uC740 \uCC38\uACE0\uD558\uB418, \uB370\uC774\uD130 \uC6D0\uBCF8\uC740 \uD604\uC7AC system DB \uAE30\uC900\uC73C\uB85C \uC720\uC9C0\uD558\uB294 \uBC29\uD5A5\uC744 \uAD8C\uC7A5\uD569\uB2C8\uB2E4.
+          지금 system 구조를 깨지 않고 업그레이드할 수 있는 실전 참고 레포 목록입니다.
+          화면 패턴은 참고하되, 데이터 원본은 현재 system DB 기준으로 유지하는 방향을 권장합니다.
         </p>
         <div className="mt-5 grid gap-3 xl:grid-cols-2">
           {ossUpgradeCandidates.map((repo) => (
@@ -237,7 +237,7 @@ export default async function AdminIntegrationsPage() {
                 rel="noreferrer"
                 className="mt-3 inline-flex text-sm font-medium text-primary"
               >
-                GitHub \uBC14\uB85C\uAC00\uAE30
+                GitHub 바로가기
               </a>
             </Card>
           ))}
@@ -245,12 +245,12 @@ export default async function AdminIntegrationsPage() {
       </Card>
 
       <Card className="p-6">
-        <p className="ui-kicker">\uC5F0\uACB0 \uBC29\uC2DD</p>
-        <h3 className="mt-2 ui-section-title">\uC9C0\uAE08 \uB2F9\uC7A5 \uAC00\uB2A5\uD55C \uBC29\uD5A5</h3>
+        <p className="ui-kicker">연결 방식</p>
+        <h3 className="mt-2 ui-section-title">지금 당장 가능한 방향</h3>
         <div className="mt-4 space-y-3 text-sm text-text-muted">
-          <p>\u2022 GitHub \uC800\uC7A5\uC18C\uB97C system\uC774 \uB7F0\uD0C0\uC784\uC5D0 \uC9C1\uC811 \uC77D\uC5B4\uC624\uB294 \uAD6C\uC870\uB294 \uC544\uB2D9\uB2C8\uB2E4.</p>
-          <p>\u2022 \uC2E4\uC81C \uC5F0\uB3D9\uC740 \uBCF4\uD1B5 API \uC8FC\uC18C, \uBC30\uD3EC URL, \uB610\uB294 \uAC19\uC740 \uBAA8\uB178\uB808\uD3EC/\uC11C\uBE0C\uBAA8\uB4C8 \uBC29\uC2DD\uC73C\uB85C \uD574\uC57C \uD569\uB2C8\uB2E4.</p>
-          <p>\u2022 \uADF8\uB798\uC11C \uC9C0\uAE08\uC740 system \uC548\uC5D0 \uD654\uBA74 \uC790\uB9AC\uB97C \uB9CC\uB4E4\uACE0, \uB098\uC911\uC5D0 \uC2E4\uC81C URL/API\uB97C \uAF42\uB294 \uAC83\uC774 \uAC00\uC7A5 \uC548\uC804\uD55C \uC21C\uC11C\uC785\uB2C8\uB2E4.</p>
+          <p>• GitHub 저장소를 system이 런타임에 직접 읽어오는 구조는 아닙니다.</p>
+          <p>• 실제 연동은 보통 API 주소, 배포 URL, 또는 같은 모노레포/서브모듈 방식으로 해야 합니다.</p>
+          <p>• 그래서 지금은 system 안에 화면 자리를 만들고, 나중에 실제 URL/API를 꽂는 것이 가장 안전한 순서입니다.</p>
         </div>
       </Card>
     </div>
