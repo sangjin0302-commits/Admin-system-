@@ -34,7 +34,7 @@ export const intakePageMessages: LocaleMessages<IntakePageKey> = {
   },
   en: {
     switchToEnglish: "English",
-    switchToKorean: "한국어",
+    switchToKorean: "Korean",
     heroKicker: "Online intake",
     heroTitle: "Submit your administrative inquiry quickly",
     heroDescription:

@@ -673,7 +673,8 @@ const FORM_SURFACE_COPY = {
     optionalBadge: "선택",
     optionalDescription: "추가 정보를 입력하면 초안 검토와 안내 정확도가 올라갑니다.",
     submitHelper: "접수 후 검토 → 상담/견적 → 진행 안내 순서로 이어집니다.",
-    nextStepsTitle: "다음 진행 단계"
+    nextStepsTitle: "다음 진행 단계",
+    datePreviewLabel: "선택 날짜"
   },
   en: {
     requiredBadge: "Required",
@@ -681,7 +682,8 @@ const FORM_SURFACE_COPY = {
     optionalBadge: "Optional",
     optionalDescription: "Additional context improves review quality and response precision.",
     submitHelper: "After intake: review → consultation/quote → execution guidance.",
-    nextStepsTitle: "What happens next"
+    nextStepsTitle: "What happens next",
+    datePreviewLabel: "Selected date"
   }
 } as const;
 
@@ -1075,7 +1077,11 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
 
               <Field
                 label={copy.labels.dueDate}
-                hint={locale === "en" && formattedDueDate ? `Selected date: ${formattedDueDate}` : undefined}
+                hint={
+                  locale === "en" && formattedDueDate
+                    ? `${formSurfaceCopy.datePreviewLabel}: ${formattedDueDate}`
+                    : undefined
+                }
               >
                 <Input
                   type="date"

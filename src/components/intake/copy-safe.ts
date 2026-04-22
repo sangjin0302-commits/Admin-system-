@@ -146,7 +146,7 @@ const en = {
     INDIVIDUAL: "Individual",
     COMPANY: "Company"
   },
-  callbackHelp: "Urgent or complex matters can be flagged for priority follow-up after screening.",
+  callbackHelp: "Urgent or complex matters can be flagged for priority follow-up after review.",
   optionLabels: {
     corporateYes: "This is a corporate request.",
     translationYes: "Translation is required.",
