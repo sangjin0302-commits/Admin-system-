@@ -214,6 +214,7 @@ export function QuoteWorkspacePanel({ inquiryId, workspace }: QuoteWorkspaceProp
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            mode: "recalculate",
             selectedServiceLegacyIds: selectedServices,
             selectedOptionLegacyIds: selectedOptions,
             urgencyRuleCode,

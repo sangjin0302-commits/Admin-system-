@@ -19,5 +19,6 @@ export async function saveQuoteManualEdits(
 export {
   createContractDraftFromQuote,
   exportContractDraftDocument,
+  QuoteContractDraftGuardError,
   transitionQuoteStatus
 } from "@/lib/services/quote-service-workflow-helpers";

@@ -27,6 +27,16 @@ function asDbClient(client: unknown): DbClient {
   return client as DbClient;
 }
 
+export class QuoteContractDraftGuardError extends Error {
+  code: "QUOTE_STATUS_BLOCKED";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "QuoteContractDraftGuardError";
+    this.code = "QUOTE_STATUS_BLOCKED";
+  }
+}
+
 async function getQuoteByIdOrThrow(quoteId: string) {
   return prisma.quote.findUniqueOrThrow({
     where: { id: quoteId },
@@ -65,6 +75,13 @@ export async function transitionQuoteStatus(
 }
 
 export async function createContractDraftFromQuote(quoteId: string) {
+  const current = await getQuoteByIdOrThrow(quoteId);
+  if (current.status === "REJECTED" || current.status === "EXPIRED") {
+    throw new QuoteContractDraftGuardError(
+      `Cannot create contract draft from ${current.status} quote.`
+    );
+  }
+
   await prisma.$transaction(async (tx) => {
     const db = asDbClient(tx);
     await createContractDraftFromQuoteInTransaction(db, quoteId);

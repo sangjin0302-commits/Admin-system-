@@ -24,7 +24,10 @@ export async function PATCH(
     if (!bodyResult.ok) {
       return api.error(400, "요청 본문(JSON)을 확인해 주세요.", { code: "INVALID_JSON_BODY" });
     }
-    const body = bodyResult.body;
+    const body =
+      bodyResult.body && typeof bodyResult.body === "object" && !Array.isArray(bodyResult.body)
+        ? bodyResult.body
+        : {};
 
     if (body?.mode === "manual") {
       const payload = saveQuoteManualEditsSchema.parse(body);
@@ -42,7 +45,9 @@ export async function PATCH(
       return api.ok({ ok: true, quote });
     }
 
-    const payload = recalculateQuoteSchema.parse(body);
+    const recalculatePayload =
+      body.mode === undefined ? { ...body, mode: "recalculate" } : body;
+    const payload = recalculateQuoteSchema.parse(recalculatePayload);
     const quote = await recalculateQuoteDraft(id, payload);
     return api.ok({ ok: true, quote });
   } catch (error) {

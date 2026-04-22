@@ -1,7 +1,10 @@
 import { ZodError } from "zod";
 
 import { createAdminRequestContext, firstZodMessage, safeReadJsonBody } from "@/lib/http/admin-api";
-import { createContractDraftFromQuote } from "@/lib/services/quote-service";
+import {
+  createContractDraftFromQuote,
+  QuoteContractDraftGuardError
+} from "@/lib/services/quote-service";
 import { createContractDraftSchema } from "@/lib/validation/quote";
 
 export async function POST(
@@ -24,6 +27,12 @@ export async function POST(
     if (error instanceof ZodError) {
       return api.error(400, firstZodMessage(error, "입력값을 다시 확인해 주세요."), {
         code: "VALIDATION_ERROR"
+      });
+    }
+
+    if (error instanceof QuoteContractDraftGuardError) {
+      return api.error(409, error.message, {
+        code: error.code
       });
     }
 

@@ -31,7 +31,8 @@ export async function saveQuoteManualEditsPersistence(
     paymentPlans: refreshed.paymentPlans,
     incomingPaymentPlans: input.paymentPlans,
     totalMin: totals.totalMin,
-    totalMax: totals.totalMax
+    totalMax: totals.totalMax,
+    successFeeRestricted: refreshed.successFeeRestricted
   });
 
   await applyManualQuoteTotalsAndPlans(quoteId, totals, paymentPlanAmounts);

@@ -78,16 +78,44 @@ export function buildManualPaymentPlanAmounts(input: {
   incomingPaymentPlans: ManualQuotePaymentPlanInput[];
   totalMin: number;
   totalMax: number;
+  successFeeRestricted: boolean;
 }) {
-  return input.paymentPlans.map((plan: QuotePaymentPlanRecord) => {
+  const mergedPlans = input.paymentPlans.map((plan: QuotePaymentPlanRecord) => {
     const incoming = input.incomingPaymentPlans.find((entry) => entry.id === plan.id);
-    const percentage = incoming?.percentage ?? plan.percentage;
+    return {
+      ...plan,
+      percentage: incoming?.percentage ?? plan.percentage
+    };
+  });
 
+  if (input.successFeeRestricted) {
+    const successPlan = mergedPlans.find((plan) => plan.stageKind === "SUCCESS");
+    const receiverPlan =
+      mergedPlans.find((plan) => plan.stageKind === "MIDTERM") ??
+      mergedPlans.find((plan) => plan.stageKind !== "SUCCESS");
+
+    if (successPlan && receiverPlan && successPlan.id !== receiverPlan.id && successPlan.percentage > 0) {
+      receiverPlan.percentage += successPlan.percentage;
+      successPlan.percentage = 0;
+    }
+  }
+
+  const totalPercentage = mergedPlans.reduce((sum, plan) => sum + plan.percentage, 0);
+  if (totalPercentage !== 100) {
+    const receiverPlan =
+      mergedPlans.find((plan) => plan.stageKind === "MIDTERM") ?? mergedPlans[0] ?? null;
+
+    if (receiverPlan) {
+      receiverPlan.percentage = Math.max(0, receiverPlan.percentage + (100 - totalPercentage));
+    }
+  }
+
+  return mergedPlans.map((plan) => {
     return {
       id: plan.id,
-      percentage,
-      amountMin: Math.round(input.totalMin * (percentage / 100)),
-      amountMax: Math.round(input.totalMax * (percentage / 100))
+      percentage: plan.percentage,
+      amountMin: Math.round(input.totalMin * (plan.percentage / 100)),
+      amountMax: Math.round(input.totalMax * (plan.percentage / 100))
     };
   });
 }
