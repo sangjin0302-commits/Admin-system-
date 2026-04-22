@@ -644,10 +644,6 @@ const initialState: FormState = {
 };
 
 const INTAKE_SUBMIT_TIMEOUT_MS = 12_000;
-const LANGUAGE_LABEL = {
-  ko: "\uD55C\uAD6D\uC5B4",
-  en: "English"
-} as const;
 
 const TRACKING_COPY = {
   ko: {
@@ -694,7 +690,7 @@ const RESULT_FLOW_STEPS = {
 
 export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
   const normalizedLocale = initialLocale === "en" ? "en" : "ko";
-  const [locale, setLocale] = useState<FormState["preferredLocale"]>(normalizedLocale);
+  const locale: FormState["preferredLocale"] = normalizedLocale;
   const [form, setForm] = useState<FormState>({
     ...initialState,
     preferredLocale: normalizedLocale
@@ -874,25 +870,6 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
         <Card className="p-6">
           <p className="ui-kicker">{copy.sections.basic}</p>
           <FieldGroup className="mt-4 sm:grid-cols-2">
-            <Field label={copy.labels.preferredLocale} className="sm:col-span-2">
-              <div className="flex gap-2">
-                {(["ko", "en"] as const).map((value) => (
-                  <Button
-                    key={value}
-                    type="button"
-                    variant={locale === value ? "primary" : "secondary"}
-                    size="sm"
-                    onClick={() => {
-                      setLocale(value);
-                      updateField("preferredLocale", value);
-                    }}
-                  >
-                    {LANGUAGE_LABEL[value]}
-                  </Button>
-                ))}
-              </div>
-            </Field>
-
             <Field label={copy.labels.clientType}>
               <Select
                 value={form.clientType}

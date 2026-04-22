@@ -36,7 +36,7 @@ export default async function IntakePageSafe({
 
       <section className="grid gap-4 lg:grid-cols-[0.95fr,1.05fr] lg:items-start">
         <Card className="ui-analysis-panel p-5 sm:p-6">
-          <h2 className="ui-section-title text-lg">{t("prepTitle")}</h2>
+          <h2 className="ui-page-title whitespace-nowrap">{t("prepTitle")}</h2>
           <p className="mt-2 text-sm text-text-muted">{t("prepDescription")}</p>
           <ul className="mt-4 space-y-2.5">
             <li className="intake-prep-item">{t("prepItemCurrentStatus")}</li>
@@ -48,7 +48,7 @@ export default async function IntakePageSafe({
 
         <Card className="p-5 sm:p-6">
           <div className="mb-5 border-b border-line pb-4">
-            <h2 className="ui-section-title text-lg">{t("formTitle")}</h2>
+            <h2 className="ui-page-title whitespace-nowrap">{t("formTitle")}</h2>
             <p className="mt-2 text-sm text-text-muted">{t("formDescription")}</p>
           </div>
           <IntakeFormSafeV3 initialLocale={locale} />
