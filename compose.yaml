@@ -1,0 +1,23 @@
+services:
+  admin-system:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: admin-system:sqlite
+    container_name: admin-system
+    restart: unless-stopped
+    env_file:
+      - .env.docker.local
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      PRISMA_DB_PROVIDER: ${PRISMA_DB_PROVIDER:-sqlite}
+      DATABASE_URL: ${DATABASE_URL:-file:./prisma/dev.db}
+    command: sh -c "npm run db:init && npm run start -- --hostname 0.0.0.0 --port 3000"
+    ports:
+      - "3000:3000"
+    volumes:
+      - admin_system_prisma_data:/app/prisma
+
+volumes:
+  admin_system_prisma_data:
