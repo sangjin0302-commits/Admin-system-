@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import { IntakeFormSafeV3 } from "@/components/intake/intake-form-safe-v3";
 import { Card } from "@/components/ui/card";
-import type { Locale } from "@/types/inquiry";
+import { intakePageMessages } from "@/i18n/locales/intake-page";
+import { createTranslator, normalizeUiLocale } from "@/i18n/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,8 @@ export default async function IntakePageSafe({
   searchParams: Promise<{ lang?: string }>;
 }) {
   const { lang } = await searchParams;
-  const locale: Locale = lang === "en" ? "en" : "ko";
+  const locale = normalizeUiLocale(lang);
+  const t = createTranslator(intakePageMessages, locale);
 
   return (
     <div className="space-y-6">
@@ -21,7 +23,7 @@ export default async function IntakePageSafe({
           href={locale === "ko" ? "/intake?lang=en" : "/intake"}
           className="inline-flex h-10 items-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
         >
-          {locale === "ko" ? "English" : "\uD55C\uAD6D\uC5B4"}
+          {locale === "ko" ? t("switchToEnglish") : t("switchToKorean")}
         </Link>
       </div>
       <Card className="p-6">

@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 
+import { adminCasesMessages } from "@/i18n/locales/admin-cases";
+import { createTranslator, type UiLocale } from "@/i18n/shared";
 import { parseClientApiError } from "@/lib/http/client-api";
 import { formatDate } from "@/lib/utils";
 import {
@@ -25,6 +27,7 @@ type RequiredDocumentStatusPanelProps = {
   caseMatterUpdatedAt: string;
   documents: RequiredDocumentItem[];
   allowedTransitionsByDocumentId: Record<string, readonly RequiredDocumentStatusValue[]>;
+  locale?: UiLocale;
 };
 
 type DraftState = {
@@ -36,9 +39,11 @@ export function RequiredDocumentStatusPanel({
   caseMatterId,
   caseMatterUpdatedAt,
   documents,
-  allowedTransitionsByDocumentId
+  allowedTransitionsByDocumentId,
+  locale = "ko"
 }: RequiredDocumentStatusPanelProps) {
   const router = useRouter();
+  const t = createTranslator(adminCasesMessages, locale);
   const [pendingDocumentId, setPendingDocumentId] = useState<string | null>(null);
   const [createName, setCreateName] = useState("");
   const [createDescription, setCreateDescription] = useState("");
@@ -96,7 +101,7 @@ export function RequiredDocumentStatusPanel({
     };
     const statusChanged = draft.status !== snapshot.status;
     if (!statusChanged) {
-      setRowMessage(documentId, "변경할 상태가 없습니다.");
+      setRowMessage(documentId, t("documentNoStatusChange"));
       return;
     }
 
@@ -122,7 +127,7 @@ export function RequiredDocumentStatusPanel({
       );
 
       if (!response.ok) {
-        setRowMessage(documentId, await parseClientApiError(response, "문서 상태를 변경하지 못했습니다."));
+        setRowMessage(documentId, await parseClientApiError(response, t("documentUpdateFailed")));
         if (response.status === 409 && response.headers.get("X-Current-Updated-At")) {
           router.refresh();
         }
@@ -130,7 +135,7 @@ export function RequiredDocumentStatusPanel({
         return;
       }
 
-      setRowMessage(documentId, "문서 상태가 변경되었습니다. 최신 상태를 다시 불러옵니다...");
+      setRowMessage(documentId, t("documentUpdateSuccess"));
       setPendingDocumentId(null);
       router.refresh();
     });
@@ -140,7 +145,7 @@ export function RequiredDocumentStatusPanel({
     event.preventDefault();
     const name = createName.trim();
     if (!name) {
-      setCreateMessage("필수서류 이름은 반드시 입력해야 합니다.");
+      setCreateMessage(t("createNameRequired"));
       return;
     }
 
@@ -161,14 +166,14 @@ export function RequiredDocumentStatusPanel({
       });
 
       if (!response.ok) {
-        setCreateMessage(await parseClientApiError(response, "필수서류를 생성하지 못했습니다."));
+        setCreateMessage(await parseClientApiError(response, t("createFailed")));
         if (response.status === 409 && response.headers.get("X-Current-Updated-At")) {
           router.refresh();
         }
         return;
       }
 
-      setCreateMessage("필수서류가 생성되었습니다. 최신 상태를 다시 불러옵니다...");
+      setCreateMessage(t("createSuccess"));
       setCreateName("");
       setCreateDescription("");
       setCreateDueDate("");
@@ -193,7 +198,7 @@ export function RequiredDocumentStatusPanel({
       );
 
       if (!response.ok) {
-        setCreateMessage(await parseClientApiError(response, "체크리스트 스타터를 실행하지 못했습니다."));
+        setCreateMessage(await parseClientApiError(response, t("starterFailed")));
         if (response.status === 409 && response.headers.get("X-Current-Updated-At")) {
           router.refresh();
         }
@@ -206,7 +211,7 @@ export function RequiredDocumentStatusPanel({
       const createdCount = payload?.createdCount ?? 0;
       const skippedCount = payload?.skippedCount ?? 0;
       setCreateMessage(
-        `체크리스트 스타터를 적용했습니다. ${createdCount}건 생성, 기존 ${skippedCount}건은 건너뛰었습니다.`
+        `${t("starterSuccessPrefix")} ${t("starterCreatedCount")} ${createdCount}, ${t("starterSkippedCount")} ${skippedCount}`
       );
       router.refresh();
     });
@@ -215,23 +220,21 @@ export function RequiredDocumentStatusPanel({
   return (
     <div className="rounded-2xl border border-line bg-surface-muted p-4">
       <div className="mb-3">
-        <p className="text-sm font-semibold text-text-strong">필수서류</p>
-        <p className="mt-1 text-xs text-text-muted">
-          모든 상태 변경은 결정적 전이 규칙과 감사 이벤트를 거칩니다.
-        </p>
+        <p className="text-sm font-semibold text-text-strong">{t("requiredDocPanelTitle")}</p>
+        <p className="mt-1 text-xs text-text-muted">{t("requiredDocPanelDescription")}</p>
       </div>
 
       <form
         onSubmit={onCreateDocument}
         className="mb-4 space-y-3 rounded-xl border border-line bg-surface p-3"
       >
-        <p className="text-sm font-semibold text-text-strong">체크리스트 항목 추가</p>
+        <p className="text-sm font-semibold text-text-strong">{t("checklistCreateTitle")}</p>
         <div className="grid gap-3 lg:grid-cols-[1fr_1fr]">
           <input
             value={createName}
             onChange={(event) => setCreateName(event.target.value)}
             className="h-10 rounded-xl border border-line bg-surface px-3 text-sm text-text-strong outline-none focus:border-line-strong"
-            placeholder="서류명"
+            placeholder={t("createNamePlaceholder")}
             maxLength={120}
           />
           <input
@@ -246,7 +249,7 @@ export function RequiredDocumentStatusPanel({
           onChange={(event) => setCreateDescription(event.target.value)}
           rows={2}
           className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-text outline-none focus:border-line-strong"
-          placeholder="문서 메모(선택)"
+          placeholder={t("createDescriptionPlaceholder")}
           maxLength={300}
         />
         <label className="flex items-center gap-2 text-sm text-text">
@@ -256,7 +259,7 @@ export function RequiredDocumentStatusPanel({
             onChange={(event) => setCreateRequired(event.target.checked)}
             className="h-4 w-4 rounded border-line"
           />
-          필수 항목
+          {t("requiredFlagLabel")}
         </label>
         <div className="flex flex-wrap gap-2">
           <button
@@ -264,7 +267,7 @@ export function RequiredDocumentStatusPanel({
             disabled={isCreatePending}
             className="h-10 rounded-xl bg-ink px-4 text-sm font-semibold text-white transition hover:bg-trust disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isCreatePending ? "생성 중..." : "항목 생성"}
+            {isCreatePending ? t("creatingItem") : t("createItem")}
           </button>
           <button
             type="button"
@@ -272,7 +275,7 @@ export function RequiredDocumentStatusPanel({
             disabled={isStarterPending}
             className="h-10 rounded-xl border border-line bg-surface px-4 text-sm font-semibold text-text-strong transition hover:border-line-strong hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isStarterPending ? "적용 중..." : "체크리스트 스타터로 시작"}
+            {isStarterPending ? t("startingStarterChecklist") : t("startStarterChecklist")}
           </button>
         </div>
         {createMessage ? <p className="text-xs text-text-muted">{createMessage}</p> : null}
@@ -280,9 +283,7 @@ export function RequiredDocumentStatusPanel({
 
       {documents.length === 0 ? (
         <div className="rounded-xl border border-line bg-surface p-3">
-          <p className="text-sm text-text-muted">
-            아직 필수서류 항목이 없습니다. 직접 항목을 추가하거나 체크리스트 스타터로 시작하세요.
-          </p>
+          <p className="text-sm text-text-muted">{t("emptyDocuments")}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -301,11 +302,12 @@ export function RequiredDocumentStatusPanel({
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-text-strong">{document.name}</p>
                     <p className="mt-1 text-xs text-text-muted">
-                      {document.required ? "필수" : "선택"} | 현재 상태:{" "}
+                      {document.required ? t("requiredTagRequired") : t("requiredTagOptional")} |{" "}
+                      {t("documentCurrentStatusPrefix")}:{" "}
                       <span className="font-medium text-text-strong">
-                        {getRequiredDocumentStatusLabel(document.status)}
+                        {getRequiredDocumentStatusLabel(document.status, locale)}
                       </span>{" "}
-                      | 마감: {formatDate(document.dueDate)}
+                      | {t("documentDueDatePrefix")}: {formatDate(document.dueDate)}
                     </p>
                   </div>
                 </div>
@@ -322,7 +324,7 @@ export function RequiredDocumentStatusPanel({
                   >
                     {allowedTargets.map((value) => (
                       <option key={value} value={value}>
-                        {getRequiredDocumentStatusLabel(value)}
+                        {getRequiredDocumentStatusLabel(value, locale)}
                       </option>
                     ))}
                   </select>
@@ -332,7 +334,7 @@ export function RequiredDocumentStatusPanel({
                     disabled={!changed || rowBusy}
                     className="h-10 rounded-xl bg-ink px-4 text-sm font-semibold text-white transition hover:bg-trust disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {rowBusy ? "변경 중..." : "적용"}
+                    {rowBusy ? t("rowApplying") : t("rowApply")}
                   </button>
                 </div>
 
@@ -341,7 +343,7 @@ export function RequiredDocumentStatusPanel({
                   onChange={(event) => setRowDraft(document.id, { note: event.target.value })}
                   rows={2}
                   className="mt-3 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-text outline-none focus:border-line-strong"
-                  placeholder="감사 로그용 사유(선택)"
+                  placeholder={t("rowAuditPlaceholder")}
                 />
 
                 {rowMessages[document.id] ? (

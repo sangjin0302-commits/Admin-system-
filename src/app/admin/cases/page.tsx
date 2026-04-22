@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
+import { adminCasesMessages } from "@/i18n/locales/admin-cases";
+import { createTranslator, normalizeUiLocale } from "@/i18n/shared";
 import { listCaseMatters } from "@/lib/services/case-matter-service";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { getCaseMatterStatusLabel } from "@/types/case-matter";
@@ -25,7 +27,14 @@ function countRequiredDocumentBacklog(caseMatter: CaseMatterListItem) {
   ).length;
 }
 
-export default async function AdminCasesPage() {
+export default async function AdminCasesPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const params = (await searchParams) ?? {};
+  const locale = normalizeUiLocale(params.lang);
+  const t = createTranslator(adminCasesMessages, locale);
   const cases = await safeListCaseMatters();
 
   return (
@@ -33,23 +42,21 @@ export default async function AdminCasesPage() {
       <Card className="p-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="ui-kicker">사건 관리</p>
-            <h2 className="mt-2 ui-page-title">사건 운영</h2>
-            <p className="mt-2 text-sm text-text-muted">
-              이 보드는 Phase 1에서 사건 중심 운영을 위한 최소 운영 경로입니다.
-            </p>
+            <p className="ui-kicker">{t("boardKicker")}</p>
+            <h2 className="mt-2 ui-page-title">{t("boardTitle")}</h2>
+            <p className="mt-2 text-sm text-text-muted">{t("boardDescription")}</p>
           </div>
           <div className="rounded-full bg-surface-muted px-4 py-2 text-sm font-semibold text-text-strong">
-            활성 사건: {cases.length}
+            {t("totalCases")}: {cases.length}
           </div>
         </div>
       </Card>
 
       {cases.length === 0 ? (
         <EmptyState
-          title="등록된 사건이 아직 없습니다."
-          description="먼저 문의를 사건으로 전환하세요. 전환된 사건이 이 운영 보드에 표시됩니다."
-          actionLabel="문의 화면으로 이동"
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
+          actionLabel={t("goInquiries")}
           actionHref="/admin/inquiries"
         />
       ) : (
@@ -58,12 +65,12 @@ export default async function AdminCasesPage() {
             <table className="min-w-full divide-y divide-line text-sm">
               <thead className="bg-surface-muted text-left text-xs uppercase tracking-wide text-text-muted">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">사건</th>
-                  <th className="px-4 py-3 font-semibold">상태</th>
-                  <th className="px-4 py-3 font-semibold">다음 액션</th>
-                  <th className="px-4 py-3 font-semibold">마감일</th>
-                  <th className="px-4 py-3 font-semibold">미처리 문서</th>
-                  <th className="px-4 py-3 font-semibold">업데이트</th>
+                  <th className="px-4 py-3 font-semibold">{t("tableCase")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("tableStatus")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("tableNextAction")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("tableDueDate")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("tablePendingDocs")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("tableUpdatedAt")}</th>
                   <th className="px-4 py-3 font-semibold" />
                 </tr>
               </thead>
@@ -73,10 +80,12 @@ export default async function AdminCasesPage() {
                     <td className="px-4 py-3">
                       <p className="font-semibold text-text-strong">{item.title}</p>
                       <p className="mt-1 text-xs text-text-muted">
-                        {item.caseNo ?? "사건번호 없음"} | {item.matterType}
+                        {item.caseNo ?? t("caseNoMissing")} | {item.matterType}
                       </p>
                     </td>
-                    <td className="px-4 py-3 text-text">{getCaseMatterStatusLabel(item.status)}</td>
+                    <td className="px-4 py-3 text-text">
+                      {getCaseMatterStatusLabel(item.status, locale)}
+                    </td>
                     <td className="px-4 py-3">
                       <p className="font-medium text-text-strong">{item.nextAction.message}</p>
                       <p className="mt-1 text-xs text-text-muted">
@@ -84,14 +93,16 @@ export default async function AdminCasesPage() {
                       </p>
                     </td>
                     <td className="px-4 py-3 text-text">{formatDate(item.dueDate)}</td>
-                    <td className="px-4 py-3 text-text">{countRequiredDocumentBacklog(item)}</td>
+                    <td className="px-4 py-3 text-text">
+                      {countRequiredDocumentBacklog(item)}
+                    </td>
                     <td className="px-4 py-3 text-text-muted">{formatDateTime(item.updatedAt)}</td>
                     <td className="px-4 py-3">
                       <Link
                         href={`/admin/cases/${item.id}`}
                         className="inline-flex h-9 items-center rounded-lg border border-line bg-surface px-3 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
                       >
-                        열기
+                        {t("viewDetail")}
                       </Link>
                     </td>
                   </tr>
