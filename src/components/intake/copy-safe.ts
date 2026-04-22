@@ -65,7 +65,7 @@ const ko = {
     COMPANY: "\uAE30\uC5C5"
   },
   callbackHelp:
-    "\uC0AC\uC548\uC774 \uAE34\uAE09\uD558\uAC70\uB098 \uC124\uBA85\uC774 \uBCF5\uC7A1\uD55C \uACBD\uC6B0\uC5D0\uB294 \uAC80\uD1A0 \uD6C4 \uC6B0\uC120 \uC5F0\uB77D \uB300\uC0C1\uC73C\uB85C \uD45C\uC2DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+    "\uC0AC\uC548\uC774 \uAE34\uAE09\uD558\uAC70\uB098 \uC124\uBA85\uC774 \uBCF5\uC7A1\uD55C \uACBD\uC6B0\uC5D0\uB294 \uAC80\uD1A0 \uC774\uD6C4 \uC6B0\uC120 \uC5F0\uB77D \uB300\uC0C1\uC73C\uB85C \uD45C\uC2DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
   optionLabels: {
     corporateYes: "\uAE30\uC5C5 \uC758\uB8B0\uC785\uB2C8\uB2E4.",
     translationYes: "\uBC88\uC5ED\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.",
@@ -146,7 +146,7 @@ const en = {
     INDIVIDUAL: "Individual",
     COMPANY: "Company"
   },
-  callbackHelp: "Urgent or complex matters can be flagged for priority follow-up after review.",
+  callbackHelp: "Urgent or complex matters can be flagged for priority follow-up after screening.",
   optionLabels: {
     corporateYes: "This is a corporate request.",
     translationYes: "Translation is required.",
