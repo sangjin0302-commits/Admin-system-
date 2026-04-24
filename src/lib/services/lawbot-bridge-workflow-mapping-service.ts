@@ -2,6 +2,10 @@ import type {
   BridgeWorkflowStatus,
   WorkflowDraftStatus
 } from "../../types/lawbot-bridge-workflow.ts";
+import {
+  buildBridgeReviewViewModels,
+  type SupplementalReferenceCandidate
+} from "./lawbot-bridge-review-view-models.ts";
 
 type JsonObject = Record<string, unknown>;
 
@@ -20,6 +24,8 @@ type BridgeBaseResponse = {
   must_verify?: string[];
   must_verify_sources?: string[];
   risk_flags?: string[];
+  matched_subtype_keys?: string[];
+  supplemental_reference_candidates?: unknown[];
   practitioner_guide?: JsonObject | null;
   case_outlook?: BridgeCaseOutlook | null;
   draft?: JsonObject | null;
@@ -164,6 +170,81 @@ function serializeJson(value: unknown) {
   return JSON.stringify(value);
 }
 
+function asBoolean(value: unknown, fallback = false) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") {
+      return true;
+    }
+    if (normalized === "false") {
+      return false;
+    }
+  }
+  return fallback;
+}
+
+function normalizeSupplementalReferenceCandidates(
+  candidates: unknown
+): SupplementalReferenceCandidate[] {
+  if (!Array.isArray(candidates)) {
+    return [];
+  }
+
+  return candidates
+    .map((entry) => {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+        return null;
+      }
+      const record = entry as Record<string, unknown>;
+      const title = String(record.title ?? "").trim();
+      if (!title) {
+        return null;
+      }
+      return {
+        title,
+        sourceType: String(
+          record.source_type ?? record.sourceType ?? "internal_archive"
+        ).trim() || "internal_archive",
+        mustVerifyOriginal: asBoolean(
+          record.must_verify_original ?? record.mustVerifyOriginal,
+          true
+        ),
+        trustLevel:
+          String(record.trust_level ?? record.trustLevel ?? "unknown").trim() || "unknown",
+        usageLocations: asStringArray(record.usage_locations ?? record.usageLocations),
+        referenceLevel:
+          String(record.reference_level ?? record.referenceLevel ?? "candidate").trim() ||
+          "candidate"
+      };
+    })
+    .filter((entry): entry is SupplementalReferenceCandidate => Boolean(entry));
+}
+
+function serializePractitionerGuide(response: BridgeBaseResponse) {
+  const subtypeKeys = asStringArray(response.matched_subtype_keys);
+  const supplementalReferenceCandidates = normalizeSupplementalReferenceCandidates(
+    response.supplemental_reference_candidates
+  );
+  const guide =
+    response.practitioner_guide && typeof response.practitioner_guide === "object"
+      ? { ...response.practitioner_guide }
+      : {};
+
+  if (subtypeKeys.length > 0) {
+    (guide as Record<string, unknown>).matched_subtype_keys = subtypeKeys;
+  }
+  if (supplementalReferenceCandidates.length > 0) {
+    (guide as Record<string, unknown>).supplemental_reference_candidates =
+      supplementalReferenceCandidates;
+  }
+
+  const hasGuideContent = Object.keys(guide).length > 0;
+  return hasGuideContent ? JSON.stringify(guide) : null;
+}
+
 function serializeArray(values: string[]) {
   return JSON.stringify(values);
 }
@@ -178,7 +259,7 @@ function basePersistence(
     bridgeMustVerify: serializeArray(asStringArray(response.must_verify)),
     bridgeMustVerifySources: serializeArray(asStringArray(response.must_verify_sources)),
     bridgeRiskFlags: serializeArray(asStringArray(response.risk_flags)),
-    bridgePractitionerGuide: serializeJson(response.practitioner_guide),
+    bridgePractitionerGuide: serializePractitionerGuide(response),
     bridgeCaseOutlook: serializeJson(response.case_outlook)
   };
 }
@@ -206,19 +287,47 @@ function makeCaseTasksFromMustVerify(
 
 function makeSourceVerificationTasks(context: MappingContext, response: BridgeBaseResponse) {
   const riskFlags = serializeArray(asStringArray(response.risk_flags));
-  return asStringArray(response.must_verify_sources).map(
-    (item): SourceVerificationTaskInput => ({
+  const reviewModels = buildBridgeReviewViewModels({
+    reviewRequired: response.review_required,
+    mustVerify: asStringArray(response.must_verify),
+    mustVerifySources: asStringArray(response.must_verify_sources),
+    riskFlags: asStringArray(response.risk_flags),
+    matchedSubtypeKeys: asStringArray(response.matched_subtype_keys),
+    supplementalReferenceCandidates: response.supplemental_reference_candidates,
+    practitionerGuide: response.practitioner_guide ?? null,
+    caseOutlook: response.case_outlook ?? null
+  });
+
+  return reviewModels.sourceVerificationChecklist.items.map(
+    (descriptor): SourceVerificationTaskInput => ({
       inquiryId: context.inquiryId,
       caseId: context.caseId,
-      title: `Verify source: ${item}`,
-      sourceLabel: item,
+      title: `Verify source: ${descriptor.sourceLabel}`,
+      authorityBucket: descriptor.authorityBucket,
+      sourceLabel: descriptor.sourceLabel,
+      sourceCitation: descriptor.sourceCitation ?? undefined,
+      notes: descriptor.notes ?? undefined,
       status: "OPEN",
       reviewRequired: true,
-      mustVerify: serializeArray([item]),
+      mustVerify: serializeArray([descriptor.sourceLabel]),
       riskFlags,
       source: "lawbot_bridge"
     })
   );
+}
+
+function shouldHoldForApproval(response: BridgeBaseResponse) {
+  const reviewModels = buildBridgeReviewViewModels({
+    reviewRequired: response.review_required,
+    mustVerify: asStringArray(response.must_verify),
+    mustVerifySources: asStringArray(response.must_verify_sources),
+    riskFlags: asStringArray(response.risk_flags),
+    matchedSubtypeKeys: asStringArray(response.matched_subtype_keys),
+    supplementalReferenceCandidates: response.supplemental_reference_candidates,
+    practitionerGuide: response.practitioner_guide ?? null,
+    caseOutlook: response.case_outlook ?? null
+  });
+  return !reviewModels.approvalWorkflowGate.canProceedWithoutApproval;
 }
 
 function makeAttentionTasksFromOutlook(context: MappingContext, response: BridgeBaseResponse) {
@@ -280,7 +389,7 @@ function makeDocumentRequestTasks(
 }
 
 function draftStatusFromResponse(response: BridgeBaseResponse): WorkflowDraftStatus {
-  return response.review_required ? "APPROVAL_PENDING" : "DRAFT_CREATED";
+  return shouldHoldForApproval(response) ? "APPROVAL_PENDING" : "DRAFT_CREATED";
 }
 
 function intakeAnalyzeStatus(response: BridgeIntakeAnalyzeResponse): BridgeWorkflowStatus {
@@ -361,7 +470,7 @@ export function mapDocumentDraftResponseToWorkflow(
   context: MappingContext,
   response: BridgeDocumentDraftResponse
 ): WorkflowMappingResult {
-  const approvalPending = Boolean(response.review_required && response.draft);
+  const approvalPending = Boolean(response.draft && shouldHoldForApproval(response));
   const workflowStatus: BridgeWorkflowStatus = approvalPending ? "APPROVAL_PENDING" : "DRAFT_CREATED";
 
   return {
@@ -400,7 +509,7 @@ export function mapCustomerMessageDraftResponseToWorkflow(
   context: MappingContext,
   response: BridgeCustomerMessageDraftResponse
 ): WorkflowMappingResult {
-  const approvalPending = Boolean(response.review_required && response.draft);
+  const approvalPending = Boolean(response.draft && shouldHoldForApproval(response));
   const workflowStatus: BridgeWorkflowStatus = approvalPending
     ? "APPROVAL_PENDING"
     : "MESSAGE_DRAFT_CREATED";
