@@ -14,6 +14,17 @@ import {
   type MessageDraftInput,
   type SourceVerificationTaskInput
 } from "./lawbot-bridge-workflow-mapping-service.ts";
+import {
+  buildBridgeReviewViewModels,
+  type ApprovalWorkflowGateViewModel,
+  type LegalAxisClue,
+  type OperatorAssistPanelViewModel,
+  type ReviewerReferencePanelViewModel,
+  type ReviewerPatternReviewPanelViewModel,
+  type SourceVerificationChecklistViewModel,
+  type ReviewerAttentionPanelViewModel,
+  type SupplementalReferenceCandidate
+} from "./lawbot-bridge-review-view-models.ts";
 
 type JsonObject = Record<string, unknown>;
 
@@ -150,6 +161,23 @@ export type LawbotBridgeCaseWorkflowResult = {
     documentRequestTasks: number;
   };
   approvalPending: boolean;
+  reviewSignals: {
+    reviewRequired: boolean;
+    mustVerify: string[];
+    mustVerifySources: string[];
+    riskFlags: string[];
+    matchedSubtypeKeys: string[];
+    practitionerGuide: JsonObject | null;
+    caseOutlook: JsonObject | null;
+    supplementalReferenceCandidates: SupplementalReferenceCandidate[];
+    legalAxisClues: LegalAxisClue[];
+    reviewerAttentionPanel: ReviewerAttentionPanelViewModel;
+    reviewerPatternReviewPanel: ReviewerPatternReviewPanelViewModel;
+    operatorAssistPanel: OperatorAssistPanelViewModel;
+    reviewerReferencePanel: ReviewerReferencePanelViewModel;
+    sourceVerificationChecklist: SourceVerificationChecklistViewModel;
+    approvalWorkflowGate: ApprovalWorkflowGateViewModel;
+  };
 };
 
 function parseJsonObject(raw: string | null | undefined) {
@@ -184,6 +212,24 @@ function parseStringArray(raw: string | null | undefined) {
   } catch {
     return [];
   }
+}
+
+function parseSubtypeKeysFromObjects(input: {
+  practitionerGuide: JsonObject | null;
+  caseOutlook: JsonObject | null;
+}) {
+  const subtypeFromGuide = Array.isArray(input.practitionerGuide?.matched_subtype_keys)
+    ? input.practitionerGuide?.matched_subtype_keys
+    : [];
+  const subtypeFromOutlook = Array.isArray(input.caseOutlook?.matched_subtype_keys)
+    ? input.caseOutlook?.matched_subtype_keys
+    : [];
+
+  return [...new Set(
+    [...subtypeFromGuide, ...subtypeFromOutlook]
+      .map((entry) => String(entry ?? "").trim())
+      .filter((entry) => entry.length > 0)
+  )];
 }
 
 function buildFactInput(inquiry: WorkflowInquiryRecord) {
@@ -286,6 +332,10 @@ function withMessageDraftId(
     caseId,
     messageDraftId
   }));
+}
+
+function parseJsonObjectOrNull(raw: string | null | undefined): JsonObject | null {
+  return parseJsonObject(raw) ?? null;
 }
 
 export async function runLawbotBridgeCaseWorkflow(
@@ -455,6 +505,31 @@ export async function runLawbotBridgeCaseWorkflow(
   }
 
   const approvalPending = documentMapping.approvalPending || messageMapping.approvalPending;
+  const reviewSignals = {
+    reviewRequired: caseRecord.bridgeReviewRequired ?? false,
+    mustVerify: parseStringArray(caseRecord.bridgeMustVerify),
+    mustVerifySources: parseStringArray(caseRecord.bridgeMustVerifySources),
+    riskFlags: parseStringArray(caseRecord.bridgeRiskFlags),
+    practitionerGuide: parseJsonObjectOrNull(caseRecord.bridgePractitionerGuide),
+    caseOutlook: parseJsonObjectOrNull(caseRecord.bridgeCaseOutlook)
+  };
+  const matchedSubtypeKeys = parseSubtypeKeysFromObjects(reviewSignals);
+  const reviewViewModels = buildBridgeReviewViewModels({
+    ...reviewSignals,
+    matchedSubtypeKeys
+  });
+  const enrichedReviewSignals = {
+    ...reviewSignals,
+    matchedSubtypeKeys,
+    supplementalReferenceCandidates: reviewViewModels.supplementalReferenceCandidates,
+    legalAxisClues: reviewViewModels.legalAxisClues,
+    reviewerAttentionPanel: reviewViewModels.reviewerAttentionPanel,
+    reviewerPatternReviewPanel: reviewViewModels.reviewerPatternReviewPanel,
+    operatorAssistPanel: reviewViewModels.operatorAssistPanel,
+    reviewerReferencePanel: reviewViewModels.reviewerReferencePanel,
+    sourceVerificationChecklist: reviewViewModels.sourceVerificationChecklist,
+    approvalWorkflowGate: reviewViewModels.approvalWorkflowGate
+  };
 
   return {
     inquiryId: inquiry.id,
@@ -476,6 +551,7 @@ export async function runLawbotBridgeCaseWorkflow(
         messageSourceTasks.length,
       documentRequestTasks: documentRequestTasks.length
     },
-    approvalPending
+    approvalPending,
+    reviewSignals: enrichedReviewSignals
   };
 }
