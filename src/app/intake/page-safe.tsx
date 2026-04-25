@@ -34,10 +34,26 @@ export default async function IntakePageSafe({
         </div>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[0.95fr,1.05fr] lg:items-start">
+      <section className="space-y-4">
         <Card className="ui-analysis-panel p-5 sm:p-6">
-          <h2 className="ui-page-title whitespace-nowrap">{t("prepTitle")}</h2>
-          <p className="mt-2 text-sm text-text-muted">{t("prepDescription")}</p>
+          <div className="space-y-3">
+            <h2 className="ui-page-title">{t("prepTitle")}</h2>
+            <p className="text-sm text-text-muted">{t("prepDescription")}</p>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="ui-analysis-chip">
+              {locale === "ko" ? "현재 상황" : "Current status"}
+            </span>
+            <span className="ui-analysis-chip">
+              {locale === "ko" ? "목표/마감" : "Goal & deadline"}
+            </span>
+            <span className="ui-analysis-chip">
+              {locale === "ko" ? "보유 문서" : "Available documents"}
+            </span>
+            <span className="ui-analysis-chip">
+              {locale === "ko" ? "제출처" : "Target authority"}
+            </span>
+          </div>
           <ul className="mt-4 space-y-2.5">
             <li className="intake-prep-item">{t("prepItemCurrentStatus")}</li>
             <li className="intake-prep-item">{t("prepItemGoalAndDeadline")}</li>
