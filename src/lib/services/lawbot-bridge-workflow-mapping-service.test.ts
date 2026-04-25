@@ -5,7 +5,7 @@ import {
   mapDocumentDraftResponseToWorkflow,
   mapIntakeAnalyzeResponseToWorkflow,
   mapIntakeProfileResponseToWorkflow
-} from "./lawbot-bridge-workflow-mapping-service.ts";
+} from "./lawbot-bridge-workflow-mapping-service";
 
 function run() {
   const analyze = mapIntakeAnalyzeResponseToWorkflow(

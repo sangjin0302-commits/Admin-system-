@@ -2,7 +2,7 @@ import {
   runLawbotBridgeCaseWorkflow,
   type BridgeWorkflowPersistencePort,
   type LawbotBridgeWorkflowClient
-} from "./lawbot-bridge-case-workflow-service.ts";
+} from "./lawbot-bridge-case-workflow-service";
 
 export type RunLawbotWorkflowDependencies = {
   client: LawbotBridgeWorkflowClient;
@@ -59,8 +59,8 @@ function parseRunLawbotWorkflowRequestPayload(
 export async function createRunLawbotWorkflowDependencies(): Promise<RunLawbotWorkflowDependencies> {
   const [{ createLawbotBridgeHttpClientFromEnv }, { createLawbotBridgeWorkflowPrismaPersistence }] =
     await Promise.all([
-      import("./lawbot-bridge-http-client.ts"),
-      import("./lawbot-bridge-workflow-prisma-persistence.ts")
+      import("./lawbot-bridge-http-client"),
+      import("./lawbot-bridge-workflow-prisma-persistence")
     ]);
 
   return {

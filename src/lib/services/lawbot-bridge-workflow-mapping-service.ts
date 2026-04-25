@@ -1,11 +1,11 @@
 import type {
   BridgeWorkflowStatus,
   WorkflowDraftStatus
-} from "../../types/lawbot-bridge-workflow.ts";
+} from "../../types/lawbot-bridge-workflow";
 import {
   buildBridgeReviewViewModels,
   type SupplementalReferenceCandidate
-} from "./lawbot-bridge-review-view-models.ts";
+} from "./lawbot-bridge-review-view-models";
 
 type JsonObject = Record<string, unknown>;
 

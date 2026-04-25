@@ -11,7 +11,7 @@ import {
   type SourceVerificationChecklistViewModel,
   type ReviewerAttentionPanelViewModel,
   type SupplementalReferenceCandidate
-} from "./lawbot-bridge-review-view-models.ts";
+} from "./lawbot-bridge-review-view-models";
 
 type JsonObject = Record<string, unknown>;
 

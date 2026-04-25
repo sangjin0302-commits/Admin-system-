@@ -1,16 +1,17 @@
 import assert from "node:assert/strict";
 
-import { handleRunLawbotWorkflowRequest } from "./lawbot-bridge-case-workflow-action.ts";
+import { handleRunLawbotWorkflowRequest } from "./lawbot-bridge-case-workflow-action";
 import {
   LawbotBridgeHttpClient,
   LawbotBridgeTransportError
-} from "./lawbot-bridge-http-client.ts";
+} from "./lawbot-bridge-http-client";
 import type {
+  LawbotBridgeCaseWorkflowResult,
   BridgeWorkflowPersistencePort,
   LawbotBridgeWorkflowClient,
   WorkflowCaseRecord,
   WorkflowInquiryRecord
-} from "./lawbot-bridge-case-workflow-service.ts";
+} from "./lawbot-bridge-case-workflow-service";
 
 type MemoryState = {
   inquiry: WorkflowInquiryRecord | null;
@@ -247,7 +248,7 @@ async function testSuccessfulFlow() {
   );
 
   assert.equal(response.status, 200);
-  const json = await response.json();
+  const json = (await response.json()) as { result: LawbotBridgeCaseWorkflowResult };
   assert.deepEqual(callOrder, [
     "intake_analyze",
     "intake_profile",
@@ -388,7 +389,7 @@ async function testSuccessfulFlowWithMockedHttpLayer() {
   );
 
   assert.equal(response.status, 200);
-  const payload = await response.json();
+  const payload = (await response.json()) as { result: LawbotBridgeCaseWorkflowResult };
   assert.equal(payload.result.reviewSignals.reviewRequired, true);
   assert.deepEqual(payload.result.reviewSignals.mustVerifySources, ["disposition notice"]);
   assert.deepEqual(payload.result.reviewSignals.matchedSubtypeKeys, ["admin_appeal_refusal"]);

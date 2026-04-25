@@ -1,7 +1,7 @@
 import {
   getLawbotBridgeReviewFlowByInquiryId,
   type LawbotReviewFlowResult
-} from "./lawbot-bridge-review-flow-service.ts";
+} from "./lawbot-bridge-review-flow-service";
 
 export type LawbotReviewFlowLoader = (
   inquiryId: string

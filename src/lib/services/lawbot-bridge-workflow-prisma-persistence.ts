@@ -5,7 +5,7 @@ import type {
   BridgeWorkflowPersistencePort,
   WorkflowInquiryRecord,
   WorkflowCaseRecord
-} from "./lawbot-bridge-case-workflow-service.ts";
+} from "./lawbot-bridge-case-workflow-service";
 import type {
   BridgeWorkflowPersistence,
   CaseTaskInput,
@@ -13,7 +13,7 @@ import type {
   DocumentRequestTaskInput,
   MessageDraftInput,
   SourceVerificationTaskInput
-} from "./lawbot-bridge-workflow-mapping-service.ts";
+} from "./lawbot-bridge-workflow-mapping-service";
 
 type PrismaLike = typeof prisma;
 
