@@ -5,7 +5,6 @@ import process from "node:process";
 const rootDir = process.cwd();
 const generatedDir = path.join(rootDir, "generated");
 const generatedClientNextDir = path.join(generatedDir, "prisma-client-next");
-const generatedClientDir = path.join(rootDir, "..", "admin-office-mvp-generated", "prisma-client");
 const legacyClientDir = path.join(generatedDir, "prisma-v4");
 const targetClientDir = generatedClientNextDir;
 
@@ -22,7 +21,6 @@ async function main() {
   const sourceCandidates = [
     generatedClientNextDir,
     process.env.PRISMA_CLIENT_SOURCE?.trim(),
-    generatedClientDir,
     legacyClientDir,
     targetClientDir
   ].filter(Boolean);
