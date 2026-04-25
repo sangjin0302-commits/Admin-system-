@@ -8,7 +8,7 @@
     "postinstall": "node scripts/prisma-generate-auto.mjs && node scripts/prepare-prisma-client.mjs",
     "build:prepare": "node scripts/prisma-generate-auto.mjs && node scripts/prepare-prisma-client.mjs",
     "build:prepare:strict": "node scripts/preflight/build-prepare-strict.mjs",
-    "build": "next build",
+    "build": "next build && node scripts/ensure-prisma-engine-runtime.mjs",
     "build:safe": "npm run preflight:spawn && npm run build",
     "typecheck": "tsc --noEmit",
     "text:check": "node scripts/check-text-integrity-safe.mjs",

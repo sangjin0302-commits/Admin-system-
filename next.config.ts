@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   // Windows + OneDrive lock contention during repeated builds.
   distDir: process.env.NODE_ENV === "production" && !isVercelBuild ? ".next-local" : ".next",
   outputFileTracingRoot: process.cwd(),
+  outputFileTracingIncludes: {
+    // Ensure Prisma engines and schema are bundled for server route execution.
+    "/*": ["./generated/prisma-client-next/**/*"]
+  },
   eslint: {
     // Lint is executed separately in local verification scripts.
     ignoreDuringBuilds: true
