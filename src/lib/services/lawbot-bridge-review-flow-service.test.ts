@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 
-import { getLawbotBridgeReviewFlowByInquiryId } from "./lawbot-bridge-review-flow-service.ts";
-import type { LawbotBridgeReadonlySummary } from "./lawbot-bridge-readonly-summary-service.ts";
+import { getLawbotBridgeReviewFlowByInquiryId } from "./lawbot-bridge-review-flow-service";
+import type { LawbotBridgeReadonlySummary } from "./lawbot-bridge-readonly-summary-service";
 
 function createReadonlySummary(): LawbotBridgeReadonlySummary {
   return {

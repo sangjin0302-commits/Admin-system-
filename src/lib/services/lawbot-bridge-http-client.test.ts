@@ -7,7 +7,7 @@ import {
   LawbotBridgeServiceError,
   LawbotBridgeTransportError,
   createLawbotBridgeHttpClientFromEnv
-} from "./lawbot-bridge-http-client.ts";
+} from "./lawbot-bridge-http-client";
 
 async function testRequestShapeAndHeaderInjection() {
   const calls: Array<{

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { buildBridgeReviewViewModels } from "./lawbot-bridge-review-view-models.ts";
+import { buildBridgeReviewViewModels } from "./lawbot-bridge-review-view-models";
 
 function run() {
   const result = buildBridgeReviewViewModels({

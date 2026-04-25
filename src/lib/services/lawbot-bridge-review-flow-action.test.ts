@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 
-import { handleGetLawbotReviewFlowRequest } from "./lawbot-bridge-review-flow-action.ts";
-import { getLawbotBridgeReviewFlowByInquiryId } from "./lawbot-bridge-review-flow-service.ts";
-import type { LawbotReviewFlowResult } from "./lawbot-bridge-review-flow-service.ts";
-import type { LawbotBridgeReadonlySummary } from "./lawbot-bridge-readonly-summary-service.ts";
+import { handleGetLawbotReviewFlowRequest } from "./lawbot-bridge-review-flow-action";
+import { getLawbotBridgeReviewFlowByInquiryId } from "./lawbot-bridge-review-flow-service";
+import type { LawbotReviewFlowResult } from "./lawbot-bridge-review-flow-service";
+import type { LawbotBridgeReadonlySummary } from "./lawbot-bridge-readonly-summary-service";
 
 function createReviewResult(): LawbotReviewFlowResult {
   return {
@@ -244,7 +244,7 @@ async function testSuccess() {
   });
 
   assert.equal(response.status, 200);
-  const payload = await response.json();
+  const payload = (await response.json()) as { result: LawbotReviewFlowResult };
   assert.equal(payload.result.inquiryId, "inq_1");
   assert.equal(payload.result.reviewSignals.reviewRequired, true);
   assert.deepEqual(payload.result.reviewSignals.mustVerifySources, ["disposition notice"]);
@@ -287,7 +287,7 @@ async function testActionWithServiceIntegration() {
   });
 
   assert.equal(response.status, 200);
-  const payload = await response.json();
+  const payload = (await response.json()) as { result: LawbotReviewFlowResult };
   assert.equal(payload.result.inquiryId, "inq_2");
   assert.equal(payload.result.reviewSignals.reviewRequired, true);
   assert.deepEqual(payload.result.reviewSignals.mustVerifySources, ["refusal notice"]);

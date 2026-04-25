@@ -4,7 +4,7 @@ import {
   bridgeWorkflowStatusValues,
   workflowDraftStatusValues,
   workflowTaskStatusValues
-} from "../../types/lawbot-bridge-workflow.ts";
+} from "../../types/lawbot-bridge-workflow";
 
 const stringArraySchema = z.array(z.string().trim().min(1)).default([]);
 const recordIdSchema = z.string().trim().min(1);

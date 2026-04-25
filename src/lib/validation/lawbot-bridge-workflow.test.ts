@@ -10,7 +10,7 @@ import {
   messageDraftCreateSchema,
   shouldMoveDraftToApprovalPending,
   sourceVerificationTaskCreateSchema
-} from "./lawbot-bridge-workflow.ts";
+} from "./lawbot-bridge-workflow";
 
 function run() {
   const inquiry = inquiryWorkflowRecordSchema.parse({

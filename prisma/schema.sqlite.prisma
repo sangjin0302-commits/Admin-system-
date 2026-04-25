@@ -98,6 +98,40 @@ enum CaseStage {
   CLOSED
 }
 
+enum BridgeWorkflowStatus {
+  NEW_INQUIRY
+  TRIAGE_REVIEW
+  AWAITING_MORE_FACTS
+  PROFILED
+  PROFILE_REVIEW_REQUIRED
+  CASE_CARD_CREATED
+  AWAITING_SOURCE_VERIFICATION
+  DRAFT_CREATED
+  MESSAGE_DRAFT_CREATED
+  APPROVAL_PENDING
+  APPROVED
+  REVISION_REQUESTED
+  BLOCKED
+  CLOSED
+}
+
+enum WorkflowTaskStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+  CANCELED
+}
+
+enum WorkflowDraftStatus {
+  DRAFT_CREATED
+  APPROVAL_PENDING
+  APPROVED
+  REVISION_REQUESTED
+  BLOCKED
+  ARCHIVED
+}
+
 enum CaseMatterStatus {
   INTAKE_REVIEW
   CONSULTING
@@ -212,6 +246,7 @@ enum SupplementStatus {
 }
 
 enum CaseTaskStatus {
+  OPEN
   TODO
   IN_PROGRESS
   BLOCKED
@@ -279,10 +314,22 @@ model Inquiry {
   lawbotSnapshotStatus     String?
   lawbotSnapshotSummary    String?
   lawbotSnapshotPayload    String?
+  bridgeWorkflowStatus     BridgeWorkflowStatus @default(NEW_INQUIRY)
+  bridgeReviewRequired     Boolean       @default(false)
+  bridgeMustVerify         String        @default("[]")
+  bridgeMustVerifySources  String        @default("[]")
+  bridgeRiskFlags          String        @default("[]")
+  bridgePractitionerGuide  String?
+  bridgeCaseOutlook        String?
   quotes                   Quote[]
   contractDrafts           ContractDraft[]
   cases                    CaseRecord[]
   caseMatters              CaseMatter[]
+  caseTasks                CaseTask[]
+  sourceVerificationTasks  SourceVerificationTask[]
+  documentRequestTasks     DocumentRequestTask[]
+  documentDrafts           DocumentDraft[]
+  messageDrafts            MessageDraft[]
 }
 
 model ServiceType {
@@ -442,17 +489,28 @@ model CaseRecord {
   id              String    @id @default(cuid())
   caseNumber      String    @unique
   inquiryId       String
-  quoteId         String    @unique
+  quoteId         String?   @unique
   contractDraftId String?   @unique
   currentStage    CaseStage @default(CONTRACT_PREPARATION)
+  bridgeWorkflowStatus    BridgeWorkflowStatus @default(CASE_CARD_CREATED)
+  bridgeReviewRequired    Boolean   @default(false)
+  bridgeMustVerify        String    @default("[]")
+  bridgeMustVerifySources String    @default("[]")
+  bridgeRiskFlags         String    @default("[]")
+  bridgePractitionerGuide String?
+  bridgeCaseOutlook       String?
   dueDate         DateTime?
   internalMemo    String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   inquiry         Inquiry   @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
-  quote           Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quote           Quote?    @relation(fields: [quoteId], references: [id], onDelete: SetNull)
   contractDraft   ContractDraft? @relation(fields: [contractDraftId], references: [id], onDelete: SetNull)
   caseMatter      CaseMatter? @relation("CaseMatterLegacyCaseRecord")
+  sourceVerificationTasks SourceVerificationTask[]
+  documentRequestTasks    DocumentRequestTask[]
+  documentDrafts          DocumentDraft[]
+  messageDrafts           MessageDraft[]
 }
 
 model CaseMatter {
@@ -670,11 +728,19 @@ model SupplementRequest {
 
 model CaseTask {
   id          String           @id @default(cuid())
-  caseId       String
-  caseMatter   CaseMatter       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  inquiryId   String?
+  inquiry     Inquiry?         @relation(fields: [inquiryId], references: [id], onDelete: SetNull)
+  caseId      String?
+  caseMatter  CaseMatter?      @relation(fields: [caseId], references: [id], onDelete: SetNull)
   title       String
+  details     String?
+  taskType    String           @default("GENERAL")
   description String?
   status      CaseTaskStatus    @default(TODO)
+  reviewRequired Boolean       @default(false)
+  mustVerify  String           @default("[]")
+  riskFlags   String           @default("[]")
+  source      String           @default("manual")
   priority    CaseTaskPriority  @default(NORMAL)
   dueDate     DateTime?
   assignedTo  String?
@@ -682,9 +748,114 @@ model CaseTask {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
+  @@index([inquiryId, status])
   @@index([caseId])
   @@index([status])
   @@index([dueDate])
+}
+
+model SourceVerificationTask {
+  id               String             @id @default(cuid())
+  inquiryId        String
+  caseId           String?
+  documentDraftId  String?
+  messageDraftId   String?
+  title            String
+  authorityBucket  String?
+  sourceLabel      String
+  sourceCitation   String?
+  notes            String?
+  status           WorkflowTaskStatus @default(OPEN)
+  reviewRequired   Boolean            @default(true)
+  mustVerify       String             @default("[]")
+  riskFlags        String             @default("[]")
+  source           String             @default("lawbot_bridge")
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  resolvedAt       DateTime?
+  inquiry          Inquiry            @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  caseRecord       CaseRecord?        @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  documentDraft    DocumentDraft?     @relation(fields: [documentDraftId], references: [id], onDelete: SetNull)
+  messageDraft     MessageDraft?      @relation(fields: [messageDraftId], references: [id], onDelete: SetNull)
+
+  @@index([inquiryId, status])
+  @@index([caseId, status])
+  @@index([documentDraftId])
+  @@index([messageDraftId])
+}
+
+model DocumentRequestTask {
+  id               String             @id @default(cuid())
+  inquiryId        String
+  caseId           String?
+  title            String
+  documentLabel    String
+  notes            String?
+  status           WorkflowTaskStatus @default(OPEN)
+  reviewRequired   Boolean            @default(false)
+  mustVerify       String             @default("[]")
+  riskFlags        String             @default("[]")
+  source           String             @default("lawbot_bridge")
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  resolvedAt       DateTime?
+  inquiry          Inquiry            @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  caseRecord       CaseRecord?        @relation(fields: [caseId], references: [id], onDelete: SetNull)
+
+  @@index([inquiryId, status])
+  @@index([caseId, status])
+}
+
+model DocumentDraft {
+  id                      String              @id @default(cuid())
+  inquiryId               String
+  caseId                  String?
+  draftType               String
+  title                   String?
+  bodyJson                String              @default("{}")
+  status                  WorkflowDraftStatus @default(DRAFT_CREATED)
+  reviewRequired          Boolean             @default(true)
+  mustVerify              String              @default("[]")
+  mustVerifySources       String              @default("[]")
+  riskFlags               String              @default("[]")
+  practitionerGuide       String?
+  caseOutlook             String?
+  source                  String              @default("lawbot_bridge")
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  approvedAt              DateTime?
+  inquiry                 Inquiry             @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  caseRecord              CaseRecord?         @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  sourceVerificationTasks SourceVerificationTask[]
+
+  @@index([inquiryId, status])
+  @@index([caseId, status])
+}
+
+model MessageDraft {
+  id                      String              @id @default(cuid())
+  inquiryId               String
+  caseId                  String?
+  messageKind             String
+  subject                 String
+  bodyText                String
+  status                  WorkflowDraftStatus @default(DRAFT_CREATED)
+  reviewRequired          Boolean             @default(true)
+  mustVerify              String              @default("[]")
+  mustVerifySources       String              @default("[]")
+  riskFlags               String              @default("[]")
+  practitionerGuide       String?
+  caseOutlook             String?
+  source                  String              @default("lawbot_bridge")
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  approvedAt              DateTime?
+  inquiry                 Inquiry             @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  caseRecord              CaseRecord?         @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  sourceVerificationTasks SourceVerificationTask[]
+
+  @@index([inquiryId, status])
+  @@index([caseId, status])
 }
 
 model CaseEvent {

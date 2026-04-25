@@ -6,7 +6,7 @@ import {
   type LawbotBridgeWorkflowClient,
   type WorkflowCaseRecord,
   type WorkflowInquiryRecord
-} from "./lawbot-bridge-case-workflow-service.ts";
+} from "./lawbot-bridge-case-workflow-service";
 
 type MemoryState = {
   inquiry: WorkflowInquiryRecord;
@@ -268,14 +268,16 @@ async function run() {
     result.reviewSignals.approvalWorkflowGate.blockerCodes.includes("review_required"),
     true
   );
-  assert.equal(
-    result.reviewSignals.practitionerGuide?.why_it_matters?.[0],
-    "customer message must stay non-final"
-  );
-  assert.equal(
-    result.reviewSignals.caseOutlook?.key_decision_factors?.[0],
-    "proof of service"
-  );
+  const practitionerGuide = result.reviewSignals.practitionerGuide as Record<string, unknown> | null;
+  const whyItMatters: string[] = Array.isArray(practitionerGuide?.["why_it_matters"])
+    ? practitionerGuide["why_it_matters"].map((entry) => String(entry ?? ""))
+    : [];
+  assert.equal(whyItMatters[0], "customer message must stay non-final");
+  const caseOutlook = result.reviewSignals.caseOutlook as Record<string, unknown> | null;
+  const keyDecisionFactors: string[] = Array.isArray(caseOutlook?.["key_decision_factors"])
+    ? caseOutlook["key_decision_factors"].map((entry) => String(entry ?? ""))
+    : [];
+  assert.equal(keyDecisionFactors[0], "proof of service");
   assert.equal(state.documentDrafts[0]?.caseId, "case_1");
   assert.equal(state.messageDrafts[0]?.caseId, "case_1");
   assert.equal(state.sourceVerificationTasks[1]?.documentDraftId, "doc_1");

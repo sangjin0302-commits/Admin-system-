@@ -13,7 +13,7 @@ import {
   type DocumentRequestTaskInput,
   type MessageDraftInput,
   type SourceVerificationTaskInput
-} from "./lawbot-bridge-workflow-mapping-service.ts";
+} from "./lawbot-bridge-workflow-mapping-service";
 import {
   buildBridgeReviewViewModels,
   type ApprovalWorkflowGateViewModel,
@@ -24,7 +24,7 @@ import {
   type SourceVerificationChecklistViewModel,
   type ReviewerAttentionPanelViewModel,
   type SupplementalReferenceCandidate
-} from "./lawbot-bridge-review-view-models.ts";
+} from "./lawbot-bridge-review-view-models";
 
 type JsonObject = Record<string, unknown>;
 

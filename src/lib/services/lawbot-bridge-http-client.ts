@@ -4,13 +4,13 @@ import type {
   LawbotBridgeIntakeAnalyzeRequest,
   LawbotBridgeIntakeProfileRequest,
   LawbotBridgeWorkflowClient
-} from "./lawbot-bridge-case-workflow-service.ts";
+} from "./lawbot-bridge-case-workflow-service";
 import type {
   BridgeCustomerMessageDraftResponse,
   BridgeDocumentDraftResponse,
   BridgeIntakeAnalyzeResponse,
   BridgeIntakeProfileResponse
-} from "./lawbot-bridge-workflow-mapping-service.ts";
+} from "./lawbot-bridge-workflow-mapping-service";
 
 type FetchLike = typeof fetch;
 

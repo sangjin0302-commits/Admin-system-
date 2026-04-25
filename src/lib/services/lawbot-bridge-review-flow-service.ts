@@ -1,4 +1,4 @@
-import type { LawbotBridgeReadonlySummary } from "./lawbot-bridge-readonly-summary-service.ts";
+import type { LawbotBridgeReadonlySummary } from "./lawbot-bridge-readonly-summary-service";
 
 type ReviewDraftStatus =
   | "DRAFT_CREATED"
@@ -120,7 +120,7 @@ function toApprovalReasonCodes(
 }
 
 async function loadLawbotDocumentDraftRows(inquiryId: string): Promise<LawbotDocumentDraftRow[]> {
-  const { prisma } = await import("../prisma/client.ts");
+  const { prisma } = await import("../prisma/client");
   return prisma.documentDraft.findMany({
     where: { inquiryId, source: "lawbot_bridge" },
     orderBy: { createdAt: "desc" },
@@ -140,7 +140,7 @@ async function loadLawbotDocumentDraftRows(inquiryId: string): Promise<LawbotDoc
 }
 
 async function loadLawbotMessageDraftRows(inquiryId: string): Promise<LawbotMessageDraftRow[]> {
-  const { prisma } = await import("../prisma/client.ts");
+  const { prisma } = await import("../prisma/client");
   return prisma.messageDraft.findMany({
     where: { inquiryId, source: "lawbot_bridge" },
     orderBy: { createdAt: "desc" },
@@ -167,7 +167,7 @@ export async function getLawbotBridgeReviewFlowByInquiryId(
     dependencies?.loadSummary ??
     (async (id: string) => {
       const { getLawbotBridgeReadonlySummaryByInquiryId } = await import(
-        "./lawbot-bridge-readonly-summary-service.ts"
+        "./lawbot-bridge-readonly-summary-service"
       );
       return getLawbotBridgeReadonlySummaryByInquiryId(id);
     });
