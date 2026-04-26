@@ -1,5 +1,6 @@
 import type { LawbotBridgeReadonlySummary } from "./lawbot-bridge-readonly-summary-service";
 import {
+  sanitizeBridgeReviewOutput,
   hasBridgeMojibake,
   normalizeBridgeTextDeep,
   normalizeBridgeTextWithFallback,
@@ -349,5 +350,5 @@ export async function getLawbotBridgeReviewFlowByInquiryId(
     }
   }) as LawbotReviewFlowResult;
 
-  return sanitizeReviewFlowForResponse(normalizedResult);
+  return sanitizeBridgeReviewOutput(sanitizeReviewFlowForResponse(normalizedResult));
 }

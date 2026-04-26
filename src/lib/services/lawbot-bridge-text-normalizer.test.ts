@@ -1,7 +1,9 @@
 const assert = require("node:assert/strict");
 
 const {
+  BRIDGE_REVIEW_FALLBACK_TEXT,
   hasBridgeMojibake,
+  sanitizeBridgeReviewOutput,
   normalizeBridgeText,
   normalizeBridgeTextDeep,
   normalizeBridgeTextWithFallback
@@ -79,6 +81,65 @@ function run() {
   assert.equal(normalized.reviewSignals.mustVerify[0], "조문");
   assert.equal(normalized.reviewSignals.sourceVerificationChecklist.items[0].notes, "조문");
   assert.equal(normalized.reviewQueue.messageDrafts[0].mustVerifySources[0], "조문");
+
+  const forcedSanitized = sanitizeBridgeReviewOutput({
+    result: {
+      reviewSignals: {
+        mustVerify: [productionLikeSample1],
+        mustVerifySources: [productionLikeSample2],
+        riskFlags: [productionLikeSample3],
+        legalAxisClues: [
+          { id: productionLikeSample2, label: productionLikeSample3, sourceHint: productionLikeSample1 }
+        ],
+        reviewerAttentionPanel: { items: [{ label: productionLikeSample1 }] },
+        reviewerPatternReviewPanel: { items: [{ sampleLabels: [productionLikeSample2] }] },
+        operatorAssistPanel: { items: [{ action: productionLikeSample3 }] },
+        sourceVerificationChecklist: {
+          items: [
+            {
+              id: productionLikeSample2,
+              sourceLabel: productionLikeSample1,
+              sourceCitation: productionLikeSample2,
+              notes: productionLikeSample3
+            }
+          ]
+        }
+      },
+      reviewQueue: {
+        documentDrafts: [{ mustVerifySources: [productionLikeSample2], riskFlags: [productionLikeSample3] }],
+        messageDrafts: [{ mustVerifySources: [productionLikeSample1], riskFlags: [productionLikeSample3] }]
+      }
+    }
+  });
+
+  assert.equal(
+    forcedSanitized.result.reviewSignals.mustVerify[0],
+    BRIDGE_REVIEW_FALLBACK_TEXT.mustVerify
+  );
+  assert.equal(
+    forcedSanitized.result.reviewSignals.mustVerifySources[0],
+    BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
+  );
+  assert.equal(
+    forcedSanitized.result.reviewSignals.riskFlags[0],
+    BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag
+  );
+  assert.equal(
+    forcedSanitized.result.reviewSignals.legalAxisClues[0].label,
+    BRIDGE_REVIEW_FALLBACK_TEXT.generic
+  );
+  assert.equal(
+    forcedSanitized.result.reviewSignals.legalAxisClues[0].sourceHint,
+    BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
+  );
+  assert.equal(
+    forcedSanitized.result.reviewQueue.documentDrafts[0].mustVerifySources[0],
+    BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
+  );
+  assert.equal(
+    forcedSanitized.result.reviewQueue.messageDrafts[0].riskFlags[0],
+    BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag
+  );
 
   console.log("lawbot-bridge-text-normalizer-test-ok");
 }

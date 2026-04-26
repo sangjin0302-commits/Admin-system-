@@ -8,6 +8,13 @@ const COMMON_MOJIBAKE_PREFIX_PATTERN = /[ìëíÂÃ]/;
 const WHITESPACE_SPLIT_PATTERN = /(\s+)/;
 const MAX_REPAIR_PASSES = 3;
 
+export const BRIDGE_REVIEW_FALLBACK_TEXT = {
+  sourceVerification: "\uCD9C\uCC98 \uD655\uC778 \uD544\uC694",
+  riskFlag: "\uC704\uD5D8 \uC2E0\uD638 \uD655\uC778 \uD544\uC694",
+  mustVerify: "\uC218\uB3D9 \uAC80\uD1A0 \uD544\uC694",
+  generic: "\uC6D0\uBB38 \uD655\uC778 \uD544\uC694"
+} as const;
+
 const WINDOWS1252_UNICODE_TO_BYTE: Record<number, number> = {
   0x20ac: 0x80,
   0x201a: 0x82,
@@ -254,4 +261,55 @@ export function normalizeBridgeTextDeep<T>(input: T): T {
   }
 
   return input;
+}
+
+function classifyFallbackText(pathSegments: string[]) {
+  const joinedPath = pathSegments.join(".").toLowerCase();
+
+  if (
+    joinedPath.includes("mustverifysources") ||
+    joinedPath.includes("sourceverification") ||
+    joinedPath.includes("sourcehint") ||
+    joinedPath.includes("sourcelabel") ||
+    joinedPath.includes("sourcecitation") ||
+    joinedPath.includes("notes")
+  ) {
+    return BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification;
+  }
+
+  if (joinedPath.includes("riskflags") || joinedPath.includes("risk_flag")) {
+    return BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag;
+  }
+
+  if (joinedPath.includes("mustverify") || joinedPath.includes("must_verify")) {
+    return BRIDGE_REVIEW_FALLBACK_TEXT.mustVerify;
+  }
+
+  return BRIDGE_REVIEW_FALLBACK_TEXT.generic;
+}
+
+function sanitizeBridgeReviewOutputDeep(input: unknown, pathSegments: string[]): unknown {
+  if (typeof input === "string") {
+    return normalizeBridgeTextWithFallback(input, classifyFallbackText(pathSegments));
+  }
+
+  if (Array.isArray(input)) {
+    return input.map((entry, index) =>
+      sanitizeBridgeReviewOutputDeep(entry, [...pathSegments, String(index)])
+    );
+  }
+
+  if (input && typeof input === "object") {
+    const entries = Object.entries(input as Record<string, unknown>).map(([key, value]) => [
+      key,
+      sanitizeBridgeReviewOutputDeep(value, [...pathSegments, key])
+    ]);
+    return Object.fromEntries(entries);
+  }
+
+  return input;
+}
+
+export function sanitizeBridgeReviewOutput<T>(input: T): T {
+  return sanitizeBridgeReviewOutputDeep(input, []) as T;
 }
