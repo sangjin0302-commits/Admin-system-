@@ -4,6 +4,7 @@ import { handleGetLawbotReviewFlowRequest } from "./lawbot-bridge-review-flow-ac
 import { getLawbotBridgeReviewFlowByInquiryId } from "./lawbot-bridge-review-flow-service";
 import type { LawbotReviewFlowResult } from "./lawbot-bridge-review-flow-service";
 import type { LawbotBridgeReadonlySummary } from "./lawbot-bridge-readonly-summary-service";
+import { BRIDGE_REVIEW_FALLBACK_TEXT } from "./lawbot-bridge-text-normalizer";
 
 function createReviewResult(): LawbotReviewFlowResult {
   return {
@@ -296,10 +297,108 @@ async function testActionWithServiceIntegration() {
   assert.equal(payload.result.approvalGate.externalActionAllowed, false);
 }
 
+async function testBoundarySanitizesMojibake() {
+  const mojibake = "ìë¬¸ íì¸ \u0085";
+
+  const response = await handleGetLawbotReviewFlowRequest("inq_3", {
+    loadReviewFlow: async () => ({
+      ...createReviewResult(),
+      inquiryId: "inq_3",
+      reviewSignals: {
+        ...createReviewResult().reviewSignals,
+        mustVerify: [mojibake],
+        mustVerifySources: [mojibake],
+        riskFlags: [mojibake],
+        legalAxisClues: [
+          {
+            ...createReviewResult().reviewSignals.legalAxisClues[0],
+            id: mojibake,
+            label: mojibake,
+            sourceHint: mojibake
+          }
+        ],
+        reviewerAttentionPanel: {
+          ...createReviewResult().reviewSignals.reviewerAttentionPanel,
+          items: [{ ...createReviewResult().reviewSignals.reviewerAttentionPanel.items[0], label: mojibake }]
+        },
+        reviewerPatternReviewPanel: {
+          ...createReviewResult().reviewSignals.reviewerPatternReviewPanel,
+          items: [
+            {
+              ...createReviewResult().reviewSignals.reviewerPatternReviewPanel.items[0],
+              sampleLabels: [mojibake]
+            }
+          ]
+        },
+        operatorAssistPanel: {
+          ...createReviewResult().reviewSignals.operatorAssistPanel,
+          items: [{ ...createReviewResult().reviewSignals.operatorAssistPanel.items[0], action: mojibake }]
+        },
+        sourceVerificationChecklist: {
+          ...createReviewResult().reviewSignals.sourceVerificationChecklist,
+          items: [
+            {
+              ...createReviewResult().reviewSignals.sourceVerificationChecklist.items[0],
+              id: mojibake,
+              sourceLabel: mojibake,
+              sourceCitation: mojibake,
+              notes: mojibake
+            }
+          ]
+        }
+      },
+      reviewQueue: {
+        ...createReviewResult().reviewQueue,
+        documentDrafts: [
+          {
+            ...createReviewResult().reviewQueue.documentDrafts[0],
+            mustVerifySources: [mojibake],
+            riskFlags: [mojibake]
+          }
+        ],
+        messageDrafts: [
+          {
+            ...createReviewResult().reviewQueue.messageDrafts[0],
+            mustVerifySources: [mojibake],
+            riskFlags: [mojibake]
+          }
+        ]
+      }
+    })
+  });
+
+  assert.equal(response.status, 200);
+  const payload = (await response.json()) as { result: LawbotReviewFlowResult };
+
+  assert.equal(payload.result.reviewSignals.mustVerify[0], BRIDGE_REVIEW_FALLBACK_TEXT.mustVerify);
+  assert.equal(
+    payload.result.reviewSignals.mustVerifySources[0],
+    BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
+  );
+  assert.equal(payload.result.reviewSignals.riskFlags[0], BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag);
+  assert.equal(
+    payload.result.reviewSignals.legalAxisClues[0]?.label,
+    BRIDGE_REVIEW_FALLBACK_TEXT.generic
+  );
+  assert.equal(
+    payload.result.reviewSignals.sourceVerificationChecklist.items[0]?.sourceLabel,
+    BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
+  );
+  assert.equal(
+    payload.result.reviewQueue.documentDrafts[0]?.mustVerifySources[0],
+    BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
+  );
+  assert.equal(
+    payload.result.reviewQueue.messageDrafts[0]?.riskFlags[0],
+    BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag
+  );
+}
+
 async function run() {
   await testSuccess();
   await testNotFound();
   await testActionWithServiceIntegration();
+  await testBoundarySanitizesMojibake();
   console.log("lawbot-bridge-review-flow-action-test-ok");
 }
 
