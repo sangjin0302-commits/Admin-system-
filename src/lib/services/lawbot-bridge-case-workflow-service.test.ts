@@ -249,6 +249,10 @@ async function run() {
   assert.equal(state.sourceVerificationTasks.length, 3);
   assert.equal(state.documentRequestTasks.length, 2);
   assert.equal(state.caseTasks.length, 13);
+  assert.equal(
+    state.caseTasks.every((task) => task.caseId === undefined),
+    true
+  );
   assert.equal(result.createdCounts.caseTasks, 13);
   assert.equal(result.createdCounts.sourceVerificationTasks, 3);
   assert.equal(result.createdCounts.documentRequestTasks, 2);

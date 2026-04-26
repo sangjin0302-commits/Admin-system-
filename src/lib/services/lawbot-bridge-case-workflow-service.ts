@@ -310,6 +310,13 @@ function withCaseId<T extends { caseId?: string }>(items: T[], caseId: string) {
   }));
 }
 
+function withoutCaseId<T extends { caseId?: string }>(items: T[]) {
+  return items.map((item) => ({
+    ...item,
+    caseId: undefined
+  }));
+}
+
 function withDocumentDraftId(
   items: SourceVerificationTaskInput[],
   caseId: string,
@@ -399,7 +406,7 @@ export async function runLawbotBridgeCaseWorkflow(
     caseRecord = applyWorkflowToCaseRecord(caseRecord, profileMapping.caseUpdate);
   }
 
-  const profileCaseTasks = withCaseId(profileMapping.caseTasks, caseRecord.id);
+  const profileCaseTasks = withoutCaseId(profileMapping.caseTasks);
   if (profileCaseTasks.length > 0) {
     await dependencies.persistence.createCaseTasks(profileCaseTasks);
   }
@@ -444,7 +451,7 @@ export async function runLawbotBridgeCaseWorkflow(
     await dependencies.persistence.updateCaseWorkflow(caseRecord.id, documentMapping.caseUpdate);
     caseRecord = applyWorkflowToCaseRecord(caseRecord, documentMapping.caseUpdate);
   }
-  const documentCaseTasks = withCaseId(documentMapping.caseTasks, caseRecord.id);
+  const documentCaseTasks = withoutCaseId(documentMapping.caseTasks);
   if (documentCaseTasks.length > 0) {
     await dependencies.persistence.createCaseTasks(documentCaseTasks);
   }
@@ -484,7 +491,7 @@ export async function runLawbotBridgeCaseWorkflow(
     await dependencies.persistence.updateCaseWorkflow(caseRecord.id, messageMapping.caseUpdate);
     caseRecord = applyWorkflowToCaseRecord(caseRecord, messageMapping.caseUpdate);
   }
-  const messageCaseTasks = withCaseId(messageMapping.caseTasks, caseRecord.id);
+  const messageCaseTasks = withoutCaseId(messageMapping.caseTasks);
   if (messageCaseTasks.length > 0) {
     await dependencies.persistence.createCaseTasks(messageCaseTasks);
   }
