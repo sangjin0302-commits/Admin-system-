@@ -1,4 +1,9 @@
 import type { LawbotBridgeReadonlySummary } from "./lawbot-bridge-readonly-summary-service";
+import {
+  normalizeBridgeTextDeep,
+  normalizeBridgeStringArray,
+  normalizeBridgeText
+} from "./lawbot-bridge-text-normalizer";
 
 type ReviewDraftStatus =
   | "DRAFT_CREATED"
@@ -85,9 +90,11 @@ function parseStringArray(raw: string | null | undefined) {
     if (!Array.isArray(parsed)) {
       return [];
     }
-    return parsed
-      .map((entry) => String(entry ?? "").trim())
-      .filter((entry) => entry.length > 0);
+    return normalizeBridgeStringArray(
+      parsed
+        .map((entry) => String(entry ?? "").trim())
+        .filter((entry) => entry.length > 0)
+    );
   } catch {
     return [];
   }
@@ -188,7 +195,7 @@ export async function getLawbotBridgeReviewFlowByInquiryId(
     id: row.id,
     sourceType: "document",
     draftTypeOrKind: row.draftType,
-    titleOrSubject: row.title ?? null,
+    titleOrSubject: row.title ? normalizeBridgeText(row.title) : null,
     status: row.status,
     reviewRequired: row.reviewRequired,
     mustVerifySources: parseStringArray(row.mustVerifySources),
@@ -201,7 +208,7 @@ export async function getLawbotBridgeReviewFlowByInquiryId(
     id: row.id,
     sourceType: "message",
     draftTypeOrKind: row.messageKind,
-    titleOrSubject: row.subject ?? null,
+    titleOrSubject: row.subject ? normalizeBridgeText(row.subject) : null,
     status: row.status,
     reviewRequired: row.reviewRequired,
     mustVerifySources: parseStringArray(row.mustVerifySources),
@@ -214,7 +221,7 @@ export async function getLawbotBridgeReviewFlowByInquiryId(
     (draft) => draft.status === "APPROVAL_PENDING"
   ).length;
 
-  return {
+  return normalizeBridgeTextDeep({
     inquiryId: summary.inquiryId,
     caseId: summary.caseId,
     caseNumber: summary.caseNumber,
@@ -235,5 +242,5 @@ export async function getLawbotBridgeReviewFlowByInquiryId(
       externalActionAllowed: false,
       reasonCodes: toApprovalReasonCodes(summary, approvalPendingDrafts)
     }
-  };
+  });
 }

@@ -239,6 +239,29 @@ export function createLawbotBridgeWorkflowPrismaPersistence(
         }
       });
       return { id: record.id };
+    },
+    async getBridgeReviewQueueSnapshot(inquiryId) {
+      const [documentDrafts, messageDrafts, approvalPendingDocumentDrafts, approvalPendingMessageDrafts] =
+        await Promise.all([
+          prismaClient.documentDraft.count({
+            where: { inquiryId, source: "lawbot_bridge" }
+          }),
+          prismaClient.messageDraft.count({
+            where: { inquiryId, source: "lawbot_bridge" }
+          }),
+          prismaClient.documentDraft.count({
+            where: { inquiryId, source: "lawbot_bridge", status: "APPROVAL_PENDING" }
+          }),
+          prismaClient.messageDraft.count({
+            where: { inquiryId, source: "lawbot_bridge", status: "APPROVAL_PENDING" }
+          })
+        ]);
+
+      return {
+        totalDrafts: documentDrafts + messageDrafts,
+        approvalPendingDrafts:
+          approvalPendingDocumentDrafts + approvalPendingMessageDrafts
+      };
     }
   };
 }

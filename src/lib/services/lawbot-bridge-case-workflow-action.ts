@@ -1,8 +1,10 @@
 import {
+  LawbotBridgeWorkflowLockedError,
   runLawbotBridgeCaseWorkflow,
   type BridgeWorkflowPersistencePort,
   type LawbotBridgeWorkflowClient
 } from "./lawbot-bridge-case-workflow-service";
+import { normalizeBridgeTextDeep } from "./lawbot-bridge-text-normalizer";
 
 export type RunLawbotWorkflowDependencies = {
   client: LawbotBridgeWorkflowClient;
@@ -87,7 +89,7 @@ export async function handleRunLawbotWorkflowRequest(
       customerMessageTone: payload.customerMessageTone
     });
 
-    return Response.json({ result }, { status: 200 });
+    return Response.json({ result: normalizeBridgeTextDeep(result) }, { status: 200 });
   } catch (error) {
     if (error instanceof SyntaxError) {
       return Response.json({ error: "Invalid JSON request body." }, { status: 400 });
@@ -95,6 +97,17 @@ export async function handleRunLawbotWorkflowRequest(
 
     if (error instanceof Error && error.message.startsWith("Inquiry not found:")) {
       return Response.json({ error: "Inquiry not found." }, { status: 404 });
+    }
+
+    if (error instanceof LawbotBridgeWorkflowLockedError) {
+      return Response.json(
+        {
+          error:
+            "Workflow is already locked in APPROVAL_PENDING/APPROVED. Use review flow instead of rerun.",
+          reason: "lawbot_bridge_workflow_locked"
+        },
+        { status: 409 }
+      );
     }
 
     if (error instanceof Error && error.message.includes("must")) {

@@ -12,6 +12,11 @@ import {
   type ReviewerAttentionPanelViewModel,
   type SupplementalReferenceCandidate
 } from "./lawbot-bridge-review-view-models";
+import {
+  normalizeBridgeStringArray,
+  normalizeBridgeText,
+  normalizeBridgeTextDeep
+} from "./lawbot-bridge-text-normalizer";
 
 type JsonObject = Record<string, unknown>;
 
@@ -61,9 +66,11 @@ function parseStringArray(raw: string | null | undefined) {
     if (!Array.isArray(parsed)) {
       return [];
     }
-    return parsed
-      .map((entry) => String(entry ?? "").trim())
-      .filter((entry) => entry.length > 0);
+    return normalizeBridgeStringArray(
+      parsed
+        .map((entry) => String(entry ?? "").trim())
+        .filter((entry) => entry.length > 0)
+    );
   } catch {
     return [];
   }
@@ -96,11 +103,13 @@ function parseSubtypeKeysFromObjects(input: {
     ? input.caseOutlook?.matched_subtype_keys
     : [];
 
-  return [...new Set(
-    [...subtypeFromGuide, ...subtypeFromOutlook]
-      .map((entry) => String(entry ?? "").trim())
-      .filter((entry) => entry.length > 0)
-  )];
+  return [
+    ...new Set(
+      [...subtypeFromGuide, ...subtypeFromOutlook]
+        .map((entry) => normalizeBridgeText(String(entry ?? "").trim()))
+        .filter((entry) => entry.length > 0)
+    )
+  ];
 }
 
 function toExecutionStatus(status: BridgeWorkflowStatus): ExecutionStatus {
@@ -122,26 +131,26 @@ function toExecutionStatus(status: BridgeWorkflowStatus): ExecutionStatus {
 
 function toExecutionSummary(status: BridgeWorkflowStatus) {
   if (status === "BLOCKED") {
-    return "실행이 차단되었거나 실패해 추가 검토가 필요합니다.";
+    return "Execution was blocked or failed. Additional operator review is required.";
   }
 
   if (status === "APPROVAL_PENDING") {
-    return "초안 생성까지 완료되었고 승인 대기 상태를 유지합니다.";
+    return "Draft generation finished and approval is pending.";
   }
 
   if (status === "APPROVED") {
-    return "검토 승인 상태까지 반영되었습니다. 자동 발송/제출은 여전히 수동 승인 절차가 필요합니다.";
+    return "Approved status recorded. External send/file actions still require manual confirmation.";
   }
 
   if (status === "REVISION_REQUESTED") {
-    return "검토 결과 수정 요청 상태입니다. 승인 우회 없이 재검토가 필요합니다.";
+    return "Revision requested. Additional operator edits are required.";
   }
 
   if (status === "CLOSED") {
-    return "워크플로우가 닫힌 상태입니다.";
+    return "Workflow is closed.";
   }
 
-  return "아직 실행 결과가 충분히 쌓이지 않았거나 중간 단계입니다.";
+  return "Workflow is still in progress or waiting for additional data.";
 }
 
 export async function getLawbotBridgeReadonlySummaryByInquiryId(
@@ -159,7 +168,7 @@ export async function getLawbotBridgeReadonlySummaryByInquiryId(
         bridgeMustVerifySources: true,
         bridgeRiskFlags: true,
         bridgePractitionerGuide: true,
-        bridgeCaseOutlook: true,
+        bridgeCaseOutlook: true
       }
     }),
     prisma.caseRecord.findFirst({
@@ -175,7 +184,7 @@ export async function getLawbotBridgeReadonlySummaryByInquiryId(
         bridgeMustVerifySources: true,
         bridgeRiskFlags: true,
         bridgePractitionerGuide: true,
-        bridgeCaseOutlook: true,
+        bridgeCaseOutlook: true
       }
     })
   ]);
@@ -186,14 +195,19 @@ export async function getLawbotBridgeReadonlySummaryByInquiryId(
 
   const source = caseRecord ?? inquiry;
 
-  const [caseTasks, sourceVerificationTasks, documentRequestTasks, documentDrafts, messageDrafts] =
-    await Promise.all([
-      prisma.caseTask.count({ where: { inquiryId, source: "lawbot_bridge" } }),
-      prisma.sourceVerificationTask.count({ where: { inquiryId, source: "lawbot_bridge" } }),
-      prisma.documentRequestTask.count({ where: { inquiryId, source: "lawbot_bridge" } }),
-      prisma.documentDraft.count({ where: { inquiryId, source: "lawbot_bridge" } }),
-      prisma.messageDraft.count({ where: { inquiryId, source: "lawbot_bridge" } }),
-    ]);
+  const [
+    caseTasks,
+    sourceVerificationTasks,
+    documentRequestTasks,
+    documentDrafts,
+    messageDrafts
+  ] = await Promise.all([
+    prisma.caseTask.count({ where: { inquiryId, source: "lawbot_bridge" } }),
+    prisma.sourceVerificationTask.count({ where: { inquiryId, source: "lawbot_bridge" } }),
+    prisma.documentRequestTask.count({ where: { inquiryId, source: "lawbot_bridge" } }),
+    prisma.documentDraft.count({ where: { inquiryId, source: "lawbot_bridge" } }),
+    prisma.messageDraft.count({ where: { inquiryId, source: "lawbot_bridge" } })
+  ]);
 
   const reviewSignalsBase = {
     reviewRequired: source.bridgeReviewRequired,
@@ -201,7 +215,7 @@ export async function getLawbotBridgeReadonlySummaryByInquiryId(
     mustVerifySources: parseStringArray(source.bridgeMustVerifySources),
     riskFlags: parseStringArray(source.bridgeRiskFlags),
     practitionerGuide: parseJsonObject(source.bridgePractitionerGuide),
-    caseOutlook: parseJsonObject(source.bridgeCaseOutlook),
+    caseOutlook: parseJsonObject(source.bridgeCaseOutlook)
   };
   const matchedSubtypeKeys = parseSubtypeKeysFromObjects(reviewSignalsBase);
   const reviewViewModels = buildBridgeReviewViewModels({
@@ -215,9 +229,9 @@ export async function getLawbotBridgeReadonlySummaryByInquiryId(
     caseNumber: caseRecord?.caseNumber ?? null,
     workflowStatus: source.bridgeWorkflowStatus,
     executionStatus: toExecutionStatus(source.bridgeWorkflowStatus),
-    executionSummary: toExecutionSummary(source.bridgeWorkflowStatus),
+    executionSummary: normalizeBridgeText(toExecutionSummary(source.bridgeWorkflowStatus)),
     updatedAt: source.updatedAt.toISOString(),
-    reviewSignals: {
+    reviewSignals: normalizeBridgeTextDeep({
       ...reviewSignalsBase,
       matchedSubtypeKeys,
       supplementalReferenceCandidates: reviewViewModels.supplementalReferenceCandidates,
@@ -227,14 +241,14 @@ export async function getLawbotBridgeReadonlySummaryByInquiryId(
       operatorAssistPanel: reviewViewModels.operatorAssistPanel,
       reviewerReferencePanel: reviewViewModels.reviewerReferencePanel,
       sourceVerificationChecklist: reviewViewModels.sourceVerificationChecklist,
-      approvalWorkflowGate: reviewViewModels.approvalWorkflowGate,
-    },
+      approvalWorkflowGate: reviewViewModels.approvalWorkflowGate
+    }),
     createdCounts: {
       caseTasks,
       sourceVerificationTasks,
       documentRequestTasks,
       documentDrafts,
       messageDrafts
-    },
+    }
   };
 }

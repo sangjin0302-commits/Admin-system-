@@ -25,6 +25,7 @@ import {
   type ReviewerAttentionPanelViewModel,
   type SupplementalReferenceCandidate
 } from "./lawbot-bridge-review-view-models";
+import { normalizeBridgeTextDeep } from "./lawbot-bridge-text-normalizer";
 
 type JsonObject = Record<string, unknown>;
 
@@ -138,6 +139,9 @@ export type BridgeWorkflowPersistencePort = {
   createDocumentRequestTasks(tasks: DocumentRequestTaskInput[]): Promise<void>;
   createDocumentDraft(draft: DocumentDraftInput): Promise<WorkflowDraftRecord>;
   createMessageDraft(draft: MessageDraftInput): Promise<WorkflowDraftRecord>;
+  getBridgeReviewQueueSnapshot?(
+    inquiryId: string
+  ): Promise<{ totalDrafts: number; approvalPendingDrafts: number }>;
 };
 
 export type RunLawbotBridgeCaseWorkflowOptions = {
@@ -146,6 +150,13 @@ export type RunLawbotBridgeCaseWorkflowOptions = {
   customerMessageKind?: string;
   customerMessageTone?: string;
 };
+
+export class LawbotBridgeWorkflowLockedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "LawbotBridgeWorkflowLockedError";
+  }
+}
 
 export type LawbotBridgeCaseWorkflowResult = {
   inquiryId: string;
@@ -345,6 +356,10 @@ function parseJsonObjectOrNull(raw: string | null | undefined): JsonObject | nul
   return parseJsonObject(raw) ?? null;
 }
 
+function isWorkflowLockedForRerun(status: string | null | undefined) {
+  return status === "APPROVAL_PENDING" || status === "APPROVED";
+}
+
 export async function runLawbotBridgeCaseWorkflow(
   dependencies: {
     client: LawbotBridgeWorkflowClient;
@@ -357,6 +372,23 @@ export async function runLawbotBridgeCaseWorkflow(
     throw new Error(`Inquiry not found: ${options.inquiryId}`);
   }
   let inquiry = storedInquiry;
+  let caseRecord = await dependencies.persistence.getCaseByInquiryId(inquiry.id);
+  const currentWorkflowStatus = caseRecord?.bridgeWorkflowStatus ?? inquiry.bridgeWorkflowStatus;
+  const existingReviewQueue = dependencies.persistence.getBridgeReviewQueueSnapshot
+    ? await dependencies.persistence.getBridgeReviewQueueSnapshot(inquiry.id)
+    : { totalDrafts: 0, approvalPendingDrafts: 0 };
+  const hasExistingDrafts = existingReviewQueue.totalDrafts > 0;
+  const hasApprovalPendingDrafts = existingReviewQueue.approvalPendingDrafts > 0;
+
+  if (
+    isWorkflowLockedForRerun(currentWorkflowStatus) ||
+    hasExistingDrafts ||
+    hasApprovalPendingDrafts
+  ) {
+    throw new LawbotBridgeWorkflowLockedError(
+      `Workflow already locked for inquiry ${inquiry.id}. status=${currentWorkflowStatus ?? "NONE"} totalDrafts=${existingReviewQueue.totalDrafts} approvalPendingDrafts=${existingReviewQueue.approvalPendingDrafts}`
+    );
+  }
 
   const factInput = buildFactInput(inquiry);
   const requestPrefix = `${inquiry.id}-${Date.now()}`;
@@ -364,7 +396,7 @@ export async function runLawbotBridgeCaseWorkflow(
   const analyzeResponse = await dependencies.client.intakeAnalyze({
     requestId: `${requestPrefix}-intake-analyze`,
     factInput,
-    caseProfile: buildCaseProfile(inquiry)
+    caseProfile: buildCaseProfile(inquiry, caseRecord)
   });
   const analyzeMapping = mapIntakeAnalyzeResponseToWorkflow(
     { inquiryId: inquiry.id },
@@ -379,8 +411,6 @@ export async function runLawbotBridgeCaseWorkflow(
   if (analyzeCaseTasks.length > 0) {
     await dependencies.persistence.createCaseTasks(analyzeCaseTasks);
   }
-
-  let caseRecord = await dependencies.persistence.getCaseByInquiryId(inquiry.id);
 
   const profileResponse = await dependencies.client.intakeProfile({
     requestId: `${requestPrefix}-intake-profile`,
@@ -526,7 +556,7 @@ export async function runLawbotBridgeCaseWorkflow(
     ...reviewSignals,
     matchedSubtypeKeys
   });
-  const enrichedReviewSignals = {
+  const enrichedReviewSignals = normalizeBridgeTextDeep({
     ...reviewSignals,
     matchedSubtypeKeys,
     supplementalReferenceCandidates: reviewViewModels.supplementalReferenceCandidates,
@@ -537,7 +567,7 @@ export async function runLawbotBridgeCaseWorkflow(
     reviewerReferencePanel: reviewViewModels.reviewerReferencePanel,
     sourceVerificationChecklist: reviewViewModels.sourceVerificationChecklist,
     approvalWorkflowGate: reviewViewModels.approvalWorkflowGate
-  };
+  });
 
   return {
     inquiryId: inquiry.id,
