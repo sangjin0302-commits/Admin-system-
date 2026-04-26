@@ -150,13 +150,22 @@ export class LawbotBridgeHttpClient implements LawbotBridgeWorkflowClient {
   async intakeAnalyze(
     request: LawbotBridgeIntakeAnalyzeRequest
   ): Promise<BridgeIntakeAnalyzeResponse> {
+    const body: JsonRecord = {
+      request_id: request.requestId,
+      intake: {
+        fact_input: request.factInput,
+        attachments_present: false,
+        channel: "admin-system"
+      },
+      options: {}
+    };
+    if (request.caseProfile) {
+      body.case_ref = request.caseProfile;
+    }
+
     return this.postJson<BridgeIntakeAnalyzeResponse>({
       path: "/bridge/intake/analyze",
-      body: {
-        request_id: request.requestId,
-        fact_input: request.factInput,
-        case_profile: request.caseProfile ?? null
-      }
+      body
     });
   }
 

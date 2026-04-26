@@ -81,6 +81,60 @@ async function testRequestShapeAndHeaderInjection() {
   });
 }
 
+async function testIntakeAnalyzePayloadContract() {
+  const calls: Array<{
+    url: string;
+    init: RequestInit;
+  }> = [];
+
+  const client = new LawbotBridgeHttpClient(
+    {
+      baseUrl: "https://lawbot.example.com/",
+      serviceKey: "secret-key",
+      serviceCaller: "admin-backend",
+      timeoutMs: 200,
+      maxRetries: 0
+    },
+    async (input, init) => {
+      calls.push({
+        url: String(input),
+        init: init ?? {}
+      });
+      return new Response(JSON.stringify({ review_required: false }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+    }
+  );
+
+  await client.intakeAnalyze({
+    requestId: "req-intake-1",
+    factInput: "Client received refusal disposition.",
+    caseProfile: {
+      inquiry_id: "inq_1",
+      workflow_status: "NEW_INQUIRY"
+    }
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0]?.url, "https://lawbot.example.com/bridge/intake/analyze");
+
+  const body = JSON.parse(String(calls[0]?.init.body));
+  assert.equal(body.request_id, "req-intake-1");
+  assert.equal(body.intake.fact_input, "Client received refusal disposition.");
+  assert.equal(body.intake.attachments_present, false);
+  assert.equal(body.intake.channel, "admin-system");
+  assert.deepEqual(body.case_ref, {
+    inquiry_id: "inq_1",
+    workflow_status: "NEW_INQUIRY"
+  });
+  assert.deepEqual(body.options, {});
+  assert.equal(Object.prototype.hasOwnProperty.call(body, "fact_input"), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(body, "case_profile"), false);
+}
+
 async function testRetryAndServiceErrorMapping() {
   let attempts = 0;
 
@@ -242,6 +296,7 @@ async function testNonRetryableServiceFailure() {
 
 async function run() {
   await testRequestShapeAndHeaderInjection();
+  await testIntakeAnalyzePayloadContract();
   await testRetryAndServiceErrorMapping();
   await testRequestAndAuthErrorMapping();
   await testTimeoutAndTransportError();
