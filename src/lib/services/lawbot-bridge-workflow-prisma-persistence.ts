@@ -84,7 +84,9 @@ async function createCaseTasks(prismaClient: PrismaLike, tasks: CaseTaskInput[])
     await prismaClient.caseTask.create({
       data: {
         inquiryId: task.inquiryId,
-        caseId: task.caseId,
+        // Bridge-generated workflow tasks are inquiry-scoped.
+        // CaseTask.caseId points to CaseMatter, not CaseRecord, so keep it empty.
+        caseId: undefined,
         title: task.title,
         details: task.details,
         taskType: task.taskType,

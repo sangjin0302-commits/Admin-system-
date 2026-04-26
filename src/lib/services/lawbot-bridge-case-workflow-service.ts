@@ -375,8 +375,9 @@ export async function runLawbotBridgeCaseWorkflow(
     analyzeMapping.inquiryUpdate
   );
   inquiry = applyWorkflowToInquiryRecord(inquiry, analyzeMapping.inquiryUpdate);
-  if (analyzeMapping.caseTasks.length > 0) {
-    await dependencies.persistence.createCaseTasks(analyzeMapping.caseTasks);
+  const analyzeCaseTasks = withoutCaseId(analyzeMapping.caseTasks);
+  if (analyzeCaseTasks.length > 0) {
+    await dependencies.persistence.createCaseTasks(analyzeCaseTasks);
   }
 
   let caseRecord = await dependencies.persistence.getCaseByInquiryId(inquiry.id);
@@ -548,7 +549,7 @@ export async function runLawbotBridgeCaseWorkflow(
     messageDraftId: messageDraftRecord.id,
     createdCounts: {
       caseTasks:
-        analyzeMapping.caseTasks.length +
+        analyzeCaseTasks.length +
         profileCaseTasks.length +
         documentCaseTasks.length +
         messageCaseTasks.length,

@@ -516,6 +516,52 @@ async function run() {
     true
   );
 
+  const existingCaseState: MemoryState = {
+    inquiry: {
+      id: "inq_existing",
+      contactName: "Lee Existing",
+      title: "Existing case rerun",
+      description: "Replay workflow on an inquiry with an existing case record.",
+      email: "lee@example.com",
+      generatedSummary: "Existing case rerun summary",
+      classificationReason: "rerun for regression check",
+      recommendedNextStep: "verify case task FK safety"
+    },
+    caseRecord: {
+      id: "case_existing_1",
+      inquiryId: "inq_existing",
+      caseNumber: "CASE-EXIST-001",
+      bridgeWorkflowStatus: "PROFILED",
+      bridgeReviewRequired: true,
+      bridgeMustVerify: JSON.stringify(["legacy must verify"]),
+      bridgeMustVerifySources: JSON.stringify(["legacy source"]),
+      bridgeRiskFlags: JSON.stringify(["legacy risk"]),
+      bridgePractitionerGuide: null,
+      bridgeCaseOutlook: null
+    },
+    caseTasks: [],
+    sourceVerificationTasks: [],
+    documentRequestTasks: [],
+    documentDrafts: [],
+    messageDrafts: []
+  };
+
+  await runLawbotBridgeCaseWorkflow(
+    {
+      client: createMockClient([]),
+      persistence: createMemoryPersistence(existingCaseState)
+    },
+    {
+      inquiryId: "inq_existing"
+    }
+  );
+
+  assert.equal(
+    existingCaseState.caseTasks.every((task) => task.caseId === undefined),
+    true
+  );
+  assert.equal(existingCaseState.caseTasks.length > 0, true);
+
   console.log("lawbot-bridge-case-workflow-test-ok");
 }
 
