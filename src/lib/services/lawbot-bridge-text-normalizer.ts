@@ -5,6 +5,8 @@ const LATIN1_SUSPECT_PATTERN = /[\u00c0-\u00ff]/g;
 const WINDOWS1252_CONTROL_PATTERN = /[\u0080-\u009f]/g;
 const NON_PRINTABLE_CONTROL_PATTERN = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g;
 const COMMON_MOJIBAKE_PREFIX_PATTERN = /[ìëíÂÃ]/;
+const HARD_MOJIBAKE_PATTERN =
+  /(ìë¬¸|ë²|ì¡°|[ìëíÂ]|\u0085|\uFFFD)/;
 const WHITESPACE_SPLIT_PATTERN = /(\s+)/;
 const MAX_REPAIR_PASSES = 3;
 
@@ -113,6 +115,10 @@ export function hasBridgeMojibake(value: string) {
     }
     return COMMON_MOJIBAKE_PREFIX_PATTERN.test(token) || countSuspects(token) >= 2;
   });
+}
+
+function containsHardMojibake(value: string) {
+  return HARD_MOJIBAKE_PATTERN.test(value);
 }
 
 function scoreDecodedQuality(value: string) {
@@ -232,12 +238,20 @@ export function normalizeBridgeStringArray(values: string[]) {
 }
 
 export function normalizeBridgeTextWithFallback(value: string, fallback: string) {
-  const normalized = normalizeBridgeText(value);
+  const original = value.trim();
+  const normalized = normalizeBridgeText(original);
   if (!normalized) {
     return fallback;
   }
 
-  if (hasBridgeMojibake(normalized)) {
+  if (hasBridgeMojibake(normalized) || containsHardMojibake(normalized)) {
+    return fallback;
+  }
+
+  // Fail-closed for reviewer-facing text:
+  // if original had hard mojibake and normalized is still not clearly readable Korean text,
+  // do not leak original text.
+  if (containsHardMojibake(original) && !HANGUL_CHAR_PATTERN.test(normalized)) {
     return fallback;
   }
 
