@@ -27,11 +27,9 @@ function runLawbotReviewReadonlyUiModelTest() {
       mustVerifySourcesCount: 2,
       riskFlagsCount: 1,
       sourceVerificationChecklist: { totalRequired: 3 },
-      mustVerify: ["ìë ê²í íì"],
+      mustVerify: ["ìë¬¸ íì¸"],
       mustVerifySources: ["ì¶ì² íì¸ íì"],
-      riskFlags: ["ìí ì í¸ íì¸ íì"],
-      legalAxisClues: [{ label: "ì¡°ë¬¸", sourceHint: "Â" }],
-      reviewerAttentionPanel: { items: [{ label: "ìë¬¸" }] }
+      riskFlags: ["ìí ì í¸ íì¸ íì"]
     },
     reviewQueue: {
       totalDrafts: 2,
@@ -75,8 +73,10 @@ function runLawbotReviewReadonlyUiModelTest() {
   readonlyAssert.equal(serialized.includes("\u0085"), false);
   readonlyAssert.equal(serialized.includes("\uFFFD"), false);
 
-  readonlyAssert.equal(model.readonlyNotice.includes("읽기 전용"), true);
-  readonlyAssert.equal(model.readonlyNotice.includes("승인/발송/제출 기능은 비활성화"), true);
+  readonlyAssert.equal(
+    model.readonlyNotice,
+    "현재 이 화면은 읽기 전용이며 승인/발송/제출 기능은 비활성화되어 있습니다."
+  );
   readonlyAssert.equal(model.reviewSignals.mustVerifyCount, 1);
   readonlyAssert.equal(model.reviewSignals.mustVerifySourcesCount, 2);
   readonlyAssert.equal(model.reviewSignals.riskFlagsCount, 1);
@@ -93,9 +93,39 @@ function runLawbotReviewReadonlyUiModelTest() {
     "lawbot-review-readonly-client.tsx"
   );
   const clientSource = fs.readFileSync(clientPath, "utf8");
+  readonlyAssert.equal(clientSource.includes("현재 이 화면은 읽기 전용이며"), false);
+  readonlyAssert.equal(clientSource.includes("model.readonlyNotice"), true);
   readonlyAssert.equal(clientSource.includes("run-lawbot-workflow"), false);
+  readonlyAssert.equal(clientSource.includes('"mustVerify":'), false);
+  readonlyAssert.equal(clientSource.includes('"mustVerifySources":'), false);
+  readonlyAssert.equal(clientSource.includes('"riskFlags":'), false);
 
-  readonlyAssert.equal(LAWBOT_REVIEW_READONLY_NOTICE.length > 0, true);
+  const lowerClientSource = clientSource.toLowerCase();
+  readonlyAssert.equal(lowerClientSource.includes("approve"), false);
+  readonlyAssert.equal(lowerClientSource.includes("send"), false);
+  readonlyAssert.equal(lowerClientSource.includes("submit"), false);
+  readonlyAssert.equal(lowerClientSource.includes("rerun"), false);
+  readonlyAssert.equal(lowerClientSource.includes("retry"), false);
+
+  const detailPath = path.resolve(
+    __dirname,
+    "..",
+    "..",
+    "components",
+    "admin",
+    "inquiry-detail-right-column.tsx"
+  );
+  const detailSource = fs.readFileSync(detailPath, "utf8");
+  readonlyAssert.equal(detailSource.includes("Lawbot 리뷰 결과 보기"), true);
+  readonlyAssert.equal(
+    detailSource.includes("/admin/inquiries/${input.lawbotPanel.inquiryId}/lawbot-review"),
+    true
+  );
+
+  readonlyAssert.equal(
+    LAWBOT_REVIEW_READONLY_NOTICE,
+    "현재 이 화면은 읽기 전용이며 승인/발송/제출 기능은 비활성화되어 있습니다."
+  );
   console.log("lawbot-review-readonly-ui-model-test-ok");
 }
 

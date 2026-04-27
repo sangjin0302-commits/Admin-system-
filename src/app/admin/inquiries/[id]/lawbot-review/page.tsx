@@ -17,7 +17,7 @@ export default async function AdminInquiryLawbotReviewPage({
   if (!inquiryId) {
     return (
       <InquiryDetailUnavailable
-        title="잘못된 문의 ID입니다."
+        title="올바르지 않은 문의 ID입니다."
         message="URL 형식이 올바르지 않아 리뷰 화면을 불러올 수 없습니다."
         detail={id.trim() || "empty-id"}
       />

@@ -143,23 +143,29 @@ export function RefreshButton({
   hasStoredSnapshot: boolean;
   connectionReady: boolean;
 }) {
+  const isInitialAnalysisBlocked = connectionReady && !hasStoredSnapshot;
   const idleLabel = connectionReady
     ? hasStoredSnapshot
       ? "재분석"
-      : "초기 분석 실행"
+      : "초기 분석 실행 비활성화"
     : hasStoredSnapshot
       ? "연결 후 재분석"
       : "연결 준비 확인";
 
   return (
-    <button
-      type="button"
-      onClick={onRefresh}
-      disabled={isRefreshing}
-      className="inline-flex items-center rounded-full border border-border/70 px-4 py-2 text-xs font-medium text-text transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {isRefreshing ? "재분석 중..." : idleLabel}
-    </button>
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={onRefresh}
+        disabled={isRefreshing || isInitialAnalysisBlocked}
+        className="inline-flex items-center rounded-full border border-border/70 px-4 py-2 text-xs font-medium text-text transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isRefreshing ? "재분석 중..." : idleLabel}
+      </button>
+      {isInitialAnalysisBlocked ? (
+        <p className="text-xs text-text-muted">현재 단계에서는 결과 조회만 가능합니다.</p>
+      ) : null}
+    </div>
   );
 }
 

@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react";
+import Link from "next/link";
 
 import { InquiryCaseAnalysisPanel } from "@/components/admin/inquiry-case-analysis-panel";
 import { InquiryCaseTimelineV2 } from "@/components/admin/inquiry-case-timeline-v2";
@@ -85,6 +86,18 @@ export function InquiryDetailRightColumn(input: {
       />
 
       <div id="detail-lawbot">
+        <Card muted className="mb-4 p-5">
+          <p className="ui-kicker">Lawbot 리뷰 조회</p>
+          <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm text-text-muted">현재 단계에서는 결과 조회만 가능합니다.</p>
+            <Link
+              href={`/admin/inquiries/${input.lawbotPanel.inquiryId}/lawbot-review`}
+              className="inline-flex items-center justify-center rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-text transition hover:bg-surface-muted"
+            >
+              Lawbot 리뷰 결과 보기
+            </Link>
+          </div>
+        </Card>
         <LawbotCaseAnalysisPanel
           inquiryId={input.lawbotPanel.inquiryId}
           initialResult={input.lawbotPanel.initialResult}
