@@ -16,8 +16,14 @@ function runSafeDtoTest() {
     reviewSignals: {
       reviewRequired: true,
       mustVerify: ["\u00ec\u00eb\u00ac\u00b8 \u00ed\u00ec\u00b8"],
-      mustVerifySources: ["\u00ec\u00b6\u00ec\u00b2 \u00ed\u00ec\u00b8 \u00ed\u00ec"],
-      riskFlags: ["\u00ec\u00ad \u00ec \u00ed\u00b8 \u00ed\u00ec\u00b8 \u00ed\u00ec"],
+      mustVerifySources: [
+        "\u00ec\u00b6\u00ec\u00b2 \u00ed\u00ec\u00b8 \u00ed\u00ec",
+        "ì¶ì² íì¸ íì"
+      ],
+      riskFlags: [
+        "\u00ec\u00ad \u00ec \u00ed\u00b8 \u00ed\u00ec\u00b8 \u00ed\u00ec",
+        "ìí ì í¸ íì¸ íì"
+      ],
       legalAxisClues: [{ label: "\u00ec\u00a1\u00b0\u00eb\u00ac\u00b8", sourceHint: "\u00c2" }],
       reviewerAttentionPanel: { items: [{ label: "\u00ec\u00eb\u00ac\u00b8" }] },
       reviewerPatternReviewPanel: { items: [{ sampleLabels: ["\u00eb\u00b2"] }] },
@@ -68,15 +74,21 @@ function runSafeDtoTest() {
   safeAssert.equal(safe.approvalGate.approvalRequired, true);
   safeAssert.equal(safe.approvalGate.externalActionAllowed, false);
   safeAssert.equal(safe.reviewSignals.mustVerifyCount, 1);
-  safeAssert.equal(safe.reviewSignals.mustVerifySourcesCount, 1);
-  safeAssert.equal(safe.reviewSignals.riskFlagsCount, 1);
+  safeAssert.equal(safe.reviewSignals.mustVerifySourcesCount, 2);
+  safeAssert.equal(safe.reviewSignals.riskFlagsCount, 2);
   safeAssert.equal(safe.reviewSignals.sourceVerificationChecklist.totalRequired, 2);
   safeAssert.equal(safe.reviewQueue.totalDrafts, 2);
   safeAssert.equal(safe.reviewQueue.approvalPendingDrafts, 2);
 
-  safeAssert.deepEqual(safe.reviewSignals.mustVerify, ["수동 검토 필요"]);
-  safeAssert.deepEqual(safe.reviewSignals.mustVerifySources, ["출처 확인 필요"]);
-  safeAssert.deepEqual(safe.reviewSignals.riskFlags, ["위험 신호 확인 필요"]);
+  safeAssert.equal(safeJson.includes('"mustVerify":'), false);
+  safeAssert.equal(safeJson.includes('"mustVerifySources":'), false);
+  safeAssert.equal(safeJson.includes('"riskFlags":'), false);
+  safeAssert.equal(safeJson.includes("ì"), false);
+  safeAssert.equal(safeJson.includes("ë"), false);
+  safeAssert.equal(safeJson.includes("í"), false);
+  safeAssert.equal(safeJson.includes("Â"), false);
+  safeAssert.equal(safeJson.includes("\u0085"), false);
+  safeAssert.equal(safeJson.includes("\uFFFD"), false);
 
   safeAssert.equal("mustVerifySources" in safe.reviewQueue.documentDrafts[0], false);
   safeAssert.equal("riskFlags" in safe.reviewQueue.documentDrafts[0], false);

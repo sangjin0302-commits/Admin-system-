@@ -1,9 +1,6 @@
 const FORBIDDEN_MOJIBAKE_CHAR_PATTERN = /[\u00ec\u00eb\u00ed\u00c2\u0085\uFFFD]/;
 
 const REVIEW_FALLBACK_TEXT = {
-  sourceVerification: "출처 확인 필요",
-  riskFlag: "위험 신호 확인 필요",
-  mustVerify: "수동 검토 필요",
   generic: "원문 확인 필요"
 } as const;
 
@@ -39,9 +36,6 @@ type SafeLawbotReviewDto = {
     sourceVerificationChecklist: {
       totalRequired: number;
     };
-    mustVerify: string[];
-    mustVerifySources: string[];
-    riskFlags: string[];
   };
   reviewQueue: {
     totalDrafts: number;
@@ -216,11 +210,7 @@ export function buildLawbotReviewSafeDto(rawResult: unknown): SafeLawbotReviewDt
       riskFlagsCount,
       sourceVerificationChecklist: {
         totalRequired
-      },
-      mustVerify: mustVerifyCount > 0 ? [REVIEW_FALLBACK_TEXT.mustVerify] : [],
-      mustVerifySources:
-        mustVerifySourcesCount > 0 ? [REVIEW_FALLBACK_TEXT.sourceVerification] : [],
-      riskFlags: riskFlagsCount > 0 ? [REVIEW_FALLBACK_TEXT.riskFlag] : []
+      }
     },
     reviewQueue: {
       totalDrafts,
@@ -233,10 +223,6 @@ export function buildLawbotReviewSafeDto(rawResult: unknown): SafeLawbotReviewDt
   // Fail-closed: if anything forbidden survives, collapse user-facing arrays to fallback.
   if (hasForbiddenCharsDeep(safeDto)) {
     safeDto.executionSummary = REVIEW_FALLBACK_TEXT.generic;
-    safeDto.reviewSignals.mustVerify = mustVerifyCount > 0 ? [REVIEW_FALLBACK_TEXT.mustVerify] : [];
-    safeDto.reviewSignals.mustVerifySources =
-      mustVerifySourcesCount > 0 ? [REVIEW_FALLBACK_TEXT.sourceVerification] : [];
-    safeDto.reviewSignals.riskFlags = riskFlagsCount > 0 ? [REVIEW_FALLBACK_TEXT.riskFlag] : [];
   }
 
   return safeDto;
