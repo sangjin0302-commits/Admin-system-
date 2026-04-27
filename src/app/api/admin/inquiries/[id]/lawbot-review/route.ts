@@ -1,8 +1,5 @@
 import { handleGetLawbotReviewFlowRequest } from "@/lib/services/lawbot-bridge-review-flow-action";
-import {
-  buildSafeLawbotReviewDto,
-  type LawbotReviewFlowResult
-} from "@/lib/services/lawbot-bridge-review-flow-service";
+import { buildLawbotReviewSafeDto } from "@/lib/services/lawbot-bridge-review-safe-dto";
 
 export async function GET(
   _request: Request,
@@ -15,9 +12,9 @@ export async function GET(
     return response;
   }
 
-  const payload = (await response.json()) as { result?: LawbotReviewFlowResult | null };
+  const payload = (await response.json()) as { result?: unknown };
   return Response.json(
-    { result: payload.result ? buildSafeLawbotReviewDto(payload.result) : null },
+    { result: payload.result ? buildLawbotReviewSafeDto(payload.result) : null },
     { status: 200 }
   );
 }
