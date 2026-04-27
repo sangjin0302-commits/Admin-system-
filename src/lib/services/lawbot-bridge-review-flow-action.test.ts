@@ -20,6 +20,9 @@ function createReviewResult(): LawbotReviewFlowResult {
       mustVerify: ["confirm service route"],
       mustVerifySources: ["disposition notice"],
       riskFlags: ["timing_risk"],
+      mustVerifyCount: 1,
+      mustVerifySourcesCount: 1,
+      riskFlagsCount: 1,
       matchedSubtypeKeys: ["admin_appeal_refusal"],
       practitionerGuide: {
         what_to_check_first: ["service date"],
@@ -248,7 +251,10 @@ async function testSuccess() {
   const payload = (await response.json()) as { result: LawbotReviewFlowResult };
   assert.equal(payload.result.inquiryId, "inq_1");
   assert.equal(payload.result.reviewSignals.reviewRequired, true);
-  assert.deepEqual(payload.result.reviewSignals.mustVerifySources, ["disposition notice"]);
+  assert.deepEqual(payload.result.reviewSignals.mustVerifySources, [
+    BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
+  ]);
+  assert.equal(payload.result.reviewSignals.mustVerifySourcesCount, 1);
   assert.equal(
     payload.result.reviewSignals.legalAxisClues[0]?.articleTitle,
     "Immigration Act Article 23"
@@ -291,7 +297,10 @@ async function testActionWithServiceIntegration() {
   const payload = (await response.json()) as { result: LawbotReviewFlowResult };
   assert.equal(payload.result.inquiryId, "inq_2");
   assert.equal(payload.result.reviewSignals.reviewRequired, true);
-  assert.deepEqual(payload.result.reviewSignals.mustVerifySources, ["refusal notice"]);
+  assert.deepEqual(payload.result.reviewSignals.mustVerifySources, [
+    BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
+  ]);
+  assert.equal(payload.result.reviewSignals.mustVerifySourcesCount, 1);
   assert.equal(payload.result.reviewQueue.documentDrafts.length, 1);
   assert.equal(payload.result.reviewQueue.messageDrafts.length, 0);
   assert.equal(payload.result.approvalGate.externalActionAllowed, false);
@@ -391,6 +400,10 @@ async function testBoundarySanitizesMojibake() {
   assert.equal(
     payload.result.reviewQueue.messageDrafts[0]?.riskFlags[0],
     BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag
+  );
+  assert.equal(
+    /[\u00ec\u00eb\u00ed\u00c2\u0085\uFFFD]/.test(JSON.stringify(payload.result)),
+    false
   );
 }
 

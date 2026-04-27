@@ -1,9 +1,8 @@
 import type { LawbotBridgeReadonlySummary } from "./lawbot-bridge-readonly-summary-service";
 import {
-  sanitizeBridgeReviewOutput,
+  BRIDGE_REVIEW_FALLBACK_TEXT,
   hasBridgeMojibake,
   normalizeBridgeTextDeep,
-  normalizeBridgeTextWithFallback,
   normalizeBridgeStringArray,
   normalizeBridgeText
 } from "./lawbot-bridge-text-normalizer";
@@ -63,7 +62,11 @@ export type LawbotReviewFlowResult = {
   executionStatus: LawbotBridgeReadonlySummary["executionStatus"];
   executionSummary: string;
   updatedAt: string;
-  reviewSignals: LawbotBridgeReadonlySummary["reviewSignals"];
+  reviewSignals: LawbotBridgeReadonlySummary["reviewSignals"] & {
+    mustVerifyCount: number;
+    mustVerifySourcesCount: number;
+    riskFlagsCount: number;
+  };
   createdCounts: LawbotBridgeReadonlySummary["createdCounts"];
   reviewQueue: {
     documentDrafts: LawbotReviewDraftItem[];
@@ -84,12 +87,7 @@ export type LawbotReviewFlowDependencies = {
   loadMessageDrafts?: (inquiryId: string) => Promise<LawbotMessageDraftRow[]>;
 };
 
-const FALLBACK_TEXT = {
-  sourceVerification: "출처 확인 필요",
-  riskFlag: "위험 신호 확인 필요",
-  mustVerify: "수동 검토 필요",
-  generic: "원문 확인 필요"
-} as const;
+const FORBIDDEN_MOJIBAKE_CHAR_PATTERN = /[\u00ec\u00eb\u00ed\u00c2\u0085\uFFFD]/;
 
 function parseStringArray(raw: string | null | undefined) {
   if (!raw) {
@@ -110,98 +108,181 @@ function parseStringArray(raw: string | null | undefined) {
   }
 }
 
-function sanitizeTextArray(values: string[], fallback: string) {
-  return values.map((value) => normalizeBridgeTextWithFallback(value, fallback));
+function hasForbiddenMojibakeChars(value: string) {
+  return FORBIDDEN_MOJIBAKE_CHAR_PATTERN.test(value);
 }
 
-function sanitizeId(value: string, fallbackPrefix: string, index: number) {
+function toSafeText(value: string, fallback: string) {
   const normalized = normalizeBridgeText(value);
-  if (!normalized || hasBridgeMojibake(normalized)) {
+  if (!normalized || hasBridgeMojibake(normalized) || hasForbiddenMojibakeChars(normalized)) {
+    return fallback;
+  }
+  return normalized;
+}
+
+function toSafeOptionalText(value: string | null, fallback: string) {
+  if (value === null) {
+    return null;
+  }
+  return toSafeText(value, fallback);
+}
+
+function toSafeId(value: string, fallbackPrefix: string, index: number) {
+  const normalized = normalizeBridgeText(value);
+  if (!normalized || hasBridgeMojibake(normalized) || hasForbiddenMojibakeChars(normalized)) {
     return `${fallbackPrefix}-${index + 1}`;
   }
   return normalized;
 }
 
-function sanitizeNullableText(value: string | null, fallback: string) {
-  if (value === null) {
-    return null;
+function toSafeSummaryArray(count: number, fallback: string) {
+  if (count <= 0) {
+    return [];
   }
-  return normalizeBridgeTextWithFallback(value, fallback);
+  return [fallback];
 }
 
-function sanitizeReviewFlowForResponse(result: LawbotReviewFlowResult): LawbotReviewFlowResult {
+export function buildSafeLawbotReviewDto(result: LawbotReviewFlowResult): LawbotReviewFlowResult {
+  const mustVerifyCount = result.reviewSignals.mustVerify.length;
+  const mustVerifySourcesCount = result.reviewSignals.mustVerifySources.length;
+  const riskFlagsCount = result.reviewSignals.riskFlags.length;
+
   return {
     ...result,
+    executionSummary: toSafeText(result.executionSummary, BRIDGE_REVIEW_FALLBACK_TEXT.generic),
     reviewSignals: {
       ...result.reviewSignals,
-      mustVerify: sanitizeTextArray(result.reviewSignals.mustVerify, FALLBACK_TEXT.mustVerify),
-      mustVerifySources: sanitizeTextArray(
-        result.reviewSignals.mustVerifySources,
-        FALLBACK_TEXT.sourceVerification
+      mustVerifyCount,
+      mustVerifySourcesCount,
+      riskFlagsCount,
+      mustVerify: toSafeSummaryArray(mustVerifyCount, BRIDGE_REVIEW_FALLBACK_TEXT.mustVerify),
+      mustVerifySources: toSafeSummaryArray(
+        mustVerifySourcesCount,
+        BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
       ),
-      riskFlags: sanitizeTextArray(result.reviewSignals.riskFlags, FALLBACK_TEXT.riskFlag),
+      riskFlags: toSafeSummaryArray(riskFlagsCount, BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag),
+      matchedSubtypeKeys: [],
+      practitionerGuide: null,
+      caseOutlook: null,
       legalAxisClues: result.reviewSignals.legalAxisClues.map((entry, index) => ({
         ...entry,
-        id: sanitizeId(entry.id, "axis-clue", index),
-        label: normalizeBridgeTextWithFallback(entry.label, FALLBACK_TEXT.generic),
-        sourceHint: sanitizeNullableText(entry.sourceHint, FALLBACK_TEXT.sourceVerification)
+        id: toSafeId(entry.id, "axis-clue", index),
+        label: BRIDGE_REVIEW_FALLBACK_TEXT.generic,
+        sourceHint: BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
       })),
       reviewerAttentionPanel: {
         ...result.reviewSignals.reviewerAttentionPanel,
+        headline: toSafeText(
+          result.reviewSignals.reviewerAttentionPanel.headline,
+          BRIDGE_REVIEW_FALLBACK_TEXT.generic
+        ),
         items: result.reviewSignals.reviewerAttentionPanel.items.map((item) => ({
           ...item,
-          label: normalizeBridgeTextWithFallback(item.label, FALLBACK_TEXT.generic)
+          label: BRIDGE_REVIEW_FALLBACK_TEXT.generic,
+          reason: toSafeText(item.reason, BRIDGE_REVIEW_FALLBACK_TEXT.generic)
         }))
       },
       reviewerPatternReviewPanel: {
         ...result.reviewSignals.reviewerPatternReviewPanel,
+        headline: toSafeText(
+          result.reviewSignals.reviewerPatternReviewPanel.headline,
+          BRIDGE_REVIEW_FALLBACK_TEXT.generic
+        ),
         items: result.reviewSignals.reviewerPatternReviewPanel.items.map((item) => ({
           ...item,
-          sampleLabels: sanitizeTextArray(item.sampleLabels, FALLBACK_TEXT.generic)
+          sampleLabels: toSafeSummaryArray(
+            item.sampleLabels.length,
+            BRIDGE_REVIEW_FALLBACK_TEXT.generic
+          )
         }))
       },
       operatorAssistPanel: {
         ...result.reviewSignals.operatorAssistPanel,
+        headline: toSafeText(
+          result.reviewSignals.operatorAssistPanel.headline,
+          BRIDGE_REVIEW_FALLBACK_TEXT.generic
+        ),
         items: result.reviewSignals.operatorAssistPanel.items.map((item) => ({
           ...item,
-          action: normalizeBridgeTextWithFallback(item.action, FALLBACK_TEXT.generic)
+          action: BRIDGE_REVIEW_FALLBACK_TEXT.generic,
+          detail: toSafeOptionalText(item.detail, BRIDGE_REVIEW_FALLBACK_TEXT.generic)
         }))
       },
+      reviewerReferencePanel: {
+        ...result.reviewSignals.reviewerReferencePanel,
+        headline: toSafeText(
+          result.reviewSignals.reviewerReferencePanel.headline,
+          BRIDGE_REVIEW_FALLBACK_TEXT.generic
+        ),
+        items: result.reviewSignals.reviewerReferencePanel.items.map((item, index) => ({
+          ...item,
+          id: toSafeId(item.id, "review-reference", index),
+          title: toSafeText(item.title, BRIDGE_REVIEW_FALLBACK_TEXT.generic),
+          reviewHint: toSafeText(item.reviewHint, BRIDGE_REVIEW_FALLBACK_TEXT.generic)
+        }))
+      },
+      supplementalReferenceCandidates: result.reviewSignals.supplementalReferenceCandidates.map(
+        (item) => ({
+          ...item,
+          title: toSafeText(item.title, BRIDGE_REVIEW_FALLBACK_TEXT.generic)
+        })
+      ),
       sourceVerificationChecklist: {
         ...result.reviewSignals.sourceVerificationChecklist,
+        headline: toSafeText(
+          result.reviewSignals.sourceVerificationChecklist.headline,
+          BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
+        ),
         items: result.reviewSignals.sourceVerificationChecklist.items.map((item, index) => ({
           ...item,
-          id: sanitizeId(item.id, "source-check", index),
-          sourceLabel: normalizeBridgeTextWithFallback(
-            item.sourceLabel,
-            FALLBACK_TEXT.sourceVerification
-          ),
-          sourceCitation: sanitizeNullableText(
+          id: toSafeId(item.id, "source-check", index),
+          sourceLabel: BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification,
+          sourceCitation: toSafeOptionalText(
             item.sourceCitation,
-            FALLBACK_TEXT.sourceVerification
+            BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
           ),
-          notes: sanitizeNullableText(item.notes, FALLBACK_TEXT.sourceVerification)
+          notes: toSafeOptionalText(item.notes, BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification)
         }))
+      },
+      approvalWorkflowGate: {
+        ...result.reviewSignals.approvalWorkflowGate,
+        cautionRiskFlags: toSafeSummaryArray(
+          result.reviewSignals.approvalWorkflowGate.cautionRiskFlags.length,
+          BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag
+        ),
+        summary: toSafeText(
+          result.reviewSignals.approvalWorkflowGate.summary,
+          BRIDGE_REVIEW_FALLBACK_TEXT.generic
+        )
       }
     },
     reviewQueue: {
       ...result.reviewQueue,
       documentDrafts: result.reviewQueue.documentDrafts.map((draft) => ({
         ...draft,
-        mustVerifySources: sanitizeTextArray(
-          draft.mustVerifySources,
-          FALLBACK_TEXT.sourceVerification
+        titleOrSubject: toSafeOptionalText(draft.titleOrSubject, BRIDGE_REVIEW_FALLBACK_TEXT.generic),
+        mustVerifySources: toSafeSummaryArray(
+          draft.mustVerifySources.length,
+          BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
         ),
-        riskFlags: sanitizeTextArray(draft.riskFlags, FALLBACK_TEXT.riskFlag)
+        riskFlags: toSafeSummaryArray(draft.riskFlags.length, BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag)
       })),
       messageDrafts: result.reviewQueue.messageDrafts.map((draft) => ({
         ...draft,
-        mustVerifySources: sanitizeTextArray(
-          draft.mustVerifySources,
-          FALLBACK_TEXT.sourceVerification
+        titleOrSubject: toSafeOptionalText(draft.titleOrSubject, BRIDGE_REVIEW_FALLBACK_TEXT.generic),
+        mustVerifySources: toSafeSummaryArray(
+          draft.mustVerifySources.length,
+          BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
         ),
-        riskFlags: sanitizeTextArray(draft.riskFlags, FALLBACK_TEXT.riskFlag)
+        riskFlags: toSafeSummaryArray(draft.riskFlags.length, BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag)
       }))
+    },
+    approvalGate: {
+      ...result.approvalGate,
+      externalActionAllowed: false,
+      reasonCodes: result.approvalGate.reasonCodes.map((code) =>
+        toSafeText(code, "manual_approval_required")
+      )
     }
   };
 }
@@ -335,7 +416,12 @@ export async function getLawbotBridgeReviewFlowByInquiryId(
     executionStatus: summary.executionStatus,
     executionSummary: summary.executionSummary,
     updatedAt: summary.updatedAt,
-    reviewSignals: summary.reviewSignals,
+    reviewSignals: {
+      ...summary.reviewSignals,
+      mustVerifyCount: summary.reviewSignals.mustVerify.length,
+      mustVerifySourcesCount: summary.reviewSignals.mustVerifySources.length,
+      riskFlagsCount: summary.reviewSignals.riskFlags.length
+    },
     createdCounts: summary.createdCounts,
     reviewQueue: {
       documentDrafts,
@@ -350,5 +436,5 @@ export async function getLawbotBridgeReviewFlowByInquiryId(
     }
   }) as LawbotReviewFlowResult;
 
-  return sanitizeBridgeReviewOutput(sanitizeReviewFlowForResponse(normalizedResult));
+  return buildSafeLawbotReviewDto(normalizedResult);
 }

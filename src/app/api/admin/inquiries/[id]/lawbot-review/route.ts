@@ -1,5 +1,8 @@
 import { handleGetLawbotReviewFlowRequest } from "@/lib/services/lawbot-bridge-review-flow-action";
-import { sanitizeBridgeReviewOutput } from "@/lib/services/lawbot-bridge-text-normalizer";
+import {
+  buildSafeLawbotReviewDto,
+  type LawbotReviewFlowResult
+} from "@/lib/services/lawbot-bridge-review-flow-service";
 
 export async function GET(
   _request: Request,
@@ -12,9 +15,9 @@ export async function GET(
     return response;
   }
 
-  const payload = (await response.json()) as { result?: unknown };
+  const payload = (await response.json()) as { result?: LawbotReviewFlowResult | null };
   return Response.json(
-    { result: sanitizeBridgeReviewOutput(payload.result ?? null) },
+    { result: payload.result ? buildSafeLawbotReviewDto(payload.result) : null },
     { status: 200 }
   );
 }

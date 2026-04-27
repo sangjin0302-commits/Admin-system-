@@ -1,8 +1,8 @@
 import {
+  buildSafeLawbotReviewDto,
   getLawbotBridgeReviewFlowByInquiryId,
   type LawbotReviewFlowResult
 } from "./lawbot-bridge-review-flow-service";
-import { sanitizeBridgeReviewOutput } from "./lawbot-bridge-text-normalizer";
 
 export type LawbotReviewFlowLoader = (
   inquiryId: string
@@ -23,7 +23,7 @@ export async function handleGetLawbotReviewFlowRequest(
       return Response.json({ error: "Inquiry not found." }, { status: 404 });
     }
 
-    return Response.json({ result: sanitizeBridgeReviewOutput(result) }, { status: 200 });
+    return Response.json({ result: buildSafeLawbotReviewDto(result) }, { status: 200 });
   } catch (error) {
     return Response.json(
       {

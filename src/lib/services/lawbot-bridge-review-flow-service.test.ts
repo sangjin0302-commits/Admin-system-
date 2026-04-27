@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 import { getLawbotBridgeReviewFlowByInquiryId } from "./lawbot-bridge-review-flow-service";
 import type { LawbotBridgeReadonlySummary } from "./lawbot-bridge-readonly-summary-service";
+import { BRIDGE_REVIEW_FALLBACK_TEXT } from "./lawbot-bridge-text-normalizer";
 
 function createReadonlySummary(): LawbotBridgeReadonlySummary {
   return {
@@ -130,32 +131,33 @@ async function testBuildReviewFlowFromStoredSignals() {
 
   assert.ok(result);
   assert.equal(result.reviewSignals.reviewRequired, true);
-  assert.deepEqual(result.reviewSignals.mustVerifySources, ["disposition notice"]);
-  assert.deepEqual(result.reviewSignals.riskFlags, ["timing_risk"]);
-  assert.deepEqual(result.reviewSignals.practitionerGuide, {
-    what_to_check_first: ["service date"],
-    supplemental_reference_candidates: [
-      {
-        title: "Notion archive / prior filing package",
-        source_type: "internal_archive",
-        must_verify_original: true,
-        trust_level: "medium",
-        usage_locations: ["reviewer_panel"],
-        reference_level: "supplemental"
-      }
-    ]
-  });
-  assert.deepEqual(result.reviewSignals.caseOutlook, {
-    key_decision_factors: ["proof of receipt"],
-    missing_case_facts: ["service route"]
-  });
+  assert.deepEqual(result.reviewSignals.mustVerify, [BRIDGE_REVIEW_FALLBACK_TEXT.mustVerify]);
+  assert.deepEqual(result.reviewSignals.mustVerifySources, [
+    BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
+  ]);
+  assert.deepEqual(result.reviewSignals.riskFlags, [BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag]);
+  assert.equal(result.reviewSignals.mustVerifyCount, 1);
+  assert.equal(result.reviewSignals.mustVerifySourcesCount, 1);
+  assert.equal(result.reviewSignals.riskFlagsCount, 1);
+  assert.equal(result.reviewSignals.practitionerGuide, null);
+  assert.equal(result.reviewSignals.caseOutlook, null);
   assert.equal(result.reviewQueue.documentDrafts.length, 1);
   assert.equal(result.reviewQueue.messageDrafts.length, 1);
   assert.equal(result.reviewQueue.totalDrafts, 2);
+  assert.deepEqual(result.reviewQueue.documentDrafts[0]?.mustVerifySources, [
+    BRIDGE_REVIEW_FALLBACK_TEXT.sourceVerification
+  ]);
+  assert.deepEqual(result.reviewQueue.documentDrafts[0]?.riskFlags, [
+    BRIDGE_REVIEW_FALLBACK_TEXT.riskFlag
+  ]);
   assert.equal(result.reviewSignals.supplementalReferenceCandidates.length, 1);
   assert.equal(
     result.reviewSignals.reviewerReferencePanel.items[0]?.title,
     "Notion archive / prior filing package"
+  );
+  assert.equal(
+    /[\u00ec\u00eb\u00ed\u00c2\u0085\uFFFD]/.test(JSON.stringify(result)),
+    false
   );
   assert.equal(result.approvalGate.approvalRequired, true);
   assert.equal(result.approvalGate.externalActionAllowed, false);
