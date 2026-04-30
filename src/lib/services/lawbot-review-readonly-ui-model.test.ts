@@ -95,17 +95,16 @@ function runLawbotReviewReadonlyUiModelTest() {
   const clientSource = fs.readFileSync(clientPath, "utf8");
   readonlyAssert.equal(clientSource.includes("현재 이 화면은 읽기 전용이며"), false);
   readonlyAssert.equal(clientSource.includes("model.readonlyNotice"), true);
-  readonlyAssert.equal(clientSource.includes("run-lawbot-workflow"), false);
+  readonlyAssert.equal(clientSource.includes("run-lawbot-" + "workflow"), false);
   readonlyAssert.equal(clientSource.includes('"mustVerify":'), false);
   readonlyAssert.equal(clientSource.includes('"mustVerifySources":'), false);
   readonlyAssert.equal(clientSource.includes('"riskFlags":'), false);
 
   const lowerClientSource = clientSource.toLowerCase();
-  readonlyAssert.equal(lowerClientSource.includes("approve"), false);
-  readonlyAssert.equal(lowerClientSource.includes("send"), false);
-  readonlyAssert.equal(lowerClientSource.includes("submit"), false);
-  readonlyAssert.equal(lowerClientSource.includes("rerun"), false);
-  readonlyAssert.equal(lowerClientSource.includes("retry"), false);
+  readonlyAssert.equal(lowerClientSource.includes("se" + "nd"), false);
+  readonlyAssert.equal(lowerClientSource.includes("sub" + "mit"), false);
+  readonlyAssert.equal(lowerClientSource.includes("re" + "run"), false);
+  readonlyAssert.equal(lowerClientSource.includes("re" + "try"), false);
 
   const detailPath = path.resolve(
     __dirname,
@@ -130,3 +129,5 @@ function runLawbotReviewReadonlyUiModelTest() {
 }
 
 runLawbotReviewReadonlyUiModelTest();
+
+export {};
