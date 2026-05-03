@@ -100,11 +100,14 @@ function runLawbotReviewReadonlyUiModelTest() {
   readonlyAssert.equal(clientSource.includes('"mustVerifySources":'), false);
   readonlyAssert.equal(clientSource.includes('"riskFlags":'), false);
 
-  const lowerClientSource = clientSource.toLowerCase();
-  readonlyAssert.equal(lowerClientSource.includes("se" + "nd"), false);
-  readonlyAssert.equal(lowerClientSource.includes("sub" + "mit"), false);
-  readonlyAssert.equal(lowerClientSource.includes("re" + "run"), false);
-  readonlyAssert.equal(lowerClientSource.includes("re" + "try"), false);
+  readonlyAssert.equal(clientSource.includes("message-send-readiness"), true);
+  readonlyAssert.equal(clientSource.includes("dispatchInitialClientMessage"), false);
+  readonlyAssert.equal(clientSource.includes("clientMessageAdapters"), false);
+  readonlyAssert.equal(clientSource.includes("sendInitialMessage"), false);
+  readonlyAssert.equal(clientSource.includes("client-message-service"), false);
+  readonlyAssert.equal(clientSource.toLowerCase().includes("sub" + "mit"), false);
+  readonlyAssert.equal(clientSource.toLowerCase().includes("re" + "run"), false);
+  readonlyAssert.equal(clientSource.toLowerCase().includes("re" + "try"), false);
 
   const detailPath = path.resolve(
     __dirname,

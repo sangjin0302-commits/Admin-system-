@@ -166,9 +166,13 @@ function runLawbotReviewApprovalUiModelTest() {
   );
   approvalUiAssert.equal(clientSource.includes("외부 발송/제출은 별도 단계에서만 가능합니다."), true);
   approvalUiAssert.equal(clientSource.includes("lawbot-review/approve"), true);
+  approvalUiAssert.equal(clientSource.includes("message-send-readiness"), true);
   approvalUiAssert.equal(clientSource.includes("run-lawbot-" + "workflow"), false);
   approvalUiAssert.equal(clientSource.includes("externalActionAllowed: " + "true"), false);
-  approvalUiAssert.equal(clientSource.toLowerCase().includes("se" + "nd"), false);
+  approvalUiAssert.equal(clientSource.includes("dispatchInitialClientMessage"), false);
+  approvalUiAssert.equal(clientSource.includes("clientMessageAdapters"), false);
+  approvalUiAssert.equal(clientSource.includes("sendInitialMessage"), false);
+  approvalUiAssert.equal(clientSource.includes("client-message-service"), false);
   approvalUiAssert.equal(clientSource.toLowerCase().includes("sub" + "mit"), false);
   approvalUiAssert.equal(clientSource.toLowerCase().includes("re" + "run"), false);
   approvalUiAssert.equal(clientSource.toLowerCase().includes("re" + "try"), false);
