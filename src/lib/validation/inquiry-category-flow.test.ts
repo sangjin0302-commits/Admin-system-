@@ -159,9 +159,27 @@ for (const label of [
   "고충 민원",
   "정보 공개",
   "categoryDetails",
-  "업무 분야를 먼저 선택해 주세요."
+  "업무 분야를 먼저 선택해 주세요.",
+  "업무 분야 선택",
+  "연락처 및 상담 정보",
+  "분야별 상세 질문",
+  "사건 개요 및 서류",
+  "동의 및 제출",
+  "필수",
+  "선택",
+  "제출 전 요약"
 ]) {
   assert.match(`${intakeFormSource}\n${intakeCategorySource}`, new RegExp(label));
+}
+for (const guidance of [
+  "체류자격, 초청, 연장, 변경, 불허 대응 정보를 확인합니다.",
+  "번역, 통역, 공증·인증, 기관 제출 목적을 확인합니다.",
+  "자동차 등록, 정보공개, 고충민원 등 일반 행정 민원을 확인합니다.",
+  "기한/긴급도",
+  "서류/증빙",
+  "요청사항"
+]) {
+  assert.match(intakeFormSource, new RegExp(guidance));
 }
 assert.equal(intakeFormSource.includes("run-lawbot-workflow"), false);
 assert.equal(intakeFormSource.includes("client-message-service"), false);

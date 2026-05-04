@@ -98,19 +98,140 @@ function getCategoryHelp(category: IntakeCategory) {
   return help[category];
 }
 
+function getCategoryGuidance(category: IntakeCategory) {
+  const guidance: Record<IntakeCategory, string> = {
+    visa: "체류자격, 초청, 연장, 변경, 불허 대응 정보를 확인합니다.",
+    corporation: "법인 설립, 변경, 외국인투자, 지점·연락사무소, 청산 관련 정보를 확인합니다.",
+    administrative_appeal: "처분 내용, 불복 기한, 원하는 결과, 집행정지 필요성을 확인합니다.",
+    fact_finding_contract: "사실관계, 분쟁 여부, 필요한 문서와 제출·발송 대상을 확인합니다.",
+    permit_license: "인허가 종류, 대상 기관, 진행 단계, 보완 요구와 업종 정보를 확인합니다.",
+    arabic_translation: "번역, 통역, 공증·인증, 기관 제출 목적을 확인합니다.",
+    civil_petition: "자동차 등록, 정보공개, 고충민원 등 일반 행정 민원을 확인합니다."
+  };
+  return guidance[category];
+}
+
+function StepHeader({
+  step,
+  title,
+  description
+}: {
+  step: number;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary bg-primary text-sm font-semibold text-white">
+        {step}
+      </span>
+      <div>
+        <p className="text-base font-semibold text-text-strong">{title}</p>
+        <p className="mt-1 text-sm text-text-muted">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function FieldBadge({ required }: { required?: boolean }) {
+  return (
+    <span className={required ? "ui-status-pill intake-pill-required" : "ui-status-pill intake-pill-optional"}>
+      {required ? "필수" : "선택"}
+    </span>
+  );
+}
+
+function FieldLabel({ label, required }: { label: string; required?: boolean }) {
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      <span>{label}</span>
+      <FieldBadge required={required} />
+    </span>
+  );
+}
+
+function getFieldGroupTitle(field: IntakeCategoryDetailField) {
+  const key = field.key.toLowerCase();
+  const label = field.label;
+
+  if (
+    key.includes("date") ||
+    key.includes("deadline") ||
+    key.includes("expiry") ||
+    key.includes("urgent") ||
+    label.includes("기한") ||
+    label.includes("긴급") ||
+    label.includes("납기") ||
+    label.includes("일정")
+  ) {
+    return "기한/긴급도";
+  }
+
+  if (
+    key.includes("document") ||
+    key.includes("evidence") ||
+    key.includes("file") ||
+    key.includes("proof") ||
+    key.includes("certificate") ||
+    label.includes("서류") ||
+    label.includes("증빙") ||
+    label.includes("자료") ||
+    label.includes("파일")
+  ) {
+    return "서류/증빙";
+  }
+
+  if (
+    key.includes("desired") ||
+    key.includes("purpose") ||
+    key.includes("result") ||
+    key.includes("target") ||
+    key.includes("method") ||
+    label.includes("원하는") ||
+    label.includes("목적") ||
+    label.includes("방식") ||
+    label.includes("대상")
+  ) {
+    return "요청사항";
+  }
+
+  return "기본 정보";
+}
+
+function groupCategoryFields(fields: readonly IntakeCategoryDetailField[]) {
+  const groups = ["기본 정보", "기한/긴급도", "서류/증빙", "요청사항"] as const;
+  return groups
+    .map((title) => ({
+      title,
+      fields: fields.filter((field) => getFieldGroupTitle(field) === title)
+    }))
+    .filter((group) => group.fields.length > 0);
+}
+
+function isRequiredCategoryField(category: IntakeCategory, field: IntakeCategoryDetailField) {
+  if (category === "civil_petition") return field.key === "civilPetitionType";
+  return field.key === "workType";
+}
+
 function CategoryField({
   field,
   value,
-  onChange
+  onChange,
+  required = false
 }: {
   field: IntakeCategoryDetailField;
   value: string;
   onChange: (value: string) => void;
+  required?: boolean;
 }) {
   if (field.input === "textarea") {
     return (
-      <Field label={field.label}>
+      <Field label="" hint={required ? "핵심 분류 질문입니다." : undefined}>
+        <label className="ui-label">
+          <FieldLabel label={field.label} required={required} />
+        </label>
         <Textarea
+          required={required}
           rows={4}
           maxLength={700}
           value={value}
@@ -123,8 +244,11 @@ function CategoryField({
 
   if (field.input === "select") {
     return (
-      <Field label={field.label}>
-        <Select value={value} onChange={(event) => onChange(event.target.value)}>
+      <Field label="" hint={required ? "핵심 분류 질문입니다." : undefined}>
+        <label className="ui-label">
+          <FieldLabel label={field.label} required={required} />
+        </label>
+        <Select required={required} value={value} onChange={(event) => onChange(event.target.value)}>
           <option value="">선택해 주세요</option>
           {(field.options ?? []).map((option) => (
             <option key={option} value={option}>
@@ -137,8 +261,12 @@ function CategoryField({
   }
 
   return (
-    <Field label={field.label}>
+    <Field label="" hint={required ? "핵심 분류 질문입니다." : undefined}>
+      <label className="ui-label">
+        <FieldLabel label={field.label} required={required} />
+      </label>
       <Input
+        required={required}
         type={field.input}
         maxLength={field.input === "date" ? undefined : 160}
         value={value}
@@ -173,6 +301,14 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
         ? getCivilPetitionSubtypeFields(selectedCivilPetitionSubtype)
         : [],
     [selectedCategory, selectedCivilPetitionSubtype]
+  );
+  const categoryFieldGroups = useMemo(
+    () => groupCategoryFields(selectedCategoryFields),
+    [selectedCategoryFields]
+  );
+  const civilPetitionSubtypeFieldGroups = useMemo(
+    () => groupCategoryFields(selectedCivilPetitionSubtypeFields),
+    [selectedCivilPetitionSubtypeFields]
   );
 
   useEffect(() => {
@@ -382,14 +518,12 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
           />
         </div>
 
-        <section className="space-y-3">
-          <div>
-            <p className="ui-kicker">업무 분야</p>
-            <h3 className="mt-2 text-lg font-semibold text-text-strong">필요한 업무를 먼저 선택해 주세요</h3>
-            <p className="mt-2 text-sm text-text-muted">
-              선택한 분야에 맞춰 필요한 질문만 이어서 표시됩니다.
-            </p>
-          </div>
+        <section className="space-y-4">
+          <StepHeader
+            step={1}
+            title="업무 분야 선택"
+            description="먼저 필요한 업무를 고르면 관련 질문만 이어서 정리됩니다."
+          />
           <div className="grid gap-3">
             {intakeCategoryValues.map((category) => {
               const selected = form.category === category;
@@ -412,22 +546,27 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
             })}
           </div>
           {selectedCategory ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-text-muted">선택한 분야</span>
-              <Badge>{intakeCategoryLabels[selectedCategory]}</Badge>
+            <div className="rounded-md border border-primary/30 bg-primary/5 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-text-muted">선택한 분야</span>
+                <Badge>{intakeCategoryLabels[selectedCategory]}</Badge>
+              </div>
+              <p className="mt-2 text-sm text-text-muted">{getCategoryGuidance(selectedCategory)}</p>
             </div>
           ) : null}
         </section>
 
         <section className="space-y-4 border-t border-line pt-6">
-          <div>
-            <p className="ui-kicker">공통 정보</p>
-            <p className="mt-2 text-sm text-text-muted">
-              담당자가 접수 내용을 확인하고 연락드리기 위한 기본 정보입니다.
-            </p>
-          </div>
+          <StepHeader
+            step={2}
+            title="연락처 및 상담 정보"
+            description="담당자가 접수 내용을 확인하고 연락드리기 위한 기본 정보입니다."
+          />
           <FieldGroup>
-            <Field label="이름">
+            <Field label="">
+              <label className="ui-label">
+                <FieldLabel label="이름" required />
+              </label>
               <Input
                 required
                 minLength={2}
@@ -438,8 +577,12 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
               />
             </Field>
 
-            <Field label="연락처">
+            <Field label="">
+              <label className="ui-label">
+                <FieldLabel label="연락처" required />
+              </label>
               <Input
+                required
                 maxLength={30}
                 value={form.phone}
                 onChange={(event) => updateField("phone", event.target.value)}
@@ -447,7 +590,10 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
               />
             </Field>
 
-            <Field label="이메일">
+            <Field label="">
+              <label className="ui-label">
+                <FieldLabel label="이메일" required />
+              </label>
               <Input
                 required
                 type="email"
@@ -458,7 +604,10 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
               />
             </Field>
 
-            <Field label="희망 상담 방식">
+            <Field label="">
+              <label className="ui-label">
+                <FieldLabel label="희망 상담 방식" />
+              </label>
               <Select
                 value={form.consultationMethod}
                 onChange={(event) => updateField("consultationMethod", event.target.value)}
@@ -471,7 +620,10 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
               </Select>
             </Field>
 
-            <Field label="희망 언어">
+            <Field label="">
+              <label className="ui-label">
+                <FieldLabel label="희망 언어" />
+              </label>
               <Select
                 value={form.preferredLanguage}
                 onChange={(event) => updateField("preferredLanguage", event.target.value)}
@@ -484,7 +636,10 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
               </Select>
             </Field>
 
-            <Field label="긴급도">
+            <Field label="">
+              <label className="ui-label">
+                <FieldLabel label="긴급도" />
+              </label>
               <Select
                 value={form.declaredUrgency}
                 onChange={(event) => updateField("declaredUrgency", event.target.value as UrgencyLevel)}
@@ -496,8 +651,81 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
                 ))}
               </Select>
             </Field>
+          </FieldGroup>
+        </section>
 
-            <Field label="사건/업무 개요" hint="현재 상황, 원하는 결과, 기한을 중심으로 적어 주세요.">
+        {selectedCategory ? (
+          <section className="space-y-4 border-t border-line pt-6">
+            <StepHeader
+              step={3}
+              title="분야별 상세 질문"
+              description="정확히 모르는 항목은 비워도 됩니다. 핵심 분류 질문만 먼저 확인합니다."
+            />
+            <div className="rounded-md border border-line bg-surface-muted p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge>{intakeCategoryLabels[selectedCategory]}</Badge>
+                <span className="text-sm text-text-muted">{getCategoryGuidance(selectedCategory)}</span>
+              </div>
+            </div>
+            <div className="space-y-5">
+              {categoryFieldGroups.map((group) => (
+                <div key={group.title} className="space-y-3">
+                  <h4 className="text-sm font-semibold text-text-strong">{group.title}</h4>
+                  <FieldGroup>
+                    {group.fields.map((field) => (
+                      <CategoryField
+                        key={field.key}
+                        field={field}
+                        required={isRequiredCategoryField(selectedCategory, field)}
+                        value={form.categoryDetails[field.key] ?? ""}
+                        onChange={(value) => updateCategoryDetail(field.key, value)}
+                      />
+                    ))}
+                  </FieldGroup>
+                </div>
+              ))}
+            </div>
+            {selectedCategory === "civil_petition" && selectedCivilPetitionSubtype ? (
+              <div className="space-y-4 border-t border-line pt-5">
+                <div>
+                  <p className="ui-kicker">{selectedCivilPetitionSubtype} 추가 질문</p>
+                  <p className="mt-2 text-sm text-text-muted">
+                    선택한 민원 세부 유형에 맞춰 필요한 추가 정보를 확인합니다.
+                  </p>
+                </div>
+                <div className="space-y-5">
+                  {civilPetitionSubtypeFieldGroups.map((group) => (
+                    <div key={group.title} className="space-y-3">
+                      <h4 className="text-sm font-semibold text-text-strong">{group.title}</h4>
+                      <FieldGroup>
+                        {group.fields.map((field) => (
+                          <CategoryField
+                            key={field.key}
+                            field={field}
+                            value={form.categoryDetails[field.key] ?? ""}
+                            onChange={(value) => updateCategoryDetail(field.key, value)}
+                          />
+                        ))}
+                      </FieldGroup>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        <section className="space-y-4 border-t border-line pt-6">
+          <StepHeader
+            step={4}
+            title="사건 개요 및 서류"
+            description="현재 상황과 보유 자료를 알려 주시면 담당자가 확인할 범위를 줄일 수 있습니다."
+          />
+          <FieldGroup>
+            <Field label="" hint="현재 상황, 원하는 결과, 기한을 중심으로 적어 주세요.">
+              <label className="ui-label">
+                <FieldLabel label="사건/업무 개요" required />
+              </label>
               <Textarea
                 required
                 rows={7}
@@ -509,7 +737,10 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
               />
             </Field>
 
-            <Field label="관련 서류 보유 여부">
+            <Field label="">
+              <label className="ui-label">
+                <FieldLabel label="관련 서류 보유 여부" />
+              </label>
               <Select
                 value={form.documentAvailability}
                 onChange={(event) => updateField("documentAvailability", event.target.value)}
@@ -524,48 +755,45 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
           </FieldGroup>
         </section>
 
-        {selectedCategory ? (
-          <section className="space-y-4 border-t border-line pt-6">
-            <div>
-              <p className="ui-kicker">{intakeCategoryLabels[selectedCategory]} 세부 정보</p>
-              <p className="mt-2 text-sm text-text-muted">
-                정확히 모르는 항목은 비워도 됩니다. 담당자가 확인 후 필요한 자료를 안내합니다.
-              </p>
-            </div>
-            <FieldGroup>
-              {selectedCategoryFields.map((field) => (
-                <CategoryField
-                  key={field.key}
-                  field={field}
-                  value={form.categoryDetails[field.key] ?? ""}
-                  onChange={(value) => updateCategoryDetail(field.key, value)}
-                />
-              ))}
-            </FieldGroup>
-            {selectedCategory === "civil_petition" && selectedCivilPetitionSubtype ? (
-              <div className="space-y-4 border-t border-line pt-5">
-                <div>
-                  <p className="ui-kicker">{selectedCivilPetitionSubtype} 추가 질문</p>
-                  <p className="mt-2 text-sm text-text-muted">
-                    선택한 민원 세부 유형에 맞춰 필요한 추가 정보를 확인합니다.
-                  </p>
-                </div>
-                <FieldGroup>
-                  {selectedCivilPetitionSubtypeFields.map((field) => (
-                    <CategoryField
-                      key={field.key}
-                      field={field}
-                      value={form.categoryDetails[field.key] ?? ""}
-                      onChange={(value) => updateCategoryDetail(field.key, value)}
-                    />
-                  ))}
-                </FieldGroup>
-              </div>
-            ) : null}
-          </section>
-        ) : null}
-
         <section className="space-y-4 border-t border-line pt-6">
+          <StepHeader
+            step={5}
+            title="동의 및 제출"
+            description="제출 전 선택한 접수 내용을 한 번만 확인해 주세요."
+          />
+          <div className="rounded-md border border-line bg-surface-muted p-4">
+            <p className="text-sm font-semibold text-text-strong">제출 전 요약</p>
+            <dl className="mt-3 grid gap-2 text-sm">
+              <div className="flex flex-wrap gap-x-2 gap-y-1">
+                <dt className="text-text-muted">업무 분야</dt>
+                <dd className="font-medium text-text-strong">
+                  {selectedCategory ? intakeCategoryLabels[selectedCategory] : "선택 전"}
+                </dd>
+              </div>
+              {selectedCategory === "civil_petition" && selectedCivilPetitionSubtype ? (
+                <div className="flex flex-wrap gap-x-2 gap-y-1">
+                  <dt className="text-text-muted">민원 세부 유형</dt>
+                  <dd className="font-medium text-text-strong">{selectedCivilPetitionSubtype}</dd>
+                </div>
+              ) : null}
+              <div className="flex flex-wrap gap-x-2 gap-y-1">
+                <dt className="text-text-muted">희망 상담 방식</dt>
+                <dd className="font-medium text-text-strong">{form.consultationMethod}</dd>
+              </div>
+              <div className="flex flex-wrap gap-x-2 gap-y-1">
+                <dt className="text-text-muted">희망 언어</dt>
+                <dd className="font-medium text-text-strong">{form.preferredLanguage}</dd>
+              </div>
+              <div className="flex flex-wrap gap-x-2 gap-y-1">
+                <dt className="text-text-muted">긴급도</dt>
+                <dd className="font-medium text-text-strong">{urgencyOptionLabels[form.declaredUrgency]}</dd>
+              </div>
+              <div className="flex flex-wrap gap-x-2 gap-y-1">
+                <dt className="text-text-muted">관련 서류</dt>
+                <dd className="font-medium text-text-strong">{form.documentAvailability}</dd>
+              </div>
+            </dl>
+          </div>
           <label className="flex items-start gap-3 rounded-md border border-line bg-surface-muted p-4">
             <input
               required
