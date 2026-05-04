@@ -8,6 +8,7 @@ import {
 } from "@/lib/security/rate-limit";
 import { getPublicIntakeControlSnapshot } from "@/lib/services/public-intake-control-service-safe-v3";
 import { createInquiry } from "@/lib/services/inquiry-service";
+import { extractPublicTrackingCodeFromCommunicationLogs } from "@/lib/services/public-tracking-code-service";
 
 const KO_INVALID_JSON_SAFE =
   "\uC694\uCCAD \uBCF8\uBB38\uC774 \uC62C\uBC14\uB978 JSON \uD615\uC2DD\uC774 \uC544\uB2D9\uB2C8\uB2E4. \uC785\uB825 \uB0B4\uC6A9\uC744 \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.";
@@ -52,6 +53,7 @@ const ALLOWED_ORIGINS = parseAllowedOrigins(process.env.PUBLIC_INTAKE_ALLOWED_OR
 type PublicInquiryResponse = {
   received: true;
   message: string;
+  trackingCode?: string;
 };
 
 type IntakeAvailabilityResponse = {
@@ -184,10 +186,11 @@ function getHoneypotValue(payload: unknown) {
 }
 
 export function toPublicInquiryResponse(inquiry: CreatedInquiryRecord): PublicInquiryResponse {
-  void inquiry;
+  const trackingCode = extractPublicTrackingCodeFromCommunicationLogs(inquiry?.communicationLogs);
   return {
     received: true,
-    message: "\uC811\uC218\uAC00 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2F4\uB2F9\uC790\uAC00 \uD655\uC778 \uD6C4 \uC5F0\uB77D\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4."
+    message: "\uC811\uC218\uAC00 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2F4\uB2F9\uC790\uAC00 \uD655\uC778 \uD6C4 \uC5F0\uB77D\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4.",
+    ...(trackingCode ? { trackingCode } : {})
   };
 }
 

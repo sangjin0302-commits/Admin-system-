@@ -62,12 +62,19 @@ export function InquiryDetailEvidenceSection(input: {
 export function InquiryDetailIntakeCategorySection(input: {
   summary: IntakeCategoryDetailSummary;
   urgencyLabel: string;
+  publicTrackingCode: string | null;
 }) {
   const { summary } = input;
 
   return (
     <Card className="p-6">
       <h3 className="ui-section-title">접수 업무 분야</h3>
+      <Card muted className="mt-5 p-5">
+        <p className="ui-kicker">고객용 접수번호</p>
+        <p className="mt-2 text-sm font-semibold text-text-strong">
+          {input.publicTrackingCode || "아직 발급된 고객용 접수번호가 없습니다."}
+        </p>
+      </Card>
       {summary.categoryLabel ? (
         <>
           <div className="mt-5 grid gap-4 text-sm text-text sm:grid-cols-2">

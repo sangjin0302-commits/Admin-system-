@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { toPublicInquiryResponse } from "@/app/api/inquiries/route-safe-v3";
+import { buildPublicTrackingCommunicationLogEntry } from "@/lib/services/public-tracking-code-service";
 import { parseCreateInquiryInput } from "@/lib/validation/inquiry-safe";
 import {
   civilPetitionSubtypeValues,
@@ -124,9 +125,16 @@ assert.match(parsedArabicInterpretation.description, /업무 유형: 통역/);
 assert.match(parsedArabicInterpretation.description, /통역 방식: 화상/);
 assert.match(parsedArabicInterpretation.description, /민감 정보 포함 여부: 있음/);
 
-const publicResponse = toPublicInquiryResponse({} as never);
+const publicTrackingLog = buildPublicTrackingCommunicationLogEntry(
+  "20260427-VI-0007-K3",
+  new Date("2026-04-27T03:00:00.000Z")
+);
+const publicResponse = toPublicInquiryResponse({
+  communicationLogs: JSON.stringify([publicTrackingLog])
+} as never);
 const publicResponseJson = JSON.stringify(publicResponse);
 assert.equal(publicResponse.received, true);
+assert.equal(publicResponse.trackingCode, "20260427-VI-0007-K3");
 assert.match(publicResponseJson, /접수가 완료되었습니다/);
 for (const blocked of ["id", "inquiryId", "caseId", "workflowStatus", "bridgeWorkflowStatus", "lawbot", "Lawbot"]) {
   assert.equal(publicResponseJson.includes(blocked), false, `${blocked} must not be public`);
@@ -183,6 +191,7 @@ for (const guidance of [
 }
 assert.equal(intakeFormSource.includes("run-lawbot-workflow"), false);
 assert.equal(intakeFormSource.includes("client-message-service"), false);
+assert.match(intakeFormSource, /접수번호/);
 const legacyArabicTranslationLabel = ["기타", "아랍어", "번역"].join(" ");
 assert.equal(intakeFormSource.includes(legacyArabicTranslationLabel), false);
 assert.equal(intakeCategorySource.includes(legacyArabicTranslationLabel), false);
@@ -195,3 +204,10 @@ assert.equal(routeSource.includes("id: inquiry.id"), false);
 assert.equal(routeSource.includes("workflowStatus"), false);
 assert.equal(routeSource.includes("updatedBy:"), false);
 assert.equal(routeSource.includes("controlSource:"), false);
+
+const adminDetailSource = readFileSync(
+  join(root, "src/components/admin/inquiry-detail-content-sections.tsx"),
+  "utf8"
+);
+assert.match(adminDetailSource, /고객용 접수번호/);
+assert.match(adminDetailSource, /아직 발급된 고객용 접수번호가 없습니다/);

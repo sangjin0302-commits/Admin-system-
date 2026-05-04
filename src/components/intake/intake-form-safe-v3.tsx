@@ -33,6 +33,7 @@ type IntakeResponse = {
   inquiry?: {
     received: boolean;
     message: string;
+    trackingCode?: string;
   };
 };
 
@@ -288,6 +289,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
   const [intakeAvailable, setIntakeAvailable] = useState(true);
   const [intakeMessage, setIntakeMessage] = useState("");
   const [completedMessage, setCompletedMessage] = useState("");
+  const [completedTrackingCode, setCompletedTrackingCode] = useState("");
 
   const selectedCategory = form.category || null;
   const selectedCategoryFields = useMemo(
@@ -360,6 +362,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
       categoryDetails: {}
     }));
     setCompletedMessage("");
+    setCompletedTrackingCode("");
     setError("");
   }
 
@@ -457,6 +460,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
     setError("");
     setNotice("");
     setCompletedMessage("");
+    setCompletedTrackingCode("");
     let timeoutId: number | undefined;
 
     try {
@@ -477,6 +481,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
 
       const data = (await response.json().catch(() => null)) as IntakeResponse | null;
       setCompletedMessage(data?.inquiry?.message || COMPLETE_MESSAGE);
+      setCompletedTrackingCode(data?.inquiry?.trackingCode ?? "");
       if (data?.deduplicated) {
         setNotice("최근 동일 문의가 확인되어 기존 접수 흐름으로 연결했습니다.");
       }
@@ -820,6 +825,11 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
         <section className="rounded-md border border-line bg-surface-muted p-5">
           <p className="ui-kicker">접수 완료</p>
           <p className="mt-2 text-base font-semibold text-text-strong">{COMPLETE_MESSAGE}</p>
+          {completedTrackingCode ? (
+            <p className="mt-3 text-sm text-text">
+              접수번호: <span className="font-semibold text-text-strong">{completedTrackingCode}</span>
+            </p>
+          ) : null}
         </section>
       ) : null}
     </div>
