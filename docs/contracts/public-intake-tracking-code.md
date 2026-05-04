@@ -43,11 +43,55 @@ The monthly sequence is currently calculated as the count of inquiries in the Ko
 
 The count-based sequence can still race between concurrent submissions. The unique `publicTrackingCode` constraint keeps lookup keys unique, but a future transactional sequence allocator can make the monthly sequence itself deterministic under heavy concurrency.
 
-## Public Lookup Requirements
+## Public Lookup API
 
-Future `/track` lookup must require both:
+`POST /api/public/track` is the first public lookup endpoint. The `/track`
+page is still intentionally out of scope.
+
+Request body:
+
+```json
+{
+  "trackingCode": "20260504-VI-0001-K3",
+  "phoneLast4": "1234"
+}
+```
+
+Lookup requires both:
 
 - `trackingCode`
 - last four digits of the submitted phone number
 
-The public tracking response must remain a safe DTO and must not expose internal ids, Lawbot status, approval gate data, draft content, admin notes, raw legal analysis, or reviewer-facing arrays.
+The route normalizes `trackingCode` with trim + uppercase and normalizes
+`phoneLast4` to the final four digits. Invalid input returns `400`. Missing or
+incorrect lookup pairs return the same generic `404` message so callers cannot
+distinguish whether a tracking code exists.
+
+Allowed response fields:
+
+- `trackingCode`
+- `categoryLabel`
+- `categoryDetailLabel`
+- `receivedAt`
+- `lastUpdatedAt`
+- `customerStatus`
+- `customerStatusLabel`
+- `message`
+- `documentsRequested`
+- `nextStepLabel`
+
+Customer-facing statuses are limited to:
+
+- `RECEIVED`
+- `UNDER_REVIEW`
+- `IN_REVIEW`
+- `DOCUMENTS_REQUESTED`
+- `COMPLETED`
+
+The public tracking response must remain a safe DTO and must not expose
+internal ids, Lawbot status, approval gate data, draft content, admin notes,
+raw legal analysis, internal logs, or reviewer-facing arrays.
+
+The endpoint uses the existing in-memory public rate limit helper as a first
+guard. A durable shared rate limit should be added before high-volume public
+traffic.
