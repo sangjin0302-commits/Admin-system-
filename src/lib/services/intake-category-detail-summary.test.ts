@@ -36,6 +36,25 @@ assert.equal(empty.categoryLabel, null);
 assert.equal(empty.cleanedDescription, "일반 문의입니다.");
 assert.deepEqual(empty.detailRows, []);
 
+const legacyArabicTranslation = buildIntakeCategoryDetailSummary(`기관 제출용 번역 상담입니다.
+
+[업무 분야]
+기타 아랍어 번역
+
+[분야별 세부사항]
+- 업무 유형: 번역
+- 통역 방식: 해당 없음`);
+
+assert.equal(
+  legacyArabicTranslation.categoryLabel,
+  "아랍어 통번역",
+  "legacy 기타 아랍어 번역 label must render as current admin label"
+);
+assert.deepEqual(legacyArabicTranslation.detailRows, [
+  { label: "업무 유형", value: "번역" },
+  { label: "통역 방식", value: "해당 없음" }
+]);
+
 const rowText = summary.detailRows.map((row) => `${row.label}: ${row.value}`).join("\n");
 assert.equal(rowText.includes("undefined 값"), false);
 assert.equal(rowText.includes("null 값"), false);

@@ -175,6 +175,7 @@ export function parseCreateInquiryInput(payload: unknown) {
       hasOwnStringValue(categoryDetails, "generalTargetAgency") ||
       hasOwnStringValue(categoryDetails, "disclosureTargetAgency") ||
       hasOwnStringValue(categoryDetails, "relatedAgencyDepartment") ||
+      hasOwnStringValue(categoryDetails, "submissionAgencyOrUsePurpose") ||
       hasOwnStringValue(categoryDetails, "submissionAgency"),
     dueDate:
       parsedDueDate && !Number.isNaN(parsedDueDate.getTime())

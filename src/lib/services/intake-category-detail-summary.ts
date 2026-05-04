@@ -15,6 +15,10 @@ export type IntakeCategoryDetailSummary = {
 
 const CATEGORY_MARKER = "[업무 분야]";
 const DETAIL_MARKER = "[분야별 세부사항]";
+const LEGACY_CATEGORY_LABELS: Record<string, string> = {
+  // Backward compatibility: older intake rows stored this display label in description text.
+  "기타 아랍어 번역": "아랍어 통번역"
+};
 const RESERVED_LABELS = new Set([
   "민원 세부 유형",
   "희망 상담 방식",
@@ -26,6 +30,11 @@ function cleanText(value: string | null | undefined) {
   const cleaned = (value ?? "").replace(/\u0000/g, "").replace(/\uFFFD/g, "").trim();
   if (!cleaned || cleaned === "undefined" || cleaned === "null") return null;
   return cleaned;
+}
+
+function normalizeCategoryLabel(value: string | null) {
+  if (!value) return null;
+  return LEGACY_CATEGORY_LABELS[value] ?? value;
 }
 
 function parseDetailLine(line: string): IntakeCategoryDetailRow | null {
@@ -61,7 +70,7 @@ export function buildIntakeCategoryDetailSummary(description: string): IntakeCat
   const categoryMarkerIndex = lines.findIndex((line) => line === CATEGORY_MARKER);
   const detailMarkerIndex = lines.findIndex((line) => line === DETAIL_MARKER);
   const categoryLabel =
-    categoryMarkerIndex >= 0 ? cleanText(lines[categoryMarkerIndex + 1]) : null;
+    categoryMarkerIndex >= 0 ? normalizeCategoryLabel(cleanText(lines[categoryMarkerIndex + 1])) : null;
   const detailLines =
     detailMarkerIndex >= 0 ? lines.slice(detailMarkerIndex + 1) : [];
   const rows = detailLines.map(parseDetailLine).filter((row): row is IntakeCategoryDetailRow => Boolean(row));

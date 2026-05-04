@@ -92,7 +92,7 @@ function getCategoryHelp(category: IntakeCategory) {
     administrative_appeal: "처분일과 불복 기한을 기준으로 진행 가능성을 확인합니다.",
     fact_finding_contract: "사실관계와 최종 사용 목적을 기준으로 필요한 문서 범위를 정합니다.",
     permit_license: "대상 기관, 진행 단계, 보완 요구 여부를 중심으로 준비 범위를 확인합니다.",
-    arabic_translation: "번역 방향, 인증 필요성, 제출 기관을 기준으로 납기와 범위를 확인합니다.",
+    arabic_translation: "아랍어 번역, 통역, 공증·인증, 기관 제출용 문서 지원 범위를 확인합니다.",
     civil_petition: "자동차 등록, 일반 민원, 고충 민원, 정보 공개 등 생활 행정민원을 분류합니다."
   };
   return help[category];
@@ -277,6 +277,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
         form.categoryDetails.generalTargetAgency ??
         form.categoryDetails.disclosureTargetAgency ??
         form.categoryDetails.relatedAgencyDepartment ??
+        form.categoryDetails.submissionAgencyOrUsePurpose ??
         form.categoryDetails.submissionAgency ??
         "",
       hasPreparedDocuments: getBooleanFromAvailability(form.documentAvailability),
