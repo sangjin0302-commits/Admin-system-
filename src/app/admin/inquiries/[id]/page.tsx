@@ -1,6 +1,7 @@
 import { InquiryActionChecklistPanel } from "@/components/admin/inquiry-action-checklist-panel";
 import {
   InquiryDetailEvidenceSection,
+  InquiryDetailIntakeCategorySection,
   InquiryDetailInternalMemoSection
 } from "@/components/admin/inquiry-detail-content-sections";
 import { InquiryDetailUnavailable } from "@/components/admin/inquiry-detail-common";
@@ -19,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { buildInquiryDetailPageData } from "@/lib/services/inquiry-detail-page-data";
 import { safeGetInquiryForDetail } from "@/lib/services/inquiry-detail-loaders";
+import { buildIntakeCategoryDetailSummary } from "@/lib/services/intake-category-detail-summary";
 import { formatDateTime } from "@/lib/utils";
 import {
   getClientTypeLabel,
@@ -119,6 +121,7 @@ export default async function AdminInquiryDetailPage({
       detailImmediateActions,
       checklistActionItems
     } = await buildInquiryDetailPageData(inquiry);
+    const intakeCategorySummary = buildIntakeCategoryDetailSummary(inquiry.description);
 
     return (
       <div className="space-y-6">
@@ -219,8 +222,12 @@ export default async function AdminInquiryDetailPage({
               hasPreparedDocuments={inquiry.hasPreparedDocuments}
               needsTranslation={inquiry.needsTranslation}
               wantsCallback={inquiry.wantsCallback}
-              description={inquiry.description}
+              description={intakeCategorySummary.cleanedDescription}
               requestedOutcome={inquiry.requestedOutcome}
+            />
+            <InquiryDetailIntakeCategorySection
+              summary={intakeCategorySummary}
+              urgencyLabel={getUrgencyLabel(declaredUrgency)}
             />
             <InquiryDetailInternalMemoSection
               structuredInternalMemo={structuredInternalMemo}
