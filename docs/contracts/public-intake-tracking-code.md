@@ -29,15 +29,19 @@ The final check code uses at least two non-ambiguous characters and avoids `O`, 
 
 ## Storage Decision
 
-Phase 1 stores the issued tracking code in `Inquiry.communicationLogs` as an internal log entry. This avoids a production schema dependency while preserving the code with the inquiry.
+Phase 1 stored the issued tracking code in `Inquiry.communicationLogs` as an internal log entry. The lookup-ready phase stores the same code in dedicated `Inquiry` fields while preserving the log entry for audit and backward compatibility:
 
-Long term, `/track` should use a dedicated indexed and unique database column, for example `Inquiry.publicTrackingCode String? @unique`, before public lookup is enabled. Searching JSON text in `communicationLogs` is acceptable for issuance display, but it is not the preferred lookup surface.
+- `publicTrackingCode String? @unique`
+- `publicTrackingPhoneLast4 String?`
+- `publicTrackingIssuedAt DateTime?`
+
+Admin display should prefer `publicTrackingCode` and fall back to the legacy communication log entry when the dedicated field is empty.
 
 ## Sequence Policy
 
-The monthly sequence is currently calculated as the count of inquiries in the Korea-local month plus one. A random check code and retry reduce collision risk.
+The monthly sequence is currently calculated as the count of inquiries in the Korea-local month plus one. A random check code and unique-code retry reduce collision risk.
 
-Before public tracking lookup ships, add a dedicated unique constraint or equivalent transactional allocation to close the race condition between concurrent submissions.
+The count-based sequence can still race between concurrent submissions. The unique `publicTrackingCode` constraint keeps lookup keys unique, but a future transactional sequence allocator can make the monthly sequence itself deterministic under heavy concurrency.
 
 ## Public Lookup Requirements
 
@@ -47,4 +51,3 @@ Future `/track` lookup must require both:
 - last four digits of the submitted phone number
 
 The public tracking response must remain a safe DTO and must not expose internal ids, Lawbot status, approval gate data, draft content, admin notes, raw legal analysis, or reviewer-facing arrays.
-

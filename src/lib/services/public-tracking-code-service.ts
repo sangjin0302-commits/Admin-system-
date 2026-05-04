@@ -26,6 +26,11 @@ export type PublicTrackingCodeInput = {
   checkCode?: string;
 };
 
+export type PublicTrackingCodeLike = {
+  publicTrackingCode?: string | null;
+  communicationLogs?: string | null;
+};
+
 export function getPublicTrackingCategoryCode(category: IntakeCategory) {
   return CATEGORY_CODES[category];
 }
@@ -76,6 +81,12 @@ export function normalizePublicTrackingCheckCode(value: string) {
     .slice(0, 6);
 }
 
+export function normalizePhoneLast4(value: string | null | undefined) {
+  const digits = (value ?? "").replace(/\D/g, "");
+  if (digits.length < 4) return null;
+  return digits.slice(-4);
+}
+
 export function generatePublicTrackingCode(input: PublicTrackingCodeInput) {
   if (!Number.isInteger(input.monthlySequence) || input.monthlySequence < 1) {
     throw new Error("monthlySequence must be a positive integer.");
@@ -118,3 +129,6 @@ export function extractPublicTrackingCodeFromCommunicationLogs(value: string | n
   return match?.[1] ?? null;
 }
 
+export function getPublicTrackingCodeFromInquiry(input: PublicTrackingCodeLike | null | undefined) {
+  return input?.publicTrackingCode ?? extractPublicTrackingCodeFromCommunicationLogs(input?.communicationLogs);
+}

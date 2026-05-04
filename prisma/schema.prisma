@@ -302,6 +302,9 @@ model Inquiry {
   wantsCallback            Boolean       @default(false)
   consentToPrivacy         Boolean       @default(false)
   intakeSource             String        @default("website")
+  publicTrackingCode       String?       @unique
+  publicTrackingPhoneLast4 String?
+  publicTrackingIssuedAt   DateTime?
   generatedSummary         String
   generatedGuidance        String
   generatedReceiptMessage  String
@@ -329,6 +332,9 @@ model Inquiry {
   documentRequestTasks     DocumentRequestTask[]
   documentDrafts           DocumentDraft[]
   messageDrafts            MessageDraft[]
+
+  @@index([publicTrackingPhoneLast4])
+  @@index([publicTrackingIssuedAt])
 }
 
 model ServiceType {
