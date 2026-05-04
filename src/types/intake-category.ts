@@ -36,7 +36,7 @@ export const intakeCategoryLabels: Record<IntakeCategory, string> = {
   administrative_appeal: "행정심판",
   fact_finding_contract: "사실조사 및 계약서 작성",
   permit_license: "인허가",
-  arabic_translation: "기타 아랍어 번역",
+  arabic_translation: "아랍어 통번역",
   civil_petition: "기타 민원"
 };
 
@@ -142,16 +142,18 @@ export const intakeCategoryDetailFields: Record<IntakeCategory, readonly IntakeC
     { key: "businessType", label: "영업 형태 또는 업종", input: "text" }
   ],
   arabic_translation: [
-    { key: "translationDirection", label: "번역 방향", input: "select", options: ["아랍어 → 한국어", "한국어 → 아랍어", "영어 포함", "기타"] },
-    { key: "documentType", label: "문서 종류", input: "text" },
+    { key: "workType", label: "업무 유형", input: "select", options: ["번역", "통역", "번역+공증", "기관 제출용 문서", "기타"] },
+    { key: "languageDirection", label: "언어 방향", input: "select", options: ["아랍어 → 한국어", "한국어 → 아랍어", "영어 포함", "기타"] },
+    { key: "documentOrInterpretationField", label: "문서 종류 또는 통역 분야", input: "text" },
+    { key: "interpretationMethod", label: "통역 방식", input: "select", options: ["방문", "전화", "화상", "동행", "해당 없음"] },
+    { key: "interpretationScheduleOrDeadline", label: "통역 일정 또는 희망 납기", input: "text" },
+    { key: "submissionAgencyOrUsePurpose", label: "제출 기관 또는 사용 목적", input: "text" },
     { key: "needsNotaryCertification", label: "공증/인증 필요 여부", input: "select", options: ["필요", "불필요", "확인 필요"] },
     { key: "needsApostilleOrConsular", label: "아포스티유/영사확인 필요 여부", input: "select", options: ["필요", "불필요", "확인 필요"] },
-    { key: "submissionAgency", label: "제출 기관", input: "text" },
-    { key: "volume", label: "분량", input: "text" },
-    { key: "desiredDeadline", label: "희망 납기", input: "date" },
     { key: "hasOriginalFile", label: "원본 파일 보유 여부", input: "select", options: ["예", "아니오", "스캔본만 보유"] },
-    { key: "sourceAndTargetLanguage", label: "원문 언어와 대상 언어", input: "text" },
-    { key: "nameTransliterationCheck", label: "이름/기관명 표기 방식 확인 필요 여부", input: "select", options: ["필요", "불필요", "확인 필요"] }
+    { key: "volumeOrEstimatedTime", label: "분량 또는 예상 시간", input: "text" },
+    { key: "nameTransliterationCheck", label: "이름/기관명 표기 방식 확인 필요 여부", input: "select", options: ["필요", "불필요", "확인 필요"] },
+    { key: "hasSensitiveInfo", label: "민감 정보 포함 여부", input: "select", options: ["있음", "없음", "확인 필요"] }
   ],
   civil_petition: [
     { key: "civilPetitionType", label: "민원 세부 유형", input: "select", options: civilPetitionSubtypeValues },

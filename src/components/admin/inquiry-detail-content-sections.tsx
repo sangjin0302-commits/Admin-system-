@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { InfoItem } from "@/components/admin/inquiry-detail-common";
+import type { IntakeCategoryDetailSummary } from "@/lib/services/intake-category-detail-summary";
 
 type StructuredMemoLike = {
   metadata: {
@@ -54,6 +55,49 @@ export function InquiryDetailEvidenceSection(input: {
           {input.requestedOutcome || "미입력"}
         </p>
       </Card>
+    </Card>
+  );
+}
+
+export function InquiryDetailIntakeCategorySection(input: {
+  summary: IntakeCategoryDetailSummary;
+  urgencyLabel: string;
+}) {
+  const { summary } = input;
+
+  return (
+    <Card className="p-6">
+      <h3 className="ui-section-title">접수 업무 분야</h3>
+      {summary.categoryLabel ? (
+        <>
+          <div className="mt-5 grid gap-4 text-sm text-text sm:grid-cols-2">
+            <InfoItem label="업무 분야" value={summary.categoryLabel} />
+            <InfoItem label="세부 유형" value={summary.subtypeLabel} />
+            <InfoItem label="긴급도" value={input.urgencyLabel} />
+            <InfoItem label="희망 상담 방식" value={summary.consultationMethod} />
+            <InfoItem label="희망 언어" value={summary.preferredLanguage} />
+            <InfoItem label="관련 서류 보유 여부" value={summary.documentAvailability} />
+          </div>
+          {summary.detailRows.length > 0 ? (
+            <div className="mt-6">
+              <p className="ui-kicker">분야별 주요 답변</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {summary.detailRows.map((row) => (
+                  <InfoItem key={`${row.label}-${row.value}`} label={row.label} value={row.value} />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <Card muted className="mt-6 p-5">
+              <p className="text-sm text-text-muted">분야별 추가 답변이 없습니다.</p>
+            </Card>
+          )}
+        </>
+      ) : (
+        <Card muted className="mt-5 p-5">
+          <p className="text-sm text-text-muted">접수 분야 정보가 아직 없습니다.</p>
+        </Card>
+      )}
     </Card>
   );
 }

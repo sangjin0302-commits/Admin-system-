@@ -27,6 +27,7 @@ const basePayload = {
 assert.equal(intakeCategoryValues.length, 7);
 assert.equal(intakeCategoryValues.includes("civil_petition"), true);
 assert.equal(intakeCategoryLabels.civil_petition, "기타 민원");
+assert.equal(intakeCategoryLabels.arabic_translation, "아랍어 통번역");
 for (const subtype of ["자동차 등록", "일반 민원", "고충 민원", "정보 공개"]) {
   assert.equal(civilPetitionSubtypeValues.includes(subtype as never), true);
 }
@@ -100,6 +101,29 @@ assert.match(parsedCivilPetition.description, /민원 세부 유형: 자동차 �
 assert.match(parsedCivilPetition.description, /차량 구분: 이전/);
 assert.match(parsedCivilPetition.description, /차량 소유자 구분: 외국인/);
 
+const parsedArabicInterpretation = parseCreateInquiryInput({
+  ...basePayload,
+  title: "아랍어 통번역 상담 요청",
+  description: "기관 제출과 화상 통역이 함께 필요해서 상담을 요청합니다.",
+  category: "arabic_translation",
+  categoryDetails: {
+    workType: "통역",
+    languageDirection: "아랍어 → 한국어",
+    documentOrInterpretationField: "출입국 상담",
+    interpretationMethod: "화상",
+    interpretationScheduleOrDeadline: "다음 주",
+    submissionAgencyOrUsePurpose: "출입국사무소 상담",
+    hasSensitiveInfo: "있음"
+  }
+});
+
+assert.equal(parsedArabicInterpretation.requestedInquiryType, "TRANSLATION_NOTARY");
+assert.equal(parsedArabicInterpretation.targetAgency, "출입국사무소 상담");
+assert.match(parsedArabicInterpretation.description, /아랍어 통번역/);
+assert.match(parsedArabicInterpretation.description, /업무 유형: 통역/);
+assert.match(parsedArabicInterpretation.description, /통역 방식: 화상/);
+assert.match(parsedArabicInterpretation.description, /민감 정보 포함 여부: 있음/);
+
 const publicResponse = toPublicInquiryResponse({} as never);
 const publicResponseJson = JSON.stringify(publicResponse);
 assert.equal(publicResponse.received, true);
@@ -128,7 +152,7 @@ for (const label of [
   "행정심판",
   "사실조사 및 계약서 작성",
   "인허가",
-  "기타 아랍어 번역",
+  "아랍어 통번역",
   "기타 민원",
   "자동차 등록",
   "일반 민원",
@@ -141,6 +165,12 @@ for (const label of [
 }
 assert.equal(intakeFormSource.includes("run-lawbot-workflow"), false);
 assert.equal(intakeFormSource.includes("client-message-service"), false);
+const legacyArabicTranslationLabel = ["기타", "아랍어", "번역"].join(" ");
+assert.equal(intakeFormSource.includes(legacyArabicTranslationLabel), false);
+assert.equal(intakeCategorySource.includes(legacyArabicTranslationLabel), false);
+for (const label of ["업무 유형", "통역 방식", "민감 정보 포함 여부"]) {
+  assert.match(intakeCategorySource, new RegExp(label));
+}
 
 const routeSource = readFileSync(join(root, "src/app/api/inquiries/route-safe-v3.ts"), "utf8");
 assert.equal(routeSource.includes("id: inquiry.id"), false);
