@@ -8,7 +8,6 @@ import {
 } from "@/lib/security/rate-limit";
 import { getPublicIntakeControlSnapshot } from "@/lib/services/public-intake-control-service-safe-v3";
 import { createInquiry } from "@/lib/services/inquiry-service";
-import type { InquiryType, UrgencyLevel } from "@/types/inquiry";
 
 const KO_INVALID_JSON_SAFE =
   "\uC694\uCCAD \uBCF8\uBB38\uC774 \uC62C\uBC14\uB978 JSON \uD615\uC2DD\uC774 \uC544\uB2D9\uB2C8\uB2E4. \uC785\uB825 \uB0B4\uC6A9\uC744 \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.";
@@ -51,14 +50,8 @@ const ALLOW_MISSING_ORIGIN = getEnvBoolean("PUBLIC_INTAKE_ALLOW_MISSING_ORIGIN",
 const ALLOWED_ORIGINS = parseAllowedOrigins(process.env.PUBLIC_INTAKE_ALLOWED_ORIGINS);
 
 type PublicInquiryResponse = {
-  id: string;
-  inquiryType: InquiryType;
-  urgencyLevel: UrgencyLevel;
-  generatedSummary: string;
-  generatedGuidance: string;
-  generatedReceiptMessage: string;
-  consultationRequired: boolean;
-  riskComplexityHint?: string | null;
+  received: true;
+  message: string;
 };
 
 type IntakeAvailabilityResponse = {
@@ -67,9 +60,6 @@ type IntakeAvailabilityResponse = {
   maintenanceMode: boolean;
   maintenanceMessage: string | null;
   retryAfterSec: number | null;
-  controlSource: "env" | "db";
-  updatedAt: string | null;
-  updatedBy: string | null;
 };
 
 type CreatedInquiryRecord = Awaited<ReturnType<typeof createInquiry>>;
@@ -193,16 +183,11 @@ function getHoneypotValue(payload: unknown) {
   return "";
 }
 
-function toPublicInquiryResponse(inquiry: CreatedInquiryRecord): PublicInquiryResponse {
+export function toPublicInquiryResponse(inquiry: CreatedInquiryRecord): PublicInquiryResponse {
+  void inquiry;
   return {
-    id: inquiry.id,
-    inquiryType: inquiry.inquiryType as InquiryType,
-    urgencyLevel: inquiry.urgencyLevel as UrgencyLevel,
-    generatedSummary: inquiry.generatedSummary,
-    generatedGuidance: inquiry.generatedGuidance,
-    generatedReceiptMessage: inquiry.generatedReceiptMessage,
-    consultationRequired: inquiry.consultationRequired,
-    riskComplexityHint: inquiry.riskComplexityHint
+    received: true,
+    message: "\uC811\uC218\uAC00 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2F4\uB2F9\uC790\uAC00 \uD655\uC778 \uD6C4 \uC5F0\uB77D\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4."
   };
 }
 
@@ -238,10 +223,7 @@ function buildIntakeAvailability(
     available: !control.maintenanceMode,
     maintenanceMode: control.maintenanceMode,
     maintenanceMessage: control.maintenanceMode ? control.maintenanceMessage : null,
-    retryAfterSec: control.maintenanceMode ? control.retryAfterSec : null,
-    controlSource: control.source,
-    updatedAt: control.updatedAt,
-    updatedBy: control.updatedBy
+    retryAfterSec: control.maintenanceMode ? control.retryAfterSec : null
   };
 }
 
