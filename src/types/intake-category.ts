@@ -228,3 +228,242 @@ export function getIntakeCategoryDetailLabel(category: IntakeCategory, key: stri
 
   return key;
 }
+
+export type IntakeCategoryDisplayLocale = "ko" | "en";
+
+const intakeCategoryEnglishLabels: Record<IntakeCategory, string> = {
+  visa: "Visa",
+  corporation: "Corporate services",
+  administrative_appeal: "Administrative appeal",
+  fact_finding_contract: "Fact investigation and contract drafting",
+  permit_license: "Permits and licenses",
+  arabic_translation: "Arabic translation and interpretation",
+  civil_petition: "Other civil petitions"
+};
+
+const intakeCategoryEnglishHelp: Record<IntakeCategory, string> = {
+  visa: "Review visa status, invitation, extension, change, denial, or departure-order issues.",
+  corporation: "Review company setup, changes, foreign investment, branches, closures, and permit needs.",
+  administrative_appeal: "Review the agency action, notice date, appeal deadline, and desired outcome.",
+  fact_finding_contract: "Review facts, dispute context, documents needed, and submission or delivery purpose.",
+  permit_license: "Review permit type, target agency, current stage, supplement requests, and business type.",
+  arabic_translation: "Review Arabic translation, interpretation, notarization, certification, and agency submission needs.",
+  civil_petition: "Review vehicle registration, information disclosure, grievance petitions, and other civil petitions."
+};
+
+const intakeCategoryEnglishGuidance: Record<IntakeCategory, string> = {
+  visa: "We will check stay status, invitation, extension, change, and denial-response details.",
+  corporation: "We will check incorporation, changes, foreign investment, branch offices, and liquidation details.",
+  administrative_appeal: "We will check the disposition, appeal deadline, desired result, and need for suspension.",
+  fact_finding_contract: "We will check facts, disputes, needed documents, and submission or delivery target.",
+  permit_license: "We will check permit type, agency, progress stage, supplement requests, and industry details.",
+  arabic_translation: "We will check translation, interpretation, notarization, certification, and agency submission purpose.",
+  civil_petition: "We will check vehicle registration, information disclosure, grievances, and general civil petitions."
+};
+
+const intakeFieldEnglishLabels: Record<string, string> = {
+  workType: "Service type",
+  nationality: "Nationality",
+  currentVisaStatus: "Current visa status",
+  desiredVisaType: "Desired visa status",
+  stayExpiryDate: "Stay expiry date",
+  insideKorea: "Currently in Korea",
+  familyAccompanying: "Family accompanying",
+  priorDenialOrExitOrder: "Prior denial, refusal, or departure order",
+  currentDocuments: "Current documents",
+  urgentReason: "Urgent reason",
+  corporationType: "Corporation type",
+  representativeNationality: "Representative nationality",
+  shareholderOfficerStructure: "Shareholder/officer structure",
+  businessPurpose: "Business purpose",
+  capitalAmount: "Capital amount",
+  hasBusinessAddress: "Business address available",
+  requiredPermit: "Required permit or license",
+  foreignInvestorOrHq: "Foreign investor or overseas headquarters",
+  agency: "Disposition agency",
+  dispositionName: "Disposition name",
+  noticeDate: "Notice date",
+  hasDispositionNotice: "Disposition notice available",
+  knowsAppealDeadline: "Appeal deadline known",
+  desiredResult: "Desired result",
+  caseBackground: "Case background",
+  priorObjection: "Prior objection or civil petition",
+  hasEvidence: "Evidence available",
+  needsExecutionStay: "Need urgent suspension",
+  counterpartyType: "Counterparty type",
+  mainFacts: "Main facts",
+  keyDates: "Key dates",
+  hasDispute: "Dispute status",
+  documentType: "Desired document type",
+  hasExistingMaterials: "Existing contract or materials available",
+  finalUsePurpose: "Final use purpose",
+  submissionOrDeliveryTarget: "Submission or delivery target",
+  permitType: "Permit or license type",
+  targetAgency: "Target agency",
+  siteAddress: "Business site or target address",
+  currentStage: "Current stage",
+  priorConsultationOrFiling: "Prior consultation or filing",
+  hasSupplementRequest: "Supplement request received",
+  desiredCompletionDate: "Desired completion date",
+  hasPlansOrProof: "Plans, business plan, or proof available",
+  businessType: "Business type or industry",
+  languageDirection: "Language direction",
+  documentOrInterpretationField: "Document type or interpretation field",
+  interpretationMethod: "Interpretation method",
+  interpretationScheduleOrDeadline: "Interpretation schedule or desired deadline",
+  submissionAgencyOrUsePurpose: "Submission agency or use purpose",
+  needsNotaryCertification: "Notarization or certification needed",
+  needsApostilleOrConsular: "Apostille or consular confirmation needed",
+  hasOriginalFile: "Original file available",
+  volumeOrEstimatedTime: "Volume or estimated time",
+  nameTransliterationCheck: "Name or institution spelling confirmation needed",
+  hasSensitiveInfo: "Contains sensitive information",
+  civilPetitionType: "Petition subtype",
+  petitionTargetOrCase: "Petition target or related case",
+  petitionDocumentAvailability: "Related documents available",
+  vehicleRegistrationType: "Vehicle registration type",
+  vehicleOwnerType: "Vehicle owner type",
+  vehicleRegistrationArea: "Vehicle registration area",
+  hasVehicleRegistrationCertificate: "Vehicle registration certificate available",
+  hasTransferDeadline: "Transfer registration deadline",
+  vehicleFineLienMortgageIssue: "Fine, seizure, or mortgage issue",
+  generalPetitionType: "Petition type",
+  generalTargetAgency: "Target agency",
+  hasPetitionReceiptNumber: "Existing petition receipt number available",
+  processingDeadline: "Processing deadline",
+  desiredAnswerOrAction: "Desired answer or action",
+  damageOrInconvenience: "Damage or inconvenience",
+  relatedAgencyDepartment: "Related agency or department",
+  priorPetitionOrObjectionHistory: "Prior petition or objection history",
+  desiredResolutionMethod: "Desired resolution method",
+  hasSupportingEvidence: "Supporting evidence available",
+  disclosureTargetAgency: "Information disclosure target agency",
+  requestedInformation: "Information requested",
+  disclosureUsePurpose: "Use purpose",
+  preferredDisclosureMethod: "Preferred disclosure method",
+  priorNonDisclosureHistory: "Prior non-disclosure or partial disclosure history",
+  needsDisclosureObjection: "Need objection to disclosure decision",
+  otherPetitionType: "Other petition type",
+  otherPetitionDetails: "Additional details"
+};
+
+const intakeFieldEnglishOptions: Record<string, readonly string[]> = {
+  workType: ["New", "Extension", "Change", "Invitation", "Denial response", "Departure-order response", "Other"],
+  insideKorea: ["Yes", "No", "Need confirmation"],
+  familyAccompanying: ["Yes", "No", "Undecided"],
+  priorDenialOrExitOrder: ["Yes", "No", "Need confirmation"],
+  hasBusinessAddress: ["Yes", "No", "Planned"],
+  foreignInvestorOrHq: ["Yes", "No", "Need confirmation"],
+  hasDispositionNotice: ["Yes", "No", "Need confirmation"],
+  knowsAppealDeadline: ["Yes", "No", "Need confirmation"],
+  desiredResult: ["Cancellation", "Reduction", "Change", "New disposition", "Other"],
+  priorObjection: ["Yes", "No", "Need confirmation"],
+  hasEvidence: ["Yes", "No", "Partially available"],
+  needsExecutionStay: ["Needed", "Not needed", "Need confirmation"],
+  hasDispute: ["Yes", "No", "Possible"],
+  hasExistingMaterials: ["Yes", "No", "Partially available"],
+  priorConsultationOrFiling: ["Yes", "No", "Need confirmation"],
+  hasSupplementRequest: ["Yes", "No", "Need confirmation"],
+  hasPlansOrProof: ["Yes", "No", "Partially available"],
+  languageDirection: ["Arabic to Korean", "Korean to Arabic", "Includes English", "Other"],
+  interpretationMethod: ["In-person", "Phone", "Video call", "Accompaniment", "Not applicable"],
+  needsNotaryCertification: ["Needed", "Not needed", "Need confirmation"],
+  needsApostilleOrConsular: ["Needed", "Not needed", "Need confirmation"],
+  hasOriginalFile: ["Yes", "No", "Only scan/photo available"],
+  nameTransliterationCheck: ["Needed", "Not needed", "Need confirmation"],
+  hasSensitiveInfo: ["Yes", "No", "Need confirmation"],
+  civilPetitionType: [
+    "Vehicle registration",
+    "General civil petition",
+    "Grievance petition",
+    "Information disclosure request",
+    "Other"
+  ],
+  petitionDocumentAvailability: ["Documents available", "Partially available", "Not yet available", "Need confirmation"],
+  vehicleRegistrationType: ["New", "Transfer", "Cancellation", "Change", "License plate", "Other"],
+  vehicleOwnerType: ["Individual", "Corporation", "Foreigner", "Joint ownership"],
+  hasVehicleRegistrationCertificate: ["Yes", "No", "Need confirmation"],
+  hasTransferDeadline: ["Yes", "No", "Need confirmation"],
+  vehicleFineLienMortgageIssue: ["Yes", "No", "Need confirmation"],
+  hasPetitionReceiptNumber: ["Yes", "No", "Need confirmation"],
+  hasSupportingEvidence: ["Yes", "No", "Partially available"],
+  preferredDisclosureMethod: ["Inspection", "Copy", "Electronic file"],
+  priorNonDisclosureHistory: ["Yes", "No", "Need confirmation"],
+  needsDisclosureObjection: ["Needed", "Not needed", "Need confirmation"]
+};
+
+const arabicTranslationWorkTypeEnglishOptions = [
+  "Translation",
+  "Interpretation",
+  "Translation + notarization",
+  "Documents for agency submission",
+  "Other"
+] as const;
+
+const corporationWorkTypeEnglishOptions = [
+  "Incorporation",
+  "Change",
+  "Foreign investment",
+  "Branch or liaison office",
+  "Closure or liquidation",
+  "Other"
+] as const;
+
+const factFindingWorkTypeEnglishOptions = [
+  "Fact investigation",
+  "Certified content letter",
+  "Contract drafting",
+  "Contract review",
+  "Opinion letter",
+  "Other"
+] as const;
+
+function getWorkTypeEnglishOptions(category: IntakeCategory | null) {
+  if (category === "arabic_translation") return arabicTranslationWorkTypeEnglishOptions;
+  if (category === "corporation") return corporationWorkTypeEnglishOptions;
+  if (category === "fact_finding_contract") return factFindingWorkTypeEnglishOptions;
+  return intakeFieldEnglishOptions.workType;
+}
+
+export function getLocalizedIntakeCategoryLabel(
+  category: IntakeCategory,
+  locale: IntakeCategoryDisplayLocale
+) {
+  return locale === "en" ? intakeCategoryEnglishLabels[category] : intakeCategoryLabels[category];
+}
+
+export function getLocalizedIntakeCategoryHelp(
+  category: IntakeCategory,
+  locale: IntakeCategoryDisplayLocale
+) {
+  return locale === "en" ? intakeCategoryEnglishHelp[category] : null;
+}
+
+export function getLocalizedIntakeCategoryGuidance(
+  category: IntakeCategory,
+  locale: IntakeCategoryDisplayLocale
+) {
+  return locale === "en" ? intakeCategoryEnglishGuidance[category] : null;
+}
+
+export function getLocalizedIntakeFieldLabel(
+  field: IntakeCategoryDetailField,
+  locale: IntakeCategoryDisplayLocale
+) {
+  return locale === "en" ? intakeFieldEnglishLabels[field.key] ?? field.label : field.label;
+}
+
+export function getLocalizedIntakeOptionLabel(input: {
+  category: IntakeCategory | null;
+  field: IntakeCategoryDetailField;
+  option: string;
+  locale: IntakeCategoryDisplayLocale;
+}) {
+  if (input.locale !== "en") return input.option;
+  const options =
+    input.field.key === "workType"
+      ? getWorkTypeEnglishOptions(input.category)
+      : intakeFieldEnglishOptions[input.field.key];
+  const optionIndex = input.field.options?.indexOf(input.option) ?? -1;
+  return optionIndex >= 0 ? options?.[optionIndex] ?? input.option : input.option;
+}

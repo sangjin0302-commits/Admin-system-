@@ -17,6 +17,11 @@ import {
   documentAvailabilityOptions,
   getCivilPetitionSubtypeFieldKeys,
   getCivilPetitionSubtypeFields,
+  getLocalizedIntakeCategoryGuidance,
+  getLocalizedIntakeCategoryHelp,
+  getLocalizedIntakeCategoryLabel,
+  getLocalizedIntakeFieldLabel,
+  getLocalizedIntakeOptionLabel,
   intakeCategoryClientTypeMap,
   intakeCategoryDetailFields,
   intakeCategoryInquiryTypeMap,
@@ -25,7 +30,8 @@ import {
   preferredLanguageOptions,
   urgencyOptionLabels,
   type IntakeCategory,
-  type IntakeCategoryDetailField
+  type IntakeCategoryDetailField,
+  type IntakeCategoryDisplayLocale
 } from "@/types/intake-category";
 
 type IntakeResponse = {
@@ -60,6 +66,8 @@ type FormState = {
   website: string;
 };
 
+type FieldGroupKey = "basic" | "deadline" | "documents" | "request";
+
 const initialState: FormState = {
   category: "",
   contactName: "",
@@ -76,40 +84,250 @@ const initialState: FormState = {
 };
 
 const INTAKE_SUBMIT_TIMEOUT_MS = 12_000;
-const COMPLETE_MESSAGE = "접수가 완료되었습니다. 담당자가 확인 후 연락드리겠습니다.";
+
+const intakeFormCopy = {
+  ko: {
+    required: "필수",
+    optional: "선택",
+    coreHint: "핵심 분류 질문입니다.",
+    selectPlaceholder: "선택해 주세요",
+    selectedCategory: "선택한 분야",
+    selectedFallback: "선택 전",
+    step1Title: "업무 분야 선택",
+    step1Description: "먼저 필요한 업무를 고르면 관련 질문만 이어서 정리합니다.",
+    step2Title: "연락처 및 상담 정보",
+    step2Description: "담당자가 접수 내용을 확인하고 연락드리기 위한 기본 정보입니다.",
+    step3Title: "분야별 상세 질문",
+    step3Description: "정확히 모르는 항목은 비워도 됩니다. 핵심 분류 질문만 먼저 확인합니다.",
+    step4Title: "사건 개요 및 서류",
+    step4Description: "현재 상황과 보유 자료를 알려 주시면 담당자가 확인할 범위를 줄일 수 있습니다.",
+    step5Title: "동의 및 제출",
+    step5Description: "제출 전 선택한 접수 내용을 한 번만 확인해 주세요.",
+    extraQuestionsSuffix: "추가 질문",
+    extraQuestionsDescription: "선택한 민원 세부 유형에 맞춰 필요한 추가 정보를 확인합니다.",
+    name: "이름",
+    phone: "연락처",
+    email: "이메일",
+    consultationMethod: "희망 상담 방식",
+    preferredLanguage: "희망 언어",
+    urgency: "긴급도",
+    description: "사건/업무 개요",
+    documentAvailability: "관련 서류 보유 여부",
+    summaryTitle: "제출 전 요약",
+    serviceCategory: "업무 분야",
+    petitionSubtype: "민원 세부 유형",
+    documents: "관련 서류",
+    privacyConsent: "개인정보 수집 및 이용에 동의합니다.",
+    submit: "접수하기",
+    submitting: "접수 중...",
+    completeKicker: "접수 완료",
+    completeMessage: "접수가 완료되었습니다. 담당자가 확인 후 연락드리겠습니다.",
+    trackingNumber: "접수번호",
+    trackingHelp: "접수 진행상황은 접수번호로 확인할 수 있습니다.",
+    categoryRequired: "업무 분야를 먼저 선택해 주세요.",
+    civilPetitionTypeRequired: "기타 민원은 민원 세부 유형을 선택해 주세요.",
+    maintenance: "현재 접수 시스템 점검 중으로 접수가 일시 중지되었습니다.",
+    submitError: "문의 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+    timeout: "요청 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.",
+    deduplicated: "최근 동일 문의가 확인되어 기존 접수 흐름으로 연결했습니다.",
+    fieldGroups: {
+      basic: "기본 정보",
+      deadline: "기한/긴급도",
+      documents: "서류/증빙",
+      request: "요청사항"
+    },
+    categoryFallback: {
+      visa: "체류 자격, 만료일, 거절 이력처럼 기한과 리스크를 먼저 확인합니다.",
+      corporation: "설립/변경 등기와 인허가 필요성을 함께 확인합니다.",
+      administrative_appeal: "처분일과 불복 기한을 기준으로 진행 가능성을 확인합니다.",
+      fact_finding_contract: "사실관계와 최종 사용 목적을 기준으로 필요한 문서 범위를 정합니다.",
+      permit_license: "대상 기관, 진행 단계, 보완 요구 여부를 중심으로 준비 범위를 확인합니다.",
+      arabic_translation: "아랍어 번역, 통역, 공증·인증, 기관 제출용 문서 지원 범위를 확인합니다.",
+      civil_petition: "자동차 등록, 일반 민원, 고충 민원, 정보공개 등 행정 민원을 분류합니다."
+    }
+  },
+  en: {
+    required: "Required",
+    optional: "Optional",
+    coreHint: "This is a core classification question.",
+    selectPlaceholder: "Select an option",
+    selectedCategory: "Selected service type",
+    selectedFallback: "Not selected",
+    step1Title: "Select service type",
+    step1Description: "Choose the service area first so we only ask the relevant questions.",
+    step2Title: "Contact and consultation details",
+    step2Description: "Basic information used by staff to review your request and contact you.",
+    step3Title: "Service-specific questions",
+    step3Description: "Leave uncertain items blank. Please answer the core classification question first.",
+    step4Title: "Case summary and documents",
+    step4Description: "Tell us the current situation and available documents so staff can review efficiently.",
+    step5Title: "Consent and submission",
+    step5Description: "Review your selected intake details once before submitting.",
+    extraQuestionsSuffix: "additional questions",
+    extraQuestionsDescription: "Additional questions are shown for the selected petition subtype.",
+    name: "Name",
+    phone: "Phone",
+    email: "Email",
+    consultationMethod: "Preferred consultation method",
+    preferredLanguage: "Preferred language",
+    urgency: "Urgency",
+    description: "Case or service summary",
+    documentAvailability: "Related documents available",
+    summaryTitle: "Submission summary",
+    serviceCategory: "Service type",
+    petitionSubtype: "Petition subtype",
+    documents: "Documents",
+    privacyConsent: "I agree to the collection and use of personal information.",
+    submit: "Submit request",
+    submitting: "Submitting...",
+    completeKicker: "Submission complete",
+    completeMessage: "Your request has been submitted. A staff member will review it and contact you.",
+    trackingNumber: "Tracking number",
+    trackingHelp: "You can check your request status with your tracking number.",
+    categoryRequired: "Please select a service type first.",
+    civilPetitionTypeRequired: "Please select a petition subtype for other civil petitions.",
+    maintenance: "Intake is temporarily paused for system maintenance.",
+    submitError: "An error occurred while submitting your request. Please try again shortly.",
+    timeout: "The request timed out. Please try again shortly.",
+    deduplicated: "A recent duplicate request was found, so we linked you to the existing intake flow.",
+    fieldGroups: {
+      basic: "Basic information",
+      deadline: "Deadlines and urgency",
+      documents: "Documents and evidence",
+      request: "Requested outcome"
+    },
+    categoryFallback: {
+      visa: "We first check visa status, expiry dates, prior denials, deadlines, and risk factors.",
+      corporation: "We review registration, changes, and permit needs together.",
+      administrative_appeal: "We review feasibility based on the disposition date and appeal deadline.",
+      fact_finding_contract: "We define the document scope based on facts and final use purpose.",
+      permit_license: "We review the target agency, current stage, and supplement requests.",
+      arabic_translation: "We review Arabic translation, interpretation, notarization, certification, and agency submission needs.",
+      civil_petition: "We classify vehicle registration, general petitions, grievances, and information disclosure requests."
+    }
+  }
+} as const;
+
+const localizedCommonOptions = {
+  consultationMethod: {
+    en: ["Phone consultation", "Email consultation", "Office visit", "Video consultation"]
+  },
+  preferredLanguage: {
+    en: ["Korean", "English", "Arabic"]
+  },
+  documentAvailability: {
+    en: ["Documents available", "Partially available", "Not yet available", "Need confirmation"]
+  },
+  urgency: {
+    en: {
+      LOW: "Low",
+      MEDIUM: "Medium",
+      HIGH: "High",
+      CRITICAL: "Critical"
+    }
+  }
+} as const;
+
+export function getIntakeFormDisplaySnapshot(locale: IntakeCategoryDisplayLocale) {
+  return {
+    sectionHeadings: [
+      intakeFormCopy[locale].step1Title,
+      intakeFormCopy[locale].step2Title,
+      intakeFormCopy[locale].step3Title,
+      intakeFormCopy[locale].step4Title,
+      intakeFormCopy[locale].step5Title
+    ],
+    categoryLabels: intakeCategoryValues.map((category) =>
+      getLocalizedIntakeCategoryLabel(category, locale)
+    ),
+    arabicFieldLabels: intakeCategoryDetailFields.arabic_translation.map((field) =>
+      getLocalizedIntakeFieldLabel(field, locale)
+    ),
+    civilPetitionSubtypeLabels: civilPetitionSubtypeValues.map((option) => {
+      const field = intakeCategoryDetailFields.civil_petition[0];
+      return getLocalizedIntakeOptionLabel({
+        category: "civil_petition",
+        field,
+        option,
+        locale
+      });
+    }),
+    completion: {
+      message: intakeFormCopy[locale].completeMessage,
+      trackingNumber: intakeFormCopy[locale].trackingNumber,
+      trackingHelp: intakeFormCopy[locale].trackingHelp
+    }
+  };
+}
+
+function getDisplayLocale(initialLocale: Locale): IntakeCategoryDisplayLocale {
+  return initialLocale === "en" ? "en" : "ko";
+}
 
 function getPreferredLocale(preferredLanguage: string): "ko" | "en" {
-  return preferredLanguage === "영어" ? "en" : "ko";
+  return preferredLanguage === preferredLanguageOptions[1] ? "en" : "ko";
 }
 
 function getBooleanFromAvailability(value: string) {
-  return value === "관련 서류 보유" || value === "일부 보유";
+  return value === documentAvailabilityOptions[0] || value === documentAvailabilityOptions[1];
 }
 
-function getCategoryHelp(category: IntakeCategory) {
-  const help: Record<IntakeCategory, string> = {
-    visa: "체류 자격, 만료일, 거절 이력처럼 기한과 리스크를 먼저 확인합니다.",
-    corporation: "설립/변경/등기와 인허가 필요성을 함께 확인합니다.",
-    administrative_appeal: "처분일과 불복 기한을 기준으로 진행 가능성을 확인합니다.",
-    fact_finding_contract: "사실관계와 최종 사용 목적을 기준으로 필요한 문서 범위를 정합니다.",
-    permit_license: "대상 기관, 진행 단계, 보완 요구 여부를 중심으로 준비 범위를 확인합니다.",
-    arabic_translation: "아랍어 번역, 통역, 공증·인증, 기관 제출용 문서 지원 범위를 확인합니다.",
-    civil_petition: "자동차 등록, 일반 민원, 고충 민원, 정보 공개 등 생활 행정민원을 분류합니다."
-  };
-  return help[category];
+function getIndexedDisplayLabel(
+  options: readonly string[],
+  value: string,
+  englishLabels: readonly string[] | undefined,
+  locale: IntakeCategoryDisplayLocale
+) {
+  if (locale !== "en") return value;
+  const index = options.indexOf(value);
+  return index >= 0 ? englishLabels?.[index] ?? value : value;
 }
 
-function getCategoryGuidance(category: IntakeCategory) {
-  const guidance: Record<IntakeCategory, string> = {
-    visa: "체류자격, 초청, 연장, 변경, 불허 대응 정보를 확인합니다.",
-    corporation: "법인 설립, 변경, 외국인투자, 지점·연락사무소, 청산 관련 정보를 확인합니다.",
-    administrative_appeal: "처분 내용, 불복 기한, 원하는 결과, 집행정지 필요성을 확인합니다.",
-    fact_finding_contract: "사실관계, 분쟁 여부, 필요한 문서와 제출·발송 대상을 확인합니다.",
-    permit_license: "인허가 종류, 대상 기관, 진행 단계, 보완 요구와 업종 정보를 확인합니다.",
-    arabic_translation: "번역, 통역, 공증·인증, 기관 제출 목적을 확인합니다.",
-    civil_petition: "자동차 등록, 정보공개, 고충민원 등 일반 행정 민원을 확인합니다."
-  };
-  return guidance[category];
+function getCommonOptionLabel(input: {
+  kind: "consultationMethod" | "preferredLanguage" | "documentAvailability";
+  value: string;
+  locale: IntakeCategoryDisplayLocale;
+}) {
+  if (input.kind === "consultationMethod") {
+    return getIndexedDisplayLabel(
+      consultationMethodOptions,
+      input.value,
+      localizedCommonOptions.consultationMethod.en,
+      input.locale
+    );
+  }
+  if (input.kind === "preferredLanguage") {
+    return getIndexedDisplayLabel(
+      preferredLanguageOptions,
+      input.value,
+      localizedCommonOptions.preferredLanguage.en,
+      input.locale
+    );
+  }
+  return getIndexedDisplayLabel(
+    documentAvailabilityOptions,
+    input.value,
+    localizedCommonOptions.documentAvailability.en,
+    input.locale
+  );
+}
+
+function getUrgencyDisplayLabel(value: UrgencyLevel, locale: IntakeCategoryDisplayLocale) {
+  return locale === "en" ? localizedCommonOptions.urgency.en[value] : urgencyOptionLabels[value];
+}
+
+function getCategoryHelp(category: IntakeCategory, locale: IntakeCategoryDisplayLocale) {
+  return (
+    getLocalizedIntakeCategoryHelp(category, locale) ??
+    intakeFormCopy[locale].categoryFallback[category]
+  );
+}
+
+function getCategoryGuidance(category: IntakeCategory, locale: IntakeCategoryDisplayLocale) {
+  return (
+    getLocalizedIntakeCategoryGuidance(category, locale) ??
+    intakeFormCopy[locale].categoryFallback[category]
+  );
 }
 
 function StepHeader({
@@ -134,38 +352,49 @@ function StepHeader({
   );
 }
 
-function FieldBadge({ required }: { required?: boolean }) {
+function FieldBadge({
+  required,
+  locale
+}: {
+  required?: boolean;
+  locale: IntakeCategoryDisplayLocale;
+}) {
+  const copy = intakeFormCopy[locale];
   return (
     <span className={required ? "ui-status-pill intake-pill-required" : "ui-status-pill intake-pill-optional"}>
-      {required ? "필수" : "선택"}
+      {required ? copy.required : copy.optional}
     </span>
   );
 }
 
-function FieldLabel({ label, required }: { label: string; required?: boolean }) {
+function FieldLabel({
+  label,
+  required,
+  locale
+}: {
+  label: string;
+  required?: boolean;
+  locale: IntakeCategoryDisplayLocale;
+}) {
   return (
     <span className="flex flex-wrap items-center gap-2">
       <span>{label}</span>
-      <FieldBadge required={required} />
+      <FieldBadge required={required} locale={locale} />
     </span>
   );
 }
 
-function getFieldGroupTitle(field: IntakeCategoryDetailField) {
+function getFieldGroupKey(field: IntakeCategoryDetailField): FieldGroupKey {
   const key = field.key.toLowerCase();
-  const label = field.label;
 
   if (
     key.includes("date") ||
     key.includes("deadline") ||
     key.includes("expiry") ||
     key.includes("urgent") ||
-    label.includes("기한") ||
-    label.includes("긴급") ||
-    label.includes("납기") ||
-    label.includes("일정")
+    key.includes("schedule")
   ) {
-    return "기한/긴급도";
+    return "deadline";
   }
 
   if (
@@ -174,12 +403,9 @@ function getFieldGroupTitle(field: IntakeCategoryDetailField) {
     key.includes("file") ||
     key.includes("proof") ||
     key.includes("certificate") ||
-    label.includes("서류") ||
-    label.includes("증빙") ||
-    label.includes("자료") ||
-    label.includes("파일")
+    key.includes("material")
   ) {
-    return "서류/증빙";
+    return "documents";
   }
 
   if (
@@ -188,23 +414,20 @@ function getFieldGroupTitle(field: IntakeCategoryDetailField) {
     key.includes("result") ||
     key.includes("target") ||
     key.includes("method") ||
-    label.includes("원하는") ||
-    label.includes("목적") ||
-    label.includes("방식") ||
-    label.includes("대상")
+    key.includes("agency")
   ) {
-    return "요청사항";
+    return "request";
   }
 
-  return "기본 정보";
+  return "basic";
 }
 
 function groupCategoryFields(fields: readonly IntakeCategoryDetailField[]) {
-  const groups = ["기본 정보", "기한/긴급도", "서류/증빙", "요청사항"] as const;
+  const groups = ["basic", "deadline", "documents", "request"] as const;
   return groups
-    .map((title) => ({
-      title,
-      fields: fields.filter((field) => getFieldGroupTitle(field) === title)
+    .map((groupKey) => ({
+      groupKey,
+      fields: fields.filter((field) => getFieldGroupKey(field) === groupKey)
     }))
     .filter((group) => group.fields.length > 0);
 }
@@ -216,20 +439,27 @@ function isRequiredCategoryField(category: IntakeCategory, field: IntakeCategory
 
 function CategoryField({
   field,
+  category,
   value,
   onChange,
-  required = false
+  required = false,
+  locale
 }: {
   field: IntakeCategoryDetailField;
+  category: IntakeCategory | null;
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
+  locale: IntakeCategoryDisplayLocale;
 }) {
+  const copy = intakeFormCopy[locale];
+  const label = getLocalizedIntakeFieldLabel(field, locale);
+
   if (field.input === "textarea") {
     return (
-      <Field label="" hint={required ? "핵심 분류 질문입니다." : undefined}>
+      <Field label="" hint={required ? copy.coreHint : undefined}>
         <label className="ui-label">
-          <FieldLabel label={field.label} required={required} />
+          <FieldLabel label={label} required={required} locale={locale} />
         </label>
         <Textarea
           required={required}
@@ -245,15 +475,15 @@ function CategoryField({
 
   if (field.input === "select") {
     return (
-      <Field label="" hint={required ? "핵심 분류 질문입니다." : undefined}>
+      <Field label="" hint={required ? copy.coreHint : undefined}>
         <label className="ui-label">
-          <FieldLabel label={field.label} required={required} />
+          <FieldLabel label={label} required={required} locale={locale} />
         </label>
         <Select required={required} value={value} onChange={(event) => onChange(event.target.value)}>
-          <option value="">선택해 주세요</option>
+          <option value="">{copy.selectPlaceholder}</option>
           {(field.options ?? []).map((option) => (
             <option key={option} value={option}>
-              {option}
+              {getLocalizedIntakeOptionLabel({ category, field, option, locale })}
             </option>
           ))}
         </Select>
@@ -262,9 +492,9 @@ function CategoryField({
   }
 
   return (
-    <Field label="" hint={required ? "핵심 분류 질문입니다." : undefined}>
+    <Field label="" hint={required ? copy.coreHint : undefined}>
       <label className="ui-label">
-        <FieldLabel label={field.label} required={required} />
+        <FieldLabel label={label} required={required} locale={locale} />
       </label>
       <Input
         required={required}
@@ -279,9 +509,11 @@ function CategoryField({
 }
 
 export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
+  const locale = getDisplayLocale(initialLocale);
+  const copy = intakeFormCopy[locale];
   const [form, setForm] = useState<FormState>({
     ...initialState,
-    preferredLanguage: initialLocale === "en" ? "영어" : "한국어"
+    preferredLanguage: initialLocale === "en" ? preferredLanguageOptions[1] : preferredLanguageOptions[0]
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -422,7 +654,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
       hasPreparedDocuments: getBooleanFromAvailability(form.documentAvailability),
       needsTranslation: selectedCategory === "arabic_translation",
       isCorporateRequest: intakeCategoryClientTypeMap[selectedCategory] === "COMPANY",
-      wantsCallback: form.consultationMethod === "전화 상담",
+      wantsCallback: form.consultationMethod === consultationMethodOptions[0],
       dueDate:
         form.categoryDetails.desiredDeadline ??
         form.categoryDetails.desiredCompletionDate ??
@@ -439,20 +671,20 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!intakeAvailable) {
-      setError(intakeMessage || "현재 접수 시스템 점검 중으로 접수가 일시 중지되었습니다.");
+      setError(intakeMessage || copy.maintenance);
       return;
     }
 
     const payload = buildPayload();
     if (!payload) {
-      setError("업무 분야를 먼저 선택해 주세요.");
+      setError(copy.categoryRequired);
       return;
     }
     if (
       payload.category === "civil_petition" &&
       !(civilPetitionSubtypeValues as readonly string[]).includes(payload.categoryDetails.civilPetitionType ?? "")
     ) {
-      setError("기타 민원은 민원 세부 유형을 선택해 주세요.");
+      setError(copy.civilPetitionTypeRequired);
       return;
     }
 
@@ -475,15 +707,15 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
       });
 
       if (!response.ok) {
-        setError(await parseClientApiError(response, "문의 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."));
+        setError(await parseClientApiError(response, copy.submitError));
         return;
       }
 
       const data = (await response.json().catch(() => null)) as IntakeResponse | null;
-      setCompletedMessage(data?.inquiry?.message || COMPLETE_MESSAGE);
+      setCompletedMessage(copy.completeMessage);
       setCompletedTrackingCode(data?.inquiry?.trackingCode ?? "");
       if (data?.deduplicated) {
-        setNotice("최근 동일 문의가 확인되어 기존 접수 흐름으로 연결했습니다.");
+        setNotice(copy.deduplicated);
       }
 
       setForm({
@@ -492,9 +724,9 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
       });
     } catch (requestError) {
       if (requestError instanceof DOMException && requestError.name === "AbortError") {
-        setError("요청 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.");
+        setError(copy.timeout);
       } else {
-        setError("문의 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+        setError(copy.submitError);
       }
     } finally {
       if (timeoutId !== undefined) {
@@ -526,8 +758,8 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
         <section className="space-y-4">
           <StepHeader
             step={1}
-            title="업무 분야 선택"
-            description="먼저 필요한 업무를 고르면 관련 질문만 이어서 정리됩니다."
+            title={copy.step1Title}
+            description={copy.step1Description}
           />
           <div className="grid gap-3">
             {intakeCategoryValues.map((category) => {
@@ -544,8 +776,12 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
                   ].join(" ")}
                   onClick={() => updateCategory(category)}
                 >
-                  <span className="block text-base font-semibold">{intakeCategoryLabels[category]}</span>
-                  <span className="mt-1 block text-sm text-text-muted">{getCategoryHelp(category)}</span>
+                  <span className="block text-base font-semibold">
+                    {getLocalizedIntakeCategoryLabel(category, locale)}
+                  </span>
+                  <span className="mt-1 block text-sm text-text-muted">
+                    {getCategoryHelp(category, locale)}
+                  </span>
                 </button>
               );
             })}
@@ -553,10 +789,12 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
           {selectedCategory ? (
             <div className="rounded-md border border-primary/30 bg-primary/5 p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-text-muted">선택한 분야</span>
-                <Badge>{intakeCategoryLabels[selectedCategory]}</Badge>
+                <span className="text-sm text-text-muted">{copy.selectedCategory}</span>
+                <Badge>{getLocalizedIntakeCategoryLabel(selectedCategory, locale)}</Badge>
               </div>
-              <p className="mt-2 text-sm text-text-muted">{getCategoryGuidance(selectedCategory)}</p>
+              <p className="mt-2 text-sm text-text-muted">
+                {getCategoryGuidance(selectedCategory, locale)}
+              </p>
             </div>
           ) : null}
         </section>
@@ -564,13 +802,13 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
         <section className="space-y-4 border-t border-line pt-6">
           <StepHeader
             step={2}
-            title="연락처 및 상담 정보"
-            description="담당자가 접수 내용을 확인하고 연락드리기 위한 기본 정보입니다."
+            title={copy.step2Title}
+            description={copy.step2Description}
           />
           <FieldGroup>
             <Field label="">
               <label className="ui-label">
-                <FieldLabel label="이름" required />
+                <FieldLabel label={copy.name} required locale={locale} />
               </label>
               <Input
                 required
@@ -578,13 +816,13 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
                 maxLength={60}
                 value={form.contactName}
                 onChange={(event) => updateField("contactName", event.target.value)}
-                placeholder="예: 김민지"
+                placeholder={locale === "en" ? "Full name" : "예: 김민수"}
               />
             </Field>
 
             <Field label="">
               <label className="ui-label">
-                <FieldLabel label="연락처" required />
+                <FieldLabel label={copy.phone} required locale={locale} />
               </label>
               <Input
                 required
@@ -597,7 +835,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
 
             <Field label="">
               <label className="ui-label">
-                <FieldLabel label="이메일" required />
+                <FieldLabel label={copy.email} required locale={locale} />
               </label>
               <Input
                 required
@@ -611,7 +849,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
 
             <Field label="">
               <label className="ui-label">
-                <FieldLabel label="희망 상담 방식" />
+                <FieldLabel label={copy.consultationMethod} locale={locale} />
               </label>
               <Select
                 value={form.consultationMethod}
@@ -619,7 +857,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
               >
                 {consultationMethodOptions.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {getCommonOptionLabel({ kind: "consultationMethod", value: option, locale })}
                   </option>
                 ))}
               </Select>
@@ -627,7 +865,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
 
             <Field label="">
               <label className="ui-label">
-                <FieldLabel label="희망 언어" />
+                <FieldLabel label={copy.preferredLanguage} locale={locale} />
               </label>
               <Select
                 value={form.preferredLanguage}
@@ -635,7 +873,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
               >
                 {preferredLanguageOptions.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {getCommonOptionLabel({ kind: "preferredLanguage", value: option, locale })}
                   </option>
                 ))}
               </Select>
@@ -643,15 +881,15 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
 
             <Field label="">
               <label className="ui-label">
-                <FieldLabel label="긴급도" />
+                <FieldLabel label={copy.urgency} locale={locale} />
               </label>
               <Select
                 value={form.declaredUrgency}
                 onChange={(event) => updateField("declaredUrgency", event.target.value as UrgencyLevel)}
               >
-                {Object.entries(urgencyOptionLabels).map(([value, label]) => (
+                {Object.keys(urgencyOptionLabels).map((value) => (
                   <option key={value} value={value}>
-                    {label}
+                    {getUrgencyDisplayLabel(value as UrgencyLevel, locale)}
                   </option>
                 ))}
               </Select>
@@ -663,27 +901,33 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
           <section className="space-y-4 border-t border-line pt-6">
             <StepHeader
               step={3}
-              title="분야별 상세 질문"
-              description="정확히 모르는 항목은 비워도 됩니다. 핵심 분류 질문만 먼저 확인합니다."
+              title={copy.step3Title}
+              description={copy.step3Description}
             />
             <div className="rounded-md border border-line bg-surface-muted p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge>{intakeCategoryLabels[selectedCategory]}</Badge>
-                <span className="text-sm text-text-muted">{getCategoryGuidance(selectedCategory)}</span>
+                <Badge>{getLocalizedIntakeCategoryLabel(selectedCategory, locale)}</Badge>
+                <span className="text-sm text-text-muted">
+                  {getCategoryGuidance(selectedCategory, locale)}
+                </span>
               </div>
             </div>
             <div className="space-y-5">
               {categoryFieldGroups.map((group) => (
-                <div key={group.title} className="space-y-3">
-                  <h4 className="text-sm font-semibold text-text-strong">{group.title}</h4>
+                <div key={group.groupKey} className="space-y-3">
+                  <h4 className="text-sm font-semibold text-text-strong">
+                    {copy.fieldGroups[group.groupKey]}
+                  </h4>
                   <FieldGroup>
                     {group.fields.map((field) => (
                       <CategoryField
                         key={field.key}
+                        category={selectedCategory}
                         field={field}
                         required={isRequiredCategoryField(selectedCategory, field)}
                         value={form.categoryDetails[field.key] ?? ""}
                         onChange={(value) => updateCategoryDetail(field.key, value)}
+                        locale={locale}
                       />
                     ))}
                   </FieldGroup>
@@ -693,22 +937,28 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
             {selectedCategory === "civil_petition" && selectedCivilPetitionSubtype ? (
               <div className="space-y-4 border-t border-line pt-5">
                 <div>
-                  <p className="ui-kicker">{selectedCivilPetitionSubtype} 추가 질문</p>
+                  <p className="ui-kicker">
+                    {getCommonSubtypeDisplay(selectedCivilPetitionSubtype, locale)} {copy.extraQuestionsSuffix}
+                  </p>
                   <p className="mt-2 text-sm text-text-muted">
-                    선택한 민원 세부 유형에 맞춰 필요한 추가 정보를 확인합니다.
+                    {copy.extraQuestionsDescription}
                   </p>
                 </div>
                 <div className="space-y-5">
                   {civilPetitionSubtypeFieldGroups.map((group) => (
-                    <div key={group.title} className="space-y-3">
-                      <h4 className="text-sm font-semibold text-text-strong">{group.title}</h4>
+                    <div key={group.groupKey} className="space-y-3">
+                      <h4 className="text-sm font-semibold text-text-strong">
+                        {copy.fieldGroups[group.groupKey]}
+                      </h4>
                       <FieldGroup>
                         {group.fields.map((field) => (
                           <CategoryField
                             key={field.key}
+                            category={selectedCategory}
                             field={field}
                             value={form.categoryDetails[field.key] ?? ""}
                             onChange={(value) => updateCategoryDetail(field.key, value)}
+                            locale={locale}
                           />
                         ))}
                       </FieldGroup>
@@ -723,13 +973,13 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
         <section className="space-y-4 border-t border-line pt-6">
           <StepHeader
             step={4}
-            title="사건 개요 및 서류"
-            description="현재 상황과 보유 자료를 알려 주시면 담당자가 확인할 범위를 줄일 수 있습니다."
+            title={copy.step4Title}
+            description={copy.step4Description}
           />
           <FieldGroup>
-            <Field label="" hint="현재 상황, 원하는 결과, 기한을 중심으로 적어 주세요.">
+            <Field label="" hint={locale === "en" ? "Summarize current status, desired outcome, deadline, and documents." : "현재 상황, 원하는 결과, 기한, 보유 자료를 중심으로 적어 주세요."}>
               <label className="ui-label">
-                <FieldLabel label="사건/업무 개요" required />
+                <FieldLabel label={copy.description} required locale={locale} />
               </label>
               <Textarea
                 required
@@ -738,13 +988,17 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
                 maxLength={2000}
                 value={form.description}
                 onChange={(event) => updateField("description", event.target.value)}
-                placeholder="예: 현재 상황, 필요한 업무, 마감일, 보유 자료를 알려 주세요."
+                placeholder={
+                  locale === "en"
+                    ? "Please describe the current situation, needed service, deadline, and available documents."
+                    : "예: 현재 상황, 필요한 업무, 마감일, 보유 자료를 알려 주세요."
+                }
               />
             </Field>
 
             <Field label="">
               <label className="ui-label">
-                <FieldLabel label="관련 서류 보유 여부" />
+                <FieldLabel label={copy.documentAvailability} locale={locale} />
               </label>
               <Select
                 value={form.documentAvailability}
@@ -752,7 +1006,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
               >
                 {documentAvailabilityOptions.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {getCommonOptionLabel({ kind: "documentAvailability", value: option, locale })}
                   </option>
                 ))}
               </Select>
@@ -763,39 +1017,49 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
         <section className="space-y-4 border-t border-line pt-6">
           <StepHeader
             step={5}
-            title="동의 및 제출"
-            description="제출 전 선택한 접수 내용을 한 번만 확인해 주세요."
+            title={copy.step5Title}
+            description={copy.step5Description}
           />
           <div className="rounded-md border border-line bg-surface-muted p-4">
-            <p className="text-sm font-semibold text-text-strong">제출 전 요약</p>
+            <p className="text-sm font-semibold text-text-strong">{copy.summaryTitle}</p>
             <dl className="mt-3 grid gap-2 text-sm">
               <div className="flex flex-wrap gap-x-2 gap-y-1">
-                <dt className="text-text-muted">업무 분야</dt>
+                <dt className="text-text-muted">{copy.serviceCategory}</dt>
                 <dd className="font-medium text-text-strong">
-                  {selectedCategory ? intakeCategoryLabels[selectedCategory] : "선택 전"}
+                  {selectedCategory ? getLocalizedIntakeCategoryLabel(selectedCategory, locale) : copy.selectedFallback}
                 </dd>
               </div>
               {selectedCategory === "civil_petition" && selectedCivilPetitionSubtype ? (
                 <div className="flex flex-wrap gap-x-2 gap-y-1">
-                  <dt className="text-text-muted">민원 세부 유형</dt>
-                  <dd className="font-medium text-text-strong">{selectedCivilPetitionSubtype}</dd>
+                  <dt className="text-text-muted">{copy.petitionSubtype}</dt>
+                  <dd className="font-medium text-text-strong">
+                    {getCommonSubtypeDisplay(selectedCivilPetitionSubtype, locale)}
+                  </dd>
                 </div>
               ) : null}
               <div className="flex flex-wrap gap-x-2 gap-y-1">
-                <dt className="text-text-muted">희망 상담 방식</dt>
-                <dd className="font-medium text-text-strong">{form.consultationMethod}</dd>
+                <dt className="text-text-muted">{copy.consultationMethod}</dt>
+                <dd className="font-medium text-text-strong">
+                  {getCommonOptionLabel({ kind: "consultationMethod", value: form.consultationMethod, locale })}
+                </dd>
               </div>
               <div className="flex flex-wrap gap-x-2 gap-y-1">
-                <dt className="text-text-muted">희망 언어</dt>
-                <dd className="font-medium text-text-strong">{form.preferredLanguage}</dd>
+                <dt className="text-text-muted">{copy.preferredLanguage}</dt>
+                <dd className="font-medium text-text-strong">
+                  {getCommonOptionLabel({ kind: "preferredLanguage", value: form.preferredLanguage, locale })}
+                </dd>
               </div>
               <div className="flex flex-wrap gap-x-2 gap-y-1">
-                <dt className="text-text-muted">긴급도</dt>
-                <dd className="font-medium text-text-strong">{urgencyOptionLabels[form.declaredUrgency]}</dd>
+                <dt className="text-text-muted">{copy.urgency}</dt>
+                <dd className="font-medium text-text-strong">
+                  {getUrgencyDisplayLabel(form.declaredUrgency, locale)}
+                </dd>
               </div>
               <div className="flex flex-wrap gap-x-2 gap-y-1">
-                <dt className="text-text-muted">관련 서류</dt>
-                <dd className="font-medium text-text-strong">{form.documentAvailability}</dd>
+                <dt className="text-text-muted">{copy.documents}</dt>
+                <dd className="font-medium text-text-strong">
+                  {getCommonOptionLabel({ kind: "documentAvailability", value: form.documentAvailability, locale })}
+                </dd>
               </div>
             </dl>
           </div>
@@ -808,7 +1072,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
               className="mt-1 h-4 w-4 rounded border-line text-primary"
             />
             <span className="text-sm font-semibold text-text-strong">
-              개인정보 수집 및 이용에 동의합니다.
+              {copy.privacyConsent}
             </span>
           </label>
 
@@ -816,22 +1080,36 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
           {!error && notice ? <StateInline tone="success">{notice}</StateInline> : null}
 
           <Button type="submit" disabled={isSubmitting || !intakeAvailable} size="lg" fullWidth>
-            {isSubmitting ? "접수 중..." : "접수하기"}
+            {isSubmitting ? copy.submitting : copy.submit}
           </Button>
         </section>
       </form>
 
       {completedMessage ? (
         <section className="rounded-md border border-line bg-surface-muted p-5">
-          <p className="ui-kicker">접수 완료</p>
-          <p className="mt-2 text-base font-semibold text-text-strong">{COMPLETE_MESSAGE}</p>
+          <p className="ui-kicker">{copy.completeKicker}</p>
+          <p className="mt-2 text-base font-semibold text-text-strong">{completedMessage}</p>
           {completedTrackingCode ? (
-            <p className="mt-3 text-sm text-text">
-              접수번호: <span className="font-semibold text-text-strong">{completedTrackingCode}</span>
-            </p>
+            <>
+              <p className="mt-3 text-sm text-text">
+                {copy.trackingNumber}:{" "}
+                <span className="font-semibold text-text-strong">{completedTrackingCode}</span>
+              </p>
+              <p className="mt-2 text-sm text-text-muted">{copy.trackingHelp}</p>
+            </>
           ) : null}
         </section>
       ) : null}
     </div>
   );
+}
+
+function getCommonSubtypeDisplay(value: string, locale: IntakeCategoryDisplayLocale) {
+  const field = intakeCategoryDetailFields.civil_petition[0];
+  return getLocalizedIntakeOptionLabel({
+    category: "civil_petition",
+    field,
+    option: value,
+    locale
+  });
 }

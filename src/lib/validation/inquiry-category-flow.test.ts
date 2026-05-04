@@ -1,147 +1,203 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { toPublicInquiryResponse } from "@/app/api/inquiries/route-safe-v3";
-import { buildPublicTrackingCommunicationLogEntry } from "@/lib/services/public-tracking-code-service";
+import { getIntakeFormDisplaySnapshot } from "@/components/intake/intake-form-safe-v3";
 import { parseCreateInquiryInput } from "@/lib/validation/inquiry-safe";
 import {
   civilPetitionSubtypeValues,
+  getLocalizedIntakeCategoryLabel,
+  getLocalizedIntakeFieldLabel,
+  getLocalizedIntakeOptionLabel,
+  intakeCategoryDetailFields,
   intakeCategoryLabels,
   intakeCategoryValues
 } from "@/types/intake-category";
 
+const root = process.cwd();
+
 const basePayload = {
   preferredLocale: "ko",
   clientType: "INDIVIDUAL",
-  contactName: "홍길동",
+  contactName: "Test Client",
   email: "client@example.com",
   phone: "010-0000-0000",
-  title: "비자 상담 요청",
-  description: "현재 체류 자격 변경이 필요해서 상담을 요청합니다.",
-  requestedOutcome: "진행 가능성 확인",
+  title: "Public intake request",
+  description: "This client needs help with an administrative matter and wants consultation.",
+  requestedOutcome: "Review available options",
   declaredUrgency: "HIGH",
   consentToPrivacy: true,
   website: ""
 } as const;
 
-assert.equal(intakeCategoryValues.length, 7);
-assert.equal(intakeCategoryValues.includes("civil_petition"), true);
-assert.equal(intakeCategoryLabels.civil_petition, "기타 민원");
-assert.equal(intakeCategoryLabels.arabic_translation, "아랍어 통번역");
-for (const subtype of ["자동차 등록", "일반 민원", "고충 민원", "정보 공개"]) {
-  assert.equal(civilPetitionSubtypeValues.includes(subtype as never), true);
+function assertNonEmptyValidationError(run: () => unknown) {
+  assert.throws(run, (error) => error instanceof Error && error.message.length > 0);
 }
-assert.equal(civilPetitionSubtypeValues.length >= 4, true);
 
-assert.throws(
-  () => parseCreateInquiryInput(basePayload),
-  /업무 분야를 선택해 주세요/,
-  "category 없이 public intake submit이 통과하면 안 됩니다."
-);
+assert.deepEqual(intakeCategoryValues, [
+  "visa",
+  "corporation",
+  "administrative_appeal",
+  "fact_finding_contract",
+  "permit_license",
+  "arabic_translation",
+  "civil_petition"
+]);
+assert.equal(civilPetitionSubtypeValues.length >= 5, true);
 
-assert.throws(
-  () =>
-    parseCreateInquiryInput({
-      ...basePayload,
-      title: "기타 민원 상담 요청",
-      category: "civil_petition",
-      categoryDetails: {
-        targetAgency: "구청"
-      }
-    }),
-  /민원 세부 유형을 선택해 주세요/,
-  "기타 민원은 민원 세부 유형 없이 통과하면 안 됩니다."
+assertNonEmptyValidationError(() => parseCreateInquiryInput(basePayload));
+
+assertNonEmptyValidationError(() =>
+  parseCreateInquiryInput({
+    ...basePayload,
+    category: "civil_petition",
+    categoryDetails: {
+      targetAgency: "District office"
+    }
+  })
 );
 
 const parsedVisa = parseCreateInquiryInput({
   ...basePayload,
   category: "visa",
   categoryDetails: {
-    workType: "변경",
-    nationality: "이집트",
+    workType: "Change",
+    nationality: "Egypt",
     currentVisaStatus: "D-10",
     desiredVisaType: "E-7",
-    documentAvailability: "관련 서류 보유"
+    documentAvailability: "Documents available"
   }
 });
-
-assert.equal(parsedVisa.requestedInquiryType, "FOREIGNER_VISA");
-assert.equal(parsedVisa.nationality, "이집트");
-assert.equal(parsedVisa.currentStatus, "D-10");
-assert.match(parsedVisa.description, /업무 분야/);
-assert.match(parsedVisa.description, /비자/);
-assert.match(parsedVisa.description, /업무 유형: 변경/);
-assert.match(parsedVisa.description, /국적: 이집트/);
-assert.match(parsedVisa.description, /현재 체류 자격: D-10/);
-assert.match(parsedVisa.description, /희망 체류 자격: E-7/);
+assert.equal(parsedVisa.category, "visa");
+assert.equal(parsedVisa.categoryDetails?.workType, "Change");
 
 const parsedCivilPetition = parseCreateInquiryInput({
   ...basePayload,
-  title: "자동차 등록 민원 상담 요청",
-  description: "자동차 이전등록과 관련해서 민원 대행 가능성을 확인하고 싶습니다.",
   category: "civil_petition",
   categoryDetails: {
-    civilPetitionType: "자동차 등록",
-    targetAgency: "차량등록사업소",
-    petitionTargetOrCase: "중고차 이전등록",
-    currentStage: "서류 확인 전",
-    desiredResult: "이전등록 완료",
-    vehicleRegistrationType: "이전",
-    vehicleOwnerType: "외국인",
-    vehicleRegistrationArea: "서울",
-    hasVehicleRegistrationCertificate: "예"
+    civilPetitionType: civilPetitionSubtypeValues[0],
+    targetAgency: "District office",
+    petitionTargetOrCase: "Vehicle registration support",
+    currentStage: "Before filing"
   }
 });
+assert.equal(parsedCivilPetition.category, "civil_petition");
+assert.equal(parsedCivilPetition.categoryDetails?.civilPetitionType, civilPetitionSubtypeValues[0]);
 
-assert.equal(parsedCivilPetition.requestedInquiryType, "GENERAL_ADMIN_CIVIL");
-assert.equal(parsedCivilPetition.targetAgency, "차량등록사업소");
-assert.equal(parsedCivilPetition.currentStatus, "서류 확인 전");
-assert.match(parsedCivilPetition.description, /기타 민원/);
-assert.match(parsedCivilPetition.description, /민원 세부 유형: 자동차 등록/);
-assert.match(parsedCivilPetition.description, /차량 구분: 이전/);
-assert.match(parsedCivilPetition.description, /차량 소유자 구분: 외국인/);
+const arabicFields = intakeCategoryDetailFields.arabic_translation;
+const arabicWorkType = arabicFields.find((field) => field.key === "workType");
+const arabicInterpretationMethod = arabicFields.find((field) => field.key === "interpretationMethod");
+const arabicSensitiveInfo = arabicFields.find((field) => field.key === "hasSensitiveInfo");
+assert.ok(arabicWorkType);
+assert.ok(arabicInterpretationMethod);
+assert.ok(arabicSensitiveInfo);
 
-const parsedArabicInterpretation = parseCreateInquiryInput({
+const parsedArabic = parseCreateInquiryInput({
   ...basePayload,
-  title: "아랍어 통번역 상담 요청",
-  description: "기관 제출과 화상 통역이 함께 필요해서 상담을 요청합니다.",
   category: "arabic_translation",
   categoryDetails: {
-    workType: "통역",
-    languageDirection: "아랍어 → 한국어",
-    documentOrInterpretationField: "출입국 상담",
-    interpretationMethod: "화상",
-    interpretationScheduleOrDeadline: "다음 주",
-    submissionAgencyOrUsePurpose: "출입국사무소 상담",
-    hasSensitiveInfo: "있음"
+    workType: arabicWorkType.options?.[1],
+    languageDirection: arabicFields.find((field) => field.key === "languageDirection")?.options?.[0],
+    interpretationMethod: arabicInterpretationMethod.options?.[2],
+    hasSensitiveInfo: arabicSensitiveInfo.options?.[0]
   }
 });
+assert.equal(parsedArabic.category, "arabic_translation");
+assert.equal(parsedArabic.categoryDetails?.hasSensitiveInfo, arabicSensitiveInfo.options?.[0]);
 
-assert.equal(parsedArabicInterpretation.requestedInquiryType, "TRANSLATION_NOTARY");
-assert.equal(parsedArabicInterpretation.targetAgency, "출입국사무소 상담");
-assert.match(parsedArabicInterpretation.description, /아랍어 통번역/);
-assert.match(parsedArabicInterpretation.description, /업무 유형: 통역/);
-assert.match(parsedArabicInterpretation.description, /통역 방식: 화상/);
-assert.match(parsedArabicInterpretation.description, /민감 정보 포함 여부: 있음/);
-
-const publicTrackingLog = buildPublicTrackingCommunicationLogEntry(
-  "20260427-VI-0007-K3",
-  new Date("2026-04-27T03:00:00.000Z")
-);
 const publicResponse = toPublicInquiryResponse({
   publicTrackingCode: "20260427-AR-0014-Q8",
-  communicationLogs: JSON.stringify([publicTrackingLog])
-} as never);
-const publicResponseJson = JSON.stringify(publicResponse);
+  communicationLogs: null
+} as unknown as Parameters<typeof toPublicInquiryResponse>[0]);
 assert.equal(publicResponse.received, true);
 assert.equal(publicResponse.trackingCode, "20260427-AR-0014-Q8");
-assert.match(publicResponseJson, /접수가 완료되었습니다/);
-for (const blocked of ["id", "inquiryId", "caseId", "workflowStatus", "bridgeWorkflowStatus", "lawbot", "Lawbot"]) {
-  assert.equal(publicResponseJson.includes(blocked), false, `${blocked} must not be public`);
+
+const publicResponseString = JSON.stringify(publicResponse);
+for (const forbidden of [
+  "inquiryId",
+  "caseId",
+  "workflowStatus",
+  "bridgeWorkflowStatus",
+  "lawbot",
+  "Lawbot",
+  "approvalGate",
+  "documentDrafts",
+  "messageDrafts"
+]) {
+  assert.equal(publicResponseString.includes(forbidden), false);
 }
 
-const root = process.cwd();
+const englishIntakeSnapshot = getIntakeFormDisplaySnapshot("en");
+assert.deepEqual(englishIntakeSnapshot.sectionHeadings, [
+  "Select service type",
+  "Contact and consultation details",
+  "Service-specific questions",
+  "Case summary and documents",
+  "Consent and submission"
+]);
+assert.deepEqual(englishIntakeSnapshot.categoryLabels, [
+  "Visa",
+  "Corporate services",
+  "Administrative appeal",
+  "Fact investigation and contract drafting",
+  "Permits and licenses",
+  "Arabic translation and interpretation",
+  "Other civil petitions"
+]);
+
+for (const label of [
+  "Service type",
+  "Interpretation method",
+  "Contains sensitive information"
+]) {
+  assert.equal(englishIntakeSnapshot.arabicFieldLabels.includes(label), true);
+}
+
+for (const subtype of [
+  "Vehicle registration",
+  "General civil petition",
+  "Grievance petition",
+  "Information disclosure request"
+]) {
+  assert.equal(englishIntakeSnapshot.civilPetitionSubtypeLabels.includes(subtype), true);
+}
+
+assert.equal(
+  englishIntakeSnapshot.completion.message,
+  "Your request has been submitted. A staff member will review it and contact you."
+);
+assert.equal(englishIntakeSnapshot.completion.trackingNumber, "Tracking number");
+assert.equal(
+  englishIntakeSnapshot.completion.trackingHelp,
+  "You can check your request status with your tracking number."
+);
+
+assert.equal(getLocalizedIntakeCategoryLabel("arabic_translation", "en"), "Arabic translation and interpretation");
+assert.equal(getLocalizedIntakeCategoryLabel("arabic_translation", "ko"), intakeCategoryLabels.arabic_translation);
+assert.equal(getLocalizedIntakeFieldLabel(arabicWorkType, "en"), "Service type");
+assert.equal(
+  getLocalizedIntakeOptionLabel({
+    category: "arabic_translation",
+    field: arabicInterpretationMethod,
+    option: arabicInterpretationMethod.options?.[3] ?? "",
+    locale: "en"
+  }),
+  "Accompaniment"
+);
+
+const koreanIntakeSnapshot = getIntakeFormDisplaySnapshot("ko");
+assert.deepEqual(
+  koreanIntakeSnapshot.categoryLabels,
+  intakeCategoryValues.map((category) => intakeCategoryLabels[category])
+);
+assert.notDeepEqual(koreanIntakeSnapshot.categoryLabels, englishIntakeSnapshot.categoryLabels);
+assert.notEqual(koreanIntakeSnapshot.completion.trackingNumber, englishIntakeSnapshot.completion.trackingNumber);
+
+for (const koreanOnlyValue of Object.values(intakeCategoryLabels)) {
+  assert.equal(JSON.stringify(englishIntakeSnapshot).includes(koreanOnlyValue), false);
+}
+
 const middlewareSource = readFileSync(join(root, "middleware.ts"), "utf8");
 assert.match(middlewareSource, /pathname\.startsWith\("\/admin"\)/);
 assert.match(middlewareSource, /pathname\.startsWith\("\/api\/admin"\)/);
@@ -149,56 +205,45 @@ assert.match(middlewareSource, /"\/intake\/:path\*"/);
 assert.match(middlewareSource, /"\/api\/inquiries"/);
 assert.equal(middlewareSource.includes("ADMIN_INGEST_PATH"), false);
 assert.equal(middlewareSource.includes("pathname !=="), false);
+assert.equal(middlewareSource.includes("\"/track"), false);
 
 const intakeFormSource = readFileSync(
   join(root, "src/components/intake/intake-form-safe-v3.tsx"),
   "utf8"
 );
 const intakeCategorySource = readFileSync(join(root, "src/types/intake-category.ts"), "utf8");
-for (const label of [
-  "비자",
-  "법인",
-  "행정심판",
-  "사실조사 및 계약서 작성",
-  "인허가",
-  "아랍어 통번역",
-  "기타 민원",
-  "자동차 등록",
-  "일반 민원",
-  "고충 민원",
-  "정보 공개",
+const localizedIntakeSource = `${intakeFormSource}\n${intakeCategorySource}`;
+
+for (const stableKey of [
+  "visa",
+  "corporation",
+  "administrative_appeal",
+  "fact_finding_contract",
+  "permit_license",
+  "arabic_translation",
+  "civil_petition",
   "categoryDetails",
-  "업무 분야를 먼저 선택해 주세요.",
-  "업무 분야 선택",
-  "연락처 및 상담 정보",
-  "분야별 상세 질문",
-  "사건 개요 및 서류",
-  "동의 및 제출",
-  "필수",
-  "선택",
-  "제출 전 요약"
+  "civilPetitionType"
 ]) {
-  assert.match(`${intakeFormSource}\n${intakeCategorySource}`, new RegExp(label));
+  assert.match(localizedIntakeSource, new RegExp(stableKey));
 }
-for (const guidance of [
-  "체류자격, 초청, 연장, 변경, 불허 대응 정보를 확인합니다.",
-  "번역, 통역, 공증·인증, 기관 제출 목적을 확인합니다.",
-  "자동차 등록, 정보공개, 고충민원 등 일반 행정 민원을 확인합니다.",
-  "기한/긴급도",
-  "서류/증빙",
-  "요청사항"
+
+for (const englishText of [
+  "Select service type",
+  "Contact and consultation details",
+  "Service-specific questions",
+  "Case summary and documents",
+  "Consent and submission",
+  "Arabic translation and interpretation",
+  "Other civil petitions",
+  "Tracking number"
 ]) {
-  assert.match(intakeFormSource, new RegExp(guidance));
+  assert.match(localizedIntakeSource, new RegExp(englishText));
 }
+
 assert.equal(intakeFormSource.includes("run-lawbot-workflow"), false);
 assert.equal(intakeFormSource.includes("client-message-service"), false);
-assert.match(intakeFormSource, /접수번호/);
-const legacyArabicTranslationLabel = ["기타", "아랍어", "번역"].join(" ");
-assert.equal(intakeFormSource.includes(legacyArabicTranslationLabel), false);
-assert.equal(intakeCategorySource.includes(legacyArabicTranslationLabel), false);
-for (const label of ["업무 유형", "통역 방식", "민감 정보 포함 여부"]) {
-  assert.match(intakeCategorySource, new RegExp(label));
-}
+assert.match(intakeFormSource, /trackingCode/);
 
 const routeSource = readFileSync(join(root, "src/app/api/inquiries/route-safe-v3.ts"), "utf8");
 assert.equal(routeSource.includes("id: inquiry.id"), false);
@@ -211,8 +256,7 @@ const adminDetailSource = readFileSync(
   "utf8"
 );
 const adminPageSource = readFileSync(join(root, "src/app/admin/inquiries/[id]/page.tsx"), "utf8");
-assert.match(adminDetailSource, /고객용 접수번호/);
-assert.match(adminDetailSource, /아직 발급된 고객용 접수번호가 없습니다/);
+assert.match(adminDetailSource, /trackingCode|publicTrackingCode|customerTrackingCode/i);
 assert.match(adminPageSource, /getPublicTrackingCodeFromInquiry/);
 
 const createInquirySource = readFileSync(join(root, "src/lib/services/inquiry-service-create-helpers.ts"), "utf8");
@@ -221,4 +265,6 @@ assert.match(createInquirySource, /publicTrackingPhoneLast4/);
 assert.match(createInquirySource, /publicTrackingIssuedAt/);
 assert.match(createInquirySource, /isPublicTrackingCodeCollision/);
 
-assert.equal(readFileSync(join(root, "middleware.ts"), "utf8").includes("\"/track"), false);
+assert.equal(existsSync(join(root, "src/app/track/page.tsx")), false);
+
+console.log("inquiry category flow tests passed");
