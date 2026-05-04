@@ -130,11 +130,12 @@ const publicTrackingLog = buildPublicTrackingCommunicationLogEntry(
   new Date("2026-04-27T03:00:00.000Z")
 );
 const publicResponse = toPublicInquiryResponse({
+  publicTrackingCode: "20260427-AR-0014-Q8",
   communicationLogs: JSON.stringify([publicTrackingLog])
 } as never);
 const publicResponseJson = JSON.stringify(publicResponse);
 assert.equal(publicResponse.received, true);
-assert.equal(publicResponse.trackingCode, "20260427-VI-0007-K3");
+assert.equal(publicResponse.trackingCode, "20260427-AR-0014-Q8");
 assert.match(publicResponseJson, /접수가 완료되었습니다/);
 for (const blocked of ["id", "inquiryId", "caseId", "workflowStatus", "bridgeWorkflowStatus", "lawbot", "Lawbot"]) {
   assert.equal(publicResponseJson.includes(blocked), false, `${blocked} must not be public`);
@@ -209,5 +210,15 @@ const adminDetailSource = readFileSync(
   join(root, "src/components/admin/inquiry-detail-content-sections.tsx"),
   "utf8"
 );
+const adminPageSource = readFileSync(join(root, "src/app/admin/inquiries/[id]/page.tsx"), "utf8");
 assert.match(adminDetailSource, /고객용 접수번호/);
 assert.match(adminDetailSource, /아직 발급된 고객용 접수번호가 없습니다/);
+assert.match(adminPageSource, /getPublicTrackingCodeFromInquiry/);
+
+const createInquirySource = readFileSync(join(root, "src/lib/services/inquiry-service-create-helpers.ts"), "utf8");
+assert.match(createInquirySource, /publicTrackingCode/);
+assert.match(createInquirySource, /publicTrackingPhoneLast4/);
+assert.match(createInquirySource, /publicTrackingIssuedAt/);
+assert.match(createInquirySource, /isPublicTrackingCodeCollision/);
+
+assert.equal(readFileSync(join(root, "middleware.ts"), "utf8").includes("\"/track"), false);

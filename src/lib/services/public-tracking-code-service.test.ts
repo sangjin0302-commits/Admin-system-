@@ -6,7 +6,9 @@ import {
   generatePublicTrackingCheckCode,
   generatePublicTrackingCode,
   getKoreaMonthRange,
-  getPublicTrackingCategoryCode
+  getPublicTrackingCategoryCode,
+  getPublicTrackingCodeFromInquiry,
+  normalizePhoneLast4
 } from "@/lib/services/public-tracking-code-service";
 import type { IntakeCategory } from "@/types/intake-category";
 
@@ -98,6 +100,23 @@ assert.equal(
   "20260427-VI-0007-K3"
 );
 assert.equal(extractPublicTrackingCodeFromCommunicationLogs("[]"), null);
+assert.equal(
+  getPublicTrackingCodeFromInquiry({
+    publicTrackingCode: "20260427-AR-0014-Q8",
+    communicationLogs: JSON.stringify([logEntry])
+  }),
+  "20260427-AR-0014-Q8"
+);
+assert.equal(
+  getPublicTrackingCodeFromInquiry({
+    publicTrackingCode: null,
+    communicationLogs: JSON.stringify([logEntry])
+  }),
+  "20260427-VI-0007-K3"
+);
+assert.equal(normalizePhoneLast4("010-1234-5678"), "5678");
+assert.equal(normalizePhoneLast4("+82 10 0000 1357"), "1357");
+assert.equal(normalizePhoneLast4("123"), null);
 
-// The first implementation uses count + 1 for the monthly sequence and a random check code.
-// A future dedicated DB column should add a unique index for stronger concurrent lookup guarantees.
+// The monthly sequence still uses count + 1. The dedicated unique tracking code field
+// guards lookup uniqueness, while a future sequence allocator can close ordering races.

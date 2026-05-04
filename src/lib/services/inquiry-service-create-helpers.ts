@@ -1,3 +1,5 @@
+import { Prisma } from "@generated/prisma-client/client";
+
 import { prisma } from "@/lib/prisma/client";
 import { parseCreateInquiryInput } from "@/lib/validation/inquiry-safe";
 import { dispatchInitialClientMessage } from "@/lib/services/client-message-service";
@@ -16,8 +18,17 @@ import {
 import {
   buildPublicTrackingCommunicationLogEntry,
   generatePublicTrackingCode,
-  getKoreaMonthRange
+  getKoreaMonthRange,
+  normalizePhoneLast4
 } from "@/lib/services/public-tracking-code-service";
+
+function isPublicTrackingCodeCollision(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002" &&
+    String(error.meta?.target ?? "").includes("publicTrackingCode")
+  );
+}
 
 async function getNextPublicTrackingMonthlySequence(createdAt: Date) {
   const monthRange = getKoreaMonthRange(createdAt);
@@ -36,9 +47,9 @@ async function getNextPublicTrackingMonthlySequence(createdAt: Date) {
 async function buildAvailablePublicTrackingCode(input: CreateInquiryInput, createdAt: Date) {
   const monthlySequence = await getNextPublicTrackingMonthlySequence(createdAt);
 
-  // This first phase stores the public code in communicationLogs for schema compatibility.
-  // The random check code and retry reduce collision risk, but /track should move this to
-  // a dedicated unique indexed column before public lookup is enabled.
+  // The monthly sequence is count-based, so concurrent submissions can race on the same
+  // sequence. The unique publicTrackingCode field plus random check code/retry keeps the
+  // allocation fail-closed until a stronger transactional sequence allocator is added.
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const trackingCode = generatePublicTrackingCode({
       category: input.category,
@@ -47,9 +58,14 @@ async function buildAvailablePublicTrackingCode(input: CreateInquiryInput, creat
     });
     const existing = await prisma.inquiry.findFirst({
       where: {
-        communicationLogs: {
-          contains: trackingCode
-        }
+        OR: [
+          { publicTrackingCode: trackingCode },
+          {
+            communicationLogs: {
+              contains: trackingCode
+            }
+          }
+        ]
       },
       select: {
         id: true
@@ -97,17 +113,36 @@ export async function createInquiry(payload: unknown) {
     }
 
     const derived = evaluateCreateInquiryInput(input);
-    const createdAt = new Date();
-    const publicTrackingCode = await buildAvailablePublicTrackingCode(input, createdAt);
-    const publicTrackingLog = buildPublicTrackingCommunicationLogEntry(publicTrackingCode, createdAt);
+    const publicTrackingPhoneLast4 = normalizePhoneLast4(input.phone);
+    let created: Awaited<ReturnType<typeof prisma.inquiry.create>> | null = null;
 
-    const created = await prisma.inquiry.create({
-      data: {
-        ...buildCreateInquiryData(input, derived),
-        createdAt,
-        communicationLogs: JSON.stringify([publicTrackingLog])
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const createdAt = new Date();
+      const publicTrackingCode = await buildAvailablePublicTrackingCode(input, createdAt);
+      const publicTrackingLog = buildPublicTrackingCommunicationLogEntry(publicTrackingCode, createdAt);
+
+      try {
+        created = await prisma.inquiry.create({
+          data: {
+            ...buildCreateInquiryData(input, derived),
+            createdAt,
+            publicTrackingCode,
+            publicTrackingPhoneLast4,
+            publicTrackingIssuedAt: createdAt,
+            communicationLogs: JSON.stringify([publicTrackingLog])
+          }
+        });
+        break;
+      } catch (error) {
+        if (!isPublicTrackingCodeCollision(error) || attempt === 4) {
+          throw error;
+        }
       }
-    });
+    }
+
+    if (!created) {
+      throw new Error("Failed to create inquiry with public tracking code.");
+    }
     const artifacts = await buildFinalizedMessageArtifacts(created, derived.messageInputDraft);
 
     const updated = await prisma.inquiry.update({
