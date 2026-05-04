@@ -8,6 +8,7 @@ import {
   urgencyValues
 } from "@/types/inquiry";
 import {
+  civilPetitionSubtypeValues,
   getIntakeCategoryDetailLabel,
   intakeCategoryInquiryTypeMap,
   intakeCategoryLabels,
@@ -34,6 +35,7 @@ const validationMessages = {
   documentCountryMax: "\uBB38\uC11C \uBC1C\uD589 \uAD6D\uAC00\uB294 80\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.",
   targetAgencyMax: "\uC81C\uCD9C\uCC98 \uB610\uB294 \uC0AC\uC6A9\uCC98\uB294 120\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.",
   categoryRequired: "\uC5C5\uBB34 \uBD84\uC57C\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.",
+  civilPetitionTypeRequired: "\uAE30\uD0C0 \uBBFC\uC6D0\uC740 \uBBFC\uC6D0 \uC138\uBD80 \uC720\uD615\uC744 \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.",
   categoryDetailMax: "\uBD84\uC57C\uBCC4 \uC138\uBD80 \uB0B4\uC6A9\uC740 \uD56D\uBAA9\uB2F9 500\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.",
   consentRequired:
     "\uAC1C\uC778\uC815\uBCF4 \uC218\uC9D1 \uBC0F \uC0C1\uB2F4 \uBAA9\uC801 \uC774\uC6A9 \uB3D9\uC758\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4."
@@ -104,6 +106,17 @@ export const createInquirySchema = z.object({
   consentToPrivacy: booleanish.transform((value) => parseBooleanish(value)).refine(Boolean, {
     message: validationMessages.consentRequired
   })
+}).superRefine((value, context) => {
+  if (
+    value.category === "civil_petition" &&
+    !(civilPetitionSubtypeValues as readonly string[]).includes(value.categoryDetails.civilPetitionType ?? "")
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["categoryDetails", "civilPetitionType"],
+      message: validationMessages.civilPetitionTypeRequired
+    });
+  }
 });
 
 function hasOwnStringValue(details: Record<string, string>, key: string) {
@@ -159,6 +172,9 @@ export function parseCreateInquiryInput(payload: unknown) {
       parsed.targetAgency?.trim() ||
       hasOwnStringValue(categoryDetails, "agency") ||
       hasOwnStringValue(categoryDetails, "targetAgency") ||
+      hasOwnStringValue(categoryDetails, "generalTargetAgency") ||
+      hasOwnStringValue(categoryDetails, "disclosureTargetAgency") ||
+      hasOwnStringValue(categoryDetails, "relatedAgencyDepartment") ||
       hasOwnStringValue(categoryDetails, "submissionAgency"),
     dueDate:
       parsedDueDate && !Number.isNaN(parsedDueDate.getTime())

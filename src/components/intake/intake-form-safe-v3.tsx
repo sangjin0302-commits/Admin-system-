@@ -12,8 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { parseClientApiError } from "@/lib/http/client-api";
 import type { Locale, UrgencyLevel } from "@/types/inquiry";
 import {
+  civilPetitionSubtypeValues,
   consultationMethodOptions,
   documentAvailabilityOptions,
+  getCivilPetitionSubtypeFieldKeys,
+  getCivilPetitionSubtypeFields,
   intakeCategoryClientTypeMap,
   intakeCategoryDetailFields,
   intakeCategoryInquiryTypeMap,
@@ -89,7 +92,8 @@ function getCategoryHelp(category: IntakeCategory) {
     administrative_appeal: "처분일과 불복 기한을 기준으로 진행 가능성을 확인합니다.",
     fact_finding_contract: "사실관계와 최종 사용 목적을 기준으로 필요한 문서 범위를 정합니다.",
     permit_license: "대상 기관, 진행 단계, 보완 요구 여부를 중심으로 준비 범위를 확인합니다.",
-    arabic_translation: "번역 방향, 인증 필요성, 제출 기관을 기준으로 납기와 범위를 확인합니다."
+    arabic_translation: "번역 방향, 인증 필요성, 제출 기관을 기준으로 납기와 범위를 확인합니다.",
+    civil_petition: "자동차 등록, 일반 민원, 고충 민원, 정보 공개 등 생활 행정민원을 분류합니다."
   };
   return help[category];
 }
@@ -162,6 +166,14 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
     () => (selectedCategory ? intakeCategoryDetailFields[selectedCategory] : []),
     [selectedCategory]
   );
+  const selectedCivilPetitionSubtype = form.categoryDetails.civilPetitionType;
+  const selectedCivilPetitionSubtypeFields = useMemo(
+    () =>
+      selectedCategory === "civil_petition"
+        ? getCivilPetitionSubtypeFields(selectedCivilPetitionSubtype)
+        : [],
+    [selectedCategory, selectedCivilPetitionSubtype]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -219,7 +231,12 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
     setForm((current) => ({
       ...current,
       categoryDetails: {
-        ...current.categoryDetails,
+        ...Object.fromEntries(
+          Object.entries(current.categoryDetails).filter(
+            ([detailKey]) =>
+              key !== "civilPetitionType" || !getCivilPetitionSubtypeFieldKeys().includes(detailKey)
+          )
+        ),
         [key]: value
       }
     }));
@@ -232,7 +249,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
 
     const categoryLabel = intakeCategoryLabels[selectedCategory];
     const preferredLocale = getPreferredLocale(form.preferredLanguage);
-    const categoryDetails = {
+    const categoryDetails: Record<string, string> = {
       consultationMethod: form.consultationMethod,
       preferredLanguage: form.preferredLanguage,
       documentAvailability: form.documentAvailability,
@@ -257,6 +274,9 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
       targetAgency:
         form.categoryDetails.agency ??
         form.categoryDetails.targetAgency ??
+        form.categoryDetails.generalTargetAgency ??
+        form.categoryDetails.disclosureTargetAgency ??
+        form.categoryDetails.relatedAgencyDepartment ??
         form.categoryDetails.submissionAgency ??
         "",
       hasPreparedDocuments: getBooleanFromAvailability(form.documentAvailability),
@@ -266,6 +286,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
       dueDate:
         form.categoryDetails.desiredDeadline ??
         form.categoryDetails.desiredCompletionDate ??
+        form.categoryDetails.processingDeadline ??
         form.categoryDetails.stayExpiryDate ??
         "",
       category: selectedCategory,
@@ -285,6 +306,13 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
     const payload = buildPayload();
     if (!payload) {
       setError("업무 분야를 먼저 선택해 주세요.");
+      return;
+    }
+    if (
+      payload.category === "civil_petition" &&
+      !(civilPetitionSubtypeValues as readonly string[]).includes(payload.categoryDetails.civilPetitionType ?? "")
+    ) {
+      setError("기타 민원은 민원 세부 유형을 선택해 주세요.");
       return;
     }
 
@@ -513,6 +541,26 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
                 />
               ))}
             </FieldGroup>
+            {selectedCategory === "civil_petition" && selectedCivilPetitionSubtype ? (
+              <div className="space-y-4 border-t border-line pt-5">
+                <div>
+                  <p className="ui-kicker">{selectedCivilPetitionSubtype} 추가 질문</p>
+                  <p className="mt-2 text-sm text-text-muted">
+                    선택한 민원 세부 유형에 맞춰 필요한 추가 정보를 확인합니다.
+                  </p>
+                </div>
+                <FieldGroup>
+                  {selectedCivilPetitionSubtypeFields.map((field) => (
+                    <CategoryField
+                      key={field.key}
+                      field={field}
+                      value={form.categoryDetails[field.key] ?? ""}
+                      onChange={(value) => updateCategoryDetail(field.key, value)}
+                    />
+                  ))}
+                </FieldGroup>
+              </div>
+            ) : null}
           </section>
         ) : null}
 
