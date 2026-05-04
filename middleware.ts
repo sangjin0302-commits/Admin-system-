@@ -3,7 +3,6 @@
 const ADMIN_AUTH_USER_ENV = "ADMIN_BASIC_AUTH_USER";
 const ADMIN_AUTH_PASSWORD_ENV = "ADMIN_BASIC_AUTH_PASSWORD";
 const ADMIN_REALM = 'Basic realm="admin-office-mvp"';
-const ADMIN_INGEST_PATH = "/api/admin/marketing/ingest";
 
 const KO_AUTH_REQUIRED = "관리자 인증이 필요합니다.";
 const KO_AUTH_CONFIG_REQUIRED = "관리자 인증 환경변수 설정이 필요합니다.";
@@ -155,7 +154,7 @@ function isAllowedOrigin(originHeader: string, request: NextRequest) {
 function isProtectedAdminRoute(pathname: string) {
   if (pathname === "/") return true;
   if (pathname.startsWith("/admin")) return true;
-  if (pathname.startsWith("/api/admin") && pathname !== ADMIN_INGEST_PATH) return true;
+  if (pathname.startsWith("/api/admin")) return true;
   return false;
 }
 
@@ -322,7 +321,6 @@ export function middleware(request: NextRequest) {
 
   if (
     pathname.startsWith("/api/admin") &&
-    pathname !== ADMIN_INGEST_PATH &&
     isStateChangingMethod(request.method)
   ) {
     const requireSameOrigin = getEnvBoolean("ADMIN_REQUIRE_SAME_ORIGIN", true);

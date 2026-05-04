@@ -7,6 +7,14 @@ import {
   toLanguageCode,
   urgencyValues
 } from "@/types/inquiry";
+import {
+  civilPetitionSubtypeValues,
+  getIntakeCategoryDetailLabel,
+  intakeCategoryInquiryTypeMap,
+  intakeCategoryLabels,
+  intakeCategoryValues,
+  type IntakeCategory
+} from "@/types/intake-category";
 
 const booleanish = z.union([z.boolean(), z.string()]);
 const unicodeEscapePattern = /\\u([0-9A-Fa-f]{4})/g;
@@ -26,6 +34,9 @@ const validationMessages = {
   currentStatusMax: "\uD604\uC7AC \uC0C1\uD0DC\uB294 120\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.",
   documentCountryMax: "\uBB38\uC11C \uBC1C\uD589 \uAD6D\uAC00\uB294 80\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.",
   targetAgencyMax: "\uC81C\uCD9C\uCC98 \uB610\uB294 \uC0AC\uC6A9\uCC98\uB294 120\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.",
+  categoryRequired: "\uC5C5\uBB34 \uBD84\uC57C\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.",
+  civilPetitionTypeRequired: "\uAE30\uD0C0 \uBBFC\uC6D0\uC740 \uBBFC\uC6D0 \uC138\uBD80 \uC720\uD615\uC744 \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.",
+  categoryDetailMax: "\uBD84\uC57C\uBCC4 \uC138\uBD80 \uB0B4\uC6A9\uC740 \uD56D\uBAA9\uB2F9 500\uC790 \uC774\uD558\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.",
   consentRequired:
     "\uAC1C\uC778\uC815\uBCF4 \uC218\uC9D1 \uBC0F \uC0C1\uB2F4 \uBAA9\uC801 \uC774\uC6A9 \uB3D9\uC758\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4."
 } as const;
@@ -60,6 +71,11 @@ function textSchema(base: z.ZodString) {
   return z.preprocess(normalizeTextValue, base);
 }
 
+const categoryDetailsSchema = z
+  .record(textSchema(z.string().max(500, validationMessages.categoryDetailMax)))
+  .optional()
+  .default({});
+
 export const createInquirySchema = z.object({
   preferredLocale: z.enum(formLocaleValues),
   clientType: z.enum(clientTypeValues),
@@ -77,6 +93,11 @@ export const createInquirySchema = z.object({
   documentCountry: textSchema(z.string().max(80, validationMessages.documentCountryMax)).optional().or(z.literal("")),
   targetAgency: textSchema(z.string().max(120, validationMessages.targetAgencyMax)).optional().or(z.literal("")),
   dueDate: textSchema(z.string()).optional().or(z.literal("")),
+  category: z.enum(intakeCategoryValues, {
+    required_error: validationMessages.categoryRequired,
+    invalid_type_error: validationMessages.categoryRequired
+  }),
+  categoryDetails: categoryDetailsSchema,
   website: textSchema(z.string().max(200)).optional().or(z.literal("")),
   hasPreparedDocuments: booleanish.optional().transform((value) => parseBooleanish(value ?? false)),
   needsTranslation: booleanish.optional().transform((value) => parseBooleanish(value ?? false)),
@@ -85,28 +106,81 @@ export const createInquirySchema = z.object({
   consentToPrivacy: booleanish.transform((value) => parseBooleanish(value)).refine(Boolean, {
     message: validationMessages.consentRequired
   })
+}).superRefine((value, context) => {
+  if (
+    value.category === "civil_petition" &&
+    !(civilPetitionSubtypeValues as readonly string[]).includes(value.categoryDetails.civilPetitionType ?? "")
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["categoryDetails", "civilPetitionType"],
+      message: validationMessages.civilPetitionTypeRequired
+    });
+  }
 });
+
+function hasOwnStringValue(details: Record<string, string>, key: string) {
+  const value = details[key]?.trim();
+  return value ? value : undefined;
+}
+
+function formatCategoryDetails(category: IntakeCategory, details: Record<string, string>) {
+  const categoryLabel = intakeCategoryLabels[category];
+  const rows = Object.entries(details)
+    .map(([key, value]) => {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+      return `- ${getIntakeCategoryDetailLabel(category, key)}: ${trimmed}`;
+    })
+    .filter(Boolean);
+
+  if (rows.length === 0) {
+    return `\n\n[업무 분야]\n${categoryLabel}`;
+  }
+
+  return `\n\n[업무 분야]\n${categoryLabel}\n\n[분야별 세부사항]\n${rows.join("\n")}`;
+}
 
 export function parseCreateInquiryInput(payload: unknown) {
   const parsed = createInquirySchema.parse(payload);
   const parsedDueDate = parsed.dueDate ? new Date(parsed.dueDate) : undefined;
+  const category = parsed.category;
+  const categoryDetails = parsed.categoryDetails;
+  const effectiveInquiryType =
+    parsed.requestedInquiryType && parsed.requestedInquiryType !== "UNKNOWN"
+      ? parsed.requestedInquiryType
+      : intakeCategoryInquiryTypeMap[category];
 
   return {
     ...parsed,
     email: parsed.email.trim().toLowerCase(),
     organizationName: parsed.organizationName?.trim() || undefined,
     phone: parsed.phone?.trim() || undefined,
-    nationality: parsed.nationality?.trim() || undefined,
-    currentStatus: parsed.currentStatus?.trim() || undefined,
+    nationality:
+      parsed.nationality?.trim() ||
+      hasOwnStringValue(categoryDetails, "nationality") ||
+      hasOwnStringValue(categoryDetails, "representativeNationality"),
+    currentStatus:
+      parsed.currentStatus?.trim() ||
+      hasOwnStringValue(categoryDetails, "currentVisaStatus") ||
+      hasOwnStringValue(categoryDetails, "currentStage"),
     requestedOutcome: parsed.requestedOutcome?.trim() || undefined,
-    requestedInquiryType: parsed.requestedInquiryType,
+    requestedInquiryType: effectiveInquiryType,
     declaredUrgency: parsed.declaredUrgency,
     documentCountry: parsed.documentCountry?.trim() || undefined,
-    targetAgency: parsed.targetAgency?.trim() || undefined,
+    targetAgency:
+      parsed.targetAgency?.trim() ||
+      hasOwnStringValue(categoryDetails, "agency") ||
+      hasOwnStringValue(categoryDetails, "targetAgency") ||
+      hasOwnStringValue(categoryDetails, "generalTargetAgency") ||
+      hasOwnStringValue(categoryDetails, "disclosureTargetAgency") ||
+      hasOwnStringValue(categoryDetails, "relatedAgencyDepartment") ||
+      hasOwnStringValue(categoryDetails, "submissionAgency"),
     dueDate:
       parsedDueDate && !Number.isNaN(parsedDueDate.getTime())
         ? parsedDueDate
         : undefined,
+    description: `${parsed.description}${formatCategoryDetails(category, categoryDetails)}`,
     preferredLanguage: toLanguageCode(parsed.preferredLocale)
   };
 }
