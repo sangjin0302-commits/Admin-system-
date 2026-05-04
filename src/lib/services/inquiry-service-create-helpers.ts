@@ -13,6 +13,56 @@ import {
   evaluateCreateInquiryInput,
   type CreateInquiryInput
 } from "@/lib/services/inquiry-create-helpers";
+import {
+  buildPublicTrackingCommunicationLogEntry,
+  generatePublicTrackingCode,
+  getKoreaMonthRange
+} from "@/lib/services/public-tracking-code-service";
+
+async function getNextPublicTrackingMonthlySequence(createdAt: Date) {
+  const monthRange = getKoreaMonthRange(createdAt);
+  const existingCount = await prisma.inquiry.count({
+    where: {
+      createdAt: {
+        gte: monthRange.start,
+        lt: monthRange.end
+      }
+    }
+  });
+
+  return existingCount + 1;
+}
+
+async function buildAvailablePublicTrackingCode(input: CreateInquiryInput, createdAt: Date) {
+  const monthlySequence = await getNextPublicTrackingMonthlySequence(createdAt);
+
+  // This first phase stores the public code in communicationLogs for schema compatibility.
+  // The random check code and retry reduce collision risk, but /track should move this to
+  // a dedicated unique indexed column before public lookup is enabled.
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const trackingCode = generatePublicTrackingCode({
+      category: input.category,
+      createdAt,
+      monthlySequence
+    });
+    const existing = await prisma.inquiry.findFirst({
+      where: {
+        communicationLogs: {
+          contains: trackingCode
+        }
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (!existing) {
+      return trackingCode;
+    }
+  }
+
+  throw new Error("Failed to allocate public tracking code.");
+}
 
 export async function createInquiry(payload: unknown) {
   const input: CreateInquiryInput = parseCreateInquiryInput(payload);
@@ -47,9 +97,16 @@ export async function createInquiry(payload: unknown) {
     }
 
     const derived = evaluateCreateInquiryInput(input);
+    const createdAt = new Date();
+    const publicTrackingCode = await buildAvailablePublicTrackingCode(input, createdAt);
+    const publicTrackingLog = buildPublicTrackingCommunicationLogEntry(publicTrackingCode, createdAt);
 
     const created = await prisma.inquiry.create({
-      data: buildCreateInquiryData(input, derived)
+      data: {
+        ...buildCreateInquiryData(input, derived),
+        createdAt,
+        communicationLogs: JSON.stringify([publicTrackingLog])
+      }
     });
     const artifacts = await buildFinalizedMessageArtifacts(created, derived.messageInputDraft);
 

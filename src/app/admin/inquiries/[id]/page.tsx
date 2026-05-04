@@ -21,6 +21,7 @@ import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { buildInquiryDetailPageData } from "@/lib/services/inquiry-detail-page-data";
 import { safeGetInquiryForDetail } from "@/lib/services/inquiry-detail-loaders";
 import { buildIntakeCategoryDetailSummary } from "@/lib/services/intake-category-detail-summary";
+import { extractPublicTrackingCodeFromCommunicationLogs } from "@/lib/services/public-tracking-code-service";
 import { formatDateTime } from "@/lib/utils";
 import {
   getClientTypeLabel,
@@ -122,6 +123,7 @@ export default async function AdminInquiryDetailPage({
       checklistActionItems
     } = await buildInquiryDetailPageData(inquiry);
     const intakeCategorySummary = buildIntakeCategoryDetailSummary(inquiry.description);
+    const publicTrackingCode = extractPublicTrackingCodeFromCommunicationLogs(inquiry.communicationLogs);
 
     return (
       <div className="space-y-6">
@@ -228,6 +230,7 @@ export default async function AdminInquiryDetailPage({
             <InquiryDetailIntakeCategorySection
               summary={intakeCategorySummary}
               urgencyLabel={getUrgencyLabel(declaredUrgency)}
+              publicTrackingCode={publicTrackingCode}
             />
             <InquiryDetailInternalMemoSection
               structuredInternalMemo={structuredInternalMemo}
