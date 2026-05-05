@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -1096,6 +1097,12 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
                 <span className="font-semibold text-text-strong">{completedTrackingCode}</span>
               </p>
               <p className="mt-2 text-sm text-text-muted">{copy.trackingHelp}</p>
+              <Link
+                href="/track"
+                className="mt-4 inline-flex h-10 items-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
+              >
+                {locale === "en" ? "Check request status" : "접수 진행상황 확인하기"}
+              </Link>
             </>
           ) : null}
         </section>
