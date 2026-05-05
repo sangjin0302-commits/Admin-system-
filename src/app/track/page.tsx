@@ -5,8 +5,9 @@ import { PublicTrackClient } from "@/components/public-track/public-track-client
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "접수 진행상황 확인",
-  description: "접수번호와 휴대폰 뒤 4자리로 고객용 진행상황을 확인합니다."
+  title: "\uC811\uC218 \uC9C4\uD589\uC0C1\uD669 \uD655\uC778",
+  description:
+    "\uC811\uC218\uBC88\uD638\uC640 \uD734\uB300\uD3F0 \uB4A4 4\uC790\uB9AC\uB85C \uACE0\uAC1D\uC6A9 \uC9C4\uD589\uC0C1\uD669\uC744 \uD655\uC778\uD569\uB2C8\uB2E4."
 };
 
 export default function TrackPage() {

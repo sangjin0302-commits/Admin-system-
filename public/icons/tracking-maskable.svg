@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Tracking status app icon">
+  <rect width="512" height="512" fill="#0f4c81"/>
+  <circle cx="256" cy="256" r="214" fill="#ffffff"/>
+  <rect x="158" y="126" width="196" height="248" rx="34" fill="#0f4c81"/>
+  <path d="M206 202h100M206 256h100M206 310h58" stroke="#ffffff" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="346" cy="348" r="58" fill="#2f855a"/>
+  <path d="M320 348l18 18 40-46" fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
