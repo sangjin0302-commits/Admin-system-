@@ -7,9 +7,13 @@ const KO_APP_TITLE = "\uD589\uC815\uC0AC \uBB38\uC758 \uC811\uC218 \uBC0F \uC5C5
 const KO_PUBLIC_INTAKE = "\uACF5\uAC1C \uC811\uC218";
 const KO_ADMIN = "\uAD00\uB9AC\uC790";
 
+export function isHeaderlessPublicRoute(pathname: string) {
+  return pathname === "/intake" || pathname.startsWith("/intake/") || pathname === "/track" || pathname.startsWith("/track/");
+}
+
 export function AppShellSafe({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
-  const hideGlobalHeader = pathname.startsWith("/intake");
+  const hideGlobalHeader = isHeaderlessPublicRoute(pathname);
 
   return (
     <div className="ui-shell">

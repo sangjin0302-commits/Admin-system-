@@ -88,19 +88,34 @@ assert.equal(
 
 const trackPagePath = join(root, "src/app/track/page.tsx");
 const trackClientPath = join(root, "src/components/public-track/public-track-client.tsx");
+const appShellPath = join(root, "src/components/layout/app-shell-safe.tsx");
 assert.equal(existsSync(trackPagePath), true);
 assert.equal(existsSync(trackClientPath), true);
+assert.equal(existsSync(appShellPath), true);
 
 const trackPageSource = readFileSync(trackPagePath, "utf8");
 const trackClientSource = readFileSync(trackClientPath, "utf8");
+const appShellSource = readFileSync(appShellPath, "utf8");
 assert.match(trackPageSource, /PublicTrackClient/);
 assert.match(trackClientSource, /PUBLIC_TRACK_API_PATH/);
+assert.match(trackClientSource, /접수 조회/);
+assert.equal(trackPageSource.includes("Administrative Office Intake System"), false);
+assert.equal(trackClientSource.includes("Administrative Office Intake System"), false);
+assert.equal(trackPageSource.includes("행정사 문의 접수 및 업무 관리시스템"), false);
+assert.equal(trackClientSource.includes("행정사 문의 접수 및 업무 관리시스템"), false);
+assert.equal(trackPageSource.includes('href="/admin"'), false);
+assert.equal(trackClientSource.includes('href="/admin"'), false);
+assert.equal(trackPageSource.includes("/api/admin"), false);
+assert.equal(trackClientSource.includes("/api/admin"), false);
 assert.equal(trackClientSource.includes("/api/inquiries"), false);
 assert.equal(trackClientSource.includes("run-lawbot-workflow"), false);
 assert.equal(trackClientSource.includes("client-message-service"), false);
 assert.equal(trackClientSource.includes("externalActionAllowed"), false);
 assert.equal(trackClientSource.includes("documentDrafts"), false);
 assert.equal(trackClientSource.includes("messageDrafts"), false);
+assert.match(appShellSource, /isHeaderlessPublicRoute/);
+assert.match(appShellSource, /pathname === "\/track"/);
+assert.match(appShellSource, /pathname\.startsWith\("\/track\/"\)/);
 
 const intakeSource = readFileSync(join(root, "src/components/intake/intake-form-safe-v3.tsx"), "utf8");
 assert.match(intakeSource, /href="\/track"/);
