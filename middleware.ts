@@ -151,10 +151,28 @@ function isAllowedOrigin(originHeader: string, request: NextRequest) {
   }
 }
 
-function isProtectedAdminRoute(pathname: string) {
+function hasPathPrefix(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+export function isPublicRoute(pathname: string) {
   if (pathname === "/") return true;
-  if (pathname.startsWith("/admin")) return true;
-  if (pathname.startsWith("/api/admin")) return true;
+  if (hasPathPrefix(pathname, "/intake")) return true;
+  if (hasPathPrefix(pathname, "/track")) return true;
+  if (hasPathPrefix(pathname, "/api/inquiries")) return true;
+  if (hasPathPrefix(pathname, "/api/public/track")) return true;
+  if (pathname.startsWith("/_next/")) return true;
+  if (pathname === "/favicon.ico") return true;
+  if (pathname === "/manifest.json") return true;
+  if (pathname.startsWith("/icons/")) return true;
+  if (pathname === "/robots.txt") return true;
+  if (pathname === "/sitemap.xml") return true;
+  return false;
+}
+
+export function isProtectedAdminRoute(pathname: string) {
+  if (hasPathPrefix(pathname, "/admin")) return true;
+  if (hasPathPrefix(pathname, "/api/admin")) return true;
   return false;
 }
 
@@ -304,6 +322,12 @@ export function middleware(request: NextRequest) {
       : textError(426, KO_HTTPS_REQUIRED, request);
   }
 
+  if (isPublicRoute(pathname)) {
+    const response = NextResponse.next();
+    applySecurityHeaders(request, response);
+    return response;
+  }
+
   const protectedAdminRoute = isProtectedAdminRoute(pathname);
   if (!protectedAdminRoute) {
     const response = NextResponse.next();
@@ -399,5 +423,13 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/admin/:path*", "/api/admin/:path*", "/intake/:path*", "/api/inquiries"]
+  matcher: [
+    "/",
+    "/admin/:path*",
+    "/api/admin/:path*",
+    "/intake/:path*",
+    "/track/:path*",
+    "/api/inquiries/:path*",
+    "/api/public/track"
+  ]
 };
