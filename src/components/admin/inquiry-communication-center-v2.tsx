@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CustomerNotificationPreviewCard } from "@/components/admin/customer-notification-preview-card";
 import { CustomerTrackingNoticeCopyCard } from "@/components/admin/customer-tracking-notice-copy-card";
 
 export type InquiryCommunicationDraft = {
@@ -18,11 +19,13 @@ export type InquiryCommunicationDraft = {
 };
 
 export function InquiryCommunicationCenterV2({
+  inquiryId,
   drafts,
   recommendedDraftIds = [],
   recommendationLabel,
   publicTrackingCode = null
 }: {
+  inquiryId: string;
   drafts: InquiryCommunicationDraft[];
   recommendedDraftIds?: string[];
   recommendationLabel?: string;
@@ -98,6 +101,7 @@ export function InquiryCommunicationCenterV2({
       </div>
 
       <CustomerTrackingNoticeCopyCard trackingCode={publicTrackingCode} />
+      <CustomerNotificationPreviewCard inquiryId={inquiryId} />
 
       {recommendedDraftIds.length > 0 ? (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">

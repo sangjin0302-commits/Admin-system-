@@ -268,6 +268,7 @@ export default async function AdminInquiryDetailPage({
               suggestedChecklist: suggestedCommunicationChecklist
             }}
             communicationCenter={{
+              inquiryId: inquiry.id,
               drafts: communicationDrafts,
               recommendedDraftIds: recommendedCommunicationIds,
               recommendationLabel: routeRecommendation.recommendationLabel,
