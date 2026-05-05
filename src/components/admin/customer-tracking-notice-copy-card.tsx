@@ -36,21 +36,23 @@ export function CustomerTrackingNoticeCopyCard({
 
   if (!notice) {
     return (
-      <Card muted className="mt-4 p-5">
-        <p className="ui-kicker">고객 안내문 복사</p>
+      <Card muted className="mt-5 p-5">
+        <p className="ui-kicker">접수번호 및 진행상황 안내</p>
         <p className="mt-3 text-sm text-text-muted">{CUSTOMER_TRACKING_NOTICE_EMPTY_MESSAGE}</p>
       </Card>
     );
   }
 
   return (
-    <Card muted className="mt-4 p-5">
+    <Card muted className="mt-5 p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="ui-kicker">고객 안내문 복사</p>
-          <p className="mt-2 text-sm text-text-muted">
-            실제 SMS, 이메일, 알림톡 발송 없이 안내문만 복사합니다.
-          </p>
+          <p className="ui-kicker">접수번호 및 진행상황 안내</p>
+          <div className="mt-2 space-y-1 text-sm text-text-muted">
+            <p>고객에게 접수번호와 진행상황 확인 링크를 안내할 수 있습니다.</p>
+            <p>아래 안내문을 복사해 문자, 카카오톡, 이메일 등으로 전달하세요.</p>
+            <p>이 기능은 안내문 복사만 제공하며 실제 발송은 실행하지 않습니다.</p>
+          </div>
         </div>
         <Button type="button" variant="secondary" onClick={copyNotice}>
           고객 안내문 복사
