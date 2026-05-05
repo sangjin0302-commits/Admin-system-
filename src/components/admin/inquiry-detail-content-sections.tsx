@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { CustomerTrackingNoticeCopyCard } from "@/components/admin/customer-tracking-notice-copy-card";
 import { InfoItem } from "@/components/admin/inquiry-detail-common";
 import type { IntakeCategoryDetailSummary } from "@/lib/services/intake-category-detail-summary";
 
@@ -76,7 +75,6 @@ export function InquiryDetailIntakeCategorySection(input: {
           {input.publicTrackingCode || "아직 발급된 고객용 접수번호가 없습니다."}
         </p>
       </Card>
-      <CustomerTrackingNoticeCopyCard trackingCode={input.publicTrackingCode} />
       {summary.categoryLabel ? (
         <>
           <div className="mt-5 grid gap-4 text-sm text-text sm:grid-cols-2">

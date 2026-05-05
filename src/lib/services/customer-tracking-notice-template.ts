@@ -1,7 +1,7 @@
 export const CUSTOMER_TRACKING_NOTICE_TRACK_URL = "https://adminofficemvp2.vercel.app/track";
 
 export const CUSTOMER_TRACKING_NOTICE_EMPTY_MESSAGE =
-  "고객용 접수번호가 있는 접수에서만 안내문을 만들 수 있습니다.";
+  "고객용 접수번호가 있는 접수에서만 진행상황 안내문을 만들 수 있습니다.";
 
 export type CustomerTrackingNoticeTemplateInput = {
   trackingCode: string | null | undefined;

@@ -270,7 +270,8 @@ export default async function AdminInquiryDetailPage({
             communicationCenter={{
               drafts: communicationDrafts,
               recommendedDraftIds: recommendedCommunicationIds,
-              recommendationLabel: routeRecommendation.recommendationLabel
+              recommendationLabel: routeRecommendation.recommendationLabel,
+              publicTrackingCode
             }}
             snapshotCompare={{
               headline: lawbotSnapshotComparison.headline,

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CustomerTrackingNoticeCopyCard } from "@/components/admin/customer-tracking-notice-copy-card";
 
 export type InquiryCommunicationDraft = {
   id: string;
@@ -19,11 +20,13 @@ export type InquiryCommunicationDraft = {
 export function InquiryCommunicationCenterV2({
   drafts,
   recommendedDraftIds = [],
-  recommendationLabel
+  recommendationLabel,
+  publicTrackingCode = null
 }: {
   drafts: InquiryCommunicationDraft[];
   recommendedDraftIds?: string[];
   recommendationLabel?: string;
+  publicTrackingCode?: string | null;
 }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [bundleCopied, setBundleCopied] = useState(false);
@@ -94,6 +97,8 @@ export function InquiryCommunicationCenterV2({
         <Badge>실무 템플릿</Badge>
       </div>
 
+      <CustomerTrackingNoticeCopyCard trackingCode={publicTrackingCode} />
+
       {recommendedDraftIds.length > 0 ? (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
           <div>
@@ -155,4 +160,3 @@ export function InquiryCommunicationCenterV2({
     </Card>
   );
 }
-
