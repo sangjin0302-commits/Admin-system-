@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CustomerNotificationEmailDryRunCard } from "@/components/admin/customer-notification-email-dry-run-card";
 import { CustomerNotificationManualAuditCard } from "@/components/admin/customer-notification-manual-audit-card";
 import { CustomerNotificationPreviewCard } from "@/components/admin/customer-notification-preview-card";
 import { CustomerTrackingNoticeCopyCard } from "@/components/admin/customer-tracking-notice-copy-card";
@@ -103,6 +104,7 @@ export function InquiryCommunicationCenterV2({
 
       <CustomerTrackingNoticeCopyCard trackingCode={publicTrackingCode} />
       <CustomerNotificationPreviewCard inquiryId={inquiryId} />
+      <CustomerNotificationEmailDryRunCard inquiryId={inquiryId} />
       <CustomerNotificationManualAuditCard inquiryId={inquiryId} />
 
       {recommendedDraftIds.length > 0 ? (
