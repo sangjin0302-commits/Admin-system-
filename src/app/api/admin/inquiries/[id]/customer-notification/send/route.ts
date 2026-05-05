@@ -71,8 +71,8 @@ export async function POST(
   const confirmations = isObject(body.confirmations) ? body.confirmations : null;
   const resendReason = readString(body.resendReason);
 
-  if (channel !== "manual") {
-    return api.error(400, "Only manual channel is allowed.", {
+  if (channel !== "manual" && channel !== "email") {
+    return api.error(400, "Only manual audit and email dry-run channels are allowed.", {
       code: "CHANNEL_SEND_NOT_ENABLED"
     });
   }

@@ -5,6 +5,12 @@ import {
   CUSTOMER_NOTIFICATION_REQUIRED_CONFIRMATIONS,
   type CustomerNotificationChannel
 } from "@/lib/services/customer-notification-preview-service";
+import {
+  buildCustomerTrackingEmailMessage,
+  getCustomerEmailProvider,
+  isValidCustomerEmailAddress,
+  type CustomerEmailProvider
+} from "@/lib/services/customer-email-provider";
 
 type CustomerNotificationSendConfirmationKey =
   (typeof CUSTOMER_NOTIFICATION_REQUIRED_CONFIRMATIONS)[number];
@@ -24,7 +30,7 @@ export type CustomerNotificationSendInput = {
   resendReason?: string | null;
 };
 
-export type CustomerNotificationSendResult = {
+export type ManualCustomerNotificationSendResult = {
   status: "SENT";
   channel: "manual";
   deliveryMode: "manual_audit_only";
@@ -37,6 +43,26 @@ export type CustomerNotificationSendResult = {
   providerCalled: false;
   isResend: boolean;
 };
+
+export type EmailCustomerNotificationDryRunResult = {
+  status: "DRY_RUN_RECORDED";
+  channel: "email";
+  deliveryMode: "email_dry_run_only";
+  recipientPreview: string;
+  providerName: "dry-run";
+  providerCalled: false;
+  dryRunOnly: true;
+  externalActionAllowed: false;
+  messageVersion: typeof CUSTOMER_NOTIFICATION_MESSAGE_VERSION;
+  previewHash: string;
+  idempotencyKey: string;
+  recordedAt: string;
+  isResend: boolean;
+};
+
+export type CustomerNotificationSendResult =
+  | ManualCustomerNotificationSendResult
+  | EmailCustomerNotificationDryRunResult;
 
 type InquiryRow = {
   id: string;
@@ -60,6 +86,7 @@ type CustomerNotificationSendPrismaClient = {
 
 export type CustomerNotificationSendDependencies = {
   prismaClient?: CustomerNotificationSendPrismaClient;
+  emailProvider?: CustomerEmailProvider;
   now?: () => Date;
 };
 
@@ -117,7 +144,28 @@ function normalizeChannel(input: CustomerNotificationSendInput["channel"]) {
   return input.trim().toLowerCase();
 }
 
-function isManualChannel(channel: string): channel is CustomerNotificationChannel {
+function isSupportedSendChannel(channel: string): channel is "manual" | "email" {
+  return channel === "manual" || channel === "email";
+}
+
+function assertSendChannel(channel: string | null): "manual" | "email" {
+  if (!channel || !isSupportedSendChannel(channel)) {
+    throw customerNotificationSendError(
+      400,
+      "CHANNEL_SEND_NOT_ENABLED",
+      "Only manual audit and email dry-run notification records are enabled."
+    );
+  }
+  return channel;
+}
+
+function getSentEventType(channel: "manual" | "email") {
+  return channel === "manual"
+    ? "customer_notification_sent"
+    : "customer_email_send_dry_run_recorded";
+}
+
+function isManualChannel(channel: string): channel is "manual" {
   return channel === "manual";
 }
 
@@ -149,13 +197,15 @@ function normalizeConfirmations(
 
 function getExistingSentEventByIdempotencyKey(
   logs: unknown[],
+  channel: "manual" | "email",
   idempotencyKey: string
 ) {
+  const eventType = getSentEventType(channel);
   return logs.find((entry) => {
     if (!isRecord(entry)) return false;
     return (
-      entry.type === "customer_notification_sent" &&
-      entry.channel === "manual" &&
+      entry.type === eventType &&
+      entry.channel === channel &&
       entry.idempotencyKey === idempotencyKey
     );
   });
@@ -163,13 +213,15 @@ function getExistingSentEventByIdempotencyKey(
 
 function getExistingSuccessfulEventByPreviewHash(
   logs: unknown[],
+  channel: "manual" | "email",
   previewHash: string
 ) {
+  const eventType = getSentEventType(channel);
   return logs.find((entry) => {
     if (!isRecord(entry)) return false;
     return (
-      entry.type === "customer_notification_sent" &&
-      entry.channel === "manual" &&
+      entry.type === eventType &&
+      entry.channel === channel &&
       entry.previewHash === previewHash
     );
   });
@@ -184,35 +236,63 @@ function resultFromAuditEntry(entry: unknown): CustomerNotificationSendResult | 
   const previewHash = getString(entry, "previewHash");
   const idempotencyKey = getString(entry, "idempotencyKey");
   const sentAt = getString(entry, "sentAt");
+  const recordedAt = getString(entry, "recordedAt");
 
   if (
-    channel !== "manual" ||
-    deliveryMode !== "manual_audit_only" ||
+    channel === "manual" &&
+    deliveryMode === "manual_audit_only" &&
+    recipientPreview &&
+    messageVersion === CUSTOMER_NOTIFICATION_MESSAGE_VERSION &&
+    previewHash &&
+    idempotencyKey &&
+    sentAt
+  ) {
+    return {
+      status: "SENT",
+      channel: "manual",
+      deliveryMode: "manual_audit_only",
+      recipientPreview,
+      messageVersion,
+      previewHash,
+      idempotencyKey,
+      sentAt,
+      externalActionAllowed: false,
+      providerCalled: false,
+      isResend: getBoolean(entry, "isResend")
+    };
+  }
+
+  if (
+    channel !== "email" ||
+    deliveryMode !== "email_dry_run_only" ||
     !recipientPreview ||
     messageVersion !== CUSTOMER_NOTIFICATION_MESSAGE_VERSION ||
     !previewHash ||
     !idempotencyKey ||
-    !sentAt
+    !recordedAt
   ) {
     return null;
   }
 
   return {
-    status: "SENT",
-    channel: "manual",
-    deliveryMode: "manual_audit_only",
+    status: "DRY_RUN_RECORDED",
+    channel: "email",
+    deliveryMode: "email_dry_run_only",
     recipientPreview,
+    providerName: "dry-run",
+    providerCalled: false,
+    dryRunOnly: true,
+    externalActionAllowed: false,
     messageVersion,
     previewHash,
     idempotencyKey,
-    sentAt,
-    externalActionAllowed: false,
-    providerCalled: false,
+    recordedAt,
     isResend: getBoolean(entry, "isResend")
   };
 }
 
 function buildAuditEntry(input: {
+  channel: "manual";
   sentAt: string;
   trackingCode: string;
   previewHash: string;
@@ -243,20 +323,50 @@ function buildAuditEntry(input: {
   return resendReason ? { ...base, resendReason } : base;
 }
 
-function assertManualSendInput(input: CustomerNotificationSendInput): {
+function buildEmailDryRunAuditEntry(input: {
+  recordedAt: string;
+  trackingCode: string;
+  recipientPreview: string;
+  providerName: "dry-run";
+  previewHash: string;
+  idempotencyKey: string;
+  confirmations: CustomerNotificationSendConfirmations;
+  isResend: boolean;
+  resendReason?: string | null;
+}) {
+  const base = {
+    type: "customer_email_send_dry_run_recorded",
+    source: "admin_customer_notification",
+    channel: "email",
+    deliveryMode: "email_dry_run_only",
+    trackingCode: input.trackingCode,
+    recipientPreview: input.recipientPreview,
+    providerName: input.providerName,
+    providerCalled: false,
+    dryRunOnly: true,
+    externalActionAllowed: false,
+    messageVersion: CUSTOMER_NOTIFICATION_MESSAGE_VERSION,
+    previewHash: input.previewHash,
+    idempotencyKey: input.idempotencyKey,
+    confirmations: input.confirmations,
+    recordedAt: input.recordedAt,
+    createdAt: input.recordedAt,
+    isResend: input.isResend
+  };
+
+  const resendReason = input.resendReason?.trim();
+  return resendReason ? { ...base, resendReason } : base;
+}
+
+function assertSendInput(input: CustomerNotificationSendInput): {
+  normalizedChannel: "manual" | "email";
   normalizedIdempotencyKey: string;
   normalizedPreviewHash: string;
   normalizedMessageVersion: string;
   confirmations: CustomerNotificationSendConfirmations;
 } {
   const normalizedChannel = normalizeChannel(input.channel);
-  if (!normalizedChannel || !isManualChannel(normalizedChannel)) {
-    throw customerNotificationSendError(
-      400,
-      "CHANNEL_SEND_NOT_ENABLED",
-      "Only manual customer notification audit is enabled."
-    );
-  }
+  const sendChannel = assertSendChannel(normalizedChannel);
 
   const normalizedPreviewHash = hasText(input.previewHash)
     ? input.previewHash.trim()
@@ -281,6 +391,7 @@ function assertManualSendInput(input: CustomerNotificationSendInput): {
   const confirmations = normalizeConfirmations(input.confirmations);
 
   return {
+    normalizedChannel: sendChannel,
     normalizedIdempotencyKey,
     normalizedPreviewHash,
     normalizedMessageVersion,
@@ -293,13 +404,15 @@ export async function sendManualCustomerNotificationAudit(
   dependencies: CustomerNotificationSendDependencies = {}
 ): Promise<CustomerNotificationSendResult> {
   const {
+    normalizedChannel,
     normalizedIdempotencyKey,
     normalizedPreviewHash,
     normalizedMessageVersion,
     confirmations
-  } = assertManualSendInput(input);
+  } = assertSendInput(input);
   const prismaClient =
     dependencies.prismaClient ?? (prisma as unknown as CustomerNotificationSendPrismaClient);
+  const emailProvider = dependencies.emailProvider ?? getCustomerEmailProvider();
   const now = dependencies.now ?? (() => new Date());
 
   return prismaClient.$transaction(async (tx) => {
@@ -331,9 +444,25 @@ export async function sendManualCustomerNotificationAudit(
       );
     }
 
+    if (normalizedChannel === "email" && !inquiry.email?.trim()) {
+      throw customerNotificationSendError(
+        400,
+        "RECIPIENT_MISSING",
+        "Customer email recipient is missing."
+      );
+    }
+
+    if (normalizedChannel === "email" && !isValidCustomerEmailAddress(inquiry.email)) {
+      throw customerNotificationSendError(
+        400,
+        "INVALID_RECIPIENT_EMAIL",
+        "Customer email recipient is invalid."
+      );
+    }
+
     const preview = buildCustomerNotificationPreviewDto({
       inquiry,
-      channel: "manual"
+      channel: normalizedChannel
     });
 
     if (!preview.previewHash) {
@@ -364,6 +493,7 @@ export async function sendManualCustomerNotificationAudit(
 
     const existingByIdempotencyKey = getExistingSentEventByIdempotencyKey(
       logs,
+      normalizedChannel,
       normalizedIdempotencyKey
     );
     const existingResult = resultFromAuditEntry(existingByIdempotencyKey);
@@ -373,6 +503,7 @@ export async function sendManualCustomerNotificationAudit(
 
     const duplicateByPreviewHash = getExistingSuccessfulEventByPreviewHash(
       logs,
+      normalizedChannel,
       normalizedPreviewHash
     );
     const resendReason = input.resendReason?.trim() ?? "";
@@ -385,10 +516,75 @@ export async function sendManualCustomerNotificationAudit(
       );
     }
 
-    const sentAt = now().toISOString();
-    const auditEntry = buildAuditEntry({
-      sentAt,
+    if (isManualChannel(normalizedChannel)) {
+      const sentAt = now().toISOString();
+      const auditEntry = buildAuditEntry({
+        channel: "manual",
+        sentAt,
+        trackingCode: inquiry.publicTrackingCode.trim(),
+        previewHash: preview.previewHash,
+        idempotencyKey: normalizedIdempotencyKey,
+        confirmations,
+        isResend: Boolean(duplicateByPreviewHash),
+        resendReason: resendReason || null
+      });
+
+      await tx.inquiry.update({
+        where: { id: input.inquiryId },
+        data: {
+          communicationLogs: JSON.stringify([...logs, auditEntry])
+        }
+      });
+
+      const result = resultFromAuditEntry(auditEntry);
+      if (!result) {
+        throw customerNotificationSendError(
+          500,
+          "CUSTOMER_NOTIFICATION_SEND_AUDIT_FAILED",
+          "Customer notification audit result could not be built."
+        );
+      }
+
+      return result;
+    }
+
+    const message = buildCustomerTrackingEmailMessage({
+      trackingCode: inquiry.publicTrackingCode.trim()
+    });
+    const providerResult = await emailProvider.sendEmail({
+      to: inquiry.email ?? "",
+      from: "notice@adminofficemvp2.vercel.app",
+      subject: message.subject,
+      text: message.text,
+      html: message.html,
+      idempotencyKey: normalizedIdempotencyKey,
+      metadata: {
+        channel: "email",
+        messageVersion: CUSTOMER_NOTIFICATION_MESSAGE_VERSION,
+        previewHash: preview.previewHash
+      }
+    });
+
+    if (
+      providerResult.providerName !== "dry-run" ||
+      providerResult.providerCalled !== false ||
+      providerResult.dryRunOnly !== true ||
+      providerResult.externalActionAllowed !== false ||
+      providerResult.status !== "DRY_RUN_ACCEPTED"
+    ) {
+      throw customerNotificationSendError(
+        500,
+        "CUSTOMER_EMAIL_DRY_RUN_PROVIDER_INVALID",
+        "Customer email dry-run provider returned an unsafe result."
+      );
+    }
+
+    const recordedAt = now().toISOString();
+    const emailAuditEntry = buildEmailDryRunAuditEntry({
+      recordedAt,
       trackingCode: inquiry.publicTrackingCode.trim(),
+      recipientPreview: preview.recipientPreview,
+      providerName: "dry-run",
       previewHash: preview.previewHash,
       idempotencyKey: normalizedIdempotencyKey,
       confirmations,
@@ -399,11 +595,11 @@ export async function sendManualCustomerNotificationAudit(
     await tx.inquiry.update({
       where: { id: input.inquiryId },
       data: {
-        communicationLogs: JSON.stringify([...logs, auditEntry])
+        communicationLogs: JSON.stringify([...logs, emailAuditEntry])
       }
     });
 
-    const result = resultFromAuditEntry(auditEntry);
+    const result = resultFromAuditEntry(emailAuditEntry);
     if (!result) {
       throw customerNotificationSendError(
         500,
