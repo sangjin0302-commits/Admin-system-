@@ -9,7 +9,40 @@ const KO_SYSTEM_DESCRIPTION =
 
 export const metadata: Metadata = {
   title: KO_SYSTEM_TITLE,
-  description: KO_SYSTEM_DESCRIPTION
+  description: KO_SYSTEM_DESCRIPTION,
+  applicationName: "\uD589\uC815\uC0AC \uC9C4\uD589\uC0C1\uD669 \uC870\uD68C",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "\uC9C4\uD589\uC0C1\uD669",
+    statusBarStyle: "default"
+  },
+  icons: {
+    icon: [
+      {
+        url: "/icons/tracking-192.svg",
+        sizes: "192x192",
+        type: "image/svg+xml"
+      },
+      {
+        url: "/icons/tracking-512.svg",
+        sizes: "512x512",
+        type: "image/svg+xml"
+      }
+    ],
+    apple: [
+      {
+        url: "/icons/tracking-192.svg",
+        sizes: "192x192",
+        type: "image/svg+xml"
+      }
+    ]
+  },
+  other: {
+    "theme-color": "#0f4c81",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-title": "\uC9C4\uD589\uC0C1\uD669"
+  }
 };
 
 export default function RootLayoutSafe({ children }: Readonly<{ children: React.ReactNode }>) {

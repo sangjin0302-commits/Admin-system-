@@ -18,6 +18,13 @@ import {
 } from "@/lib/services/public-track-page-ui-model";
 
 const LOOKUP_ERROR_MESSAGE = PUBLIC_TRACK_GENERIC_NOT_FOUND_MESSAGE;
+const HOME_SCREEN_TITLE = "\uD734\uB300\uD3F0 \uD648 \uD654\uBA74\uC5D0 \uCD94\uAC00\uD558\uAE30";
+const HOME_SCREEN_DESCRIPTION =
+  "\uD648 \uD654\uBA74\uC5D0 \uCD94\uAC00\uD558\uBA74 \uC811\uC218 \uC9C4\uD589\uC0C1\uD669\uC744 \uC571\uCC98\uB7FC \uBE60\uB974\uAC8C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.";
+const IOS_HOME_SCREEN_GUIDE =
+  "iPhone: \uACF5\uC720 \uBC84\uD2BC\uC744 \uB204\uB978 \uB4A4 \u201C\uD648 \uD654\uBA74\uC5D0 \uCD94\uAC00\u201D\uB97C \uC120\uD0DD\uD558\uC138\uC694.";
+const ANDROID_HOME_SCREEN_GUIDE =
+  "Android: \uBE0C\uB77C\uC6B0\uC800 \uBA54\uB274\uB97C \uB204\uB978 \uB4A4 \u201C\uD648 \uD654\uBA74\uC5D0 \uCD94\uAC00\u201D\uB97C \uC120\uD0DD\uD558\uC138\uC694.";
 
 function ResultRow({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
@@ -174,16 +181,14 @@ export function PublicTrackClient() {
       </Card>
 
       <Card muted className="space-y-3 p-5 sm:p-6">
-        <h2 className="ui-section-title">휴대폰 홈 화면에 추가하기</h2>
-        <p className="text-sm text-text-muted">
-          휴대폰 홈 화면에 추가해두면 접수 진행상황을 편하게 확인할 수 있습니다.
-        </p>
+        <h2 className="ui-section-title">{HOME_SCREEN_TITLE}</h2>
+        <p className="text-sm text-text-muted">{HOME_SCREEN_DESCRIPTION}</p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-md border border-line bg-surface px-4 py-3 text-sm text-text">
-            <span className="font-semibold text-text-strong">iPhone</span>: 공유 버튼 → 홈 화면에 추가
+            {IOS_HOME_SCREEN_GUIDE}
           </div>
           <div className="rounded-md border border-line bg-surface px-4 py-3 text-sm text-text">
-            <span className="font-semibold text-text-strong">Android</span>: 브라우저 메뉴 → 홈 화면에 추가
+            {ANDROID_HOME_SCREEN_GUIDE}
           </div>
         </div>
       </Card>
