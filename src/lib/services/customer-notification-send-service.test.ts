@@ -117,10 +117,13 @@ function createSendInput(overrides?: {
   };
 }
 
-function buildInputPreviewHash(inquiry: Pick<FakeInquiry, "email" | "phone" | "consentToPrivacy" | "publicTrackingCode">) {
+function buildInputPreviewHash(
+  inquiry: Pick<FakeInquiry, "email" | "phone" | "consentToPrivacy" | "publicTrackingCode">,
+  channel: "manual" | "email" = "manual"
+) {
   const preview = buildCustomerNotificationPreviewDto({
     inquiry,
-    channel: "manual"
+    channel
   });
   assert.ok(preview.previewHash);
   return preview.previewHash;
@@ -220,7 +223,7 @@ async function testChannelRestrictionsRejected() {
   const fake = createFakePrisma();
   const previewHash = buildInputPreviewHash(fake.state.inquiry);
 
-  for (const channel of ["email", "sms", "alimtalk"]) {
+  for (const channel of ["sms", "alimtalk"]) {
     await assert.rejects(
       () =>
         sendManualCustomerNotificationAudit(
@@ -235,6 +238,111 @@ async function testChannelRestrictionsRejected() {
         error instanceof CustomerNotificationSendServiceError &&
         error.status === 400 &&
         error.code === "CHANNEL_SEND_NOT_ENABLED"
+    );
+  }
+}
+
+async function testEmailDryRunSuccessAppendsAudit() {
+  const fake = createFakePrisma();
+  const previewHash = buildInputPreviewHash(fake.state.inquiry, "email");
+  const providerCalls: unknown[] = [];
+
+  const result = await sendManualCustomerNotificationAudit(
+    createSendInput({
+      channel: "email",
+      previewHash,
+      idempotencyKey: "email-dry-run-001"
+    }),
+    {
+      prismaClient: fake.prismaClient,
+      now: () => new Date("2026-05-05T11:00:00.000Z"),
+      emailProvider: {
+        sendEmail: async (input) => {
+          providerCalls.push(input);
+          return {
+            providerName: "dry-run",
+            providerCalled: false,
+            dryRunOnly: true,
+            externalActionAllowed: false,
+            status: "DRY_RUN_ACCEPTED"
+          };
+        }
+      }
+    }
+  );
+
+  assert.equal(result.status, "DRY_RUN_RECORDED");
+  assert.equal(result.channel, "email");
+  assert.equal(result.deliveryMode, "email_dry_run_only");
+  assert.equal(result.recipientPreview, "c***@example.com");
+  assert.equal(result.providerName, "dry-run");
+  assert.equal(result.providerCalled, false);
+  assert.equal(result.dryRunOnly, true);
+  assert.equal(result.externalActionAllowed, false);
+  assert.equal(result.messageVersion, CUSTOMER_NOTIFICATION_MESSAGE_VERSION);
+  assert.equal(result.previewHash, previewHash);
+  assert.equal(result.idempotencyKey, "email-dry-run-001");
+  assert.equal(result.recordedAt, "2026-05-05T11:00:00.000Z");
+  assert.equal(result.isResend, false);
+  assert.equal(providerCalls.length, 1);
+  assert.equal(fake.state.counts.update, 1);
+
+  const logs = JSON.parse(fake.state.inquiry.communicationLogs);
+  assert.equal(logs.length, 1);
+  const log = logs.at(-1);
+  assert.equal(log.type, "customer_email_send_dry_run_recorded");
+  assert.equal(log.source, "admin_customer_notification");
+  assert.equal(log.channel, "email");
+  assert.equal(log.deliveryMode, "email_dry_run_only");
+  assert.equal(log.providerName, "dry-run");
+  assert.equal(log.providerCalled, false);
+  assert.equal(log.dryRunOnly, true);
+  assert.equal(log.externalActionAllowed, false);
+  assert.equal(log.trackingCode, fake.state.inquiry.publicTrackingCode);
+  assert.equal(log.recipientPreview, "c***@example.com");
+  assert.equal(log.messageVersion, CUSTOMER_NOTIFICATION_MESSAGE_VERSION);
+  assert.equal(log.previewHash, previewHash);
+  assert.equal(log.idempotencyKey, "email-dry-run-001");
+  assert.equal(log.recordedAt, result.recordedAt);
+  assert.equal(log.createdAt, result.recordedAt);
+  assert.equal(log.isResend, false);
+  assert.equal(log.messageText, undefined);
+  assert.equal(log.messageBody, undefined);
+  assert.equal(log.subject, undefined);
+  assert.equal(log.text, undefined);
+  assert.equal(log.html, undefined);
+  assert.equal(JSON.stringify(log).includes("raw message body"), false);
+}
+
+async function testEmailMissingOrInvalidRecipientRejects() {
+  for (const [email, code] of [
+    [null, "RECIPIENT_MISSING"],
+    ["bad-email", "INVALID_RECIPIENT_EMAIL"]
+  ] as const) {
+    const fake = createFakePrisma({
+      inquiry: {
+        email
+      }
+    });
+    const previewHash =
+      email && email.includes("@")
+        ? buildInputPreviewHash(fake.state.inquiry, "email")
+        : "preview-hash";
+
+    await assert.rejects(
+      () =>
+        sendManualCustomerNotificationAudit(
+          createSendInput({
+            channel: "email",
+            previewHash,
+            idempotencyKey: `email-${code}`
+          }),
+          { prismaClient: fake.prismaClient }
+        ),
+      (error: unknown) =>
+        error instanceof CustomerNotificationSendServiceError &&
+        error.status === 400 &&
+        error.code === code
     );
   }
 }
@@ -350,6 +458,36 @@ async function testDuplicateSamePreviewWithoutResendReject() {
   );
 }
 
+async function testEmailDuplicateSamePreviewWithoutResendReject() {
+  const fake = createFakePrisma();
+  const previewHash = buildInputPreviewHash(fake.state.inquiry, "email");
+
+  await sendManualCustomerNotificationAudit(
+    createSendInput({
+      channel: "email",
+      previewHash,
+      idempotencyKey: "email-first"
+    }),
+    { prismaClient: fake.prismaClient }
+  );
+
+  await assert.rejects(
+    () =>
+      sendManualCustomerNotificationAudit(
+        createSendInput({
+          channel: "email",
+          previewHash,
+          idempotencyKey: "email-second"
+        }),
+        { prismaClient: fake.prismaClient }
+      ),
+    (error: unknown) =>
+      error instanceof CustomerNotificationSendServiceError &&
+      error.status === 409 &&
+      error.code === "DUPLICATE_NOTIFICATION_SEND"
+  );
+}
+
 async function testDuplicateByIdempotencyReturnsCachedResult() {
   const fake = createFakePrisma();
   const previewHash = buildInputPreviewHash(fake.state.inquiry);
@@ -361,6 +499,33 @@ async function testDuplicateByIdempotencyReturnsCachedResult() {
 
   const second = await sendManualCustomerNotificationAudit(
     createSendInput({ previewHash, idempotencyKey: "same-key" }),
+    { prismaClient: fake.prismaClient }
+  );
+
+  assert.deepEqual(first, second);
+  const logs = JSON.parse(fake.state.inquiry.communicationLogs);
+  assert.equal(logs.length, 1);
+}
+
+async function testEmailDuplicateByIdempotencyReturnsCachedResult() {
+  const fake = createFakePrisma();
+  const previewHash = buildInputPreviewHash(fake.state.inquiry, "email");
+
+  const first = await sendManualCustomerNotificationAudit(
+    createSendInput({
+      channel: "email",
+      previewHash,
+      idempotencyKey: "same-email-key"
+    }),
+    { prismaClient: fake.prismaClient }
+  );
+
+  const second = await sendManualCustomerNotificationAudit(
+    createSendInput({
+      channel: "email",
+      previewHash,
+      idempotencyKey: "same-email-key"
+    }),
     { prismaClient: fake.prismaClient }
   );
 
@@ -393,6 +558,38 @@ async function testResendAllowedWithReason() {
   assert.equal(logs.length, 2);
   assert.equal(logs.at(-1).isResend, true);
   assert.equal(logs.at(-1).resendReason, "Customer requested re-confirmation after correction.");
+}
+
+async function testEmailResendAllowedWithReason() {
+  const fake = createFakePrisma();
+  const previewHash = buildInputPreviewHash(fake.state.inquiry, "email");
+
+  await sendManualCustomerNotificationAudit(
+    createSendInput({
+      channel: "email",
+      previewHash,
+      idempotencyKey: "email-first"
+    }),
+    { prismaClient: fake.prismaClient }
+  );
+
+  const resend = await sendManualCustomerNotificationAudit(
+    createSendInput({
+      channel: "email",
+      previewHash,
+      idempotencyKey: "email-second",
+      resendReason: "Customer asked for another dry-run record."
+    }),
+    { prismaClient: fake.prismaClient }
+  );
+
+  assert.equal(resend.status, "DRY_RUN_RECORDED");
+  assert.equal(resend.isResend, true);
+
+  const logs = JSON.parse(fake.state.inquiry.communicationLogs);
+  assert.equal(logs.length, 2);
+  assert.equal(logs.at(-1).isResend, true);
+  assert.equal(logs.at(-1).resendReason, "Customer asked for another dry-run record.");
 }
 
 async function testTrackingCodeMissingReject() {
@@ -459,13 +656,18 @@ async function run() {
   await testSafeResponseNoInternalFields();
   await testProviderNotCalled();
   await testChannelRestrictionsRejected();
+  await testEmailDryRunSuccessAppendsAudit();
+  await testEmailMissingOrInvalidRecipientRejects();
   await testMissingConfirmationReject();
   await testMissingIdempotencyReject();
   await testPreviewHashMismatchReject();
   await testMessageVersionMismatchReject();
   await testDuplicateSamePreviewWithoutResendReject();
+  await testEmailDuplicateSamePreviewWithoutResendReject();
   await testDuplicateByIdempotencyReturnsCachedResult();
+  await testEmailDuplicateByIdempotencyReturnsCachedResult();
   await testResendAllowedWithReason();
+  await testEmailResendAllowedWithReason();
   await testTrackingCodeMissingReject();
   testNoProviderAndNoMutationStrings();
   testNoForbiddenResponseFieldInRouteAndTemplateFiles();

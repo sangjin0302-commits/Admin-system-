@@ -19,11 +19,11 @@ async function testInvalidInquiryIdReturns400() {
   assert.equal(body.code, "INVALID_INQUIRY_ID");
 }
 
-async function testNonManualChannelReturns400() {
+async function testSmsChannelReturns400() {
   const response = await POST(
     new Request("https://example.test/api/admin/inquiries/inq_123/customer-notification/send", {
       method: "POST",
-      body: JSON.stringify({ channel: "email", previewHash: "hash", messageVersion: "tracking-notice-v1", idempotencyKey: "key", confirmations: {} })
+      body: JSON.stringify({ channel: "sms", previewHash: "hash", messageVersion: "tracking-notice-v1", idempotencyKey: "key", confirmations: {} })
     }),
     {
       params: Promise.resolve({ id: "inq_123" })
@@ -32,6 +32,27 @@ async function testNonManualChannelReturns400() {
   const body = await response.json();
   assert.equal(response.status, 400);
   assert.equal(body.code, "CHANNEL_SEND_NOT_ENABLED");
+}
+
+async function testEmailMissingRequiredFieldsReturns400() {
+  const response = await POST(
+    new Request("https://example.test/api/admin/inquiries/inq_123/customer-notification/send", {
+      method: "POST",
+      body: JSON.stringify({
+        channel: "email",
+        previewHash: "",
+        messageVersion: "tracking-notice-v1",
+        idempotencyKey: "key",
+        confirmations: {}
+      })
+    }),
+    {
+      params: Promise.resolve({ id: "inq_123" })
+    }
+  );
+  const body = await response.json();
+  assert.equal(response.status, 400);
+  assert.equal(body.code, "VALIDATION_ERROR");
 }
 
 async function testManualMissingRequiredFieldsReturns400() {
@@ -143,7 +164,8 @@ function testRouteSourceGuardrails() {
 
 async function run() {
   await testInvalidInquiryIdReturns400();
-  await testNonManualChannelReturns400();
+  await testSmsChannelReturns400();
+  await testEmailMissingRequiredFieldsReturns400();
   await testManualMissingRequiredFieldsReturns400();
   await testManualMissingConfirmationsReturns400();
   await testManualMissingIdempotencyReasonWhitespaceReturns400();
