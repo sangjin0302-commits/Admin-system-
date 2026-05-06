@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,26 @@ export type InquiryCommunicationDraft = {
   recommendedWhen?: string;
   channelHint?: string;
 };
+
+function CommunicationHubGroup({
+  title,
+  description,
+  children
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="mt-5 rounded-lg border border-line bg-surface-muted/40 p-4">
+      <div>
+        <p className="text-sm font-semibold text-text-strong">{title}</p>
+        <p className="mt-1 text-sm text-text-muted">{description}</p>
+      </div>
+      <div>{children}</div>
+    </section>
+  );
+}
 
 export function InquiryCommunicationCenterV2({
   inquiryId,
@@ -106,11 +126,28 @@ export function InquiryCommunicationCenterV2({
         <Badge>실무 템플릿</Badge>
       </div>
 
-      <CustomerTrackingNoticeCopyCard trackingCode={publicTrackingCode} />
-      <CustomerNotificationPreviewCard inquiryId={inquiryId} />
-      <CustomerEmailProviderReadinessCard readiness={emailProviderReadiness} />
-      <CustomerNotificationEmailDryRunCard inquiryId={inquiryId} />
-      <CustomerNotificationManualAuditCard inquiryId={inquiryId} />
+      <CommunicationHubGroup
+        title="고객에게 안내"
+        description="고객에게 전달할 안내문을 확인하거나 복사합니다."
+      >
+        <CustomerTrackingNoticeCopyCard trackingCode={publicTrackingCode} />
+        <CustomerNotificationPreviewCard inquiryId={inquiryId} />
+      </CommunicationHubGroup>
+
+      <CommunicationHubGroup
+        title="기록"
+        description="실제 발송 없이, 운영자가 수행한 안내/준비 내역을 감사 기록으로 남깁니다."
+      >
+        <CustomerNotificationManualAuditCard inquiryId={inquiryId} />
+        <CustomerNotificationEmailDryRunCard inquiryId={inquiryId} />
+      </CommunicationHubGroup>
+
+      <CommunicationHubGroup
+        title="설정/안전"
+        description="실제 이메일 발송 가능 여부와 차단 사유를 확인합니다."
+      >
+        <CustomerEmailProviderReadinessCard readiness={emailProviderReadiness} />
+      </CommunicationHubGroup>
 
       {recommendedDraftIds.length > 0 ? (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
