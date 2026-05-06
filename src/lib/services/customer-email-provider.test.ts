@@ -141,6 +141,42 @@ async function testFactoryReturnsDryRunOnly() {
   assert.equal(result.status, "DRY_RUN_ACCEPTED");
 }
 
+async function testFactoryDoesNotReturnRealProviderForResendConfig() {
+  const incompleteProvider = getCustomerEmailProvider({
+    EMAIL_PROVIDER: "resend",
+    EMAIL_PROVIDER_ENABLED: "true",
+    EMAIL_REAL_SEND_ENABLED: "false",
+    RESEND_API_KEY: "configured",
+    EMAIL_FROM: "notice@example.com",
+    EMAIL_ALLOWED_FROM_DOMAIN: "example.com"
+  });
+  const incompleteResult = await incompleteProvider.sendEmail(
+    createValidInput({ idempotencyKey: "factory-resend-incomplete" })
+  );
+  assert.equal(incompleteResult.providerName, CUSTOMER_EMAIL_PROVIDER_DRY_RUN_NAME);
+  assert.equal(incompleteResult.providerCalled, false);
+  assert.equal(incompleteResult.dryRunOnly, true);
+  assert.equal(incompleteResult.externalActionAllowed, false);
+
+  const enabledLikeProvider = getCustomerEmailProvider({
+    EMAIL_PROVIDER: "resend",
+    EMAIL_PROVIDER_ENABLED: "true",
+    EMAIL_REAL_SEND_ENABLED: "true",
+    RESEND_API_KEY: "configured",
+    EMAIL_FROM: "notice@example.com",
+    EMAIL_ALLOWED_FROM_DOMAIN: "example.com"
+  });
+  const enabledLikeResult = await enabledLikeProvider.sendEmail(
+    createValidInput({ idempotencyKey: "factory-resend-enabled-like" })
+  );
+  assert.equal(enabledLikeResult.providerName, "resend-disabled");
+  assert.equal(enabledLikeResult.providerCalled, false);
+  assert.equal(enabledLikeResult.dryRunOnly, true);
+  assert.equal(enabledLikeResult.externalActionAllowed, false);
+  assert.notEqual(enabledLikeResult.status, "SENT");
+  assert.equal(enabledLikeResult.failureReasonCode, "PROVIDER_DISABLED");
+}
+
 function testSourceGuardrails() {
   const source = readFileSync(
     join(process.cwd(), "src/lib/services/customer-email-provider.ts"),
@@ -148,7 +184,6 @@ function testSourceGuardrails() {
   );
 
   for (const forbidden of [
-    "resend",
     "sendgrid",
     "@aws-sdk/client-ses",
     "nodemailer",
@@ -173,6 +208,7 @@ async function run() {
   testEmailValidation();
   testMessageBuilderSafety();
   await testFactoryReturnsDryRunOnly();
+  await testFactoryDoesNotReturnRealProviderForResendConfig();
   testSourceGuardrails();
 
   console.log("customer email provider tests passed");

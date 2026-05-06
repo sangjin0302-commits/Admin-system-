@@ -1,4 +1,9 @@
 import { CUSTOMER_TRACKING_NOTICE_TRACK_URL } from "@/lib/services/customer-tracking-notice-template";
+import {
+  parseCustomerEmailProviderConfig,
+  type CustomerEmailProviderConfigEnv
+} from "@/lib/services/customer-email-provider-config";
+import { createDisabledResendCustomerEmailProvider } from "@/lib/services/customer-email-resend-provider";
 
 export const CUSTOMER_EMAIL_PROVIDER_DRY_RUN_NAME = "dry-run";
 
@@ -182,6 +187,13 @@ export function createDryRunCustomerEmailProvider(): CustomerEmailProvider {
   };
 }
 
-export function getCustomerEmailProvider(): CustomerEmailProvider {
+export function getCustomerEmailProvider(
+  env: CustomerEmailProviderConfigEnv = {}
+): CustomerEmailProvider {
+  const config = parseCustomerEmailProviderConfig(env);
+  if (config.provider === "resend" && config.realProviderCandidate) {
+    return createDisabledResendCustomerEmailProvider();
+  }
+
   return createDryRunCustomerEmailProvider();
 }
