@@ -18,6 +18,28 @@ export type CustomerEmailProviderConfig = {
   sendMaxPerInquiryPerChannel: number | null;
 };
 
+export type CustomerEmailProviderImplementationStatus =
+  | "stub_only"
+  | "not_configured"
+  | "disabled";
+
+export type CustomerEmailProviderReadiness = {
+  provider: CustomerEmailProviderName;
+  providerEnabled: boolean;
+  realSendEnabled: boolean;
+  dryRunOnly: true;
+  externalActionAllowed: false;
+  canUseRealProvider: false;
+  canSendRealEmail: false;
+  blockedReasonCodes: string[];
+  hasApiKey: boolean;
+  hasFromAddress: boolean;
+  hasReplyTo: boolean;
+  hasAllowedDomain: boolean;
+  fromDomainAllowed: boolean;
+  providerImplementationStatus: CustomerEmailProviderImplementationStatus;
+};
+
 function normalizeEnvValue(value: string | undefined) {
   const normalized = value?.trim() ?? "";
   return normalized || null;
@@ -33,7 +55,8 @@ function normalizeProvider(value: string | undefined): CustomerEmailProviderName
 }
 
 function getEmailDomain(value: string | null) {
-  const domain = value?.split("@")[1]?.trim().toLowerCase() ?? "";
+  const emailLike = value?.match(/<([^<>@\s]+@[^<>@\s]+)>/)?.[1] ?? value;
+  const domain = emailLike?.split("@")[1]?.replace(/[>\s]/g, "").toLowerCase() ?? "";
   return domain || null;
 }
 
@@ -103,5 +126,65 @@ export function parseCustomerEmailProviderConfig(
     sendMaxPerInquiryPerChannel: parsePositiveInteger(
       env.EMAIL_SEND_MAX_PER_INQUIRY_PER_CHANNEL
     )
+  };
+}
+
+function buildReadinessBlockedReasons(config: CustomerEmailProviderConfig) {
+  const blockedReasonCodes: string[] = [];
+
+  if (!config.providerEnabled) blockedReasonCodes.push("PROVIDER_DISABLED");
+  if (!config.realSendEnabled) blockedReasonCodes.push("REAL_SEND_DISABLED");
+  if (config.provider === "resend" && !config.apiKeyConfigured) {
+    blockedReasonCodes.push("API_KEY_MISSING");
+  }
+  if (config.provider === "resend" && !config.fromConfigured) {
+    blockedReasonCodes.push("FROM_ADDRESS_MISSING");
+  }
+  if (config.provider === "resend" && !config.allowedFromDomainConfigured) {
+    blockedReasonCodes.push("ALLOWED_DOMAIN_MISSING");
+  }
+  if (
+    config.provider === "resend" &&
+    config.fromConfigured &&
+    config.allowedFromDomainConfigured &&
+    !config.fromDomainMatchesAllowedDomain
+  ) {
+    blockedReasonCodes.push("FROM_DOMAIN_NOT_ALLOWED");
+  }
+  if (config.provider === "resend" && config.realProviderCandidate) {
+    blockedReasonCodes.push("PROVIDER_IMPLEMENTATION_STUB_ONLY");
+  }
+
+  return blockedReasonCodes;
+}
+
+function getProviderImplementationStatus(
+  config: CustomerEmailProviderConfig
+): CustomerEmailProviderImplementationStatus {
+  if (config.realProviderCandidate) return "stub_only";
+  if (config.provider !== "resend" || !config.providerEnabled) return "not_configured";
+  return "disabled";
+}
+
+export function buildCustomerEmailProviderReadiness(
+  env: CustomerEmailProviderConfigEnv = {}
+): CustomerEmailProviderReadiness {
+  const config = parseCustomerEmailProviderConfig(env);
+
+  return {
+    provider: config.provider,
+    providerEnabled: config.providerEnabled,
+    realSendEnabled: config.realSendEnabled,
+    dryRunOnly: true,
+    externalActionAllowed: false,
+    canUseRealProvider: false,
+    canSendRealEmail: false,
+    blockedReasonCodes: buildReadinessBlockedReasons(config),
+    hasApiKey: config.apiKeyConfigured,
+    hasFromAddress: config.fromConfigured,
+    hasReplyTo: config.replyToConfigured,
+    hasAllowedDomain: config.allowedFromDomainConfigured,
+    fromDomainAllowed: config.fromDomainMatchesAllowedDomain,
+    providerImplementationStatus: getProviderImplementationStatus(config)
   };
 }
