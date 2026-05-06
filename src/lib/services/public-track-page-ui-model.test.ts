@@ -99,6 +99,14 @@ const appShellSource = readFileSync(appShellPath, "utf8");
 assert.match(trackPageSource, /PublicTrackClient/);
 assert.match(trackClientSource, /PUBLIC_TRACK_API_PATH/);
 assert.match(trackClientSource, /접수 조회/);
+assert.match(trackClientSource, /<details/);
+assert.match(trackClientSource, /<summary/);
+assert.match(trackClientSource, /HOME_SCREEN_TITLE/);
+assert.ok(
+  trackClientSource.indexOf("{result ? <TrackingResultCard result={result} /> : null}") <
+    trackClientSource.indexOf("<details"),
+  "Result card should stay higher priority than home screen guidance"
+);
 assert.equal(trackPageSource.includes("Administrative Office Intake System"), false);
 assert.equal(trackClientSource.includes("Administrative Office Intake System"), false);
 assert.equal(trackPageSource.includes("행정사 문의 접수 및 업무 관리시스템"), false);

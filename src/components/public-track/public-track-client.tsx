@@ -180,20 +180,26 @@ export function PublicTrackClient() {
         </form>
       </Card>
 
-      <Card muted className="space-y-3 p-5 sm:p-6">
-        <h2 className="ui-section-title">{HOME_SCREEN_TITLE}</h2>
-        <p className="text-sm text-text-muted">{HOME_SCREEN_DESCRIPTION}</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-md border border-line bg-surface px-4 py-3 text-sm text-text">
-            {IOS_HOME_SCREEN_GUIDE}
-          </div>
-          <div className="rounded-md border border-line bg-surface px-4 py-3 text-sm text-text">
-            {ANDROID_HOME_SCREEN_GUIDE}
-          </div>
-        </div>
-      </Card>
-
       {result ? <TrackingResultCard result={result} /> : null}
+
+      <Card muted className="p-4 sm:p-5">
+        <details className="group">
+          <summary className="cursor-pointer list-none text-sm font-semibold text-text-strong">
+            {HOME_SCREEN_TITLE}
+          </summary>
+          <div className="mt-3 space-y-3">
+            <p className="text-sm text-text-muted">{HOME_SCREEN_DESCRIPTION}</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-md border border-line bg-surface px-4 py-3 text-sm text-text">
+                {IOS_HOME_SCREEN_GUIDE}
+              </div>
+              <div className="rounded-md border border-line bg-surface px-4 py-3 text-sm text-text">
+                {ANDROID_HOME_SCREEN_GUIDE}
+              </div>
+            </div>
+          </div>
+        </details>
+      </Card>
     </div>
   );
 }

@@ -8,7 +8,13 @@ const KO_PUBLIC_INTAKE = "\uACF5\uAC1C \uC811\uC218";
 const KO_ADMIN = "\uAD00\uB9AC\uC790";
 
 export function isHeaderlessPublicRoute(pathname: string) {
-  return pathname === "/intake" || pathname.startsWith("/intake/") || pathname === "/track" || pathname.startsWith("/track/");
+  return (
+    pathname === "/" ||
+    pathname === "/intake" ||
+    pathname.startsWith("/intake/") ||
+    pathname === "/track" ||
+    pathname.startsWith("/track/")
+  );
 }
 
 export function AppShellSafe({ children }: Readonly<{ children: React.ReactNode }>) {
