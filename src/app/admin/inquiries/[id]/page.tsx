@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { buildInquiryDetailPageData } from "@/lib/services/inquiry-detail-page-data";
 import { safeGetInquiryForDetail } from "@/lib/services/inquiry-detail-loaders";
+import { buildCustomerEmailProviderReadiness } from "@/lib/services/customer-email-provider-config";
 import { buildIntakeCategoryDetailSummary } from "@/lib/services/intake-category-detail-summary";
 import { getPublicTrackingCodeFromInquiry } from "@/lib/services/public-tracking-code-service";
 import { formatDateTime } from "@/lib/utils";
@@ -124,6 +125,7 @@ export default async function AdminInquiryDetailPage({
     } = await buildInquiryDetailPageData(inquiry);
     const intakeCategorySummary = buildIntakeCategoryDetailSummary(inquiry.description);
     const publicTrackingCode = getPublicTrackingCodeFromInquiry(inquiry);
+    const emailProviderReadiness = buildCustomerEmailProviderReadiness(process.env);
 
     return (
       <div className="space-y-6">
@@ -272,7 +274,8 @@ export default async function AdminInquiryDetailPage({
               drafts: communicationDrafts,
               recommendedDraftIds: recommendedCommunicationIds,
               recommendationLabel: routeRecommendation.recommendationLabel,
-              publicTrackingCode
+              publicTrackingCode,
+              emailProviderReadiness
             }}
             snapshotCompare={{
               headline: lawbotSnapshotComparison.headline,

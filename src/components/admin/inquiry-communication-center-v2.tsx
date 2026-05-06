@@ -9,6 +9,8 @@ import { CustomerNotificationEmailDryRunCard } from "@/components/admin/customer
 import { CustomerNotificationManualAuditCard } from "@/components/admin/customer-notification-manual-audit-card";
 import { CustomerNotificationPreviewCard } from "@/components/admin/customer-notification-preview-card";
 import { CustomerTrackingNoticeCopyCard } from "@/components/admin/customer-tracking-notice-copy-card";
+import { CustomerEmailProviderReadinessCard } from "@/components/admin/customer-email-provider-readiness-card";
+import type { CustomerEmailProviderReadiness } from "@/lib/services/customer-email-provider-config";
 
 export type InquiryCommunicationDraft = {
   id: string;
@@ -25,13 +27,15 @@ export function InquiryCommunicationCenterV2({
   drafts,
   recommendedDraftIds = [],
   recommendationLabel,
-  publicTrackingCode = null
+  publicTrackingCode = null,
+  emailProviderReadiness
 }: {
   inquiryId: string;
   drafts: InquiryCommunicationDraft[];
   recommendedDraftIds?: string[];
   recommendationLabel?: string;
   publicTrackingCode?: string | null;
+  emailProviderReadiness: CustomerEmailProviderReadiness;
 }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [bundleCopied, setBundleCopied] = useState(false);
@@ -104,6 +108,7 @@ export function InquiryCommunicationCenterV2({
 
       <CustomerTrackingNoticeCopyCard trackingCode={publicTrackingCode} />
       <CustomerNotificationPreviewCard inquiryId={inquiryId} />
+      <CustomerEmailProviderReadinessCard readiness={emailProviderReadiness} />
       <CustomerNotificationEmailDryRunCard inquiryId={inquiryId} />
       <CustomerNotificationManualAuditCard inquiryId={inquiryId} />
 
