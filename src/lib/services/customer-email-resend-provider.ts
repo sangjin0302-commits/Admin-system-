@@ -14,7 +14,7 @@ export function buildDisabledResendCustomerEmailProviderResult(): CustomerEmailP
     dryRunOnly: true,
     externalActionAllowed: false,
     status: "FAILED",
-    failureReasonCode: "PROVIDER_DISABLED"
+    failureReasonCode: "PROVIDER_IMPLEMENTATION_STUB_ONLY"
   };
 }
 

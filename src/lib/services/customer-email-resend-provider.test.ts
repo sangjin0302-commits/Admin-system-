@@ -27,7 +27,7 @@ async function testDisabledResult() {
   assert.equal(result.dryRunOnly, true);
   assert.equal(result.externalActionAllowed, false);
   assert.equal(result.status, "FAILED");
-  assert.equal(result.failureReasonCode, "PROVIDER_DISABLED");
+  assert.equal(result.failureReasonCode, "PROVIDER_IMPLEMENTATION_STUB_ONLY");
   assert.equal(result.messageId, undefined);
 }
 
@@ -40,7 +40,7 @@ async function testStubNeverSends() {
   assert.equal(result.dryRunOnly, true);
   assert.equal(result.externalActionAllowed, false);
   assert.notEqual(result.status, "SENT");
-  assert.equal(result.failureReasonCode, "PROVIDER_DISABLED");
+  assert.equal(result.failureReasonCode, "PROVIDER_IMPLEMENTATION_STUB_ONLY");
 }
 
 function testSourceGuardrails() {

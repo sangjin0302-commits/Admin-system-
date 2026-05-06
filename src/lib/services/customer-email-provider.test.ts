@@ -174,7 +174,7 @@ async function testFactoryDoesNotReturnRealProviderForResendConfig() {
   assert.equal(enabledLikeResult.dryRunOnly, true);
   assert.equal(enabledLikeResult.externalActionAllowed, false);
   assert.notEqual(enabledLikeResult.status, "SENT");
-  assert.equal(enabledLikeResult.failureReasonCode, "PROVIDER_DISABLED");
+  assert.equal(enabledLikeResult.failureReasonCode, "PROVIDER_IMPLEMENTATION_STUB_ONLY");
 }
 
 function testSourceGuardrails() {
