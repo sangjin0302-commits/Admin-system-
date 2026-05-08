@@ -71,6 +71,29 @@ const parsedVisa = parseCreateInquiryInput({
 });
 assert.equal(parsedVisa.category, "visa");
 assert.equal(parsedVisa.categoryDetails?.workType, "Change");
+assert.deepEqual(parsedVisa.intakeTracking, {});
+
+const parsedTrackedVisa = parseCreateInquiryInput({
+  ...basePayload,
+  category: "visa",
+  categoryDetails: {
+    workType: "Change"
+  },
+  intakeTracking: {
+    source: "autosns",
+    channel: "naver",
+    practice_area: "middle_east_admin_business",
+    content_id: "mic_46900181d72c",
+    package_id: "mdri_7cc2f3c6648f_claude_v1",
+    landing_url: "/intake?source=autosns",
+    captured_at: "2026-05-08T00:00:00.000Z"
+  }
+});
+assert.equal(parsedTrackedVisa.intakeTracking.intakeSource, "autosns");
+assert.equal(parsedTrackedVisa.intakeTracking.intakeChannel, "naver");
+assert.equal(parsedTrackedVisa.intakeTracking.intakePracticeArea, "middle_east_admin_business");
+assert.equal(parsedTrackedVisa.intakeTracking.intakeContentId, "mic_46900181d72c");
+assert.equal(parsedTrackedVisa.intakeTracking.intakePackageId, "mdri_7cc2f3c6648f_claude_v1");
 
 const parsedCivilPetition = parseCreateInquiryInput({
   ...basePayload,
@@ -205,7 +228,8 @@ assert.match(middlewareSource, /"\/intake\/:path\*"/);
 assert.match(middlewareSource, /"\/api\/inquiries"/);
 assert.equal(middlewareSource.includes("ADMIN_INGEST_PATH"), false);
 assert.equal(middlewareSource.includes("pathname !=="), false);
-assert.equal(middlewareSource.includes("\"/track"), false);
+assert.match(middlewareSource, /"\/track\/:path\*"/);
+assert.match(middlewareSource, /"\/api\/public\/track"/);
 
 const intakeFormSource = readFileSync(
   join(root, "src/components/intake/intake-form-safe-v3.tsx"),
@@ -244,12 +268,14 @@ for (const englishText of [
 assert.equal(intakeFormSource.includes("run-lawbot-workflow"), false);
 assert.equal(intakeFormSource.includes("client-message-service"), false);
 assert.match(intakeFormSource, /trackingCode/);
+assert.match(intakeFormSource, /intakeTracking/);
 
 const routeSource = readFileSync(join(root, "src/app/api/inquiries/route-safe-v3.ts"), "utf8");
 assert.equal(routeSource.includes("id: inquiry.id"), false);
 assert.equal(routeSource.includes("workflowStatus"), false);
 assert.equal(routeSource.includes("updatedBy:"), false);
 assert.equal(routeSource.includes("controlSource:"), false);
+assert.equal(routeSource.includes("intakeTracking"), false);
 
 const adminDetailSource = readFileSync(
   join(root, "src/components/admin/inquiry-detail-content-sections.tsx"),
@@ -257,14 +283,18 @@ const adminDetailSource = readFileSync(
 );
 const adminPageSource = readFileSync(join(root, "src/app/admin/inquiries/[id]/page.tsx"), "utf8");
 assert.match(adminDetailSource, /trackingCode|publicTrackingCode|customerTrackingCode/i);
+assert.match(adminDetailSource, /접수 유입 정보/);
 assert.match(adminPageSource, /getPublicTrackingCodeFromInquiry/);
+assert.match(adminPageSource, /buildIntakeSourceTrackingViewModel/);
 
 const createInquirySource = readFileSync(join(root, "src/lib/services/inquiry-service-create-helpers.ts"), "utf8");
 assert.match(createInquirySource, /publicTrackingCode/);
 assert.match(createInquirySource, /publicTrackingPhoneLast4/);
 assert.match(createInquirySource, /publicTrackingIssuedAt/);
 assert.match(createInquirySource, /isPublicTrackingCodeCollision/);
+const createDataSource = readFileSync(join(root, "src/lib/services/inquiry-create-data-helpers.ts"), "utf8");
+assert.match(createDataSource, /input\.intakeTracking/);
 
-assert.equal(existsSync(join(root, "src/app/track/page.tsx")), false);
+assert.equal(existsSync(join(root, "src/app/track/page.tsx")), true);
 
 console.log("inquiry category flow tests passed");

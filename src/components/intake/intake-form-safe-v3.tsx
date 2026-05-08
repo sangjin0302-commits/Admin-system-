@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/select";
 import { StateInline } from "@/components/ui/state-panel";
 import { Textarea } from "@/components/ui/textarea";
 import { parseClientApiError } from "@/lib/http/client-api";
+import type { IntakeSourceTrackingPayload } from "@/lib/services/intake-source-tracking";
 import type { Locale, UrgencyLevel } from "@/types/inquiry";
 import {
   civilPetitionSubtypeValues,
@@ -509,7 +510,13 @@ function CategoryField({
   );
 }
 
-export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
+export function IntakeFormSafeV3({
+  initialLocale,
+  initialTracking = {}
+}: {
+  initialLocale: Locale;
+  initialTracking?: IntakeSourceTrackingPayload;
+}) {
   const locale = getDisplayLocale(initialLocale);
   const copy = intakeFormCopy[locale];
   const [form, setForm] = useState<FormState>({
@@ -664,6 +671,7 @@ export function IntakeFormSafeV3({ initialLocale }: { initialLocale: Locale }) {
         "",
       category: selectedCategory,
       categoryDetails,
+      intakeTracking: initialTracking,
       consentToPrivacy: form.consentToPrivacy,
       website: form.website
     };

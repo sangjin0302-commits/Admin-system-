@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { InfoItem } from "@/components/admin/inquiry-detail-common";
 import type { IntakeCategoryDetailSummary } from "@/lib/services/intake-category-detail-summary";
+import type { IntakeSourceTrackingViewModel } from "@/lib/services/intake-source-tracking";
 
 type StructuredMemoLike = {
   metadata: {
@@ -103,6 +104,53 @@ export function InquiryDetailIntakeCategorySection(input: {
       ) : (
         <Card muted className="mt-5 p-5">
           <p className="text-sm text-text-muted">접수 분야 정보가 아직 없습니다.</p>
+        </Card>
+      )}
+    </Card>
+  );
+}
+
+function isSafeLandingHref(value: string) {
+  if (value.startsWith("/")) return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+export function InquiryDetailIntakeSourceTrackingSection(input: {
+  tracking: IntakeSourceTrackingViewModel;
+}) {
+  return (
+    <Card className="p-6">
+      <h3 className="ui-section-title">접수 유입 정보</h3>
+      {input.tracking.hasTracking ? (
+        <div className="mt-5 grid gap-4 text-sm text-text sm:grid-cols-2">
+          {input.tracking.rows.map((row) =>
+            row.isUrl && isSafeLandingHref(row.value) ? (
+              <div key={row.key} className="rounded-xl border border-line bg-surface-muted p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
+                  {row.label}
+                </p>
+                <a
+                  href={row.value}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="mt-2 block break-all text-sm font-medium text-primary hover:underline"
+                >
+                  {row.value}
+                </a>
+              </div>
+            ) : (
+              <InfoItem key={row.key} label={row.label} value={row.value} />
+            )
+          )}
+        </div>
+      ) : (
+        <Card muted className="mt-5 p-5">
+          <p className="text-sm text-text-muted">유입 추적 정보가 없습니다.</p>
         </Card>
       )}
     </Card>
