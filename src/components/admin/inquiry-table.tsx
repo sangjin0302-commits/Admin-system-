@@ -30,6 +30,10 @@ type InquiryItem = {
   nextContactAt?: Date | null;
   hasPreparedDocuments?: boolean;
   responsePending?: boolean;
+  intakeSource?: string | null;
+  intakeChannel?: string | null;
+  intakePracticeArea?: string | null;
+  intakeContentId?: string | null;
   checklistProgressPercent?: number;
   checklistPendingCount?: number;
   checklistTotalCount?: number;
@@ -48,6 +52,7 @@ export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
             <th>언어</th>
             <th>희망 일정</th>
             <th>다음 연락</th>
+            <th>유입</th>
             <th>응답 대기</th>
             <th>자료 상태</th>
             <th>실행 준비도</th>
@@ -90,6 +95,11 @@ export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
                 </td>
                 <td>{formatDateTime(inquiry.dueDate)}</td>
                 <td>{formatDateTime(inquiry.nextContactAt)}</td>
+                <td>
+                  {[inquiry.intakeSource, inquiry.intakeChannel, inquiry.intakePracticeArea, inquiry.intakeContentId]
+                    .filter(Boolean)
+                    .join(" / ") || "-"}
+                </td>
                 <td>{inquiry.responsePending ? "대기 중" : "-"}</td>
                 <td>{inquiry.hasPreparedDocuments ? "기본 서류 보유" : "자료 확인 필요"}</td>
                 <td>

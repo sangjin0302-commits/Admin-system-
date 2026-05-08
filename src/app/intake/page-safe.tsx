@@ -3,6 +3,7 @@ import Link from "next/link";
 import { IntakeFormSafeV3 } from "@/components/intake/intake-form-safe-v3";
 import { Card } from "@/components/ui/card";
 import { intakePageMessages } from "@/i18n/locales/intake-page";
+import { buildIntakeSourceTrackingFromSearchParams } from "@/lib/services/intake-source-tracking";
 import { createTranslator, normalizeUiLocale } from "@/i18n/shared";
 
 export const dynamic = "force-dynamic";
@@ -10,11 +11,13 @@ export const dynamic = "force-dynamic";
 export default async function IntakePageSafe({
   searchParams
 }: {
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { lang } = await searchParams;
+  const params = await searchParams;
+  const lang = typeof params.lang === "string" ? params.lang : undefined;
   const locale = normalizeUiLocale(lang);
   const t = createTranslator(intakePageMessages, locale);
+  const intakeTracking = buildIntakeSourceTrackingFromSearchParams(params);
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -67,7 +70,7 @@ export default async function IntakePageSafe({
             <h2 className="ui-page-title whitespace-nowrap">{t("formTitle")}</h2>
             <p className="mt-2 text-sm text-text-muted">{t("formDescription")}</p>
           </div>
-          <IntakeFormSafeV3 initialLocale={locale} />
+          <IntakeFormSafeV3 initialLocale={locale} initialTracking={intakeTracking} />
         </Card>
       </section>
     </div>

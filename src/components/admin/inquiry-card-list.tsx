@@ -31,6 +31,10 @@ type InquiryItem = {
   nextContactAt?: Date | null;
   hasPreparedDocuments?: boolean;
   responsePending?: boolean;
+  intakeSource?: string | null;
+  intakeChannel?: string | null;
+  intakePracticeArea?: string | null;
+  intakeContentId?: string | null;
   checklistProgressPercent?: number;
   checklistPendingCount?: number;
   checklistTotalCount?: number;
@@ -70,6 +74,11 @@ export function InquiryCardList({ inquiries }: { inquiries: InquiryItem[] }) {
                 <p className="truncate whitespace-nowrap">접수일: {formatDateTime(inquiry.createdAt)}</p>
                 <p className="truncate whitespace-nowrap">희망 일정: {formatDateTime(inquiry.dueDate)}</p>
                 <p className="truncate whitespace-nowrap">다음 연락 예정: {formatDateTime(inquiry.nextContactAt)}</p>
+                <p className="truncate whitespace-nowrap">
+                  유입: {[inquiry.intakeSource, inquiry.intakeChannel, inquiry.intakePracticeArea, inquiry.intakeContentId]
+                    .filter(Boolean)
+                    .join(" / ") || "-"}
+                </p>
                 <p className="truncate whitespace-nowrap">응답 대기: {inquiry.responsePending ? "대기 중" : "없음"}</p>
                 <p className="truncate whitespace-nowrap">자료 준비: {inquiry.hasPreparedDocuments ? "기본 서류 보유" : "자료 확인 필요"}</p>
                 <p className="truncate whitespace-nowrap">

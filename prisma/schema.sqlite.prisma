@@ -303,6 +303,18 @@ model Inquiry {
   wantsCallback            Boolean       @default(false)
   consentToPrivacy         Boolean       @default(false)
   intakeSource             String        @default("website")
+  intakeChannel            String?
+  intakePracticeArea       String?
+  intakeContentId          String?
+  intakePackageId          String?
+  intakeCampaignId         String?
+  intakeUtmSource          String?
+  intakeUtmMedium          String?
+  intakeUtmCampaign        String?
+  intakeUtmContent         String?
+  intakeRef                String?
+  intakeLandingUrl         String?
+  intakeTrackingCapturedAt DateTime?
   publicTrackingCode       String?       @unique
   publicTrackingPhoneLast4 String?
   publicTrackingIssuedAt   DateTime?
@@ -336,6 +348,10 @@ model Inquiry {
 
   @@index([publicTrackingPhoneLast4])
   @@index([publicTrackingIssuedAt])
+  @@index([intakeSource])
+  @@index([intakeChannel])
+  @@index([intakePracticeArea])
+  @@index([intakeContentId])
 }
 
 model ServiceType {

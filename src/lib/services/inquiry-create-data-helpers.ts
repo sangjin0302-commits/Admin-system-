@@ -33,6 +33,7 @@ export function buildCreateInquiryData(
     dueDate: input.dueDate,
     wantsCallback: input.wantsCallback,
     consentToPrivacy: input.consentToPrivacy,
+    ...input.intakeTracking,
     inquiryType: evaluation.inquiryType,
     urgencyLevel: evaluation.urgencyLevel,
     classificationConfidence: evaluation.confidence,

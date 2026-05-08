@@ -2,6 +2,7 @@ import { InquiryActionChecklistPanel } from "@/components/admin/inquiry-action-c
 import {
   InquiryDetailEvidenceSection,
   InquiryDetailIntakeCategorySection,
+  InquiryDetailIntakeSourceTrackingSection,
   InquiryDetailInternalMemoSection
 } from "@/components/admin/inquiry-detail-content-sections";
 import { InquiryDetailUnavailable } from "@/components/admin/inquiry-detail-common";
@@ -21,6 +22,7 @@ import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { buildInquiryDetailPageData } from "@/lib/services/inquiry-detail-page-data";
 import { safeGetInquiryForDetail } from "@/lib/services/inquiry-detail-loaders";
 import { buildCustomerEmailProviderReadiness } from "@/lib/services/customer-email-provider-config";
+import { buildIntakeSourceTrackingViewModel } from "@/lib/services/intake-source-tracking";
 import { buildIntakeCategoryDetailSummary } from "@/lib/services/intake-category-detail-summary";
 import { getPublicTrackingCodeFromInquiry } from "@/lib/services/public-tracking-code-service";
 import { formatDateTime } from "@/lib/utils";
@@ -125,6 +127,7 @@ export default async function AdminInquiryDetailPage({
     } = await buildInquiryDetailPageData(inquiry);
     const intakeCategorySummary = buildIntakeCategoryDetailSummary(inquiry.description);
     const publicTrackingCode = getPublicTrackingCodeFromInquiry(inquiry);
+    const intakeSourceTracking = buildIntakeSourceTrackingViewModel(inquiry);
     const emailProviderReadiness = buildCustomerEmailProviderReadiness(process.env);
 
     return (
@@ -234,6 +237,7 @@ export default async function AdminInquiryDetailPage({
               urgencyLabel={getUrgencyLabel(declaredUrgency)}
               publicTrackingCode={publicTrackingCode}
             />
+            <InquiryDetailIntakeSourceTrackingSection tracking={intakeSourceTracking} />
             <InquiryDetailInternalMemoSection
               structuredInternalMemo={structuredInternalMemo}
               internalMemoDisplay={internalMemoDisplay}

@@ -15,6 +15,7 @@ import {
   intakeCategoryValues,
   type IntakeCategory
 } from "@/types/intake-category";
+import { normalizeIntakeSourceTrackingPayload } from "@/lib/services/intake-source-tracking";
 
 const booleanish = z.union([z.boolean(), z.string()]);
 const unicodeEscapePattern = /\\u([0-9A-Fa-f]{4})/g;
@@ -98,6 +99,7 @@ export const createInquirySchema = z.object({
     invalid_type_error: validationMessages.categoryRequired
   }),
   categoryDetails: categoryDetailsSchema,
+  intakeTracking: z.unknown().optional(),
   website: textSchema(z.string().max(200)).optional().or(z.literal("")),
   hasPreparedDocuments: booleanish.optional().transform((value) => parseBooleanish(value ?? false)),
   needsTranslation: booleanish.optional().transform((value) => parseBooleanish(value ?? false)),
@@ -146,6 +148,7 @@ export function parseCreateInquiryInput(payload: unknown) {
   const parsedDueDate = parsed.dueDate ? new Date(parsed.dueDate) : undefined;
   const category = parsed.category;
   const categoryDetails = parsed.categoryDetails;
+  const intakeTracking = normalizeIntakeSourceTrackingPayload(parsed.intakeTracking);
   const effectiveInquiryType =
     parsed.requestedInquiryType && parsed.requestedInquiryType !== "UNKNOWN"
       ? parsed.requestedInquiryType
@@ -181,6 +184,7 @@ export function parseCreateInquiryInput(payload: unknown) {
       parsedDueDate && !Number.isNaN(parsedDueDate.getTime())
         ? parsedDueDate
         : undefined,
+    intakeTracking,
     description: `${parsed.description}${formatCategoryDetails(category, categoryDetails)}`,
     preferredLanguage: toLanguageCode(parsed.preferredLocale)
   };
