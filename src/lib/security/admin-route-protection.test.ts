@@ -6,6 +6,8 @@ import { isProtectedAdminRoute, isPublicRoute } from "../../../middleware";
 
 const publicRoutes = [
   "/",
+  "/services",
+  "/services/visa",
   "/intake",
   "/intake?lang=en",
   "/track",
