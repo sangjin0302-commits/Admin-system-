@@ -126,3 +126,12 @@ export function buildServiceIntakeHref(service: Pick<PublicMarketingService, "pr
 
   return `/intake?${params.toString()}`;
 }
+
+export function buildWebsiteIntakeHref(channel = "homepage") {
+  const params = new URLSearchParams({
+    source: "website",
+    channel
+  });
+
+  return `/intake?${params.toString()}`;
+}

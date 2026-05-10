@@ -14,7 +14,9 @@ assert.match(rootPageSource, /href="\/track"/);
 assert.match(rootPageSource, /href="\/services"/);
 assert.match(rootPageSource, /PUBLIC_MARKETING_SERVICES/);
 assert.match(rootPageSource, /buildServiceIntakeHref/);
+assert.match(rootPageSource, /buildWebsiteIntakeHref/);
 assert.match(marketingSource, /source: "website"/);
+assert.match(marketingSource, /buildWebsiteIntakeHref\(channel = "homepage"\)/);
 assert.equal(rootPageSource.includes("redirect(\"/admin\")"), false);
 assert.equal(rootPageSource.includes("page-admin-redirect"), false);
 assert.equal(rootPageSource.includes('href="/admin"'), false);
@@ -37,7 +39,9 @@ for (const forbidden of [
   "100% 허가",
   "확실한 해결",
   "즉시 수임",
-  "결과 보장"
+  "결과 보장",
+  "무조건 가능",
+  "최단기간 보장"
 ]) {
   assert.equal(rootPageSource.includes(forbidden), false, `Forbidden root token: ${forbidden}`);
 }

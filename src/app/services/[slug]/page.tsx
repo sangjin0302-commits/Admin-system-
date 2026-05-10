@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
 
 function InfoList({ title, items }: { title: string; items: string[] }) {
   return (
-    <Card className="p-5">
+    <Card className="h-full p-5">
       <h2 className="text-lg font-semibold text-text-strong">{title}</h2>
       <ul className="mt-4 space-y-2 text-sm leading-6 text-text-muted">
         {items.map((item) => (
@@ -66,7 +66,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
   return (
     <main className="mx-auto max-w-6xl space-y-8">
-      <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+      <section className="grid gap-5 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
         <div className="space-y-4">
           <p className="ui-kicker">업무 분야 안내</p>
           <h1 className="ui-page-title">{service.title}</h1>
@@ -98,7 +98,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <InfoList title="대상 고객" items={service.audience} />
+        <InfoList title="이런 분에게 필요합니다" items={service.audience} />
         <InfoList title="지원 범위" items={service.scope} />
         <InfoList title="준비하면 좋은 자료" items={service.preparation} />
         <InfoList title="진행 절차" items={service.process} />

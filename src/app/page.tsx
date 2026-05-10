@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Card } from "@/components/ui/card";
 import {
   buildServiceIntakeHref,
+  buildWebsiteIntakeHref,
   PUBLIC_MARKETING_SAFE_NOTICE,
   PUBLIC_MARKETING_SERVICES
 } from "@/lib/services/public-marketing-pages";
@@ -16,15 +17,13 @@ export const metadata: Metadata = {
     "비자, 법인, 행정심판, 인허가, 아랍어 통번역 등 행정 업무 상담을 접수하고 진행상황을 확인합니다."
 };
 
-const primaryService = PUBLIC_MARKETING_SERVICES[0];
-
 export default function PublicMarketingHomePage() {
-  const intakeHref = primaryService ? buildServiceIntakeHref(primaryService) : "/intake";
+  const intakeHref = buildWebsiteIntakeHref();
 
   return (
-    <main className="mx-auto max-w-6xl space-y-10">
-      <section className="grid gap-8 py-4 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-        <div className="space-y-5">
+    <main className="mx-auto max-w-6xl space-y-8 sm:space-y-10">
+      <section className="grid gap-5 py-2 sm:gap-8 sm:py-4 lg:grid-cols-[1.12fr_0.88fr] lg:items-center">
+        <div className="space-y-4 sm:space-y-5">
           <p className="ui-kicker">행정 상담 안내</p>
           <h1 className="ui-page-title">행정 절차를 차분하게 정리하고 접수합니다.</h1>
           <p className="max-w-2xl text-base leading-7 text-text">
@@ -45,6 +44,9 @@ export default function PublicMarketingHomePage() {
               진행상황 조회
             </Link>
           </div>
+          <p className="text-xs leading-5 text-text-muted">
+            접수 후 받은 접수번호는 진행상황 조회에 사용됩니다.
+          </p>
         </div>
         <Card muted className="p-5">
           <h2 className="ui-section-title">공식 확인 및 유의사항</h2>
@@ -69,17 +71,31 @@ export default function PublicMarketingHomePage() {
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {PUBLIC_MARKETING_SERVICES.map((service) => (
-            <Link key={service.slug} href={`/services/${service.slug}`} className="block">
-              <Card className="h-full p-5 transition hover:border-primary">
+            <Card key={service.slug} className="flex h-full flex-col p-5 transition hover:border-primary">
+              <div className="flex-1">
                 <h3 className="text-lg font-semibold text-text-strong">{service.shortTitle}</h3>
                 <p className="mt-3 text-sm leading-6 text-text-muted">{service.summary}</p>
-              </Card>
-            </Link>
+              </div>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <Link
+                  href={`/services/${service.slug}`}
+                  className="inline-flex h-10 flex-1 items-center justify-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
+                >
+                  자세히 보기
+                </Link>
+                <Link
+                  href={buildServiceIntakeHref(service)}
+                  className="inline-flex h-10 flex-1 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-[#143d5d]"
+                >
+                  접수하기
+                </Link>
+              </div>
+            </Card>
           ))}
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-3 md:grid-cols-3">
         {[
           ["접수", "업무 분야와 기본 정보를 정리해 접수합니다."],
           ["검토", "사안별 준비 자료와 확인할 사항을 정리합니다."],
