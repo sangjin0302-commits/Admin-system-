@@ -29,7 +29,7 @@ export default function ServicesPage() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="업무 분야 목록">
         {PUBLIC_MARKETING_SERVICES.map((service) => (
-          <Card key={service.slug} className="flex h-full flex-col p-5">
+          <Card key={service.slug} className="flex h-full flex-col p-5 transition hover:border-primary">
             <div className="flex-1">
               <p className="ui-kicker">{service.practiceArea}</p>
               <h2 className="mt-2 text-xl font-semibold text-text-strong">{service.title}</h2>
@@ -38,13 +38,13 @@ export default function ServicesPage() {
             <div className="mt-5 flex flex-col gap-2 sm:flex-row">
               <Link
                 href={`/services/${service.slug}`}
-                className="inline-flex h-10 items-center justify-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
+                className="inline-flex h-10 flex-1 items-center justify-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
               >
                 자세히 보기
               </Link>
               <Link
                 href={buildServiceIntakeHref(service)}
-                className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-[#143d5d]"
+                className="inline-flex h-10 flex-1 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-[#143d5d]"
               >
                 접수하기
               </Link>

@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 import {
   buildServiceIntakeHref,
+  buildWebsiteIntakeHref,
   getPublicMarketingService,
   PUBLIC_MARKETING_SAFE_NOTICE,
   PUBLIC_MARKETING_SERVICES
@@ -14,6 +15,7 @@ const root = process.cwd();
 assert.equal(PUBLIC_MARKETING_SERVICES.length, 7);
 assert.equal(PUBLIC_MARKETING_SAFE_NOTICE.includes("일반 정보 제공"), true);
 assert.equal(PUBLIC_MARKETING_SAFE_NOTICE.includes("공식 기관 확인"), true);
+assert.equal(buildWebsiteIntakeHref(), "/intake?source=website&channel=homepage");
 
 const expected = new Map([
   ["visa", "visa"],
@@ -64,11 +66,25 @@ for (const label of ["비자", "법인", "행정심판", "사실조사", "인허
   assert.equal(combinedSource.includes(label), true, `Missing label: ${label}`);
 }
 
+for (const required of [
+  "접수하기",
+  "진행상황 조회",
+  "이런 분에게 필요합니다",
+  "지원 범위",
+  "준비하면 좋은 자료",
+  "진행 절차",
+  "유의사항"
+]) {
+  assert.equal(combinedSource.includes(required), true, `Missing required token: ${required}`);
+}
+
 for (const forbidden of [
   "100% 허가",
   "확실한 해결",
   "즉시 수임",
   "결과 보장",
+  "무조건 가능",
+  "최단기간 보장",
   "href=\"/admin\"",
   "Administrative Office Intake System",
   "inquiryId",
