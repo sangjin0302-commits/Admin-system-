@@ -12,6 +12,8 @@ export function isHeaderlessPublicRoute(pathname: string) {
     pathname === "/" ||
     pathname === "/intake" ||
     pathname.startsWith("/intake/") ||
+    pathname === "/services" ||
+    pathname.startsWith("/services/") ||
     pathname === "/track" ||
     pathname.startsWith("/track/")
   );

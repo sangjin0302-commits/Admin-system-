@@ -157,6 +157,7 @@ function hasPathPrefix(pathname: string, prefix: string) {
 
 export function isPublicRoute(pathname: string) {
   if (pathname === "/") return true;
+  if (hasPathPrefix(pathname, "/services")) return true;
   if (hasPathPrefix(pathname, "/intake")) return true;
   if (hasPathPrefix(pathname, "/track")) return true;
   if (hasPathPrefix(pathname, "/api/inquiries")) return true;
@@ -427,6 +428,7 @@ export const config = {
     "/",
     "/admin/:path*",
     "/api/admin/:path*",
+    "/services/:path*",
     "/intake/:path*",
     "/track/:path*",
     "/api/inquiries/:path*",

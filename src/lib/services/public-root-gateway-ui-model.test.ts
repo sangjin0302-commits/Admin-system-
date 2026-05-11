@@ -4,17 +4,19 @@ import { join } from "node:path";
 
 const root = process.cwd();
 const rootPageSource = readFileSync(join(root, "src/app/page.tsx"), "utf8");
-const appShellSource = readFileSync(
-  join(root, "src/components/layout/app-shell-safe.tsx"),
-  "utf8"
-);
+const appShellSource = readFileSync(join(root, "src/components/layout/app-shell-safe.tsx"), "utf8");
+const marketingSource = readFileSync(join(root, "src/lib/services/public-marketing-pages.ts"), "utf8");
 
-assert.match(rootPageSource, /PublicGatewayPage/);
-assert.match(rootPageSource, /행정사 문의 접수 및 진행상황 조회/);
-assert.match(rootPageSource, /href: "\/intake"/);
-assert.match(rootPageSource, /href: "\/track"/);
+assert.match(rootPageSource, /PublicMarketingHomePage/);
 assert.match(rootPageSource, /접수하기/);
 assert.match(rootPageSource, /진행상황 조회/);
+assert.match(rootPageSource, /href="\/track"/);
+assert.match(rootPageSource, /href="\/services"/);
+assert.match(rootPageSource, /PUBLIC_MARKETING_SERVICES/);
+assert.match(rootPageSource, /buildServiceIntakeHref/);
+assert.match(rootPageSource, /buildWebsiteIntakeHref/);
+assert.match(marketingSource, /source: "website"/);
+assert.match(marketingSource, /buildWebsiteIntakeHref\(channel = "homepage"\)/);
 assert.equal(rootPageSource.includes("redirect(\"/admin\")"), false);
 assert.equal(rootPageSource.includes("page-admin-redirect"), false);
 assert.equal(rootPageSource.includes('href="/admin"'), false);
@@ -33,7 +35,13 @@ for (const forbidden of [
   "RESEND_API_KEY",
   "EMAIL_FROM",
   "EMAIL_REPLY_TO",
-  "EMAIL_ALLOWED_FROM_DOMAIN"
+  "EMAIL_ALLOWED_FROM_DOMAIN",
+  "100% 허가",
+  "확실한 해결",
+  "즉시 수임",
+  "결과 보장",
+  "무조건 가능",
+  "최단기간 보장"
 ]) {
   assert.equal(rootPageSource.includes(forbidden), false, `Forbidden root token: ${forbidden}`);
 }
