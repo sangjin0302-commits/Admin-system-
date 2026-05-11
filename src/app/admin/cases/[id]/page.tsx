@@ -1,5 +1,14 @@
 import Link from "next/link";
 
+import {
+  CaseMatterEventTimeline,
+  CaseMatterInquiryLinkSection,
+  CaseMatterPartiesSection,
+  CaseMatterSubmissionSection,
+  CaseMatterSummaryCards,
+  CaseMatterTaskSection,
+  RequiredDocumentSummarySection
+} from "@/components/admin/case-matter-detail-sections";
 import { CaseMatterStatusForm } from "@/components/admin/case-matter-status-form";
 import { RequiredDocumentStatusPanel } from "@/components/admin/required-document-status-panel";
 import { Card } from "@/components/ui/card";
@@ -9,9 +18,7 @@ import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { getAllowedCaseMatterTransitions } from "@/lib/services/case-matter-status-transition-helpers";
 import { getCaseMatterById } from "@/lib/services/case-matter-service";
 import { getAllowedRequiredDocumentTransitions } from "@/lib/services/required-document-status-transition-helpers";
-import { formatDate, formatDateTime } from "@/lib/utils";
 import {
-  getCaseMatterStatusLabel,
   normalizeCaseMatterStatus,
   normalizeRequiredDocumentStatus
 } from "@/types/case-matter";
@@ -102,29 +109,16 @@ export default async function AdminCaseMatterDetailPage({
           </Link>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-line bg-surface-muted p-3">
-            <p className="text-xs text-text-muted">{t("cardStatus")}</p>
-            <p className="mt-1 text-sm font-semibold text-text-strong">
-              {getCaseMatterStatusLabel(currentStatus, locale)}
-            </p>
-          </div>
-          <div className="rounded-xl border border-line bg-surface-muted p-3">
-            <p className="text-xs text-text-muted">{t("cardNextAction")}</p>
-            <p className="mt-1 text-sm font-semibold text-text-strong">{caseMatter.nextAction.message}</p>
-          </div>
-          <div className="rounded-xl border border-line bg-surface-muted p-3">
-            <p className="text-xs text-text-muted">{t("cardDueDate")}</p>
-            <p className="mt-1 text-sm font-semibold text-text-strong">{formatDate(caseMatter.dueDate)}</p>
-          </div>
-          <div className="rounded-xl border border-line bg-surface-muted p-3">
-            <p className="text-xs text-text-muted">{t("cardUpdatedAt")}</p>
-            <p className="mt-1 text-sm font-semibold text-text-strong">
-              {formatDateTime(caseMatter.updatedAt)}
-            </p>
-          </div>
+        <div className="mt-5 rounded-xl border border-line bg-surface-muted p-3">
+          <p className="text-xs text-text-muted">{t("cardNextAction")}</p>
+          <p className="mt-1 text-sm font-semibold text-text-strong">{caseMatter.nextAction.message}</p>
         </div>
       </Card>
+
+      <CaseMatterSummaryCards caseMatter={caseMatter} status={currentStatus} locale={locale} />
+      <CaseMatterPartiesSection parties={caseMatter.parties} />
+      <CaseMatterInquiryLinkSection inquiry={caseMatter.inquiry} />
+      <RequiredDocumentSummarySection documents={requiredDocuments} locale={locale} />
 
       <CaseMatterStatusForm
         caseMatterId={caseMatter.id}
@@ -141,6 +135,14 @@ export default async function AdminCaseMatterDetailPage({
         allowedTransitionsByDocumentId={allowedDocumentTransitionsById}
         locale={locale}
       />
+
+      <CaseMatterTaskSection tasks={caseMatter.tasks} />
+      <CaseMatterSubmissionSection
+        submissionPackages={caseMatter.submissionPackages}
+        submissions={caseMatter.submissions}
+        supplementRequests={caseMatter.supplementRequests}
+      />
+      <CaseMatterEventTimeline events={caseMatter.events} />
     </div>
   );
 }
