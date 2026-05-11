@@ -39,11 +39,35 @@ const records: IntakeSourceAnalyticsRecord[] = [
   },
   {
     id: "inquiry-3",
+    createdAt: new Date("2026-05-06T00:00:00.000Z"),
+    updatedAt: new Date("2026-05-06T01:00:00.000Z"),
+    contactName: "Website Homepage Client",
+    publicTrackingCode: "20260506-GE-0003-CC",
+    intakeSource: "website",
+    intakeChannel: "homepage",
+    intakePracticeArea: null,
+    intakeContentId: null,
+    intakePackageId: null
+  },
+  {
+    id: "inquiry-4",
+    createdAt: new Date("2026-05-05T00:00:00.000Z"),
+    updatedAt: new Date("2026-05-05T01:00:00.000Z"),
+    contactName: "Website Service Client",
+    publicTrackingCode: "20260505-VI-0004-DD",
+    intakeSource: "website",
+    intakeChannel: "service_page",
+    intakePracticeArea: "visa",
+    intakeContentId: null,
+    intakePackageId: null
+  },
+  {
+    id: "inquiry-5",
     createdAt: new Date("2026-03-01T00:00:00.000Z"),
     updatedAt: new Date("2026-03-01T01:00:00.000Z"),
     contactName: "Direct Client",
     publicTrackingCode: null,
-    intakeSource: "website",
+    intakeSource: null,
     intakeChannel: null,
     intakePracticeArea: null,
     intakeContentId: null,
@@ -52,22 +76,26 @@ const records: IntakeSourceAnalyticsRecord[] = [
 ];
 
 const analytics = buildIntakeSourceAnalytics(records, now);
-assert.equal(analytics.summary.totalCount, 3);
-assert.equal(analytics.summary.trackedCount, 2);
+assert.equal(analytics.summary.totalCount, 5);
+assert.equal(analytics.summary.trackedCount, 4);
 assert.equal(analytics.summary.autosnsCount, 2);
 assert.equal(analytics.summary.untrackedCount, 1);
-assert.equal(analytics.summary.recent7DayCount, 1);
-assert.equal(analytics.summary.recent30DayCount, 2);
+assert.equal(analytics.summary.recent7DayCount, 3);
+assert.equal(analytics.summary.recent30DayCount, 4);
 
 assert.deepEqual(
   analytics.sourceCounts.map((row) => [row.label, row.count]),
   [
     ["autosns", 2],
-    ["website", 1]
+    ["website", 2],
+    ["데이터 없음", 1]
   ]
 );
 assert.equal(analytics.channelCounts.some((row) => row.label === "데이터 없음" && row.count === 1), true);
+assert.equal(analytics.channelCounts.some((row) => row.label === "homepage" && row.count === 1), true);
+assert.equal(analytics.channelCounts.some((row) => row.label === "service_page" && row.count === 1), true);
 assert.equal(analytics.practiceAreaCounts.some((row) => row.label === "middle_east_admin_business"), true);
+assert.equal(analytics.practiceAreaCounts.some((row) => row.label === "visa"), true);
 assert.equal(analytics.contentCounts.some((row) => row.contentId === "mic_1" && row.channel === "naver"), true);
 assert.equal(analytics.packageCounts.some((row) => row.label === "pkg_1" && row.count === 2), true);
 
@@ -131,5 +159,8 @@ assert.equal(middlewareSource.includes("/admin/intake-sources"), false);
 const adminListPageSource = readFileSync(join(root, "src/app/admin/inquiries/page.tsx"), "utf8");
 assert.match(adminListPageSource, /\/admin\/intake-sources/);
 assert.match(adminListPageSource, /접수 유입 분석/);
+const adminDashboardSource = readFileSync(join(root, "src/app/admin/dashboard-content.tsx"), "utf8");
+assert.match(adminDashboardSource, /\/admin\/intake-sources/);
+assert.match(adminDashboardSource, /접수 유입 분석/);
 
 console.log("admin intake source analytics tests passed");

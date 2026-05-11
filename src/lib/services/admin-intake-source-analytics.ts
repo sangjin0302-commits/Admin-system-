@@ -98,7 +98,7 @@ function normalizeKey(value: unknown) {
 
 function hasTracking(record: IntakeSourceAnalyticsRecord) {
   return Boolean(
-    (record.intakeSource && record.intakeSource !== "website") ||
+    record.intakeSource ||
       record.intakeChannel ||
       record.intakePracticeArea ||
       record.intakeContentId ||
