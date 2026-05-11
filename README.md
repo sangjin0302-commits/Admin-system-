@@ -48,6 +48,7 @@ npm run dev
 운영 백업/PITR 기준은 `docs/railway-postgres-operations.md`를 참고하세요.
 
 ## 문서
+- 제품 비전/로드맵: `docs/admin-system-product-vision.md`
 - 운영 메모: `OPERATIONS.md`
 - 보안 가이드: `docs/security-hardening.md`
 - 인코딩 무결성: `docs/encoding-integrity.md`
