@@ -76,6 +76,7 @@ export default async function AdminCaseMatterDetailPage({
   const requiredDocuments = caseMatter.requiredDocuments.map((item) => ({
     id: item.id,
     name: item.name,
+    description: item.description,
     required: item.required,
     status: normalizeRequiredDocumentStatus(item.status),
     dueDate: item.dueDate,

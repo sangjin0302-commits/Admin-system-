@@ -39,6 +39,7 @@ const operationalInclude = {
     select: {
       id: true,
       name: true,
+      description: true,
       required: true,
       status: true,
       dueDate: true,
@@ -159,6 +160,18 @@ export type UpdateRequiredDocumentStatusInput = {
   expectedUpdatedAt?: string | null;
 };
 
+export type UpdateRequiredDocumentMetadataInput = {
+  caseMatterId: string;
+  requiredDocumentId: string;
+  name: string;
+  description?: string | null;
+  required: boolean;
+  dueDate?: string | null;
+  actorName?: string | null;
+  expectedUpdatedAt?: string | null;
+  expectedCaseUpdatedAt?: string | null;
+};
+
 export type CreateRequiredDocumentInput = {
   caseMatterId: string;
   name: string;
@@ -238,9 +251,22 @@ export class RequiredDocumentConcurrentUpdateError extends Error {
 }
 
 export class RequiredDocumentUpdateError extends Error {
-  code: "REQUIRED_DOCUMENT_NOT_FOUND" | "CASE_MATTER_MISMATCH";
+  code:
+    | "REQUIRED_DOCUMENT_NOT_FOUND"
+    | "CASE_MATTER_MISMATCH"
+    | "REQUIRED_DOCUMENT_NAME_EMPTY"
+    | "REQUIRED_DOCUMENT_DUPLICATE"
+    | "INVALID_DUE_DATE_FORMAT";
 
-  constructor(code: "REQUIRED_DOCUMENT_NOT_FOUND" | "CASE_MATTER_MISMATCH", message: string) {
+  constructor(
+    code:
+      | "REQUIRED_DOCUMENT_NOT_FOUND"
+      | "CASE_MATTER_MISMATCH"
+      | "REQUIRED_DOCUMENT_NAME_EMPTY"
+      | "REQUIRED_DOCUMENT_DUPLICATE"
+      | "INVALID_DUE_DATE_FORMAT",
+    message: string
+  ) {
     super(message);
     this.name = "RequiredDocumentUpdateError";
     this.code = code;
@@ -339,6 +365,24 @@ function parseOptionalDueDate(raw?: string | null) {
     );
   }
   return parsed;
+}
+
+function parseOptionalRequiredDocumentUpdateDueDate(raw?: string | null) {
+  if (!raw?.trim()) return null;
+  const parsed = new Date(raw);
+  if (!Number.isFinite(parsed.getTime())) {
+    throw new RequiredDocumentUpdateError(
+      "INVALID_DUE_DATE_FORMAT",
+      "Invalid required document dueDate format."
+    );
+  }
+  return parsed;
+}
+
+function sameOptionalDate(left: Date | null, right: Date | null) {
+  if (!left && !right) return true;
+  if (!left || !right) return false;
+  return left.getTime() === right.getTime();
 }
 
 function getChecklistStarterTemplates(matterType: string) {
@@ -771,6 +815,150 @@ export async function updateRequiredDocumentStatus(input: UpdateRequiredDocument
       throw new CaseMatterConversionError(
         "CASE_MATTER_NOT_FOUND",
         "Case matter lookup failed after required document status update."
+      );
+    }
+
+    return attachNextAction(caseMatter);
+  });
+}
+
+export async function updateRequiredDocumentMetadata(input: UpdateRequiredDocumentMetadataInput) {
+  return prisma.$transaction(async (tx) => {
+    const snapshot = await tx.requiredDocument.findUnique({
+      where: { id: input.requiredDocumentId },
+      select: {
+        id: true,
+        caseId: true,
+        name: true,
+        description: true,
+        required: true,
+        dueDate: true,
+        updatedAt: true,
+        caseMatter: {
+          select: {
+            updatedAt: true
+          }
+        }
+      }
+    });
+
+    if (!snapshot) {
+      throw new RequiredDocumentUpdateError(
+        "REQUIRED_DOCUMENT_NOT_FOUND",
+        "Required document not found."
+      );
+    }
+
+    if (snapshot.caseId !== input.caseMatterId) {
+      throw new RequiredDocumentUpdateError(
+        "CASE_MATTER_MISMATCH",
+        "Required document does not belong to the case matter."
+      );
+    }
+
+    const expectedUpdatedAt = normalizeExpectedUpdatedAt(input.expectedUpdatedAt);
+    if (expectedUpdatedAt && expectedUpdatedAt.getTime() !== snapshot.updatedAt.getTime()) {
+      throw new RequiredDocumentConcurrentUpdateError(
+        "Required document was updated by another session. Reload and try again.",
+        snapshot.updatedAt.toISOString()
+      );
+    }
+
+    const expectedCaseUpdatedAt = normalizeExpectedUpdatedAt(input.expectedCaseUpdatedAt);
+    if (
+      expectedCaseUpdatedAt &&
+      expectedCaseUpdatedAt.getTime() !== snapshot.caseMatter.updatedAt.getTime()
+    ) {
+      throw new CaseMatterConcurrentUpdateError(
+        "Case matter was updated by another session. Reload and try again.",
+        snapshot.caseMatter.updatedAt.toISOString()
+      );
+    }
+
+    const name = normalizeDocumentName(input.name);
+    if (!name) {
+      throw new RequiredDocumentUpdateError(
+        "REQUIRED_DOCUMENT_NAME_EMPTY",
+        "Required document name must not be empty."
+      );
+    }
+
+    if (normalizeDocumentNameKey(name) !== normalizeDocumentNameKey(snapshot.name)) {
+      const existing = await tx.requiredDocument.findMany({
+        where: {
+          caseId: snapshot.caseId,
+          id: {
+            not: snapshot.id
+          },
+          status: {
+            not: "NOT_APPLICABLE"
+          }
+        },
+        select: {
+          id: true,
+          name: true
+        }
+      });
+
+      if (existing.some((item) => normalizeDocumentNameKey(item.name) === normalizeDocumentNameKey(name))) {
+        throw new RequiredDocumentUpdateError(
+          "REQUIRED_DOCUMENT_DUPLICATE",
+          "A required document with the same name already exists for this case."
+        );
+      }
+    }
+
+    const description = input.description?.trim() || null;
+    const dueDate = parseOptionalRequiredDocumentUpdateDueDate(input.dueDate);
+    const changes: string[] = [];
+
+    if (snapshot.name !== name) changes.push("name");
+    if ((snapshot.description ?? null) !== description) changes.push("description");
+    if (snapshot.required !== input.required) changes.push("required");
+    if (!sameOptionalDate(snapshot.dueDate, dueDate)) changes.push("dueDate");
+
+    if (changes.length > 0) {
+      await tx.requiredDocument.update({
+        where: { id: snapshot.id },
+        data: {
+          name,
+          description,
+          required: input.required,
+          dueDate
+        }
+      });
+
+      await tx.caseEvent.create({
+        data: {
+          caseId: snapshot.caseId,
+          eventType: "REQUIRED_DOCUMENT_METADATA_UPDATED",
+          actorName: input.actorName?.trim() || "system",
+          message: `Required document metadata updated: ${snapshot.name} (${changes.join(", ")})`,
+          payloadJson: JSON.stringify({
+            requiredDocumentId: snapshot.id,
+            changedFields: changes,
+            previous: {
+              name: snapshot.name,
+              description: snapshot.description,
+              required: snapshot.required,
+              dueDate: snapshot.dueDate?.toISOString() ?? null
+            },
+            next: {
+              name,
+              description,
+              required: input.required,
+              dueDate: dueDate?.toISOString() ?? null
+            }
+          })
+        }
+      });
+    }
+
+    const caseMatter = await getCaseMatterOperationalByIdTx(tx, snapshot.caseId);
+    if (!caseMatter) {
+      throw new CaseMatterConversionError(
+        "CASE_MATTER_NOT_FOUND",
+        "Case matter lookup failed after required document metadata update."
       );
     }
 

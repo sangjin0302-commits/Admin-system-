@@ -61,7 +61,16 @@ type AdminCasesKey =
   | "rowApplying"
   | "rowAuditPlaceholder"
   | "documentUpdateFailed"
-  | "documentUpdateSuccess";
+  | "documentUpdateSuccess"
+  | "metadataEditTitle"
+  | "metadataNameLabel"
+  | "metadataDescriptionLabel"
+  | "metadataDueDateLabel"
+  | "metadataApply"
+  | "metadataUpdating"
+  | "metadataNameRequired"
+  | "metadataUpdateFailed"
+  | "metadataUpdateSuccess";
 
 export const adminCasesMessages: LocaleMessages<AdminCasesKey> = {
   ko: {
@@ -115,6 +124,15 @@ export const adminCasesMessages: LocaleMessages<AdminCasesKey> = {
     starterSuccessPrefix: "체크리스트 스타터를 적용했습니다.",
     starterCreatedCount: "생성",
     starterSkippedCount: "기존",
+    metadataEditTitle: "자료 정보 수정",
+    metadataNameLabel: "자료명",
+    metadataDescriptionLabel: "자료 메모",
+    metadataDueDateLabel: "자료 마감일",
+    metadataApply: "정보 수정",
+    metadataUpdating: "수정 중...",
+    metadataNameRequired: "자료명은 비워둘 수 없습니다.",
+    metadataUpdateFailed: "자료 정보를 수정하지 못했습니다.",
+    metadataUpdateSuccess: "자료 정보가 수정되었습니다. 최신 상태를 다시 불러옵니다.",
     emptyDocuments:
       "아직 필수서류 항목이 없습니다. 직접 항목을 추가하거나 체크리스트 스타터로 시작하세요.",
     documentNoStatusChange: "변경할 상태가 없습니다.",
@@ -182,6 +200,15 @@ export const adminCasesMessages: LocaleMessages<AdminCasesKey> = {
     starterSuccessPrefix: "Starter checklist applied.",
     starterCreatedCount: "created",
     starterSkippedCount: "existing",
+    metadataEditTitle: "Edit document details",
+    metadataNameLabel: "Document name",
+    metadataDescriptionLabel: "Document note",
+    metadataDueDateLabel: "Document due date",
+    metadataApply: "Update details",
+    metadataUpdating: "Updating...",
+    metadataNameRequired: "Document name is required.",
+    metadataUpdateFailed: "Failed to update document details.",
+    metadataUpdateSuccess: "Document details updated. Refreshing latest state...",
     emptyDocuments:
       "No required documents yet. Add an item manually or start from the starter checklist.",
     documentNoStatusChange: "No status change to apply.",

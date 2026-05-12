@@ -31,14 +31,13 @@ export async function POST(
     }
 
     const payload = createRequiredDocumentSchema.parse(bodyResult.body);
-    const caseMatter = await createRequiredDocument({
+    await createRequiredDocument({
       caseMatterId,
       ...payload
     });
 
     return api.ok({
-      ok: true,
-      caseMatter
+      ok: true
     });
   } catch (error) {
     if (error instanceof ZodError) {
