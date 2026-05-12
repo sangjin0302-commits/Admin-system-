@@ -1,9 +1,11 @@
 import Link from "next/link";
 
+import { CaseMatterActionSections } from "@/components/admin/case-matter-action-sections";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
 import { adminCasesMessages } from "@/i18n/locales/admin-cases";
 import { createTranslator, normalizeUiLocale } from "@/i18n/shared";
+import { buildCaseMatterActionDashboard } from "@/lib/services/case-matter-action-view-model";
 import { listCaseMatters } from "@/lib/services/case-matter-service";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { getCaseMatterStatusLabel } from "@/types/case-matter";
@@ -36,6 +38,7 @@ export default async function AdminCasesPage({
   const locale = normalizeUiLocale(params.lang);
   const t = createTranslator(adminCasesMessages, locale);
   const cases = await safeListCaseMatters();
+  const actionDashboard = buildCaseMatterActionDashboard(cases);
 
   return (
     <div className="space-y-6">
@@ -51,6 +54,8 @@ export default async function AdminCasesPage({
           </div>
         </div>
       </Card>
+
+      <CaseMatterActionSections dashboard={actionDashboard} locale={locale} />
 
       {cases.length === 0 ? (
         <EmptyState
