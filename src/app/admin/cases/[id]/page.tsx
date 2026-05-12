@@ -6,9 +6,9 @@ import {
   CaseMatterPartiesSection,
   CaseMatterSubmissionSection,
   CaseMatterSummaryCards,
-  CaseMatterTaskSection,
   RequiredDocumentSummarySection
 } from "@/components/admin/case-matter-detail-sections";
+import { CaseTaskManagementPanel } from "@/components/admin/case-task-management-panel";
 import { CaseMatterStatusForm } from "@/components/admin/case-matter-status-form";
 import { RequiredDocumentStatusPanel } from "@/components/admin/required-document-status-panel";
 import { Card } from "@/components/ui/card";
@@ -19,6 +19,8 @@ import { getAllowedCaseMatterTransitions } from "@/lib/services/case-matter-stat
 import { getCaseMatterById } from "@/lib/services/case-matter-service";
 import { getAllowedRequiredDocumentTransitions } from "@/lib/services/required-document-status-transition-helpers";
 import {
+  caseTaskPriorityValues,
+  caseTaskStatusValues,
   normalizeCaseMatterStatus,
   normalizeRequiredDocumentStatus
 } from "@/types/case-matter";
@@ -90,6 +92,18 @@ export default async function AdminCaseMatterDetailPage({
       )
     ])
   );
+  const caseTasks = caseMatter.tasks.map((task) => ({
+    id: task.id,
+    title: task.title,
+    details: task.details,
+    description: task.description,
+    status: caseTaskStatusValues.includes(task.status) ? task.status : "TODO",
+    priority: caseTaskPriorityValues.includes(task.priority) ? task.priority : "NORMAL",
+    dueDate: task.dueDate,
+    assignedTo: task.assignedTo,
+    completedAt: task.completedAt,
+    updatedAt: task.updatedAt.toISOString()
+  }));
 
   return (
     <div className="space-y-6">
@@ -137,7 +151,11 @@ export default async function AdminCaseMatterDetailPage({
         locale={locale}
       />
 
-      <CaseMatterTaskSection tasks={caseMatter.tasks} />
+      <CaseTaskManagementPanel
+        caseMatterId={caseMatter.id}
+        caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
+        tasks={caseTasks}
+      />
       <CaseMatterSubmissionSection
         submissionPackages={caseMatter.submissionPackages}
         submissions={caseMatter.submissions}

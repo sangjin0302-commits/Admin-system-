@@ -191,6 +191,9 @@ export function buildCaseMatterActionDashboard(
 
     const dueSoonReasons = [
       isDueWithinSevenDays(caseMatter.dueDate, now) ? "사건 기한 7일 이내" : null,
+      activeTasks(caseMatter).some((task) => isDueWithinSevenDays(task.dueDate, now))
+        ? "업무 태스크 기한 7일 이내"
+        : null,
       caseMatter.requiredDocuments.some((document) => isDueWithinSevenDays(document.dueDate, now))
         ? "필수자료 기한 7일 이내"
         : null,

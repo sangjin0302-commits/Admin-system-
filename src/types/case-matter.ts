@@ -38,6 +38,21 @@ export const requiredDocumentStatusValues = [
 
 export type RequiredDocumentStatusValue = (typeof requiredDocumentStatusValues)[number];
 
+export const caseTaskStatusValues = [
+  "OPEN",
+  "TODO",
+  "IN_PROGRESS",
+  "BLOCKED",
+  "DONE",
+  "CANCELLED"
+] as const;
+
+export type CaseTaskStatusValue = (typeof caseTaskStatusValues)[number];
+
+export const caseTaskPriorityValues = ["LOW", "NORMAL", "HIGH", "URGENT"] as const;
+
+export type CaseTaskPriorityValue = (typeof caseTaskPriorityValues)[number];
+
 function isCaseMatterStatus(value: unknown): value is CaseMatterStatusValue {
   return typeof value === "string" && caseMatterStatusValues.includes(value as CaseMatterStatusValue);
 }
