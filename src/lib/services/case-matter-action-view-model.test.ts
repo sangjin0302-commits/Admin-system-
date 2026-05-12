@@ -50,6 +50,14 @@ const dashboard = buildCaseMatterActionDashboard(
       dueDate: "2026-05-18T00:00:00"
     }),
     caseMatter({
+      id: "task-due-soon",
+      tasks: [{ status: "IN_PROGRESS", priority: "NORMAL", dueDate: "2026-05-16T00:00:00", assignedTo: "QA" }]
+    }),
+    caseMatter({
+      id: "cancelled-task-excluded",
+      tasks: [{ status: "CANCELLED", priority: "URGENT", dueDate: "2026-05-12T00:00:00", assignedTo: "QA" }]
+    }),
+    caseMatter({
       id: "doc-due-soon",
       requiredDocuments: [{ status: "RECEIVED", dueDate: "2026-05-15T00:00:00" }]
     }),
@@ -104,7 +112,7 @@ assert.equal(dashboard.today.find((item) => item.id === "today-next-action")?.to
 
 assert.deepEqual(
   dashboard.dueSoon.map((item) => item.id).sort(),
-  ["doc-due-soon", "due-soon"]
+  ["doc-due-soon", "due-soon", "task-due-soon"]
 );
 
 assert.deepEqual(
@@ -120,7 +128,7 @@ assert.deepEqual(
 const summary = buildCaseMatterActionSummary(dashboard, 4);
 assert.deepEqual(summary.counts, {
   today: 3,
-  dueSoon: 2,
+  dueSoon: 3,
   backlog: 2,
   stalled: 3
 });

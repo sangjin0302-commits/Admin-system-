@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
   caseMatterStatusValues,
+  caseTaskPriorityValues,
+  caseTaskStatusValues,
   requiredDocumentStatusValues
 } from "@/types/case-matter";
 
@@ -100,6 +102,62 @@ export const startRequiredDocumentChecklistSchema = z.object({
     })
 });
 
+const optionalDateString = (message: string) =>
+  z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .refine((value) => !value || !Number.isNaN(new Date(value).getTime()), {
+      message
+    });
+
+const optionalExpectedDateString = (field: string) =>
+  z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || !Number.isNaN(new Date(value).getTime()), {
+      message: `Invalid ${field} format.`
+    });
+
+export const createCaseTaskSchema = z.object({
+  title: z.string().trim().min(2).max(160),
+  details: z.string().trim().max(500).optional().nullable(),
+  description: z.string().trim().max(500).optional().nullable(),
+  status: z.enum(caseTaskStatusValues).optional().default("TODO"),
+  priority: z.enum(caseTaskPriorityValues).optional().default("NORMAL"),
+  dueDate: optionalDateString("Invalid case task dueDate format."),
+  assignedTo: z.string().trim().max(80).optional().nullable(),
+  actorName: z.string().trim().max(80).optional(),
+  expectedCaseUpdatedAt: optionalExpectedDateString("expectedCaseUpdatedAt")
+});
+
+export const updateCaseTaskMetadataSchema = z.object({
+  mode: z.literal("metadata"),
+  title: z.string().trim().min(2).max(160),
+  details: z.string().trim().max(500).optional().nullable(),
+  description: z.string().trim().max(500).optional().nullable(),
+  priority: z.enum(caseTaskPriorityValues),
+  dueDate: optionalDateString("Invalid case task dueDate format."),
+  assignedTo: z.string().trim().max(80).optional().nullable(),
+  actorName: z.string().trim().max(80).optional(),
+  expectedUpdatedAt: optionalExpectedDateString("expectedUpdatedAt")
+});
+
+export const updateCaseTaskStatusSchema = z.object({
+  mode: z.literal("status"),
+  status: z.enum(caseTaskStatusValues),
+  statusChangeNote: z.string().trim().max(300).optional().nullable(),
+  actorName: z.string().trim().max(80).optional(),
+  expectedUpdatedAt: optionalExpectedDateString("expectedUpdatedAt")
+});
+
+export const updateCaseTaskSchema = z.discriminatedUnion("mode", [
+  updateCaseTaskMetadataSchema,
+  updateCaseTaskStatusSchema
+]);
+
 export type ConvertInquiryToCaseMatterPayload = z.infer<typeof convertInquiryToCaseMatterSchema>;
 export type UpdateCaseMatterStatusPayload = z.infer<typeof updateCaseMatterStatusSchema>;
 export type UpdateRequiredDocumentStatusPayload = z.infer<typeof updateRequiredDocumentStatusSchema>;
@@ -110,3 +168,7 @@ export type UpdateRequiredDocumentMetadataPayload = z.infer<
 export type StartRequiredDocumentChecklistPayload = z.infer<
   typeof startRequiredDocumentChecklistSchema
 >;
+export type CreateCaseTaskPayload = z.infer<typeof createCaseTaskSchema>;
+export type UpdateCaseTaskMetadataPayload = z.infer<typeof updateCaseTaskMetadataSchema>;
+export type UpdateCaseTaskStatusPayload = z.infer<typeof updateCaseTaskStatusSchema>;
+export type UpdateCaseTaskPayload = z.infer<typeof updateCaseTaskSchema>;

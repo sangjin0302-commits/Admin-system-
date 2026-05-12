@@ -33,7 +33,9 @@ const protectedRoutes = [
   "/admin/inquiries/example-id/lawbot-review",
   "/api/admin",
   "/api/admin/system/health",
-  "/api/admin/inquiries/example-id/status"
+  "/api/admin/inquiries/example-id/status",
+  "/api/admin/case-matters/example-id/tasks",
+  "/api/admin/case-matters/example-id/tasks/task-id"
 ];
 
 for (const route of protectedRoutes) {
