@@ -6,7 +6,7 @@ import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { adminCasesMessages } from "@/i18n/locales/admin-cases";
 import { createTranslator, type UiLocale } from "@/i18n/shared";
 import { parseClientApiError } from "@/lib/http/client-api";
-import { formatDate } from "@/lib/utils";
+import { formatDate, stringifyDateForInput } from "@/lib/utils";
 import {
   getRequiredDocumentStatusLabel,
   requiredDocumentStatusValues,
@@ -16,6 +16,7 @@ import {
 type RequiredDocumentItem = {
   id: string;
   name: string;
+  description: string | null;
   required: boolean;
   status: RequiredDocumentStatusValue;
   dueDate: Date | null;
@@ -35,6 +36,13 @@ type DraftState = {
   note: string;
 };
 
+type MetadataDraftState = {
+  name: string;
+  description: string;
+  dueDate: string;
+  required: boolean;
+};
+
 export function RequiredDocumentStatusPanel({
   caseMatterId,
   caseMatterUpdatedAt,
@@ -45,6 +53,7 @@ export function RequiredDocumentStatusPanel({
   const router = useRouter();
   const t = createTranslator(adminCasesMessages, locale);
   const [pendingDocumentId, setPendingDocumentId] = useState<string | null>(null);
+  const [pendingMetadataDocumentId, setPendingMetadataDocumentId] = useState<string | null>(null);
   const [createName, setCreateName] = useState("");
   const [createDescription, setCreateDescription] = useState("");
   const [createDueDate, setCreateDueDate] = useState("");
@@ -62,7 +71,21 @@ export function RequiredDocumentStatusPanel({
       ])
     )
   );
+  const [metadataDraftById, setMetadataDraftById] = useState<Record<string, MetadataDraftState>>(() =>
+    Object.fromEntries(
+      documents.map((document) => [
+        document.id,
+        {
+          name: document.name,
+          description: document.description ?? "",
+          dueDate: stringifyDateForInput(document.dueDate),
+          required: document.required
+        }
+      ])
+    )
+  );
   const [isRowPending, startRowTransition] = useTransition();
+  const [isMetadataPending, startMetadataTransition] = useTransition();
   const [isCreatePending, startCreateTransition] = useTransition();
   const [isStarterPending, startStarterTransition] = useTransition();
 
@@ -89,6 +112,87 @@ export function RequiredDocumentStatusPanel({
       ...current,
       [documentId]: message
     }));
+  }
+
+  function setMetadataDraft(documentId: string, nextDraft: Partial<MetadataDraftState>) {
+    setMetadataDraftById((current) => {
+      const snapshot = documentById[documentId];
+      return {
+        ...current,
+        [documentId]: {
+          ...(current[documentId] ??
+            (snapshot
+              ? {
+                  name: snapshot.name,
+                  description: snapshot.description ?? "",
+                  dueDate: stringifyDateForInput(snapshot.dueDate),
+                  required: snapshot.required
+                }
+              : {
+                  name: "",
+                  description: "",
+                  dueDate: "",
+                  required: true
+                })),
+          ...nextDraft
+        }
+      };
+    });
+  }
+
+  function submitMetadata(documentId: string) {
+    const snapshot = documentById[documentId];
+    if (!snapshot) return;
+
+    const draft =
+      metadataDraftById[documentId] ??
+      ({
+        name: snapshot.name,
+        description: snapshot.description ?? "",
+        dueDate: stringifyDateForInput(snapshot.dueDate),
+        required: snapshot.required
+      } satisfies MetadataDraftState);
+
+    if (!draft.name.trim()) {
+      setRowMessage(documentId, t("metadataNameRequired"));
+      return;
+    }
+
+    setPendingMetadataDocumentId(documentId);
+    setRowMessage(documentId, "");
+
+    startMetadataTransition(async () => {
+      const response = await fetch(
+        `/api/admin/case-matters/${caseMatterId}/required-documents/${documentId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name: draft.name,
+            description: draft.description.trim() || null,
+            required: draft.required,
+            dueDate: draft.dueDate || null,
+            expectedUpdatedAt: snapshot.updatedAt,
+            expectedCaseUpdatedAt: caseMatterUpdatedAt
+          })
+        }
+      );
+
+      if (!response.ok) {
+        setRowMessage(documentId, await parseClientApiError(response, t("metadataUpdateFailed")));
+        if (response.status === 409 && response.headers.get("X-Current-Updated-At")) {
+          router.refresh();
+        }
+        setPendingMetadataDocumentId(null);
+        return;
+      }
+
+      setRowMessage(documentId, t("metadataUpdateSuccess"));
+      setPendingMetadataDocumentId(null);
+      router.refresh();
+    });
   }
 
   function submitRow(documentId: string) {
@@ -301,6 +405,9 @@ export function RequiredDocumentStatusPanel({
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-text-strong">{document.name}</p>
+                    {document.description ? (
+                      <p className="mt-1 text-xs text-text-muted">{document.description}</p>
+                    ) : null}
                     <p className="mt-1 text-xs text-text-muted">
                       {document.required ? t("requiredTagRequired") : t("requiredTagOptional")} |{" "}
                       {t("documentCurrentStatusPrefix")}:{" "}
@@ -309,6 +416,60 @@ export function RequiredDocumentStatusPanel({
                       </span>{" "}
                       | {t("documentDueDatePrefix")}: {formatDate(document.dueDate)}
                     </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 rounded-xl border border-line bg-surface-muted p-3">
+                  <p className="text-xs font-semibold text-text-strong">{t("metadataEditTitle")}</p>
+                  <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_160px]">
+                    <input
+                      value={metadataDraftById[document.id]?.name ?? document.name}
+                      onChange={(event) => setMetadataDraft(document.id, { name: event.target.value })}
+                      className="h-10 rounded-xl border border-line bg-surface px-3 text-sm text-text-strong outline-none focus:border-line-strong"
+                      maxLength={120}
+                      aria-label={t("metadataNameLabel")}
+                    />
+                    <input
+                      value={metadataDraftById[document.id]?.dueDate ?? stringifyDateForInput(document.dueDate)}
+                      onChange={(event) => setMetadataDraft(document.id, { dueDate: event.target.value })}
+                      type="date"
+                      className="h-10 rounded-xl border border-line bg-surface px-3 text-sm text-text-strong outline-none focus:border-line-strong"
+                      aria-label={t("metadataDueDateLabel")}
+                    />
+                  </div>
+                  <textarea
+                    value={metadataDraftById[document.id]?.description ?? document.description ?? ""}
+                    onChange={(event) =>
+                      setMetadataDraft(document.id, { description: event.target.value })
+                    }
+                    rows={2}
+                    className="mt-3 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-text outline-none focus:border-line-strong"
+                    placeholder={t("createDescriptionPlaceholder")}
+                    maxLength={300}
+                    aria-label={t("metadataDescriptionLabel")}
+                  />
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <label className="flex items-center gap-2 text-sm text-text">
+                      <input
+                        type="checkbox"
+                        checked={metadataDraftById[document.id]?.required ?? document.required}
+                        onChange={(event) =>
+                          setMetadataDraft(document.id, { required: event.target.checked })
+                        }
+                        className="h-4 w-4 rounded border-line"
+                      />
+                      {t("requiredFlagLabel")}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => submitMetadata(document.id)}
+                      disabled={isMetadataPending && pendingMetadataDocumentId === document.id}
+                      className="h-9 rounded-xl border border-line bg-surface px-4 text-sm font-semibold text-text-strong transition hover:border-line-strong hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isMetadataPending && pendingMetadataDocumentId === document.id
+                        ? t("metadataUpdating")
+                        : t("metadataApply")}
+                    </button>
                   </div>
                 </div>
 

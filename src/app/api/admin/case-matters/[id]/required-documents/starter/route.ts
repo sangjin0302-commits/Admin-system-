@@ -37,7 +37,6 @@ export async function POST(
 
     return api.ok({
       ok: true,
-      caseMatter: result.caseMatter,
       createdCount: result.createdCount,
       skippedCount: result.skippedCount
     });

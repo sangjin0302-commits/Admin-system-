@@ -3,19 +3,19 @@ import { ZodError } from "zod";
 import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { createAdminRequestContext, firstZodMessage, safeReadJsonBody } from "@/lib/http/admin-api";
 import {
+  CaseMatterConcurrentUpdateError,
   CaseMatterConversionError,
   RequiredDocumentConcurrentUpdateError,
-  RequiredDocumentStatusGuardError,
   RequiredDocumentUpdateError,
-  updateRequiredDocumentStatus
+  updateRequiredDocumentMetadata
 } from "@/lib/services/case-matter-service";
-import { updateRequiredDocumentStatusSchema } from "@/lib/validation/case-matter";
+import { updateRequiredDocumentMetadataSchema } from "@/lib/validation/case-matter";
 
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string; documentId: string }> }
 ) {
-  const api = createAdminRequestContext("admin.case-matters.required-documents.status.patch");
+  const api = createAdminRequestContext("admin.case-matters.required-documents.metadata.patch");
   const { id: rawCaseMatterId, documentId: rawRequiredDocumentId } = await context.params;
 
   const caseMatterId = normalizeAdminEntityId(rawCaseMatterId);
@@ -38,8 +38,8 @@ export async function PATCH(
       return api.error(400, "Check request JSON body.", { code: "INVALID_JSON_BODY" });
     }
 
-    const payload = updateRequiredDocumentStatusSchema.parse(bodyResult.body);
-    await updateRequiredDocumentStatus({
+    const payload = updateRequiredDocumentMetadataSchema.parse(bodyResult.body);
+    await updateRequiredDocumentMetadata({
       caseMatterId,
       requiredDocumentId,
       ...payload
@@ -55,13 +55,6 @@ export async function PATCH(
       });
     }
 
-    if (error instanceof RequiredDocumentStatusGuardError) {
-      return api.error(409, error.message, {
-        code: "STATUS_TRANSITION_BLOCKED",
-        blockers: error.blockers
-      });
-    }
-
     if (error instanceof RequiredDocumentConcurrentUpdateError) {
       return api.error(409, error.message, {
         code: "CONCURRENT_UPDATE_CONFLICT",
@@ -71,8 +64,22 @@ export async function PATCH(
       });
     }
 
+    if (error instanceof CaseMatterConcurrentUpdateError) {
+      return api.error(409, error.message, {
+        code: "CONCURRENT_CASE_UPDATE_CONFLICT",
+        headers: {
+          "X-Current-Updated-At": error.currentUpdatedAt
+        }
+      });
+    }
+
     if (error instanceof RequiredDocumentUpdateError) {
-      const status = error.code === "CASE_MATTER_MISMATCH" ? 409 : 404;
+      const status =
+        error.code === "CASE_MATTER_MISMATCH" || error.code === "REQUIRED_DOCUMENT_DUPLICATE"
+          ? 409
+          : error.code === "REQUIRED_DOCUMENT_NOT_FOUND"
+            ? 404
+            : 400;
       return api.error(status, error.message, { code: error.code });
     }
 
@@ -81,8 +88,8 @@ export async function PATCH(
     }
 
     api.logError(error);
-    return api.error(500, "Failed to update required document status.", {
-      code: "PATCH_REQUIRED_DOCUMENT_STATUS_FAILED"
+    return api.error(500, "Failed to update required document metadata.", {
+      code: "PATCH_REQUIRED_DOCUMENT_METADATA_FAILED"
     });
   }
 }
