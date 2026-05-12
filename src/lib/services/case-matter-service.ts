@@ -26,10 +26,13 @@ import {
 const operationalInclude = {
   tasks: {
     select: {
+      id: true,
       title: true,
       status: true,
       priority: true,
-      dueDate: true
+      dueDate: true,
+      assignedTo: true,
+      completedAt: true
     }
   },
   requiredDocuments: {
@@ -42,20 +45,84 @@ const operationalInclude = {
       updatedAt: true
     }
   },
+  parties: {
+    select: {
+      id: true,
+      role: true,
+      name: true,
+      phone: true,
+      email: true,
+      organization: true,
+      nationality: true,
+      memo: true
+    },
+    orderBy: [{ role: "asc" }, { createdAt: "asc" }]
+  },
+  inquiry: {
+    select: {
+      id: true,
+      title: true,
+      contactName: true,
+      email: true,
+      phone: true,
+      inquiryType: true,
+      urgencyLevel: true,
+      publicTrackingCode: true
+    }
+  },
+  submissionPackages: {
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      targetAgency: true,
+      targetOffice: true,
+      preparedAt: true,
+      reviewedAt: true,
+      lockedAt: true,
+      updatedAt: true
+    },
+    orderBy: [{ updatedAt: "desc" }]
+  },
   submissions: {
     select: {
+      id: true,
+      agencyName: true,
+      officeName: true,
+      method: true,
       status: true,
-      submittedAt: true
-    }
+      submittedAt: true,
+      receiptNo: true,
+      resultStatus: true,
+      resultReceivedAt: true,
+      updatedAt: true
+    },
+    orderBy: [{ updatedAt: "desc" }]
   },
   supplementRequests: {
     select: {
+      id: true,
       title: true,
       status: true,
-      dueDate: true
-    }
+      dueDate: true,
+      receivedAt: true,
+      respondedAt: true,
+      updatedAt: true
+    },
+    orderBy: [{ updatedAt: "desc" }]
+  },
+  events: {
+    select: {
+      id: true,
+      eventType: true,
+      actorName: true,
+      message: true,
+      createdAt: true
+    },
+    orderBy: [{ createdAt: "desc" }],
+    take: 30
   }
-} as const;
+} satisfies Prisma.CaseMatterInclude;
 
 type CaseMatterOperationalRecord = Prisma.CaseMatterGetPayload<{
   include: typeof operationalInclude;
