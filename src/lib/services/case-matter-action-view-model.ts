@@ -87,6 +87,13 @@ export type CaseMatterActionDashboard = {
   stalled: CaseMatterActionItem[];
 };
 
+export type CaseMatterActionSummary = {
+  counts: Record<keyof CaseMatterActionDashboard, number>;
+  topItems: CaseMatterActionItem[];
+  hasImmediateWork: boolean;
+  hasOperationalIssues: boolean;
+};
+
 function startOfDay(value: Date) {
   return new Date(value.getFullYear(), value.getMonth(), value.getDate());
 }
@@ -223,5 +230,38 @@ export function buildCaseMatterActionDashboard(
     dueSoon: sortActionItems(dueSoon),
     backlog: sortActionItems(backlog),
     stalled: sortActionItems(stalled)
+  };
+}
+
+export function buildCaseMatterActionSummary(
+  dashboard: CaseMatterActionDashboard,
+  limit = 5
+): CaseMatterActionSummary {
+  const seen = new Set<string>();
+  const topItems: CaseMatterActionItem[] = [];
+
+  for (const item of [
+    ...dashboard.today,
+    ...dashboard.dueSoon,
+    ...dashboard.backlog,
+    ...dashboard.stalled
+  ]) {
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    topItems.push(item);
+    if (topItems.length >= limit) break;
+  }
+
+  return {
+    counts: {
+      today: dashboard.today.length,
+      dueSoon: dashboard.dueSoon.length,
+      backlog: dashboard.backlog.length,
+      stalled: dashboard.stalled.length
+    },
+    topItems,
+    hasImmediateWork: dashboard.today.length > 0,
+    hasOperationalIssues:
+      dashboard.dueSoon.length + dashboard.backlog.length + dashboard.stalled.length > 0
   };
 }

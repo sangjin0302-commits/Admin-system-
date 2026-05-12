@@ -5,6 +5,7 @@ import {
   DashboardMetric,
   dashboardToneClassName
 } from "@/components/admin/dashboard-shared";
+import { CaseMatterActionSummaryCard } from "@/components/admin/case-matter-action-summary-card";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
@@ -16,6 +17,11 @@ import {
   getPriorityReason,
   getStatusTone
 } from "@/lib/services/admin-dashboard-helpers";
+import {
+  buildCaseMatterActionDashboard,
+  buildCaseMatterActionSummary
+} from "@/lib/services/case-matter-action-view-model";
+import { listCaseMatters } from "@/lib/services/case-matter-service";
 import { listInquiries } from "@/lib/services/inquiry-service";
 import { readMarketingSnapshot } from "@/lib/services/marketing-sync-service";
 import {
@@ -34,6 +40,7 @@ import {
 export const dynamic = "force-dynamic";
 
 type InquiryListItem = Awaited<ReturnType<typeof listInquiries>>[number];
+type CaseMatterListItem = Awaited<ReturnType<typeof listCaseMatters>>[number];
 
 async function safeListInquiries() {
   try {
@@ -41,6 +48,15 @@ async function safeListInquiries() {
   } catch (error) {
     console.error("Failed to load inquiries for admin dashboard", error);
     return [] as InquiryListItem[];
+  }
+}
+
+async function safeListCaseMatters() {
+  try {
+    return await listCaseMatters();
+  } catch (error) {
+    console.error("Failed to load case matters for admin dashboard", error);
+    return [] as CaseMatterListItem[];
   }
 }
 
@@ -95,7 +111,8 @@ export default async function AdminDashboardContent() {
     publicIntakeControl,
     quoteCount,
     contractDraftCount,
-    caseCount
+    caseCount,
+    caseMatters
   ] = await Promise.all([
     safeListInquiries(),
     safeReadMarketingSnapshot(),
@@ -103,8 +120,13 @@ export default async function AdminDashboardContent() {
     safeGetPublicIntakeControlSnapshot(),
     safeCount("quote count", prisma.quote.count(), 0),
     safeCount("contract draft count", prisma.contractDraft.count(), 0),
-    safeCount("case count", prisma.caseRecord.count(), 0)
+    safeCount("case count", prisma.caseRecord.count(), 0),
+    safeListCaseMatters()
   ]);
+  const caseMatterActionSummary = buildCaseMatterActionSummary(
+    buildCaseMatterActionDashboard(caseMatters),
+    5
+  );
 
   const {
     checklistCoverageCount,
@@ -267,6 +289,8 @@ export default async function AdminDashboardContent() {
           description={operationalHealthDescription}
         />
       </div>
+
+      <CaseMatterActionSummaryCard summary={caseMatterActionSummary} locale="ko" />
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="p-6">
