@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 
-import { buildCaseMatterActionDashboard, type CaseMatterActionSource } from "@/lib/services/case-matter-action-view-model";
+import {
+  buildCaseMatterActionDashboard,
+  buildCaseMatterActionSummary,
+  type CaseMatterActionSource
+} from "@/lib/services/case-matter-action-view-model";
 
 const now = new Date("2026-05-12T09:00:00");
 
@@ -113,10 +117,29 @@ assert.deepEqual(
   ["agency-submission-waiting", "stale", "waiting-agency"]
 );
 
+const summary = buildCaseMatterActionSummary(dashboard, 4);
+assert.deepEqual(summary.counts, {
+  today: 3,
+  dueSoon: 2,
+  backlog: 2,
+  stalled: 3
+});
+assert.deepEqual(
+  summary.topItems.map((item) => item.id),
+  ["overdue-case", "today-next-action", "task-due", "due-soon"]
+);
+assert.equal(summary.hasImmediateWork, true);
+assert.equal(summary.hasOperationalIssues, true);
+
 const empty = buildCaseMatterActionDashboard([], now);
 assert.deepEqual(empty.today, []);
 assert.deepEqual(empty.dueSoon, []);
 assert.deepEqual(empty.backlog, []);
 assert.deepEqual(empty.stalled, []);
+
+const emptySummary = buildCaseMatterActionSummary(empty);
+assert.equal(emptySummary.hasImmediateWork, false);
+assert.equal(emptySummary.hasOperationalIssues, false);
+assert.deepEqual(emptySummary.topItems, []);
 
 console.log("case matter action view model tests passed");
