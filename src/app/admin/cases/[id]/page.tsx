@@ -8,6 +8,7 @@ import {
   CaseMatterSummaryCards,
   RequiredDocumentSummarySection
 } from "@/components/admin/case-matter-detail-sections";
+import { CaseAccountingMemoPanel } from "@/components/admin/case-accounting-memo-panel";
 import { CaseTaskManagementPanel } from "@/components/admin/case-task-management-panel";
 import { CaseMatterStatusForm } from "@/components/admin/case-matter-status-form";
 import { RequiredDocumentStatusPanel } from "@/components/admin/required-document-status-panel";
@@ -118,6 +119,20 @@ export default async function AdminCaseMatterDetailPage({
     responseNote: request.responseNote,
     updatedAt: request.updatedAt.toISOString()
   }));
+  const accountingMemo = caseMatter.accountingMemo
+    ? {
+        id: caseMatter.accountingMemo.id,
+        feeAmount: caseMatter.accountingMemo.feeAmount,
+        feeStatus: caseMatter.accountingMemo.feeStatus,
+        paymentStatus: caseMatter.accountingMemo.paymentStatus,
+        paidAmount: caseMatter.accountingMemo.paidAmount,
+        paidAt: caseMatter.accountingMemo.paidAt,
+        paymentMemo: caseMatter.accountingMemo.paymentMemo,
+        invoiceMemo: caseMatter.accountingMemo.invoiceMemo,
+        ledgerMemo: caseMatter.accountingMemo.ledgerMemo,
+        updatedAt: caseMatter.accountingMemo.updatedAt.toISOString()
+      }
+    : null;
 
   return (
     <div className="space-y-6">
@@ -174,6 +189,19 @@ export default async function AdminCaseMatterDetailPage({
         caseMatterId={caseMatter.id}
         caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
         supplementRequests={supplementRequests}
+      />
+      <CaseAccountingMemoPanel
+        caseMatterId={caseMatter.id}
+        caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
+        accountingMemo={accountingMemo}
+        quoteReferences={caseMatter.quotes.map((quote) => ({
+          status: quote.status,
+          totalMin: quote.totalMin,
+          totalMax: quote.totalMax
+        }))}
+        contractReferences={caseMatter.contractDrafts.map((contract) => ({
+          status: contract.status
+        }))}
       />
       <CaseMatterSubmissionSection
         submissionPackages={caseMatter.submissionPackages}

@@ -6,6 +6,7 @@ import {
   createCaseTaskSchema,
   createSupplementRequestSchema,
   updateCaseTaskSchema,
+  updateCaseAccountingMemoSchema,
   updateRequiredDocumentMetadataSchema,
   updateSupplementRequestSchema
 } from "@/lib/validation/case-matter";
@@ -42,6 +43,14 @@ const supplementRouteSource = readFileSync(
 );
 const supplementPatchRouteSource = readFileSync(
   join(root, "src/app/api/admin/case-matters/[id]/supplement-requests/[supplementRequestId]/route.ts"),
+  "utf8"
+);
+const accountingRouteSource = readFileSync(
+  join(root, "src/app/api/admin/case-matters/[id]/accounting/route.ts"),
+  "utf8"
+);
+const accountingPanelSource = readFileSync(
+  join(root, "src/components/admin/case-accounting-memo-panel.tsx"),
   "utf8"
 );
 
@@ -281,6 +290,77 @@ assert.match(supplementPanelSource, /RESPONDED 처리/);
 assert.match(supplementPanelSource, /expectedUpdatedAt: snapshot\.updatedAt/);
 assert.doesNotMatch(
   supplementPanelSource,
+  /communicationLogs|internalMemo|payloadJson|ADMIN_BASIC_AUTH_PASSWORD|RESEND_API_KEY|EMAIL_FROM/
+);
+
+const parsedAccounting = updateCaseAccountingMemoSchema.parse({
+  feeAmount: "120000",
+  feeStatus: "CONFIRMED",
+  paymentStatus: "PARTIAL",
+  paidAmount: "60000",
+  paidAt: "2026-05-13",
+  paymentMemo: "",
+  invoiceMemo: "",
+  ledgerMemo: "  ledger memo  ",
+  expectedUpdatedAt: "2026-05-12T00:00:00.000Z",
+  expectedCaseUpdatedAt: "2026-05-12T00:00:00.000Z"
+});
+assert.equal(parsedAccounting.feeAmount, 120000);
+assert.equal(parsedAccounting.paidAmount, 60000);
+assert.equal(parsedAccounting.ledgerMemo, "ledger memo");
+
+assert.throws(() =>
+  updateCaseAccountingMemoSchema.parse({
+    feeAmount: -1,
+    feeStatus: "CONFIRMED",
+    paymentStatus: "UNPAID"
+  })
+);
+
+assert.throws(() =>
+  updateCaseAccountingMemoSchema.parse({
+    paidAmount: -1,
+    feeStatus: "CONFIRMED",
+    paymentStatus: "UNPAID"
+  })
+);
+
+assert.throws(() =>
+  updateCaseAccountingMemoSchema.parse({
+    feeStatus: "CONFIRMED",
+    paymentStatus: "UNPAID",
+    paidAt: "not-a-date"
+  })
+);
+
+assert.throws(() =>
+  updateCaseAccountingMemoSchema.parse({
+    feeStatus: "NOT_VALID",
+    paymentStatus: "UNPAID"
+  })
+);
+
+assert.match(serviceSource, /export async function updateCaseAccountingMemo/);
+assert.match(serviceSource, /CASE_ACCOUNTING_UPDATED/);
+assert.match(serviceSource, /CaseAccountingMemoConcurrentUpdateError/);
+assert.match(serviceSource, /CaseAccountingMemoUpdateError/);
+assert.match(serviceSource, /expectedCaseUpdatedAt/);
+assert.match(serviceSource, /paymentMemo: normalizeAccountingMemo/);
+assert.doesNotMatch(serviceSource, /ADMIN_BASIC_AUTH_PASSWORD|RESEND_API_KEY|EMAIL_FROM/);
+
+assert.match(accountingRouteSource, /export async function PATCH/);
+assert.match(accountingRouteSource, /updateCaseAccountingMemoSchema/);
+assert.match(accountingRouteSource, /updateCaseAccountingMemo/);
+assert.match(accountingRouteSource, /return api\.ok\(\{ ok: true \}\)/);
+assert.doesNotMatch(accountingRouteSource, /caseMatter\s*:|communicationLogs|internalMemo|payloadJson/);
+
+assert.match(accountingPanelSource, /CaseAccountingMemoPanel/);
+assert.match(accountingPanelSource, /수임관리 메모/);
+assert.match(accountingPanelSource, /method: "PATCH"/);
+assert.match(accountingPanelSource, /expectedUpdatedAt: accountingMemo\?\.updatedAt/);
+assert.match(accountingPanelSource, /expectedCaseUpdatedAt: accountingMemo \? undefined : caseMatterUpdatedAt/);
+assert.doesNotMatch(
+  accountingPanelSource,
   /communicationLogs|internalMemo|payloadJson|ADMIN_BASIC_AUTH_PASSWORD|RESEND_API_KEY|EMAIL_FROM/
 );
 

@@ -1,5 +1,7 @@
 import { z } from "zod";
 import {
+  accountingFeeStatusValues,
+  accountingPaymentStatusValues,
   caseMatterStatusValues,
   caseTaskPriorityValues,
   caseTaskStatusValues,
@@ -122,6 +124,23 @@ const optionalExpectedDateString = (field: string) =>
       message: `Invalid ${field} format.`
     });
 
+const optionalNonNegativeInteger = (field: string) =>
+  z.preprocess(
+    (value) => {
+      if (value === "" || value === null || value === undefined) return null;
+      if (typeof value === "string") return Number(value);
+      return value;
+    },
+    z
+      .number({
+        invalid_type_error: `Invalid ${field} format.`
+      })
+      .int()
+      .min(0)
+      .nullable()
+      .optional()
+  );
+
 export const createCaseTaskSchema = z.object({
   title: z.string().trim().min(2).max(160),
   details: z.string().trim().max(500).optional().nullable(),
@@ -197,6 +216,20 @@ export const updateSupplementRequestSchema = z.discriminatedUnion("mode", [
   updateSupplementRequestStatusSchema
 ]);
 
+export const updateCaseAccountingMemoSchema = z.object({
+  feeAmount: optionalNonNegativeInteger("feeAmount"),
+  feeStatus: z.enum(accountingFeeStatusValues).optional().default("UNSET"),
+  paymentStatus: z.enum(accountingPaymentStatusValues).optional().default("UNSET"),
+  paidAmount: optionalNonNegativeInteger("paidAmount"),
+  paidAt: optionalDateString("Invalid accounting paidAt format."),
+  paymentMemo: z.string().trim().max(1000).optional().nullable(),
+  invoiceMemo: z.string().trim().max(1000).optional().nullable(),
+  ledgerMemo: z.string().trim().max(1000).optional().nullable(),
+  actorName: z.string().trim().max(80).optional(),
+  expectedUpdatedAt: optionalExpectedDateString("expectedUpdatedAt"),
+  expectedCaseUpdatedAt: optionalExpectedDateString("expectedCaseUpdatedAt")
+});
+
 export type ConvertInquiryToCaseMatterPayload = z.infer<typeof convertInquiryToCaseMatterSchema>;
 export type UpdateCaseMatterStatusPayload = z.infer<typeof updateCaseMatterStatusSchema>;
 export type UpdateRequiredDocumentStatusPayload = z.infer<typeof updateRequiredDocumentStatusSchema>;
@@ -219,3 +252,4 @@ export type UpdateSupplementRequestStatusPayload = z.infer<
   typeof updateSupplementRequestStatusSchema
 >;
 export type UpdateSupplementRequestPayload = z.infer<typeof updateSupplementRequestSchema>;
+export type UpdateCaseAccountingMemoPayload = z.infer<typeof updateCaseAccountingMemoSchema>;

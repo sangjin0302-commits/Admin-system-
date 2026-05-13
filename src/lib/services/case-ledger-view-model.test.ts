@@ -92,6 +92,14 @@ function makeCaseMatter(overrides: Partial<CaseLedgerSource> = {}): CaseLedgerSo
         updatedAt: d("2026-05-07T00:00:00.000Z")
       }
     ],
+    accountingMemo: {
+      feeAmount: 120000,
+      feeStatus: "CONFIRMED",
+      paymentStatus: "PARTIAL",
+      paidAmount: 60000,
+      paidAt: d("2026-05-13T00:00:00.000Z"),
+      ledgerMemo: "Accounting memo"
+    },
     ...overrides
   } as CaseLedgerSource;
 }
@@ -116,8 +124,12 @@ assert.equal(fullRow.publicTrackingCode, "20260505-FC-0003-NM");
 assert.equal(fullRow.quoteStatus, "ACCEPTED");
 assert.equal(fullRow.quoteAmountRange, "100,000~150,000원");
 assert.equal(fullRow.contractStatus, "FINALIZED");
-assert.equal(fullRow.feeStatus, "추후 관리");
-assert.equal(fullRow.paymentStatus, "추후 관리");
+assert.equal(fullRow.feeStatus, "확정");
+assert.equal(fullRow.paymentStatus, "일부 입금");
+assert.equal(fullRow.feeAmount, "120,000원");
+assert.equal(fullRow.paidAmount, "60,000원");
+assert.equal(fullRow.paidAt, "2026-05-13");
+assert.equal(fullRow.ledgerMemo, "Accounting memo");
 
 const inquiryFallbackRow = buildCaseLedgerRow(
   makeCaseMatter({
@@ -147,6 +159,7 @@ const emptyFallbackRow = buildCaseLedgerRow(
     supplementRequests: [],
     quotes: [],
     contractDrafts: [],
+    accountingMemo: null,
     openedAt: null,
     assignedTo: null,
     summary: null,
@@ -211,6 +224,8 @@ assert.equal(caseLedgerRowToCsvCells(fullRow).includes("Client Name"), true);
 assert.equal(caseLedgerRowToCsvCells(fullRow).includes("20260505-FC-0003-NM"), true);
 assert.equal(caseLedgerRowToCsvCells(fullRow).some((cell) => cell.includes("@")), false);
 assert.equal(caseLedgerRowToCsvCells(fullRow).some((cell) => cell.includes("010-")), false);
+assert.equal(caseLedgerRowToCsvCells(fullRow).includes("120,000원"), false);
+assert.equal(caseLedgerRowToCsvCells(fullRow).includes("60,000원"), false);
 assert.equal(JSON.stringify(fullRow).includes("internalMemo"), false);
 assert.equal(JSON.stringify(fullRow).includes("communicationLogs"), false);
 

@@ -91,6 +91,21 @@ enum ContractDraftStatus {
   VOID
 }
 
+enum AccountingFeeStatus {
+  UNSET
+  ESTIMATED
+  CONFIRMED
+  WAIVED
+}
+
+enum AccountingPaymentStatus {
+  UNSET
+  UNPAID
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
 enum CaseStage {
   CONTRACT_PREPARATION
   ACTIVE
@@ -566,12 +581,32 @@ model CaseMatter {
   events              CaseEvent[]
   quotes              Quote[]            @relation("CaseMatterQuotes")
   contractDrafts      ContractDraft[]    @relation("CaseMatterContractDrafts")
+  accountingMemo      CaseAccountingMemo?
 
   @@index([status])
   @@index([matterType])
   @@index([dueDate])
   @@index([nextActionAt])
   @@index([priority])
+}
+
+model CaseAccountingMemo {
+  id            String                  @id @default(cuid())
+  caseId        String                  @unique
+  caseMatter    CaseMatter              @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  feeAmount     Int?
+  feeStatus     AccountingFeeStatus     @default(UNSET)
+  paymentStatus AccountingPaymentStatus @default(UNSET)
+  paidAmount    Int?
+  paidAt        DateTime?
+  paymentMemo   String?
+  invoiceMemo   String?
+  ledgerMemo    String?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  @@index([feeStatus])
+  @@index([paymentStatus])
 }
 
 model CaseParty {
