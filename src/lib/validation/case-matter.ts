@@ -3,7 +3,8 @@ import {
   caseMatterStatusValues,
   caseTaskPriorityValues,
   caseTaskStatusValues,
-  requiredDocumentStatusValues
+  requiredDocumentStatusValues,
+  supplementStatusValues
 } from "@/types/case-matter";
 
 export const convertInquiryToCaseMatterSchema = z.object({
@@ -158,6 +159,44 @@ export const updateCaseTaskSchema = z.discriminatedUnion("mode", [
   updateCaseTaskStatusSchema
 ]);
 
+export const createSupplementRequestSchema = z.object({
+  title: z.string().trim().min(2).max(160),
+  description: z.string().trim().max(1000).optional().nullable(),
+  receivedAt: optionalDateString("Invalid supplement request receivedAt format."),
+  dueDate: optionalDateString("Invalid supplement request dueDate format."),
+  requestedDocsJson: z.string().trim().max(2000).optional().nullable(),
+  responseNote: z.string().trim().max(1000).optional().nullable(),
+  actorName: z.string().trim().max(80).optional(),
+  expectedCaseUpdatedAt: optionalExpectedDateString("expectedCaseUpdatedAt")
+});
+
+export const updateSupplementRequestMetadataSchema = z.object({
+  mode: z.literal("metadata"),
+  title: z.string().trim().min(2).max(160),
+  description: z.string().trim().max(1000).optional().nullable(),
+  receivedAt: optionalDateString("Invalid supplement request receivedAt format."),
+  dueDate: optionalDateString("Invalid supplement request dueDate format."),
+  requestedDocsJson: z.string().trim().max(2000).optional().nullable(),
+  responseNote: z.string().trim().max(1000).optional().nullable(),
+  actorName: z.string().trim().max(80).optional(),
+  expectedUpdatedAt: optionalExpectedDateString("expectedUpdatedAt")
+});
+
+export const updateSupplementRequestStatusSchema = z.object({
+  mode: z.literal("status"),
+  status: z.enum(supplementStatusValues),
+  statusChangeNote: z.string().trim().max(300).optional().nullable(),
+  responseNote: z.string().trim().max(1000).optional().nullable(),
+  respondedAt: optionalDateString("Invalid supplement request respondedAt format."),
+  actorName: z.string().trim().max(80).optional(),
+  expectedUpdatedAt: optionalExpectedDateString("expectedUpdatedAt")
+});
+
+export const updateSupplementRequestSchema = z.discriminatedUnion("mode", [
+  updateSupplementRequestMetadataSchema,
+  updateSupplementRequestStatusSchema
+]);
+
 export type ConvertInquiryToCaseMatterPayload = z.infer<typeof convertInquiryToCaseMatterSchema>;
 export type UpdateCaseMatterStatusPayload = z.infer<typeof updateCaseMatterStatusSchema>;
 export type UpdateRequiredDocumentStatusPayload = z.infer<typeof updateRequiredDocumentStatusSchema>;
@@ -172,3 +211,11 @@ export type CreateCaseTaskPayload = z.infer<typeof createCaseTaskSchema>;
 export type UpdateCaseTaskMetadataPayload = z.infer<typeof updateCaseTaskMetadataSchema>;
 export type UpdateCaseTaskStatusPayload = z.infer<typeof updateCaseTaskStatusSchema>;
 export type UpdateCaseTaskPayload = z.infer<typeof updateCaseTaskSchema>;
+export type CreateSupplementRequestPayload = z.infer<typeof createSupplementRequestSchema>;
+export type UpdateSupplementRequestMetadataPayload = z.infer<
+  typeof updateSupplementRequestMetadataSchema
+>;
+export type UpdateSupplementRequestStatusPayload = z.infer<
+  typeof updateSupplementRequestStatusSchema
+>;
+export type UpdateSupplementRequestPayload = z.infer<typeof updateSupplementRequestSchema>;

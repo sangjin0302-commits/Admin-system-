@@ -53,6 +53,21 @@ export const caseTaskPriorityValues = ["LOW", "NORMAL", "HIGH", "URGENT"] as con
 
 export type CaseTaskPriorityValue = (typeof caseTaskPriorityValues)[number];
 
+export const supplementStatusValues = [
+  "RECEIVED",
+  "ANALYZING",
+  "DOCS_REQUESTED",
+  "CLIENT_WAITING",
+  "RESPONSE_DRAFTING",
+  "READY_TO_RESPOND",
+  "RESPONDED",
+  "CLOSED",
+  "OVERDUE",
+  "CANCELLED"
+] as const;
+
+export type SupplementStatusValue = (typeof supplementStatusValues)[number];
+
 function isCaseMatterStatus(value: unknown): value is CaseMatterStatusValue {
   return typeof value === "string" && caseMatterStatusValues.includes(value as CaseMatterStatusValue);
 }

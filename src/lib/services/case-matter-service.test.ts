@@ -4,8 +4,10 @@ import { join } from "node:path";
 
 import {
   createCaseTaskSchema,
+  createSupplementRequestSchema,
   updateCaseTaskSchema,
-  updateRequiredDocumentMetadataSchema
+  updateRequiredDocumentMetadataSchema,
+  updateSupplementRequestSchema
 } from "@/lib/validation/case-matter";
 
 const root = process.cwd();
@@ -28,6 +30,18 @@ const taskRouteSource = readFileSync(
 );
 const taskPatchRouteSource = readFileSync(
   join(root, "src/app/api/admin/case-matters/[id]/tasks/[taskId]/route.ts"),
+  "utf8"
+);
+const supplementPanelSource = readFileSync(
+  join(root, "src/components/admin/supplement-request-management-panel.tsx"),
+  "utf8"
+);
+const supplementRouteSource = readFileSync(
+  join(root, "src/app/api/admin/case-matters/[id]/supplement-requests/route.ts"),
+  "utf8"
+);
+const supplementPatchRouteSource = readFileSync(
+  join(root, "src/app/api/admin/case-matters/[id]/supplement-requests/[supplementRequestId]/route.ts"),
   "utf8"
 );
 
@@ -174,6 +188,99 @@ assert.match(taskPanelSource, /DONE 처리/);
 assert.match(taskPanelSource, /expectedUpdatedAt: snapshot\.updatedAt/);
 assert.doesNotMatch(
   taskPanelSource,
+  /communicationLogs|internalMemo|payloadJson|ADMIN_BASIC_AUTH_PASSWORD|RESEND_API_KEY|EMAIL_FROM/
+);
+
+const parsedSupplementCreate = createSupplementRequestSchema.parse({
+  title: "  기관 보완 요청  ",
+  description: "",
+  receivedAt: "2026-05-12",
+  dueDate: "",
+  requestedDocsJson: "여권 사본",
+  responseNote: "",
+  expectedCaseUpdatedAt: "2026-05-12T00:00:00.000Z"
+});
+assert.equal(parsedSupplementCreate.title, "기관 보완 요청");
+assert.equal(parsedSupplementCreate.dueDate, "");
+
+assert.throws(() =>
+  createSupplementRequestSchema.parse({
+    title: "",
+    receivedAt: "2026-05-12"
+  })
+);
+
+assert.throws(() =>
+  createSupplementRequestSchema.parse({
+    title: "Valid supplement request",
+    dueDate: "not-a-date"
+  })
+);
+
+const parsedSupplementMetadata = updateSupplementRequestSchema.parse({
+  mode: "metadata",
+  title: "Updated supplement request",
+  description: "",
+  receivedAt: "2026-05-12",
+  dueDate: null,
+  requestedDocsJson: "",
+  responseNote: "",
+  expectedUpdatedAt: "2026-05-12T00:00:00.000Z"
+});
+assert.equal(parsedSupplementMetadata.mode, "metadata");
+
+const parsedSupplementStatus = updateSupplementRequestSchema.parse({
+  mode: "status",
+  status: "RESPONDED",
+  statusChangeNote: "Complete",
+  responseNote: "Response sent manually",
+  respondedAt: "2026-05-13",
+  expectedUpdatedAt: "2026-05-12T00:00:00.000Z"
+});
+assert.equal(parsedSupplementStatus.mode, "status");
+assert.equal(parsedSupplementStatus.status, "RESPONDED");
+
+assert.throws(() =>
+  updateSupplementRequestSchema.parse({
+    mode: "status",
+    status: "NOT_VALID"
+  })
+);
+
+assert.match(serviceSource, /export async function createSupplementRequest/);
+assert.match(serviceSource, /export async function updateSupplementRequestMetadata/);
+assert.match(serviceSource, /export async function updateSupplementRequestStatus/);
+assert.match(serviceSource, /SUPPLEMENT_REQUEST_CREATED/);
+assert.match(serviceSource, /SUPPLEMENT_REQUEST_METADATA_UPDATED/);
+assert.match(serviceSource, /SUPPLEMENT_REQUEST_STATUS_CHANGED/);
+assert.match(serviceSource, /terminalWithResponse/);
+assert.match(serviceSource, /: null;/);
+assert.match(serviceSource, /SupplementRequestConcurrentUpdateError/);
+
+assert.match(supplementRouteSource, /export async function POST/);
+assert.match(supplementRouteSource, /createSupplementRequestSchema/);
+assert.match(supplementRouteSource, /createSupplementRequest/);
+assert.match(supplementRouteSource, /return api\.ok\(\{ ok: true \}\)/);
+assert.doesNotMatch(supplementRouteSource, /caseMatter\s*:|communicationLogs|internalMemo/);
+
+assert.match(supplementPatchRouteSource, /export async function PATCH/);
+assert.match(supplementPatchRouteSource, /updateSupplementRequestSchema/);
+assert.match(supplementPatchRouteSource, /updateSupplementRequestMetadata/);
+assert.match(supplementPatchRouteSource, /updateSupplementRequestStatus/);
+assert.match(supplementPatchRouteSource, /mode === "metadata"/);
+assert.match(supplementPatchRouteSource, /return api\.ok\(\{ ok: true \}\)/);
+assert.doesNotMatch(supplementPatchRouteSource, /caseMatter\s*:|communicationLogs|internalMemo/);
+
+assert.match(supplementPanelSource, /SupplementRequestManagementPanel/);
+assert.match(supplementPanelSource, /보완 요청 관리/);
+assert.match(supplementPanelSource, /method: "POST"/);
+assert.match(supplementPanelSource, /method: "PATCH"/);
+assert.match(supplementPanelSource, /mode: "metadata"/);
+assert.match(supplementPanelSource, /mode: "status"/);
+assert.match(supplementPanelSource, /RESPONDED 처리/);
+assert.match(supplementPanelSource, /expectedUpdatedAt: snapshot\.updatedAt/);
+assert.doesNotMatch(
+  supplementPanelSource,
   /communicationLogs|internalMemo|payloadJson|ADMIN_BASIC_AUTH_PASSWORD|RESEND_API_KEY|EMAIL_FROM/
 );
 

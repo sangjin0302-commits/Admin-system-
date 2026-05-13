@@ -11,6 +11,7 @@ import {
 import { CaseTaskManagementPanel } from "@/components/admin/case-task-management-panel";
 import { CaseMatterStatusForm } from "@/components/admin/case-matter-status-form";
 import { RequiredDocumentStatusPanel } from "@/components/admin/required-document-status-panel";
+import { SupplementRequestManagementPanel } from "@/components/admin/supplement-request-management-panel";
 import { Card } from "@/components/ui/card";
 import { adminCasesMessages } from "@/i18n/locales/admin-cases";
 import { createTranslator, normalizeUiLocale } from "@/i18n/shared";
@@ -22,7 +23,8 @@ import {
   caseTaskPriorityValues,
   caseTaskStatusValues,
   normalizeCaseMatterStatus,
-  normalizeRequiredDocumentStatus
+  normalizeRequiredDocumentStatus,
+  supplementStatusValues
 } from "@/types/case-matter";
 
 export const dynamic = "force-dynamic";
@@ -104,6 +106,18 @@ export default async function AdminCaseMatterDetailPage({
     completedAt: task.completedAt,
     updatedAt: task.updatedAt.toISOString()
   }));
+  const supplementRequests = caseMatter.supplementRequests.map((request) => ({
+    id: request.id,
+    title: request.title,
+    description: request.description,
+    status: supplementStatusValues.includes(request.status) ? request.status : "RECEIVED",
+    receivedAt: request.receivedAt,
+    dueDate: request.dueDate,
+    respondedAt: request.respondedAt,
+    requestedDocsJson: request.requestedDocsJson,
+    responseNote: request.responseNote,
+    updatedAt: request.updatedAt.toISOString()
+  }));
 
   return (
     <div className="space-y-6">
@@ -155,6 +169,11 @@ export default async function AdminCaseMatterDetailPage({
         caseMatterId={caseMatter.id}
         caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
         tasks={caseTasks}
+      />
+      <SupplementRequestManagementPanel
+        caseMatterId={caseMatter.id}
+        caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
+        supplementRequests={supplementRequests}
       />
       <CaseMatterSubmissionSection
         submissionPackages={caseMatter.submissionPackages}
