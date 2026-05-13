@@ -49,8 +49,16 @@ export default async function AdminCasesPage({
             <h2 className="mt-2 ui-page-title">{t("boardTitle")}</h2>
             <p className="mt-2 text-sm text-text-muted">{t("boardDescription")}</p>
           </div>
-          <div className="rounded-full bg-surface-muted px-4 py-2 text-sm font-semibold text-text-strong">
-            {t("totalCases")}: {cases.length}
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin/ledger"
+              className="inline-flex h-10 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
+            >
+              업무처리부
+            </Link>
+            <div className="rounded-full bg-surface-muted px-4 py-2 text-sm font-semibold text-text-strong">
+              {t("totalCases")}: {cases.length}
+            </div>
           </div>
         </div>
       </Card>
