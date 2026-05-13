@@ -14,6 +14,7 @@ const supplementBacklogStatuses = new Set([
   "READY_TO_RESPOND",
   "OVERDUE"
 ]);
+const inactiveSupplementStatuses = new Set(["RESPONDED", "CLOSED", "CANCELLED"]);
 const stalledCaseStatuses = new Set(["WAITING_AGENCY", "SUPPLEMENT_REQUESTED", "ON_HOLD"]);
 const waitingAgencySubmissionStatuses = new Set([
   "SUBMITTED",
@@ -133,6 +134,12 @@ function activeTasks(caseMatter: CaseMatterActionSource) {
   return caseMatter.tasks.filter((task) => !inactiveTaskStatuses.has(task.status));
 }
 
+function activeSupplementRequests(caseMatter: CaseMatterActionSource) {
+  return caseMatter.supplementRequests.filter(
+    (request) => !inactiveSupplementStatuses.has(request.status)
+  );
+}
+
 function buildItem(
   caseMatter: CaseMatterActionSource,
   reasons: string[],
@@ -162,8 +169,14 @@ function buildItem(
 
 function sortActionItems(items: CaseMatterActionItem[]) {
   return [...items].sort((a, b) => {
-    const aDue = toValidDate(a.dueDate)?.getTime() ?? toValidDate(a.nextActionAt)?.getTime() ?? Number.MAX_SAFE_INTEGER;
-    const bDue = toValidDate(b.dueDate)?.getTime() ?? toValidDate(b.nextActionAt)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const aDue =
+      toValidDate(a.dueDate)?.getTime() ??
+      toValidDate(a.nextActionAt)?.getTime() ??
+      Number.MAX_SAFE_INTEGER;
+    const bDue =
+      toValidDate(b.dueDate)?.getTime() ??
+      toValidDate(b.nextActionAt)?.getTime() ??
+      Number.MAX_SAFE_INTEGER;
     return aDue - bDue || a.title.localeCompare(b.title);
   });
 }
@@ -181,10 +194,15 @@ export function buildCaseMatterActionDashboard(
     if (!isActiveCase(caseMatter)) continue;
 
     const todayReasons = [
-      isDueTodayOrOverdue(caseMatter.nextActionAt, now) ? "다음 액션일 확인" : null,
+      isDueTodayOrOverdue(caseMatter.nextActionAt, now) ? "다음 액션 확인" : null,
       isDueTodayOrOverdue(caseMatter.dueDate, now) ? "사건 기한 확인" : null,
       activeTasks(caseMatter).some((task) => isDueTodayOrOverdue(task.dueDate, now))
         ? "오늘 또는 지연 업무 태스크"
+        : null,
+      activeSupplementRequests(caseMatter).some((request) =>
+        isDueTodayOrOverdue(request.dueDate, now)
+      )
+        ? "보완 요청 기한 확인"
         : null
     ].filter(Boolean) as string[];
     if (todayReasons.length > 0) today.push(buildItem(caseMatter, todayReasons, now));
@@ -194,10 +212,14 @@ export function buildCaseMatterActionDashboard(
       activeTasks(caseMatter).some((task) => isDueWithinSevenDays(task.dueDate, now))
         ? "업무 태스크 기한 7일 이내"
         : null,
-      caseMatter.requiredDocuments.some((document) => isDueWithinSevenDays(document.dueDate, now))
+      caseMatter.requiredDocuments.some((document) =>
+        isDueWithinSevenDays(document.dueDate, now)
+      )
         ? "필수자료 기한 7일 이내"
         : null,
-      caseMatter.supplementRequests.some((request) => isDueWithinSevenDays(request.dueDate, now))
+      activeSupplementRequests(caseMatter).some((request) =>
+        isDueWithinSevenDays(request.dueDate, now)
+      )
         ? "보완 요청 기한 7일 이내"
         : null
     ].filter(Boolean) as string[];
@@ -207,7 +229,9 @@ export function buildCaseMatterActionDashboard(
       caseMatter.requiredDocuments.some((document) => documentBacklogStatuses.has(document.status))
         ? "미제출/보완 필요 자료"
         : null,
-      caseMatter.supplementRequests.some((request) => supplementBacklogStatuses.has(request.status))
+      activeSupplementRequests(caseMatter).some((request) =>
+        supplementBacklogStatuses.has(request.status)
+      )
         ? "보완 응답 필요"
         : null
     ].filter(Boolean) as string[];

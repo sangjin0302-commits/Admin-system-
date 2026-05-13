@@ -70,6 +70,22 @@ const dashboard = buildCaseMatterActionDashboard(
       supplementRequests: [{ status: "CLIENT_WAITING", dueDate: "2026-05-20T00:00:00" }]
     }),
     caseMatter({
+      id: "supplement-due-today",
+      supplementRequests: [{ status: "READY_TO_RESPOND", dueDate: "2026-05-12T00:00:00" }]
+    }),
+    caseMatter({
+      id: "supplement-due-soon",
+      supplementRequests: [{ status: "DOCS_REQUESTED", dueDate: "2026-05-16T00:00:00" }]
+    }),
+    caseMatter({
+      id: "responded-supplement-excluded",
+      supplementRequests: [{ status: "RESPONDED", dueDate: "2026-05-12T00:00:00" }]
+    }),
+    caseMatter({
+      id: "closed-supplement-excluded",
+      supplementRequests: [{ status: "CLOSED", dueDate: "2026-05-16T00:00:00" }]
+    }),
+    caseMatter({
       id: "waiting-agency",
       status: "WAITING_AGENCY"
     }),
@@ -105,19 +121,19 @@ const dashboard = buildCaseMatterActionDashboard(
 
 assert.deepEqual(
   dashboard.today.map((item) => item.id).sort(),
-  ["overdue-case", "task-due", "today-next-action"]
+  ["overdue-case", "supplement-due-today", "task-due", "today-next-action"]
 );
 assert.equal(dashboard.today.find((item) => item.id === "overdue-case")?.ddayLabel, "D+2");
 assert.equal(dashboard.today.find((item) => item.id === "today-next-action")?.tone, "warning");
 
 assert.deepEqual(
   dashboard.dueSoon.map((item) => item.id).sort(),
-  ["doc-due-soon", "due-soon", "task-due-soon"]
+  ["doc-due-soon", "due-soon", "supplement-due-soon", "task-due-soon"]
 );
 
 assert.deepEqual(
   dashboard.backlog.map((item) => item.id).sort(),
-  ["doc-backlog", "supplement-backlog"]
+  ["doc-backlog", "supplement-backlog", "supplement-due-soon", "supplement-due-today"]
 );
 
 assert.deepEqual(
@@ -127,14 +143,14 @@ assert.deepEqual(
 
 const summary = buildCaseMatterActionSummary(dashboard, 4);
 assert.deepEqual(summary.counts, {
-  today: 3,
-  dueSoon: 3,
-  backlog: 2,
+  today: 4,
+  dueSoon: 4,
+  backlog: 4,
   stalled: 3
 });
 assert.deepEqual(
   summary.topItems.map((item) => item.id),
-  ["overdue-case", "today-next-action", "task-due", "due-soon"]
+  ["overdue-case", "today-next-action", "supplement-due-today", "task-due"]
 );
 assert.equal(summary.hasImmediateWork, true);
 assert.equal(summary.hasOperationalIssues, true);
