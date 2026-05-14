@@ -49,6 +49,10 @@ const accountingRouteSource = readFileSync(
   join(root, "src/app/api/admin/case-matters/[id]/accounting/route.ts"),
   "utf8"
 );
+const inquiryCaseMatterRouteSource = readFileSync(
+  join(root, "src/app/api/admin/inquiries/[id]/case-matters/route.ts"),
+  "utf8"
+);
 const accountingPanelSource = readFileSync(
   join(root, "src/components/admin/case-accounting-memo-panel.tsx"),
   "utf8"
@@ -353,6 +357,14 @@ assert.match(accountingRouteSource, /updateCaseAccountingMemoSchema/);
 assert.match(accountingRouteSource, /updateCaseAccountingMemo/);
 assert.match(accountingRouteSource, /return api\.ok\(\{ ok: true \}\)/);
 assert.doesNotMatch(accountingRouteSource, /caseMatter\s*:|communicationLogs|internalMemo|payloadJson/);
+
+assert.match(inquiryCaseMatterRouteSource, /function toSafeCaseMatterSummary/);
+assert.match(inquiryCaseMatterRouteSource, /caseMatters: caseMatters\.map\(toSafeCaseMatterSummary\)/);
+assert.match(inquiryCaseMatterRouteSource, /caseMatter: toSafeCaseMatterSummary\(result\.caseMatter\)/);
+assert.doesNotMatch(
+  inquiryCaseMatterRouteSource,
+  /internalMemo|communicationLogs|payloadJson|ADMIN_BASIC_AUTH_PASSWORD|RESEND_API_KEY|EMAIL_FROM/
+);
 
 assert.match(accountingPanelSource, /CaseAccountingMemoPanel/);
 assert.match(accountingPanelSource, /수임관리 메모/);
