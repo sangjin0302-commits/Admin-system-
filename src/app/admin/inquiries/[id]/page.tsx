@@ -1,4 +1,5 @@
 import { InquiryActionChecklistPanel } from "@/components/admin/inquiry-action-checklist-panel";
+import { InquiryCaseConversionPanel } from "@/components/admin/inquiry-case-conversion-panel";
 import {
   InquiryDetailEvidenceSection,
   InquiryDetailIntakeCategorySection,
@@ -179,6 +180,22 @@ export default async function AdminInquiryDetailPage({
                   statusGuardPreview={statusGuardPreview}
                 />
               </Card>
+              <InquiryCaseConversionPanel
+                inquiryId={inquiry.id}
+                inquiryTitle={inquiry.title}
+                inquiryType={inquiryType}
+                latestCaseMatter={
+                  latestCaseMatter
+                    ? {
+                        id: latestCaseMatter.id,
+                        caseNo: latestCaseMatter.caseNo,
+                        title: latestCaseMatter.title,
+                        matterType: latestCaseMatter.matterType,
+                        status: latestCaseMatter.status
+                      }
+                    : null
+                }
+              />
             </div>
           )}
         />
