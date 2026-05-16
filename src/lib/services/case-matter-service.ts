@@ -27,6 +27,7 @@ import {
   assertRequiredDocumentTransition,
   getAllowedRequiredDocumentTransitions
 } from "@/lib/services/required-document-status-transition-helpers";
+import { buildRequiredDocumentChecklistStarterPlan } from "@/lib/services/required-document-checklist-starter";
 
 const operationalInclude = {
   tasks: {
@@ -694,32 +695,6 @@ function sameOptionalDate(left: Date | null, right: Date | null) {
   if (!left && !right) return true;
   if (!left || !right) return false;
   return left.getTime() === right.getTime();
-}
-
-function getChecklistStarterTemplates(matterType: string) {
-  const normalized = matterType.trim().toLocaleLowerCase("en-US");
-
-  if (normalized.includes("immigration")) {
-    return [
-      { name: "Applicant identity document", required: true },
-      { name: "Current stay status evidence", required: true },
-      { name: "Application supporting statement", required: true }
-    ] as const;
-  }
-
-  if (normalized.includes("nonprofit")) {
-    return [
-      { name: "Founding resolution", required: true },
-      { name: "Bylaws draft", required: true },
-      { name: "Officer roster", required: true }
-    ] as const;
-  }
-
-  return [
-    { name: "Applicant identity document", required: true },
-    { name: "Core application form draft", required: true },
-    { name: "Supporting evidence packet", required: true }
-  ] as const;
 }
 
 async function getCaseMatterOperationalByIdTx(
@@ -2075,19 +2050,15 @@ export async function startRequiredDocumentChecklist(
       );
     }
 
-    const existingNameKeys = new Set(
-      snapshot.requiredDocuments
-        .filter((item) => item.status !== "NOT_APPLICABLE")
-        .map((item) => normalizeDocumentNameKey(item.name))
-    );
-    const templates = getChecklistStarterTemplates(snapshot.matterType);
-    const toCreate = templates.filter((item) => !existingNameKeys.has(normalizeDocumentNameKey(item.name)));
+    const plan = buildRequiredDocumentChecklistStarterPlan(snapshot.matterType, snapshot.requiredDocuments);
+    const { templates, toCreate } = plan;
 
     if (toCreate.length > 0) {
       await tx.requiredDocument.createMany({
         data: toCreate.map((item) => ({
           caseId: snapshot.id,
           name: item.name,
+          description: item.description ?? null,
           required: item.required,
           status: "NEEDED"
         }))
