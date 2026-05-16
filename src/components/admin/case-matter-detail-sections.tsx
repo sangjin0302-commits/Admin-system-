@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
+import { formatCaseMatterTypeLabel } from "@/lib/immigration";
 import type { getCaseMatterById } from "@/lib/services/case-matter-service";
 import {
   buildCaseMatterDDay,
@@ -62,7 +63,7 @@ export function CaseMatterSummaryCards({
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MiniField label="사건번호" value={caseMatter.caseNo ?? "사건번호 없음"} />
         <MiniField label="사건명" value={caseMatter.title} />
-        <MiniField label="업무유형" value={caseMatter.matterType} />
+        <MiniField label="업무유형" value={formatCaseMatterTypeLabel(caseMatter.matterType)} />
         <MiniField label="진행상태" value={getCaseMatterStatusLabel(status, locale)} />
         <MiniField label="우선순위" value={caseMatter.priority} />
         <MiniField label="리스크" value={caseMatter.riskLevel} />

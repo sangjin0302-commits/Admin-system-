@@ -89,6 +89,13 @@ export type ImmigrationSafetyGuardrail = {
   appliesToMatterTypes: readonly string[];
 };
 
+export type ImmigrationMatterTypeOption = {
+  value: ImmigrationMatterType;
+  label: string;
+  category: ImmigrationMatterCategory;
+  description: string;
+};
+
 type ImmigrationRequiredDocumentTemplateInput = readonly [
   id: string,
   labelKo: string,
@@ -655,6 +662,25 @@ export function listImmigrationMatterTypes() {
 
 export function listImmigrationMatterTypesByCategory(category: ImmigrationMatterCategory) {
   return immigrationMatterTypeDefinitions.filter((definition) => definition.category === category);
+}
+
+export function listImmigrationMatterTypeOptions(): ImmigrationMatterTypeOption[] {
+  return immigrationMatterTypeDefinitions.map((definition) => ({
+    value: definition.matterType,
+    label: definition.labelKo,
+    category: definition.category,
+    description: definition.descriptionKo
+  }));
+}
+
+export function getImmigrationMatterTypeLabel(matterType: string) {
+  return getImmigrationMatterTypeDefinition(matterType)?.labelKo ?? null;
+}
+
+export function formatCaseMatterTypeLabel(matterType: string | null | undefined) {
+  const normalized = matterType?.trim();
+  if (!normalized) return "-";
+  return getImmigrationMatterTypeLabel(normalized) ?? normalized;
 }
 
 export function getDispositionTypeDefinition(code: string) {
