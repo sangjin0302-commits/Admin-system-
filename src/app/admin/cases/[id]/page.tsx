@@ -10,6 +10,7 @@ import {
 } from "@/components/admin/case-matter-detail-sections";
 import { CaseAccountingMemoPanel } from "@/components/admin/case-accounting-memo-panel";
 import { CaseTaskManagementPanel } from "@/components/admin/case-task-management-panel";
+import { ImmigrationCaseHintPanel } from "@/components/admin/immigration-case-hint-panel";
 import { CaseMatterStatusForm } from "@/components/admin/case-matter-status-form";
 import { RequiredDocumentStatusPanel } from "@/components/admin/required-document-status-panel";
 import { SupplementRequestManagementPanel } from "@/components/admin/supplement-request-management-panel";
@@ -162,6 +163,7 @@ export default async function AdminCaseMatterDetailPage({
       <CaseMatterSummaryCards caseMatter={caseMatter} status={currentStatus} locale={locale} />
       <CaseMatterPartiesSection parties={caseMatter.parties} />
       <CaseMatterInquiryLinkSection inquiry={caseMatter.inquiry} />
+      <ImmigrationCaseHintPanel matterType={caseMatter.matterType} />
       <RequiredDocumentSummarySection documents={requiredDocuments} locale={locale} />
 
       <CaseMatterStatusForm
