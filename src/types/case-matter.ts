@@ -68,6 +68,20 @@ export const supplementStatusValues = [
 
 export type SupplementStatusValue = (typeof supplementStatusValues)[number];
 
+export const accountingFeeStatusValues = ["UNSET", "ESTIMATED", "CONFIRMED", "WAIVED"] as const;
+
+export type AccountingFeeStatusValue = (typeof accountingFeeStatusValues)[number];
+
+export const accountingPaymentStatusValues = [
+  "UNSET",
+  "UNPAID",
+  "PARTIAL",
+  "PAID",
+  "REFUNDED"
+] as const;
+
+export type AccountingPaymentStatusValue = (typeof accountingPaymentStatusValues)[number];
+
 function isCaseMatterStatus(value: unknown): value is CaseMatterStatusValue {
   return typeof value === "string" && caseMatterStatusValues.includes(value as CaseMatterStatusValue);
 }

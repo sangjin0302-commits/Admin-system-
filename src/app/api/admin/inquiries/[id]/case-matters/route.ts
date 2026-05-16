@@ -9,6 +9,22 @@ import {
 } from "@/lib/services/case-matter-service";
 import { convertInquiryToCaseMatterSchema } from "@/lib/validation/case-matter";
 
+function toSafeCaseMatterSummary(caseMatter: {
+  id: string;
+  caseNo: string | null;
+  title: string;
+  matterType: string;
+  status: string;
+}) {
+  return {
+    id: caseMatter.id,
+    caseNo: caseMatter.caseNo ?? "-",
+    title: caseMatter.title,
+    matterType: caseMatter.matterType,
+    status: caseMatter.status
+  };
+}
+
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> }
@@ -27,7 +43,7 @@ export async function GET(
       ok: true,
       inquiryId,
       count: caseMatters.length,
-      caseMatters
+      caseMatters: caseMatters.map(toSafeCaseMatterSummary)
     });
   } catch (error) {
     api.logError(error);
@@ -72,7 +88,7 @@ export async function POST(
         ok: true,
         inquiryId,
         created: result.created,
-        caseMatter: result.caseMatter,
+        caseMatter: toSafeCaseMatterSummary(result.caseMatter),
         linkedQuoteId: result.linkedQuoteId,
         linkedContractDraftId: result.linkedContractDraftId
       },
@@ -95,4 +111,3 @@ export async function POST(
     });
   }
 }
-

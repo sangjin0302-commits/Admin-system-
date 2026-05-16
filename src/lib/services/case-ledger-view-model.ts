@@ -1,4 +1,9 @@
-import type { CaseMatterStatus, Prisma } from "@generated/prisma-client/client";
+import type {
+  AccountingFeeStatus,
+  AccountingPaymentStatus,
+  CaseMatterStatus,
+  Prisma
+} from "@generated/prisma-client/client";
 
 import { prisma } from "@/lib/prisma/client";
 
@@ -75,6 +80,16 @@ const caseLedgerInclude = {
       updatedAt: true
     },
     orderBy: [{ updatedAt: "desc" }]
+  },
+  accountingMemo: {
+    select: {
+      feeAmount: true,
+      feeStatus: true,
+      paymentStatus: true,
+      paidAmount: true,
+      paidAt: true,
+      ledgerMemo: true
+    }
   }
 } satisfies Prisma.CaseMatterInclude;
 
@@ -115,6 +130,10 @@ export type CaseLedgerRow = {
   contractStatus: string;
   feeStatus: string;
   paymentStatus: string;
+  feeAmount: string;
+  paidAmount: string;
+  paidAt: string;
+  ledgerMemo: string;
 };
 
 export type CaseLedgerSummary = {
@@ -159,6 +178,21 @@ const activeSupplementStatuses = new Set([
   "READY_TO_RESPOND",
   "OVERDUE"
 ]);
+
+const accountingFeeStatusLabels: Record<AccountingFeeStatus, string> = {
+  UNSET: "미설정",
+  ESTIMATED: "예상",
+  CONFIRMED: "확정",
+  WAIVED: "면제"
+};
+
+const accountingPaymentStatusLabels: Record<AccountingPaymentStatus, string> = {
+  UNSET: "미설정",
+  UNPAID: "미입금",
+  PARTIAL: "일부 입금",
+  PAID: "입금 완료",
+  REFUNDED: "환불"
+};
 
 function text(value: string | null | undefined) {
   const trimmed = value?.trim();
@@ -227,6 +261,11 @@ function formatAmountRange(min: number, max: number) {
   return `${formatter.format(min)}~${formatter.format(max)}원`;
 }
 
+function formatMoney(value: number | null | undefined) {
+  if (value == null) return emptyValue;
+  return `${new Intl.NumberFormat("ko-KR").format(value)}원`;
+}
+
 function buildNote(caseMatter: CaseLedgerSource, submission: ReturnType<typeof pickSubmission>) {
   const notes: string[] = [];
   if (caseMatter.summary?.trim()) notes.push(caseMatter.summary.trim());
@@ -249,6 +288,7 @@ export function buildCaseLedgerRow(caseMatter: CaseLedgerSource): CaseLedgerRow 
   const submission = pickSubmission(caseMatter);
   const quote = pickQuote(caseMatter);
   const latestContract = caseMatter.contractDrafts[0] ?? null;
+  const accounting = caseMatter.accountingMemo ?? null;
 
   return {
     caseId: caseMatter.id,
@@ -273,8 +313,14 @@ export function buildCaseLedgerRow(caseMatter: CaseLedgerSource): CaseLedgerRow 
     quoteStatus: text(quote?.status ?? null),
     quoteAmountRange: quote ? formatAmountRange(quote.totalMin, quote.totalMax) : emptyValue,
     contractStatus: text(latestContract?.status ?? null),
-    feeStatus: feePlaceholder,
-    paymentStatus: feePlaceholder
+    feeStatus: accounting ? accountingFeeStatusLabels[accounting.feeStatus] : feePlaceholder,
+    paymentStatus: accounting
+      ? accountingPaymentStatusLabels[accounting.paymentStatus]
+      : feePlaceholder,
+    feeAmount: accounting ? formatMoney(accounting.feeAmount) : emptyValue,
+    paidAmount: accounting ? formatMoney(accounting.paidAmount) : emptyValue,
+    paidAt: accounting ? isoDate(accounting.paidAt) : emptyValue,
+    ledgerMemo: text(accounting?.ledgerMemo ?? null)
   };
 }
 

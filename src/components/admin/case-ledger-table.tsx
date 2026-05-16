@@ -112,7 +112,7 @@ export function CaseLedgerTable({
       ) : (
         <Card className="overflow-hidden p-0">
           <div className="overflow-x-auto">
-            <table className="min-w-[1500px] divide-y divide-line text-sm">
+            <table className="min-w-[1680px] divide-y divide-line text-sm">
               <thead className="bg-surface-muted text-left text-xs uppercase tracking-wide text-text-muted">
                 <tr>
                   <th className="px-3 py-3 font-semibold">사건번호</th>
@@ -126,6 +126,7 @@ export function CaseLedgerTable({
                   <th className="px-3 py-3 font-semibold">제출일자</th>
                   <th className="px-3 py-3 font-semibold">접수번호</th>
                   <th className="px-3 py-3 font-semibold">보완</th>
+                  <th className="px-3 py-3 font-semibold">수임/입금</th>
                   <th className="px-3 py-3 font-semibold">결과수령일</th>
                   <th className="px-3 py-3 font-semibold">종결일자</th>
                   <th className="px-3 py-3 font-semibold">담당자</th>
@@ -155,11 +156,20 @@ export function CaseLedgerTable({
                     <td className="px-3 py-3 text-text">{row.submittedAt}</td>
                     <td className="px-3 py-3 font-mono text-xs text-text">{row.receiptNo}</td>
                     <td className="px-3 py-3 text-text">{row.hasSupplement}</td>
+                    <td className="px-3 py-3">
+                      <p className="text-xs text-text-muted">수임 {row.feeStatus}</p>
+                      <p className="text-xs text-text-muted">입금 {row.paymentStatus}</p>
+                      <p className="mt-1 text-xs text-text">{row.feeAmount}</p>
+                      <p className="text-xs text-text">{row.paidAmount}</p>
+                    </td>
                     <td className="px-3 py-3 text-text">{row.resultReceivedAt}</td>
                     <td className="px-3 py-3 text-text">{row.closedAt}</td>
                     <td className="px-3 py-3 text-text">{row.assignedTo}</td>
                     <td className="px-3 py-3">
                       <p className="max-w-[260px] text-xs text-text-muted">{row.note}</p>
+                      {row.ledgerMemo !== "-" && (
+                        <p className="mt-1 max-w-[260px] text-xs text-text-muted">{row.ledgerMemo}</p>
+                      )}
                     </td>
                     <td className="px-3 py-3">
                       <Link
