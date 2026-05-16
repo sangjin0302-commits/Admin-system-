@@ -10,6 +10,10 @@ import {
   updateRequiredDocumentMetadataSchema,
   updateSupplementRequestSchema
 } from "@/lib/validation/case-matter";
+import {
+  buildRequiredDocumentChecklistStarterPlan,
+  getRequiredDocumentChecklistStarterTemplates
+} from "@/lib/services/required-document-checklist-starter";
 
 const root = process.cwd();
 const serviceSource = readFileSync(join(root, "src/lib/services/case-matter-service.ts"), "utf8");
@@ -94,7 +98,47 @@ assert.match(serviceSource, /REQUIRED_DOCUMENT_DUPLICATE/);
 assert.match(serviceSource, /expectedUpdatedAt/);
 assert.match(serviceSource, /expectedCaseUpdatedAt/);
 assert.match(serviceSource, /payloadJson: JSON\.stringify/);
+assert.match(serviceSource, /buildRequiredDocumentChecklistStarterPlan/);
+assert.match(serviceSource, /description: item\.description \?\? null/);
 assert.doesNotMatch(serviceSource, /communicationLogs|ADMIN_BASIC_AUTH_PASSWORD|RESEND_API_KEY|EMAIL_FROM/);
+
+const deportationStarterTemplates = getRequiredDocumentChecklistStarterTemplates("deportation_order_appeal");
+const deportationStarterNames = deportationStarterTemplates.map((template) => template.name);
+assert.ok(deportationStarterNames.includes("강제퇴거명령서"));
+assert.ok(deportationStarterNames.includes("송달일 확인 자료"));
+assert.ok(deportationStarterNames.includes("정상참작 자료"));
+assert.ok(deportationStarterNames.includes("행정심판 청구서 초안 자료"));
+assert.ok(deportationStarterTemplates.some((template) => template.description?.includes("강제퇴거명령")));
+
+const visaStarterTemplates = getRequiredDocumentChecklistStarterTemplates("visa_issuance_support");
+const visaStarterNames = visaStarterTemplates.map((template) => template.name);
+assert.ok(visaStarterNames.includes("여권"));
+assert.ok(visaStarterNames.includes("초청/입국 목적 증빙"));
+assert.ok(visaStarterNames.includes("소득/납세 자료"));
+
+const genericStarterTemplates = getRequiredDocumentChecklistStarterTemplates("case_card_qa");
+assert.deepEqual(
+  genericStarterTemplates.map((template) => template.name),
+  ["Applicant identity document", "Core application form draft", "Supporting evidence packet"]
+);
+
+const starterPlan = buildRequiredDocumentChecklistStarterPlan("deportation_order_appeal", [
+  { name: " 강제퇴거명령서 ", status: "NEEDED" },
+  { name: "송달일   확인 자료", status: "NOT_APPLICABLE" }
+]);
+assert.equal(starterPlan.templates.length, deportationStarterTemplates.length);
+assert.equal(starterPlan.skippedCount, 1);
+assert.equal(starterPlan.createdCount, deportationStarterTemplates.length - 1);
+assert.equal(starterPlan.toCreate.some((template) => template.name === "강제퇴거명령서"), false);
+assert.equal(starterPlan.toCreate.some((template) => template.name === "송달일 확인 자료"), true);
+
+const starterText = JSON.stringify({
+  deportationStarterTemplates,
+  visaStarterTemplates,
+  genericStarterTemplates
+});
+assert.doesNotMatch(starterText, /여권번호|외국인등록번호|alien registration number|passport number/i);
+assert.doesNotMatch(starterText, /결과 보장|100% 허가|자동 제출|automatic submission|guaranteed result/i);
 
 assert.match(routeSource, /export async function PATCH/);
 assert.match(routeSource, /updateRequiredDocumentMetadataSchema/);
