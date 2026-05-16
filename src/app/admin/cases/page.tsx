@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
 import { adminCasesMessages } from "@/i18n/locales/admin-cases";
 import { createTranslator, normalizeUiLocale } from "@/i18n/shared";
+import { formatCaseMatterTypeLabel } from "@/lib/immigration";
 import { buildCaseMatterActionDashboard } from "@/lib/services/case-matter-action-view-model";
 import { listCaseMatters } from "@/lib/services/case-matter-service";
 import { formatDate, formatDateTime } from "@/lib/utils";
@@ -93,7 +94,7 @@ export default async function AdminCasesPage({
                     <td className="px-4 py-3">
                       <p className="font-semibold text-text-strong">{item.title}</p>
                       <p className="mt-1 text-xs text-text-muted">
-                        {item.caseNo ?? t("caseNoMissing")} | {item.matterType}
+                        {item.caseNo ?? t("caseNoMissing")} | {formatCaseMatterTypeLabel(item.matterType)}
                       </p>
                     </td>
                     <td className="px-4 py-3 text-text">

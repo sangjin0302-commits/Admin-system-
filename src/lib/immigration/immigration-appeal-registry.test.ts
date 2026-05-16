@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import {
   getDeadlinePriorityForMatterType,
   getDraftCandidatesForMatterType,
+  formatCaseMatterTypeLabel,
   getImmigrationMatterTypeDefinition,
+  getImmigrationMatterTypeLabel,
   getRequiredDocumentTemplatesForMatterType,
   getSafetyGuardrailsForMatterType,
   immigrationDispositionTypeDefinitions,
@@ -13,6 +15,7 @@ import {
   immigrationRequiredDocumentTemplates,
   immigrationSafetyGuardrails,
   isImmigrationMatterType,
+  listImmigrationMatterTypeOptions,
   listImmigrationMatterTypes,
   listImmigrationMatterTypesByCategory
 } from "@/lib/immigration/immigration-appeal-registry";
@@ -53,9 +56,31 @@ for (const definition of immigrationMatterTypeDefinitions) {
 
 assert.equal(listImmigrationMatterTypes().length, 13);
 assert.ok(listImmigrationMatterTypesByCategory("immigration_appeal").length >= 6);
+const matterTypeOptions = listImmigrationMatterTypeOptions();
+assert.equal(matterTypeOptions.length, 13);
+assertUnique(
+  matterTypeOptions.map((option) => option.value),
+  "matter type option values"
+);
+for (const option of matterTypeOptions) {
+  assert.ok(option.label, `${option.value} should have option label`);
+  assert.ok(option.description, `${option.value} should have option description`);
+}
+assert.ok(matterTypeOptions.some((option) => option.category === "immigration_appeal"));
 assert.equal(isImmigrationMatterType("deportation_order_appeal"), true);
 assert.equal(isImmigrationMatterType("unknown_type"), false);
 assert.equal(getImmigrationMatterTypeDefinition("unknown_type"), null);
+assert.equal(
+  getImmigrationMatterTypeLabel("deportation_order_appeal"),
+  getImmigrationMatterTypeDefinition("deportation_order_appeal")?.labelKo
+);
+assert.equal(getImmigrationMatterTypeLabel("unknown_type"), null);
+assert.equal(
+  formatCaseMatterTypeLabel("deportation_order_appeal"),
+  getImmigrationMatterTypeDefinition("deportation_order_appeal")?.labelKo
+);
+assert.equal(formatCaseMatterTypeLabel("case_card_qa"), "case_card_qa");
+assert.equal(formatCaseMatterTypeLabel(""), "-");
 assert.deepEqual(getDeadlinePriorityForMatterType("unknown_type"), []);
 assert.deepEqual(getRequiredDocumentTemplatesForMatterType("unknown_type"), []);
 assert.deepEqual(getDraftCandidatesForMatterType("unknown_type"), []);

@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { adminCasesMessages } from "@/i18n/locales/admin-cases";
 import { createTranslator, normalizeUiLocale } from "@/i18n/shared";
 import { normalizeAdminEntityId } from "@/lib/http/admin-id";
+import { formatCaseMatterTypeLabel } from "@/lib/immigration";
 import { getAllowedCaseMatterTransitions } from "@/lib/services/case-matter-status-transition-helpers";
 import { getCaseMatterById } from "@/lib/services/case-matter-service";
 import { getAllowedRequiredDocumentTransitions } from "@/lib/services/required-document-status-transition-helpers";
@@ -143,7 +144,7 @@ export default async function AdminCaseMatterDetailPage({
             <p className="ui-kicker">{t("detailKicker")}</p>
             <h2 className="mt-2 text-2xl font-semibold text-text-strong">{caseMatter.title}</h2>
             <p className="mt-2 text-sm text-text-muted">
-              {caseMatter.caseNo ?? t("caseNoMissing")} | {caseMatter.matterType}
+              {caseMatter.caseNo ?? t("caseNoMissing")} | {formatCaseMatterTypeLabel(caseMatter.matterType)}
             </p>
           </div>
           <Link

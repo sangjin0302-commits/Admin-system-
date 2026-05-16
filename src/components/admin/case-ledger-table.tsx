@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
+import { formatCaseMatterTypeLabel } from "@/lib/immigration";
 import type { CaseLedgerFilters, CaseLedgerViewModel } from "@/lib/services/case-ledger-view-model";
 
 type CaseLedgerTableProps = {
@@ -70,7 +71,7 @@ export function CaseLedgerTable({
               <option value="">전체</option>
               {matterTypeOptions.map((matterType) => (
                 <option key={matterType} value={matterType}>
-                  {matterType}
+                  {formatCaseMatterTypeLabel(matterType)}
                 </option>
               ))}
             </select>
@@ -144,7 +145,7 @@ export function CaseLedgerTable({
                       <p className="font-semibold text-text-strong">{row.clientName}</p>
                       <p className="mt-1 text-xs text-text-muted">{row.clientType}</p>
                     </td>
-                    <td className="px-3 py-3 text-text">{row.matterType}</td>
+                    <td className="px-3 py-3 text-text">{formatCaseMatterTypeLabel(row.matterType)}</td>
                     <td className="px-3 py-3">
                       <p className="max-w-[240px] font-semibold text-text-strong">{row.title}</p>
                       <p className="mt-1 max-w-[260px] text-xs text-text-muted">
