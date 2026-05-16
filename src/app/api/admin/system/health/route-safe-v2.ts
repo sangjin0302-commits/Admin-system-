@@ -22,13 +22,42 @@ import { getSystemHealthSnapshot } from "@/lib/services/system-health-service-sa
 
 const KO_HEALTH_LOAD_FAILED =
   "\uC2DC\uC2A4\uD15C \uD5EC\uC2A4 \uC0C1\uD0DC \uC815\uBCF4\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.";
+const HEALTH_RESPONSE_REPLACEMENTS = [
+  ["DATABASE_URL", "database connection setting"],
+  ["ADMIN_BASIC_AUTH_PASSWORD", "admin auth credential"],
+  ["ADMIN_BASIC_AUTH_USER", "admin auth account"],
+  ["ADMIN_MARKETING_SYNC_TOKEN", "admin integration token"],
+  ["RESEND_API_KEY", "email provider credential"],
+  ["EMAIL_FROM", "email sender setting"]
+] as const;
+
+export function sanitizeSystemHealthPayloadForResponse(value: unknown): unknown {
+  if (typeof value === "string") {
+    return HEALTH_RESPONSE_REPLACEMENTS.reduce(
+      (text, [needle, replacement]) => text.split(needle).join(replacement),
+      value
+    );
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeSystemHealthPayloadForResponse(item));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nested]) => [key, sanitizeSystemHealthPayloadForResponse(nested)])
+    );
+  }
+
+  return value;
+}
 
 export async function GET() {
   const api = createAdminRequestContext("admin.system.health.get");
 
   try {
     const snapshot = await getSystemHealthSnapshot();
-    return api.ok({ ok: true, snapshot });
+    return api.ok({ ok: true, snapshot: sanitizeSystemHealthPayloadForResponse(snapshot) });
   } catch (error) {
     api.logError(error);
     return api.error(500, KO_HEALTH_LOAD_FAILED, {
