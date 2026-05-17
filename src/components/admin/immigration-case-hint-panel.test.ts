@@ -102,4 +102,46 @@ assert.match(serialized, /아직 기한 값을 저장하지 않습니다/);
 assert.match(serialized, /sourceHintKo/);
 assert.doesNotMatch(serialized, /저장 버튼|auto-save|autosave|POST|PATCH|DELETE/i);
 
+assert.ok(
+  deportationModel.draftCandidates.some((candidate) => candidate.id === "administrative_appeal_petition_draft"),
+  "deportation appeal should expose administrative appeal petition draft from document draft registry"
+);
+assert.ok(
+  deportationModel.draftCandidates.some((candidate) => candidate.id === "stay_of_execution_application_draft"),
+  "deportation appeal should expose stay of execution application draft from document draft registry"
+);
+for (const candidate of highRiskDrafts) {
+  assert.equal(candidate.noAutomaticSubmission, true);
+  assert.ok(candidate.requiredInputFields.length > 0);
+}
+
+const visaModel = buildImmigrationCaseHintPanelModel("visa_issuance_support");
+assert.ok(visaModel);
+assert.ok(
+  visaModel.draftCandidates.some((candidate) => candidate.id === "submitted_evidence_list"),
+  "visa issuance support should expose submitted evidence list draft"
+);
+assert.ok(
+  visaModel.draftCandidates.some((candidate) => candidate.id === "explanation_statement"),
+  "visa issuance support should expose explanation statement draft"
+);
+assert.ok(
+  visaModel.draftCandidates.every((candidate) => candidate.adminOnlyPreview && candidate.noAutomaticSubmission),
+  "document draft candidates should be admin-only and not submitted automatically"
+);
+
+const registrySerialized = JSON.stringify({
+  notices: [deportationModel.draftNotice, deportationModel.highRiskDraftNotice],
+  model: deportationModel,
+  visaModel
+});
+assert.doesNotMatch(registrySerialized, /결과 보장|100% 허가|자동 제출|AI가 판단|즉시 해결/);
+assert.match(registrySerialized, /문서 생성 실행이 아니라/);
+assert.match(registrySerialized, /고객 발송 또는 기관 제출 실행은 하지 않습니다/);
+assert.match(registrySerialized, /고위험 문서는 업무범위와 공식 서식 확인 후/);
+assert.match(registrySerialized, /requiredInputFields/);
+assert.match(registrySerialized, /optionalInputFields/);
+assert.match(registrySerialized, /noAutomaticSubmission/);
+assert.doesNotMatch(deportationModel.draftNotice + deportationModel.highRiskDraftNotice, /export|DOCX|PDF|HWP/i);
+
 console.log("immigration case hint panel tests passed");

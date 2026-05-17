@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import {
-  getDraftCandidatesForMatterType,
+  getDocumentDraftTemplatesForMatterType,
   getImmigrationDeadlineFieldsForMatterType,
   getImmigrationMatterTypeDefinition,
   getRequiredDocumentTemplatesForMatterType,
@@ -42,7 +42,7 @@ export function buildImmigrationCaseHintPanelModel(matterType: string) {
     categoryLabel: categoryLabels[definition.category],
     deadlines: deadlineDefinitions,
     requiredDocuments: getRequiredDocumentTemplatesForMatterType(matterType),
-    draftCandidates: getDraftCandidatesForMatterType(matterType),
+    draftCandidates: getDocumentDraftTemplatesForMatterType(matterType),
     safetyGuardrails: getSafetyGuardrailsForMatterType(matterType),
     safetyNotice:
       "실제 기한은 처분서 원문, 송달일, 관할기관 기준으로 반드시 수동 확인하세요.",
@@ -51,7 +51,9 @@ export function buildImmigrationCaseHintPanelModel(matterType: string) {
     checklistNotice:
       "이 목록은 참고용입니다. 실제 필수자료 생성은 별도 checklist 생성 기능에서 처리합니다.",
     draftNotice:
-      "문서 자동작성은 관리자 전용 초안 preview부터 시작하며, 고객 발송/기관 제출 자동화는 하지 않습니다."
+      "이 섹션은 문서 생성 실행이 아니라, 향후 초안 preview를 위한 준비 상태입니다. 고객 발송 또는 기관 제출 실행은 하지 않습니다.",
+    highRiskDraftNotice:
+      "행정심판 청구서·집행정지 신청서 등 고위험 문서는 업무범위와 공식 서식 확인 후에만 다룹니다."
   };
 }
 
@@ -158,15 +160,29 @@ export function ImmigrationCaseHintPanel({ matterType }: ImmigrationCaseHintPane
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-semibold text-text-strong">{candidate.labelKo}</p>
                 <span className="ui-badge">위험도 {riskLabels[candidate.riskLevel]}</span>
+                {candidate.riskLevel === "high" ? <span className="ui-badge">고위험 문서</span> : null}
                 {candidate.adminOnlyPreview ? <span className="ui-badge">관리자 초안</span> : null}
+                {candidate.noAutomaticSubmission ? <span className="ui-badge">기관 제출 실행 없음</span> : null}
               </div>
               <p className="mt-1 text-text-muted">{candidate.descriptionKo}</p>
-              <p className="mt-2 text-xs text-text-strong">
-                업무범위 검토: {candidate.requiresScopeReview ? "필요" : "보통"} / 공식서식 확인:{" "}
-                {candidate.requiresOfficialFormCheck ? "필요" : "보통"}
-              </p>
+              <div className="mt-2 flex flex-wrap gap-2 text-xs text-text-strong">
+                <span className="ui-badge">필수 입력값 {candidate.requiredInputFields.length}개</span>
+                {candidate.optionalInputFields.length > 0 ? (
+                  <span className="ui-badge">선택 입력값 {candidate.optionalInputFields.length}개</span>
+                ) : null}
+                {candidate.requiresScopeReview ? <span className="ui-badge">업무범위 검토 필요</span> : null}
+                {candidate.requiresOfficialFormCheck ? <span className="ui-badge">공식 서식 확인 필요</span> : null}
+              </div>
             </div>
           ))}
+        </div>
+        <div className="mt-3 space-y-2">
+          <p className="rounded-md border border-line bg-surface px-3 py-2 text-xs font-medium text-text-strong">
+            {model.draftNotice}
+          </p>
+          <p className="rounded-md border border-line bg-surface px-3 py-2 text-xs font-medium text-text-strong">
+            {model.highRiskDraftNotice}
+          </p>
         </div>
       </section>
 
