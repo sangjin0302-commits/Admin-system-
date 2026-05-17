@@ -19,6 +19,12 @@ function selectValue(value: string | null | undefined) {
   return value ?? "";
 }
 
+function accountingReasonClassName(severity: string) {
+  if (severity === "critical") return "border-danger/30 bg-danger/5 text-danger";
+  if (severity === "warn") return "border-warning/40 bg-warning/5 text-warning";
+  return "border-line bg-surface-muted text-text-strong";
+}
+
 export function CaseLedgerTable({
   viewModel,
   filters,
@@ -119,7 +125,7 @@ export function CaseLedgerTable({
       ) : (
         <Card className="overflow-hidden p-0">
           <div className="overflow-x-auto">
-            <table className="min-w-[1680px] divide-y divide-line text-sm">
+            <table className="min-w-[1840px] divide-y divide-line text-sm">
               <thead className="bg-surface-muted text-left text-xs uppercase tracking-wide text-text-muted">
                 <tr>
                   <th className="px-3 py-3 font-semibold">사건번호</th>
@@ -168,6 +174,27 @@ export function CaseLedgerTable({
                       <p className="text-xs text-text-muted">입금 {row.paymentStatus}</p>
                       <p className="mt-1 text-xs text-text">{row.feeAmount}</p>
                       <p className="text-xs text-text">{row.paidAmount}</p>
+                      {row.primaryAccountingFollowUpReason ? (
+                        <div
+                          className="mt-2 flex flex-wrap items-center gap-1"
+                          title={row.accountingFollowUpReasons.map((reason) => reason.labelKo).join(" / ")}
+                        >
+                          <span
+                            className={`rounded-full border px-2 py-1 text-xs font-semibold ${accountingReasonClassName(
+                              row.primaryAccountingFollowUpReason.severity
+                            )}`}
+                          >
+                            {row.primaryAccountingFollowUpReason.labelKo}
+                          </span>
+                          {row.accountingFollowUpReasons.length > 1 ? (
+                            <span className="text-xs font-semibold text-text-muted">
+                              +{row.accountingFollowUpReasons.length - 1}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-xs text-text-muted">-</p>
+                      )}
                     </td>
                     <td className="px-3 py-3 text-text">{row.resultReceivedAt}</td>
                     <td className="px-3 py-3 text-text">{row.closedAt}</td>

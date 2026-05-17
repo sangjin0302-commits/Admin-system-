@@ -130,6 +130,12 @@ assert.equal(fullRow.feeAmount, "120,000원");
 assert.equal(fullRow.paidAmount, "60,000원");
 assert.equal(fullRow.paidAt, "2026-05-13");
 assert.equal(fullRow.ledgerMemo, "Accounting memo");
+assert.equal(fullRow.needsAccountingFollowUp, true);
+assert.equal(fullRow.primaryAccountingFollowUpReason?.code, "payment_partial");
+assert.equal(
+  fullRow.accountingFollowUpReasons.some((reason) => reason.code === "paid_amount_less_than_fee_amount"),
+  true
+);
 
 const inquiryFallbackRow = buildCaseLedgerRow(
   makeCaseMatter({
@@ -172,6 +178,8 @@ assert.equal(emptyFallbackRow.clientName, "-");
 assert.equal(emptyFallbackRow.targetAgency, "-");
 assert.equal(emptyFallbackRow.hasSupplement, "없음");
 assert.equal(emptyFallbackRow.quoteAmountRange, "-");
+assert.equal(emptyFallbackRow.needsAccountingFollowUp, true);
+assert.equal(emptyFallbackRow.primaryAccountingFollowUpReason?.code, "missing_accounting_memo");
 assert.equal(emptyFallbackRow.ledgerStatus, "처리 중");
 
 assert.equal(mapCaseMatterStatusToLedgerStatus("CLOSED"), "종결");

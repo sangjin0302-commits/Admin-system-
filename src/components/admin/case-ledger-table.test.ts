@@ -9,6 +9,11 @@ assert.match(source, /accountingPreset/);
 assert.match(source, /name="accountingPreset"/);
 assert.match(source, /해당 조건의 사건이 없습니다/);
 assert.match(source, /전체 quick filter/);
+assert.match(source, /accountingReasonClassName/);
+assert.match(source, /primaryAccountingFollowUpReason/);
+assert.match(source, /accountingFollowUpReasons/);
+assert.match(source, /labelKo/);
+assert.match(source, /\+{row\.accountingFollowUpReasons\.length - 1}/);
 
 for (const forbidden of [
   "세금 신고 완료",

@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import {
   buildCaseAccountingSummaryViewModel,
   filterLedgerRowsByAccountingPreset,
+  getAccountingFollowUpReasons,
   getAccountingPresetLabel,
+  getPrimaryAccountingFollowUpReason,
   isCaseAccountingFollowUpRow,
   listAccountingFilterPresets,
   normalizeAccountingFilterPreset,
@@ -152,6 +154,33 @@ assert.deepEqual(
 assert.deepEqual(
   filterLedgerRowsByAccountingPreset(rows, "paid").map((item) => item.caseNo),
   ["CASE-1", "MISSING-PAID-AT"]
+);
+assert.deepEqual(getAccountingFollowUpReasons(rows[0]).map((item) => item.code), []);
+assert.deepEqual(getAccountingFollowUpReasons(rows[1]).map((item) => item.code), [
+  "missing_accounting_memo",
+  "fee_status_unset",
+  "payment_status_unset"
+]);
+assert.deepEqual(getAccountingFollowUpReasons(rows[2]).map((item) => item.code), [
+  "fee_status_pending",
+  "payment_status_unset"
+]);
+assert.deepEqual(getAccountingFollowUpReasons(rows[3]).map((item) => item.code), ["payment_unpaid"]);
+assert.deepEqual(getAccountingFollowUpReasons(rows[4]).map((item) => item.code), [
+  "payment_partial",
+  "paid_amount_less_than_fee_amount"
+]);
+assert.deepEqual(getAccountingFollowUpReasons(rows[5]).map((item) => item.code), ["paid_missing_paid_at"]);
+assert.deepEqual(getAccountingFollowUpReasons(rows[6]).map((item) => item.code), [
+  "unknown_fee_status",
+  "unknown_payment_status"
+]);
+assert.equal(getPrimaryAccountingFollowUpReason(rows[3])?.code, "payment_unpaid");
+assert.equal(
+  filterLedgerRowsByAccountingPreset(rows, "needs_follow_up").every(
+    (item) => getAccountingFollowUpReasons(item).length > 0
+  ),
+  true
 );
 
 const serialized = JSON.stringify(summary);
