@@ -581,6 +581,7 @@ model CaseMatter {
   quotes              Quote[]            @relation("CaseMatterQuotes")
   contractDrafts      ContractDraft[]    @relation("CaseMatterContractDrafts")
   accountingMemo      CaseAccountingMemo?
+  immigrationDetail   ImmigrationCaseDetail?
 
   @@index([status])
   @@index([matterType])
@@ -606,6 +607,42 @@ model CaseAccountingMemo {
 
   @@index([feeStatus])
   @@index([paymentStatus])
+}
+
+model ImmigrationCaseDetail {
+  id                         String     @id @default(cuid())
+  caseId                     String     @unique
+  caseMatter                 CaseMatter @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  dispositionType            String?
+  dispositionDate            DateTime?
+  noticeDate                 DateTime?
+  serviceDate                DateTime?
+  appealDeadline             DateTime?
+  departureDeadline          DateTime?
+  detentionStartDate         DateTime?
+  stayExpiryDate             DateTime?
+  submissionDeadline         DateTime?
+  supplementDeadline         DateTime?
+  resultExpectedDate         DateTime?
+  nationality                String?
+  currentStayStatus          String?
+  familyInKoreaSummary       String?
+  residenceBaseSummary       String?
+  employmentOrSchoolSummary  String?
+  violationHistorySummary    String?
+  scopeReviewRequired        Boolean    @default(true)
+  attorneyScopeRisk          Boolean    @default(false)
+  officialFormCheckRequired  Boolean    @default(true)
+  deadlineVerifiedAt         DateTime?
+  verifiedBy                 String?
+  createdAt                  DateTime   @default(now())
+  updatedAt                  DateTime   @updatedAt
+
+  @@index([dispositionType])
+  @@index([appealDeadline])
+  @@index([departureDeadline])
+  @@index([stayExpiryDate])
+  @@index([deadlineVerifiedAt])
 }
 
 model CaseParty {
