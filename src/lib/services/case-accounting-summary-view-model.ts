@@ -40,6 +40,11 @@ export type CaseAccountingFollowUpReason = {
   severity: CaseAccountingSummarySeverity;
 };
 
+export type CaseAccountingFollowUpReasonBreakdownItem = CaseAccountingFollowUpReason & {
+  count: number;
+  href: string;
+};
+
 export type CaseAccountingSummaryViewModel = {
   totalCases: number;
   feeConfirmedCount: number;
@@ -51,6 +56,7 @@ export type CaseAccountingSummaryViewModel = {
   paymentUnsetCount: number;
   followUpCount: number;
   followUpItems: CaseAccountingFollowUpItem[];
+  followUpReasonBreakdown: CaseAccountingFollowUpReasonBreakdownItem[];
 };
 
 export const accountingFilterPresetValues = [
@@ -95,6 +101,25 @@ const accountingFollowUpReasonLabels: Record<CaseAccountingFollowUpReasonCode, s
   paid_amount_less_than_fee_amount: "입금액 확인 필요",
   unknown_fee_status: "알 수 없는 수임료 상태",
   unknown_payment_status: "알 수 없는 입금 상태"
+};
+
+const accountingFollowUpReasonHrefByCode: Record<CaseAccountingFollowUpReasonCode, string> = {
+  missing_accounting_memo: "/admin/ledger?accountingPreset=needs_follow_up",
+  fee_status_unset: "/admin/ledger?accountingPreset=fee_unset_or_pending",
+  fee_status_pending: "/admin/ledger?accountingPreset=fee_unset_or_pending",
+  payment_status_unset: "/admin/ledger?accountingPreset=needs_follow_up",
+  payment_unpaid: "/admin/ledger?accountingPreset=unpaid",
+  payment_partial: "/admin/ledger?accountingPreset=partial",
+  paid_missing_paid_at: "/admin/ledger?accountingPreset=needs_follow_up",
+  paid_amount_less_than_fee_amount: "/admin/ledger?accountingPreset=partial",
+  unknown_fee_status: "/admin/ledger?accountingPreset=needs_follow_up",
+  unknown_payment_status: "/admin/ledger?accountingPreset=needs_follow_up"
+};
+
+const accountingFollowUpReasonSeverityRank: Record<CaseAccountingSummarySeverity, number> = {
+  critical: 0,
+  warn: 1,
+  info: 2
 };
 
 function normalizeStatus(value: string | null | undefined) {
@@ -168,6 +193,38 @@ export function getAccountingFollowUpReasons(row: CaseAccountingSummaryInputRow)
 
 export function getPrimaryAccountingFollowUpReason(row: CaseAccountingSummaryInputRow) {
   return getAccountingFollowUpReasons(row)[0] ?? null;
+}
+
+export function buildAccountingReasonBreakdown(
+  rows: readonly CaseAccountingSummaryInputRow[],
+  limit = 5
+): CaseAccountingFollowUpReasonBreakdownItem[] {
+  const countByCode = new Map<CaseAccountingFollowUpReasonCode, CaseAccountingFollowUpReasonBreakdownItem>();
+
+  for (const row of rows) {
+    for (const reasonItem of getAccountingFollowUpReasons(row)) {
+      const current = countByCode.get(reasonItem.code);
+      if (current) {
+        current.count += 1;
+      } else {
+        countByCode.set(reasonItem.code, {
+          ...reasonItem,
+          count: 1,
+          href: accountingFollowUpReasonHrefByCode[reasonItem.code]
+        });
+      }
+    }
+  }
+
+  return [...countByCode.values()]
+    .sort((left, right) => {
+      if (right.count !== left.count) return right.count - left.count;
+      const severityCompare =
+        accountingFollowUpReasonSeverityRank[left.severity] - accountingFollowUpReasonSeverityRank[right.severity];
+      if (severityCompare !== 0) return severityCompare;
+      return left.code.localeCompare(right.code);
+    })
+    .slice(0, Math.max(0, limit));
 }
 
 function buildFollowUp(row: CaseAccountingSummaryInputRow) {
@@ -275,6 +332,7 @@ export function buildCaseAccountingSummaryViewModel(
   rows: readonly CaseAccountingSummaryInputRow[]
 ): CaseAccountingSummaryViewModel {
   const followUpItems = rows.map(buildFollowUp).filter((item): item is CaseAccountingFollowUpItem => Boolean(item));
+  const followUpReasonBreakdown = buildAccountingReasonBreakdown(rows);
 
   return {
     totalCases: rows.length,
@@ -288,6 +346,7 @@ export function buildCaseAccountingSummaryViewModel(
       (row) => !row.accountingMemoExists || isPaymentUnset(normalizeStatus(row.paymentStatusCode))
     ).length,
     followUpCount: followUpItems.length,
-    followUpItems
+    followUpItems,
+    followUpReasonBreakdown
   };
 }
