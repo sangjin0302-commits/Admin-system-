@@ -1,5 +1,17 @@
 export type CaseAccountingSummarySeverity = "info" | "warn" | "critical";
 
+export type CaseAccountingFollowUpReasonCode =
+  | "missing_accounting_memo"
+  | "fee_status_unset"
+  | "fee_status_pending"
+  | "payment_status_unset"
+  | "payment_unpaid"
+  | "payment_partial"
+  | "paid_missing_paid_at"
+  | "paid_amount_less_than_fee_amount"
+  | "unknown_fee_status"
+  | "unknown_payment_status";
+
 export type CaseAccountingSummaryInputRow = {
   caseId: string;
   caseNo: string;
@@ -20,6 +32,12 @@ export type CaseAccountingFollowUpItem = {
   severity: CaseAccountingSummarySeverity;
   feeStatus: string;
   paymentStatus: string;
+};
+
+export type CaseAccountingFollowUpReason = {
+  code: CaseAccountingFollowUpReasonCode;
+  labelKo: string;
+  severity: CaseAccountingSummarySeverity;
 };
 
 export type CaseAccountingSummaryViewModel = {
@@ -66,6 +84,19 @@ const accountingFilterPresetLabels: Record<AccountingFilterPreset, string> = {
   paid: "입금 완료"
 };
 
+const accountingFollowUpReasonLabels: Record<CaseAccountingFollowUpReasonCode, string> = {
+  missing_accounting_memo: "수임관리 메모 없음",
+  fee_status_unset: "수임료 상태 미확정",
+  fee_status_pending: "수임료 검토 중",
+  payment_status_unset: "입금 상태 미확인",
+  payment_unpaid: "미입금",
+  payment_partial: "부분 입금",
+  paid_missing_paid_at: "입금일 확인 필요",
+  paid_amount_less_than_fee_amount: "입금액 확인 필요",
+  unknown_fee_status: "알 수 없는 수임료 상태",
+  unknown_payment_status: "알 수 없는 입금 상태"
+};
+
 function normalizeStatus(value: string | null | undefined) {
   return value?.trim().toUpperCase() || "UNSET";
 }
@@ -79,6 +110,64 @@ function isPaymentUnset(status: string) {
     status === "UNSET" ||
     (!paymentUnpaidStatuses.has(status) && !paymentPartialStatuses.has(status) && !paymentPaidStatuses.has(status))
   );
+}
+
+function reason(
+  code: CaseAccountingFollowUpReasonCode,
+  severity: CaseAccountingSummarySeverity
+): CaseAccountingFollowUpReason {
+  return {
+    code,
+    labelKo: accountingFollowUpReasonLabels[code],
+    severity
+  };
+}
+
+export function getAccountingFollowUpReasons(row: CaseAccountingSummaryInputRow): CaseAccountingFollowUpReason[] {
+  const feeStatus = normalizeStatus(row.feeStatusCode);
+  const paymentStatus = normalizeStatus(row.paymentStatusCode);
+  const reasons: CaseAccountingFollowUpReason[] = [];
+
+  if (!row.accountingMemoExists) reasons.push(reason("missing_accounting_memo", "warn"));
+
+  if (feeStatus === "UNSET") {
+    reasons.push(reason("fee_status_unset", "warn"));
+  } else if (!feeConfirmedStatuses.has(feeStatus) && !feePendingStatuses.has(feeStatus)) {
+    reasons.push(reason("unknown_fee_status", "warn"));
+  } else if (feePendingStatuses.has(feeStatus)) {
+    reasons.push(reason("fee_status_pending", "info"));
+  }
+
+  if (paymentStatus === "UNSET") {
+    reasons.push(reason("payment_status_unset", "warn"));
+  } else if (
+    !paymentUnpaidStatuses.has(paymentStatus) &&
+    !paymentPartialStatuses.has(paymentStatus) &&
+    !paymentPaidStatuses.has(paymentStatus)
+  ) {
+    reasons.push(reason("unknown_payment_status", "warn"));
+  } else if (paymentUnpaidStatuses.has(paymentStatus)) {
+    reasons.push(reason("payment_unpaid", "critical"));
+  } else if (paymentPartialStatuses.has(paymentStatus)) {
+    reasons.push(reason("payment_partial", "warn"));
+  } else if (paymentStatus === "PAID" && !row.paidAtValue) {
+    reasons.push(reason("paid_missing_paid_at", "warn"));
+  }
+
+  if (
+    row.feeAmountValue != null &&
+    row.paidAmountValue != null &&
+    row.paidAmountValue > 0 &&
+    row.paidAmountValue < row.feeAmountValue
+  ) {
+    reasons.push(reason("paid_amount_less_than_fee_amount", "warn"));
+  }
+
+  return Array.from(new Map(reasons.map((item) => [item.code, item])).values());
+}
+
+export function getPrimaryAccountingFollowUpReason(row: CaseAccountingSummaryInputRow) {
+  return getAccountingFollowUpReasons(row)[0] ?? null;
 }
 
 function buildFollowUp(row: CaseAccountingSummaryInputRow) {

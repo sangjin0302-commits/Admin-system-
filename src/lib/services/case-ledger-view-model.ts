@@ -6,6 +6,11 @@ import type {
 } from "@generated/prisma-client/client";
 
 import { prisma } from "@/lib/prisma/client";
+import {
+  getAccountingFollowUpReasons,
+  getPrimaryAccountingFollowUpReason,
+  type CaseAccountingFollowUpReason
+} from "@/lib/services/case-accounting-summary-view-model";
 
 const emptyValue = "-";
 const feePlaceholder = "추후 관리";
@@ -140,6 +145,9 @@ export type CaseLedgerRow = {
   feeAmountValue: number | null;
   paidAmountValue: number | null;
   paidAtValue: string | null;
+  accountingFollowUpReasons: CaseAccountingFollowUpReason[];
+  primaryAccountingFollowUpReason: CaseAccountingFollowUpReason | null;
+  needsAccountingFollowUp: boolean;
 };
 
 export type CaseLedgerSummary = {
@@ -295,6 +303,18 @@ export function buildCaseLedgerRow(caseMatter: CaseLedgerSource): CaseLedgerRow 
   const quote = pickQuote(caseMatter);
   const latestContract = caseMatter.contractDrafts[0] ?? null;
   const accounting = caseMatter.accountingMemo ?? null;
+  const accountingInput = {
+    caseId: caseMatter.id,
+    caseNo: text(caseMatter.caseNo),
+    title: text(caseMatter.title),
+    accountingMemoExists: Boolean(accounting),
+    feeStatusCode: accounting?.feeStatus ?? null,
+    paymentStatusCode: accounting?.paymentStatus ?? null,
+    feeAmountValue: accounting?.feeAmount ?? null,
+    paidAmountValue: accounting?.paidAmount ?? null,
+    paidAtValue: accounting?.paidAt ? isoDate(accounting.paidAt) : null
+  };
+  const accountingFollowUpReasons = getAccountingFollowUpReasons(accountingInput);
 
   return {
     caseId: caseMatter.id,
@@ -332,7 +352,10 @@ export function buildCaseLedgerRow(caseMatter: CaseLedgerSource): CaseLedgerRow 
     paymentStatusCode: accounting?.paymentStatus ?? null,
     feeAmountValue: accounting?.feeAmount ?? null,
     paidAmountValue: accounting?.paidAmount ?? null,
-    paidAtValue: accounting?.paidAt ? isoDate(accounting.paidAt) : null
+    paidAtValue: accounting?.paidAt ? isoDate(accounting.paidAt) : null,
+    accountingFollowUpReasons,
+    primaryAccountingFollowUpReason: getPrimaryAccountingFollowUpReason(accountingInput),
+    needsAccountingFollowUp: accountingFollowUpReasons.length > 0
   };
 }
 
