@@ -1,7 +1,9 @@
 import Link from "next/link";
 
+import { CaseAccountingSummaryCards } from "@/components/admin/case-accounting-summary-cards";
 import { CaseLedgerTable } from "@/components/admin/case-ledger-table";
 import { Card } from "@/components/ui/card";
+import { buildCaseAccountingSummaryViewModel } from "@/lib/services/case-accounting-summary-view-model";
 import {
   listCaseLedgerRows,
   mapCaseMatterStatusToLedgerStatus,
@@ -68,6 +70,7 @@ export default async function AdminLedgerPage({
   const params = (await searchParams) ?? {};
   const filters = parseFilters(params);
   const viewModel = await safeListCaseLedgerRows(filters);
+  const accountingSummary = buildCaseAccountingSummaryViewModel(viewModel.rows);
   const statusOptions = caseMatterStatusValues.map((status) => ({
     value: status,
     label: mapCaseMatterStatusToLedgerStatus(status)
@@ -126,6 +129,8 @@ export default async function AdminLedgerPage({
           <p className="mt-2 text-2xl font-bold text-text-strong">{viewModel.summary.submitted}</p>
         </Card>
       </div>
+
+      <CaseAccountingSummaryCards summary={accountingSummary} />
 
       <CaseLedgerTable
         viewModel={viewModel}
