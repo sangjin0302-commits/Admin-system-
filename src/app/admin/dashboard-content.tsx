@@ -5,12 +5,17 @@ import {
   DashboardMetric,
   dashboardToneClassName
 } from "@/components/admin/dashboard-shared";
+import { CaseAccountingDashboardCard } from "@/components/admin/case-accounting-dashboard-card";
 import { CaseMatterActionSummaryCard } from "@/components/admin/case-matter-action-summary-card";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
 import { prisma } from "@/lib/prisma/client";
 import { buildAdminDashboardPageData } from "@/lib/services/admin-dashboard-page-data";
+import {
+  buildCaseAccountingSummaryViewModel,
+  type CaseAccountingSummaryInputRow
+} from "@/lib/services/case-accounting-summary-view-model";
 import {
   getOperationalHealthToneClass,
   getPriorityScore,
@@ -57,6 +62,42 @@ async function safeListCaseMatters() {
   } catch (error) {
     console.error("Failed to load case matters for admin dashboard", error);
     return [] as CaseMatterListItem[];
+  }
+}
+
+async function safeListCaseAccountingSummaryRows(): Promise<CaseAccountingSummaryInputRow[]> {
+  try {
+    const rows = await prisma.caseMatter.findMany({
+      select: {
+        id: true,
+        caseNo: true,
+        title: true,
+        accountingMemo: {
+          select: {
+            feeAmount: true,
+            feeStatus: true,
+            paymentStatus: true,
+            paidAmount: true,
+            paidAt: true
+          }
+        }
+      },
+      orderBy: [{ updatedAt: "desc" }]
+    });
+    return rows.map((row) => ({
+      caseId: row.id,
+      caseNo: row.caseNo ?? "-",
+      title: row.title,
+      accountingMemoExists: Boolean(row.accountingMemo),
+      feeStatusCode: row.accountingMemo?.feeStatus ?? null,
+      paymentStatusCode: row.accountingMemo?.paymentStatus ?? null,
+      feeAmountValue: row.accountingMemo?.feeAmount ?? null,
+      paidAmountValue: row.accountingMemo?.paidAmount ?? null,
+      paidAtValue: row.accountingMemo?.paidAt ? row.accountingMemo.paidAt.toISOString().slice(0, 10) : null
+    }));
+  } catch (error) {
+    console.error("Failed to load case accounting summary for admin dashboard", error);
+    return [];
   }
 }
 
@@ -112,7 +153,8 @@ export default async function AdminDashboardContent() {
     quoteCount,
     contractDraftCount,
     caseCount,
-    caseMatters
+    caseMatters,
+    caseAccountingRows
   ] = await Promise.all([
     safeListInquiries(),
     safeReadMarketingSnapshot(),
@@ -121,12 +163,14 @@ export default async function AdminDashboardContent() {
     safeCount("quote count", prisma.quote.count(), 0),
     safeCount("contract draft count", prisma.contractDraft.count(), 0),
     safeCount("case count", prisma.caseRecord.count(), 0),
-    safeListCaseMatters()
+    safeListCaseMatters(),
+    safeListCaseAccountingSummaryRows()
   ]);
   const caseMatterActionSummary = buildCaseMatterActionSummary(
     buildCaseMatterActionDashboard(caseMatters),
     5
   );
+  const caseAccountingSummary = buildCaseAccountingSummaryViewModel(caseAccountingRows);
 
   const {
     checklistCoverageCount,
@@ -297,6 +341,8 @@ export default async function AdminDashboardContent() {
       </div>
 
       <CaseMatterActionSummaryCard summary={caseMatterActionSummary} locale="ko" />
+
+      <CaseAccountingDashboardCard summary={caseAccountingSummary} />
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="p-6">
