@@ -28,7 +28,13 @@ assert.match(panelSource, /아직 저장된 출입국 세부정보가 없습니�
 assert.match(panelSource, /여권번호, 외국인등록번호, 상세 주소 등 고유식별정보는 이 화면에 저장하지 않습니다/);
 assert.match(panelSource, /처분서 원문, 송달일, 관할기관 기준으로 기한을 수동 확인하세요/);
 assert.match(panelSource, /고객 발송 또는 기관 제출 자동화가 아닙니다/);
-assert.match(panelSource, /CaseMatter dueDate 반영은 다음 단계에서 별도로 처리합니다/);
+assert.match(panelSource, /CaseMatter dueDate/);
+assert.match(panelSource, /체크한 경우에만 CaseMatter dueDate에 반영합니다/);
+assert.match(panelSource, /syncCaseMatterDueDate: false/);
+assert.match(panelSource, /syncCaseMatterDueDate: draft\.syncCaseMatterDueDate/);
+assert.match(panelSource, /setField\(\{ syncCaseMatterDueDate: event\.target\.checked \}\)/);
+assert.match(panelSource, /불복기한, 출국기한, 보완기한, 체류기간 만료일, 제출기한 순서/);
+assert.match(panelSource, /처분서 원문과 송달일을 확인한 뒤 사용하세요/);
 assert.match(panelSource, /\/api\/admin\/case-matters\/\$\{caseMatterId\}\/immigration-detail/);
 assert.match(panelSource, /method: "PATCH"/);
 assert.match(panelSource, /expectedUpdatedAt: immigrationDetail\?\.updatedAt/);
@@ -48,7 +54,9 @@ assertDoesNotContain(panelSource, [
   "결과 보장",
   "100% 허가",
   "즉시 해결",
-  "AI가 판단"
+  "AI가 판단",
+  "자동 sync",
+  "자동 반영"
 ]);
 
 assert.match(caseDetailPageSource, /ImmigrationCaseDetailPanel/);

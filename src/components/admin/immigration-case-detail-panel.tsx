@@ -55,6 +55,7 @@ type Draft = {
   scopeReviewRequired: boolean;
   attorneyScopeRisk: boolean;
   officialFormCheckRequired: boolean;
+  syncCaseMatterDueDate: boolean;
   deadlineVerifiedAt: string;
   verifiedBy: string;
 };
@@ -115,6 +116,7 @@ function draftFromDetail(detail: ImmigrationCaseDetailSnapshot): Draft {
     scopeReviewRequired: detail?.scopeReviewRequired ?? true,
     attorneyScopeRisk: detail?.attorneyScopeRisk ?? false,
     officialFormCheckRequired: detail?.officialFormCheckRequired ?? true,
+    syncCaseMatterDueDate: false,
     deadlineVerifiedAt: stringifyDateForInput(detail?.deadlineVerifiedAt ?? null),
     verifiedBy: detail?.verifiedBy ?? ""
   };
@@ -178,6 +180,7 @@ export function ImmigrationCaseDetailPanel({
           scopeReviewRequired: draft.scopeReviewRequired,
           attorneyScopeRisk: draft.attorneyScopeRisk,
           officialFormCheckRequired: draft.officialFormCheckRequired,
+          syncCaseMatterDueDate: draft.syncCaseMatterDueDate,
           deadlineVerifiedAt: nullableDate(draft.deadlineVerifiedAt),
           verifiedBy: nullableText(draft.verifiedBy),
           actorName: "Admin",
@@ -231,7 +234,7 @@ export function ImmigrationCaseDetailPanel({
         <p>여권번호, 외국인등록번호, 상세 주소 등 고유식별정보는 이 화면에 저장하지 않습니다.</p>
         <p>처분서 원문, 송달일, 관할기관 기준으로 기한을 수동 확인하세요.</p>
         <p>이 화면은 관리자 전용 기록이며, 고객 발송 또는 기관 제출 자동화가 아닙니다.</p>
-        <p>CaseMatter dueDate 반영은 다음 단계에서 별도로 처리합니다.</p>
+        <p>체크한 경우에만 CaseMatter dueDate에 반영합니다.</p>
       </div>
 
       <form className="mt-5 space-y-5" onSubmit={onSubmit}>
@@ -336,6 +339,20 @@ export function ImmigrationCaseDetailPanel({
                 maxLength={80}
                 onChange={(event) => setField({ verifiedBy: event.target.value })}
               />
+            </label>
+            <label className="rounded-lg border border-line bg-surface px-3 py-2 text-sm lg:col-span-3">
+              <span className="flex items-center gap-2 font-medium text-text-strong">
+                <input
+                  type="checkbox"
+                  checked={draft.syncCaseMatterDueDate}
+                  onChange={(event) => setField({ syncCaseMatterDueDate: event.target.checked })}
+                />
+                <span>선택한 핵심 기한을 사건 dueDate에 반영</span>
+              </span>
+              <span className="mt-2 block text-xs text-text-muted">
+                체크하면 불복기한, 출국기한, 보완기한, 체류기간 만료일, 제출기한 순서로 가장 중요한 날짜를 사건 dueDate에 반영합니다.
+                처분서 원문과 송달일을 확인한 뒤 사용하세요.
+              </span>
             </label>
           </div>
         </section>

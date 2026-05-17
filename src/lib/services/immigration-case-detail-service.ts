@@ -77,6 +77,14 @@ const auditValueFields = [
   ...booleanFields
 ] as const;
 
+const dueDateSyncPriority = [
+  "appealDeadline",
+  "departureDeadline",
+  "supplementDeadline",
+  "stayExpiryDate",
+  "submissionDeadline"
+] as const satisfies NullableDateField[];
+
 export type UpdateImmigrationCaseDetailInput = UpdateImmigrationCaseDetailPayload & {
   caseMatterId: string;
 };
@@ -228,6 +236,19 @@ function buildAuditMessage(changedFields: string[]) {
     : "출입국 세부정보가 업데이트되었습니다.";
 }
 
+function resolveDueDateSyncCandidate(
+  existing: ImmigrationCaseDetail | null,
+  data: ImmigrationCaseDetailWritableData
+) {
+  for (const field of dueDateSyncPriority) {
+    const value = field in data ? (data[field] as Date | null | undefined) : existing?.[field];
+    if (value instanceof Date) {
+      return { field, date: value };
+    }
+  }
+  return null;
+}
+
 export async function updateImmigrationCaseDetail(input: UpdateImmigrationCaseDetailInput) {
   return prisma.$transaction(async (tx) => {
     const snapshot = await tx.caseMatter.findUnique({
@@ -235,6 +256,8 @@ export async function updateImmigrationCaseDetail(input: UpdateImmigrationCaseDe
       select: {
         id: true,
         updatedAt: true,
+        dueDate: true,
+        nextActionAt: true,
         immigrationDetail: true
       }
     });
@@ -270,30 +293,60 @@ export async function updateImmigrationCaseDetail(input: UpdateImmigrationCaseDe
 
     const data = buildImmigrationCaseDetailData(input);
     const changedFields = collectChangedFields(existing, data);
+    const dueDateSyncRequested = input.syncCaseMatterDueDate === true;
+    const dueDateCandidate = dueDateSyncRequested
+      ? resolveDueDateSyncCandidate(existing, data)
+      : null;
+    const dueDateShouldUpdate =
+      dueDateSyncRequested &&
+      dueDateCandidate &&
+      !sameOptionalDate(snapshot.dueDate ?? null, dueDateCandidate.date);
 
-    if (changedFields.length > 0 || !existing) {
-      const saved = existing
-        ? await tx.immigrationCaseDetail.update({
-            where: { id: existing.id },
-            data: data satisfies Prisma.ImmigrationCaseDetailUncheckedUpdateInput
-          })
-        : await tx.immigrationCaseDetail.create({
-            data: {
-              caseId: snapshot.id,
-              ...data
-            }
-          });
+    if (changedFields.length > 0 || !existing || dueDateSyncRequested) {
+      const saved =
+        changedFields.length > 0 || !existing
+          ? existing
+            ? await tx.immigrationCaseDetail.update({
+                where: { id: existing.id },
+                data: data satisfies Prisma.ImmigrationCaseDetailUncheckedUpdateInput
+              })
+            : await tx.immigrationCaseDetail.create({
+                data: {
+                  caseId: snapshot.id,
+                  ...data
+                }
+              })
+          : existing;
+
+      if (dueDateShouldUpdate) {
+        await tx.caseMatter.update({
+          where: { id: snapshot.id },
+          data: {
+            dueDate: dueDateCandidate.date
+          }
+        });
+      }
 
       await tx.caseEvent.create({
         data: {
           caseId: snapshot.id,
           eventType: "IMMIGRATION_CASE_DETAIL_UPDATED",
           actorName: input.actorName?.trim() || "system",
-          message: buildAuditMessage(changedFields),
+          message: dueDateShouldUpdate
+            ? `${buildAuditMessage(changedFields)} Case dueDate synced from ${dueDateCandidate.field}.`
+            : buildAuditMessage(changedFields),
           payloadJson: JSON.stringify({
             immigrationCaseDetailId: saved.id,
             changedFields,
-            dueDateSynced: false,
+            dueDateSyncRequested,
+            dueDateSynced: Boolean(dueDateShouldUpdate),
+            syncedDueDateField: dueDateShouldUpdate ? dueDateCandidate.field : null,
+            dueDateSyncSkippedReason:
+              dueDateSyncRequested && !dueDateCandidate ? "NO_CANDIDATE_DATE" : null,
+            previousCaseMatterDueDate: snapshot.dueDate?.toISOString() ?? null,
+            nextCaseMatterDueDate: dueDateShouldUpdate
+              ? dueDateCandidate.date.toISOString()
+              : snapshot.dueDate?.toISOString() ?? null,
             previous: auditSnapshot(existing),
             next: auditNextSnapshot(data)
           })
