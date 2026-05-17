@@ -144,4 +144,57 @@ assert.match(registrySerialized, /optionalInputFields/);
 assert.match(registrySerialized, /noAutomaticSubmission/);
 assert.doesNotMatch(deportationModel.draftNotice + deportationModel.highRiskDraftNotice, /export|DOCX|PDF|HWP/i);
 
+const readinessModel = buildImmigrationCaseHintPanelModel("deportation_order_appeal", {
+  caseMatter: {
+    caseNo: "QA-CASE-001",
+    title: "QA NON_CUSTOMER readiness case",
+    dueDate: "2026-05-22"
+  },
+  immigrationDetail: {
+    dispositionType: "DEPORTATION_ORDER_APPEAL",
+    currentStayStatus: "QA status",
+    serviceDate: "2026-05-17",
+    appealDeadline: "2026-05-22",
+    scopeReviewRequired: true,
+    attorneyScopeRisk: true,
+    officialFormCheckRequired: true
+  },
+  requiredDocuments: [{ id: "doc_1" }],
+  caseParties: [{ role: "CLIENT", name: "QA NON_CUSTOMER" }],
+  caseEvents: [{ eventType: "IMMIGRATION_CASE_DETAIL_UPDATED", message: "deadline checked" }]
+});
+assert.ok(readinessModel);
+const appealReadiness = readinessModel.draftReadinessByTemplateId.administrative_appeal_petition_draft;
+assert.ok(appealReadiness, "high-risk draft should include readiness");
+assert.equal(appealReadiness.status, "blocked_by_scope_review");
+assert.equal(appealReadiness.canExport, false);
+assert.ok(
+  appealReadiness.warnings.some((warning) => warning.includes("변호사 업무범위 위험")),
+  "attorney scope risk should surface as readiness warning"
+);
+
+const missingReadinessModel = buildImmigrationCaseHintPanelModel("visa_issuance_support", {
+  caseMatter: { caseNo: "QA-CASE-002" },
+  immigrationDetail: null,
+  requiredDocuments: [],
+  caseParties: []
+});
+assert.ok(missingReadinessModel);
+const factSummaryReadiness = missingReadinessModel.draftReadinessByTemplateId.fact_summary;
+assert.equal(factSummaryReadiness.status, "missing_required_inputs");
+assert.ok(
+  factSummaryReadiness.missingRequiredFields.some((field) => field.id === "caseMatter.title"),
+  "missing fields should expose label/source metadata"
+);
+
+const readinessSerialized = JSON.stringify({
+  model: readinessModel,
+  missingReadinessModel
+});
+assert.match(readinessSerialized, /missing_required_inputs|blocked_by_scope_review/);
+assert.doesNotMatch(
+  readinessSerialized,
+  /passportNumber|alienRegistrationNumber|fullAddress|internalMemo|communicationLogs|결과 보장|자동 제출|AI가 판단/
+);
+
 console.log("immigration case hint panel tests passed");
