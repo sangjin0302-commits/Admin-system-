@@ -31,6 +31,7 @@ const parsed = updateImmigrationCaseDetailSchema.parse({
   scopeReviewRequired: true,
   attorneyScopeRisk: false,
   officialFormCheckRequired: true,
+  syncCaseMatterDueDate: true,
   deadlineVerifiedAt: "2026-05-17",
   verifiedBy: " QA Operator ",
   actorName: " QA Operator ",
@@ -42,12 +43,19 @@ assert.equal(parsed.serviceDate, null);
 assert.equal(parsed.familyInKoreaSummary, null);
 assert.equal(parsed.nationality, "QA");
 assert.equal(parsed.verifiedBy, "QA Operator");
+assert.equal(parsed.syncCaseMatterDueDate, true);
 
 const sparseParsed = updateImmigrationCaseDetailSchema.parse({
   dispositionType: "ENTRY_BAN"
 });
 assert.equal(Object.hasOwn(sparseParsed, "serviceDate"), false);
 assert.equal(Object.hasOwn(sparseParsed, "nationality"), false);
+assert.equal(sparseParsed.syncCaseMatterDueDate, false);
+
+const noSyncParsed = updateImmigrationCaseDetailSchema.parse({
+  syncCaseMatterDueDate: false
+});
+assert.equal(noSyncParsed.syncCaseMatterDueDate, false);
 
 assert.throws(() =>
   updateImmigrationCaseDetailSchema.parse({
@@ -58,6 +66,12 @@ assert.throws(() =>
 assert.throws(() =>
   updateImmigrationCaseDetailSchema.parse({
     currentStayStatus: "x".repeat(121)
+  })
+);
+
+assert.throws(() =>
+  updateImmigrationCaseDetailSchema.parse({
+    syncCaseMatterDueDate: "true"
   })
 );
 
@@ -86,8 +100,19 @@ assert.match(serviceSource, /ImmigrationCaseDetailConcurrentUpdateError/);
 assert.match(serviceSource, /IMMIGRATION_CASE_DETAIL_UPDATED/);
 assert.match(serviceSource, /tx\.caseEvent\.create/);
 assert.match(serviceSource, /payloadJson: JSON\.stringify/);
-assert.match(serviceSource, /dueDateSynced: false/);
-assert.doesNotMatch(serviceSource, /caseMatter\.update\(\{[\s\S]*dueDate\s*:/);
+assert.match(serviceSource, /dueDateSyncPriority = \[/);
+assert.match(serviceSource, /"appealDeadline"[\s\S]*"departureDeadline"[\s\S]*"supplementDeadline"[\s\S]*"stayExpiryDate"[\s\S]*"submissionDeadline"/);
+assert.match(serviceSource, /input\.syncCaseMatterDueDate === true/);
+assert.match(serviceSource, /tx\.caseMatter\.update\(\{/);
+assert.match(serviceSource, /dueDate: dueDateCandidate\.date/);
+assert.match(serviceSource, /nextActionAt: true/);
+assert.doesNotMatch(serviceSource, /nextActionAt:\s*dueDateCandidate\.date/);
+assert.match(serviceSource, /dueDateSyncRequested/);
+assert.match(serviceSource, /dueDateSynced: Boolean\(dueDateShouldUpdate\)/);
+assert.match(serviceSource, /syncedDueDateField/);
+assert.match(serviceSource, /NO_CANDIDATE_DATE/);
+assert.match(serviceSource, /previousCaseMatterDueDate/);
+assert.match(serviceSource, /nextCaseMatterDueDate/);
 assert.doesNotMatch(serviceSource, /passportNumber|alienRegistrationNumber|fullAddress/);
 
 assert.match(routeSource, /export async function PATCH/);

@@ -281,6 +281,7 @@ export const updateImmigrationCaseDetailSchema = z
     officialFormCheckRequired: z.boolean().optional(),
     deadlineVerifiedAt: optionalNullableDateString("deadlineVerifiedAt"),
     verifiedBy: optionalNullableString(80),
+    syncCaseMatterDueDate: z.boolean().optional().default(false),
     actorName: z.string().trim().max(80).optional(),
     expectedUpdatedAt: optionalExpectedDateString("expectedUpdatedAt"),
     expectedCaseUpdatedAt: optionalExpectedDateString("expectedCaseUpdatedAt")
