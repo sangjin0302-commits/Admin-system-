@@ -124,6 +124,33 @@ const optionalExpectedDateString = (field: string) =>
       message: `Invalid ${field} format.`
     });
 
+const optionalNullableString = (max: number) =>
+  z.preprocess(
+    (value) => {
+      if (value === undefined) return undefined;
+      if (value === "" || value === null) return null;
+      return value;
+    },
+    z.string().trim().max(max).nullable().optional()
+  );
+
+const optionalNullableDateString = (field: string) =>
+  z.preprocess(
+    (value) => {
+      if (value === undefined) return undefined;
+      if (value === "" || value === null) return null;
+      return value;
+    },
+    z
+      .string()
+      .trim()
+      .nullable()
+      .optional()
+      .refine((value) => !value || !Number.isNaN(new Date(value).getTime()), {
+        message: `Invalid ${field} format.`
+      })
+  );
+
 const optionalNonNegativeInteger = (field: string) =>
   z.preprocess(
     (value) => {
@@ -230,6 +257,36 @@ export const updateCaseAccountingMemoSchema = z.object({
   expectedCaseUpdatedAt: optionalExpectedDateString("expectedCaseUpdatedAt")
 });
 
+export const updateImmigrationCaseDetailSchema = z
+  .object({
+    dispositionType: optionalNullableString(80),
+    dispositionDate: optionalNullableDateString("dispositionDate"),
+    noticeDate: optionalNullableDateString("noticeDate"),
+    serviceDate: optionalNullableDateString("serviceDate"),
+    appealDeadline: optionalNullableDateString("appealDeadline"),
+    departureDeadline: optionalNullableDateString("departureDeadline"),
+    detentionStartDate: optionalNullableDateString("detentionStartDate"),
+    stayExpiryDate: optionalNullableDateString("stayExpiryDate"),
+    submissionDeadline: optionalNullableDateString("submissionDeadline"),
+    supplementDeadline: optionalNullableDateString("supplementDeadline"),
+    resultExpectedDate: optionalNullableDateString("resultExpectedDate"),
+    nationality: optionalNullableString(80),
+    currentStayStatus: optionalNullableString(120),
+    familyInKoreaSummary: optionalNullableString(500),
+    residenceBaseSummary: optionalNullableString(500),
+    employmentOrSchoolSummary: optionalNullableString(500),
+    violationHistorySummary: optionalNullableString(500),
+    scopeReviewRequired: z.boolean().optional(),
+    attorneyScopeRisk: z.boolean().optional(),
+    officialFormCheckRequired: z.boolean().optional(),
+    deadlineVerifiedAt: optionalNullableDateString("deadlineVerifiedAt"),
+    verifiedBy: optionalNullableString(80),
+    actorName: z.string().trim().max(80).optional(),
+    expectedUpdatedAt: optionalExpectedDateString("expectedUpdatedAt"),
+    expectedCaseUpdatedAt: optionalExpectedDateString("expectedCaseUpdatedAt")
+  })
+  .strict();
+
 export type ConvertInquiryToCaseMatterPayload = z.infer<typeof convertInquiryToCaseMatterSchema>;
 export type UpdateCaseMatterStatusPayload = z.infer<typeof updateCaseMatterStatusSchema>;
 export type UpdateRequiredDocumentStatusPayload = z.infer<typeof updateRequiredDocumentStatusSchema>;
@@ -253,3 +310,6 @@ export type UpdateSupplementRequestStatusPayload = z.infer<
 >;
 export type UpdateSupplementRequestPayload = z.infer<typeof updateSupplementRequestSchema>;
 export type UpdateCaseAccountingMemoPayload = z.infer<typeof updateCaseAccountingMemoSchema>;
+export type UpdateImmigrationCaseDetailPayload = z.infer<
+  typeof updateImmigrationCaseDetailSchema
+>;
