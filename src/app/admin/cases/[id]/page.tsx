@@ -19,7 +19,7 @@ import { Card } from "@/components/ui/card";
 import { adminCasesMessages } from "@/i18n/locales/admin-cases";
 import { createTranslator, normalizeUiLocale } from "@/i18n/shared";
 import { normalizeAdminEntityId } from "@/lib/http/admin-id";
-import { formatCaseMatterTypeLabel } from "@/lib/immigration";
+import { formatCaseMatterTypeLabel, type ImmigrationDocumentDraftCaseData } from "@/lib/immigration";
 import { getAllowedCaseMatterTransitions } from "@/lib/services/case-matter-status-transition-helpers";
 import { getCaseMatterById } from "@/lib/services/case-matter-service";
 import { getAllowedRequiredDocumentTransitions } from "@/lib/services/required-document-status-transition-helpers";
@@ -32,6 +32,37 @@ import {
 } from "@/types/case-matter";
 
 export const dynamic = "force-dynamic";
+
+type CaseMatterDetail = NonNullable<Awaited<ReturnType<typeof getCaseMatterById>>>;
+
+function buildImmigrationDraftReadinessCaseData({
+  caseMatter,
+  immigrationDetail,
+  requiredDocuments
+}: {
+  caseMatter: CaseMatterDetail;
+  immigrationDetail: ImmigrationDocumentDraftCaseData["immigrationDetail"];
+  requiredDocuments: Array<{ id: string; name: string }>;
+}): ImmigrationDocumentDraftCaseData {
+  return {
+    caseMatter: {
+      caseNo: caseMatter.caseNo,
+      title: caseMatter.title,
+      summary: caseMatter.summary,
+      dueDate: caseMatter.dueDate
+    },
+    immigrationDetail,
+    requiredDocuments: requiredDocuments.map((document) => ({ id: document.id, name: document.name })),
+    caseParties: caseMatter.parties.map((party) => ({
+      role: party.role,
+      name: party.name
+    })),
+    caseEvents: caseMatter.events.map((event) => ({
+      eventType: event.eventType,
+      message: event.message
+    }))
+  };
+}
 
 export default async function AdminCaseMatterDetailPage({
   params,
@@ -164,24 +195,11 @@ export default async function AdminCaseMatterDetailPage({
         updatedAt: caseMatter.immigrationDetail.updatedAt.toISOString()
       }
     : null;
-  const immigrationDraftReadinessCaseData = {
-    caseMatter: {
-      caseNo: caseMatter.caseNo,
-      title: caseMatter.title,
-      summary: caseMatter.summary,
-      dueDate: caseMatter.dueDate
-    },
+  const immigrationDraftReadinessCaseData = buildImmigrationDraftReadinessCaseData({
+    caseMatter,
     immigrationDetail,
-    requiredDocuments: requiredDocuments.map((document) => ({ id: document.id, name: document.name })),
-    caseParties: caseMatter.parties.map((party) => ({
-      role: party.role,
-      name: party.name
-    })),
-    caseEvents: caseMatter.events.map((event) => ({
-      eventType: event.eventType,
-      message: event.message
-    }))
-  };
+    requiredDocuments
+  });
 
   return (
     <div className="space-y-6">

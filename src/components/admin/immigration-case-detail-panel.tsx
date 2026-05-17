@@ -66,6 +66,35 @@ type ImmigrationCaseDetailPanelProps = {
   immigrationDetail: ImmigrationCaseDetailSnapshot;
 };
 
+type ImmigrationCaseDetailPatchPayload = {
+  dispositionType: string | null;
+  dispositionDate: string | null;
+  noticeDate: string | null;
+  serviceDate: string | null;
+  appealDeadline: string | null;
+  departureDeadline: string | null;
+  detentionStartDate: string | null;
+  stayExpiryDate: string | null;
+  submissionDeadline: string | null;
+  supplementDeadline: string | null;
+  resultExpectedDate: string | null;
+  nationality: string | null;
+  currentStayStatus: string | null;
+  familyInKoreaSummary: string | null;
+  residenceBaseSummary: string | null;
+  employmentOrSchoolSummary: string | null;
+  violationHistorySummary: string | null;
+  scopeReviewRequired: boolean;
+  attorneyScopeRisk: boolean;
+  officialFormCheckRequired: boolean;
+  syncCaseMatterDueDate: boolean;
+  deadlineVerifiedAt: string | null;
+  verifiedBy: string | null;
+  actorName: "Admin";
+  expectedUpdatedAt?: string;
+  expectedCaseUpdatedAt?: string;
+};
+
 const dateFields: Array<{
   key: keyof Pick<
     Draft,
@@ -135,6 +164,45 @@ function displayDate(value: Date | null | undefined) {
   return formatDate(value ?? null);
 }
 
+function buildImmigrationCaseDetailPatchPayload({
+  draft,
+  immigrationDetail,
+  caseMatterUpdatedAt
+}: {
+  draft: Draft;
+  immigrationDetail: ImmigrationCaseDetailSnapshot;
+  caseMatterUpdatedAt: string;
+}): ImmigrationCaseDetailPatchPayload {
+  return {
+    dispositionType: nullableText(draft.dispositionType),
+    dispositionDate: nullableDate(draft.dispositionDate),
+    noticeDate: nullableDate(draft.noticeDate),
+    serviceDate: nullableDate(draft.serviceDate),
+    appealDeadline: nullableDate(draft.appealDeadline),
+    departureDeadline: nullableDate(draft.departureDeadline),
+    detentionStartDate: nullableDate(draft.detentionStartDate),
+    stayExpiryDate: nullableDate(draft.stayExpiryDate),
+    submissionDeadline: nullableDate(draft.submissionDeadline),
+    supplementDeadline: nullableDate(draft.supplementDeadline),
+    resultExpectedDate: nullableDate(draft.resultExpectedDate),
+    nationality: nullableText(draft.nationality),
+    currentStayStatus: nullableText(draft.currentStayStatus),
+    familyInKoreaSummary: nullableText(draft.familyInKoreaSummary),
+    residenceBaseSummary: nullableText(draft.residenceBaseSummary),
+    employmentOrSchoolSummary: nullableText(draft.employmentOrSchoolSummary),
+    violationHistorySummary: nullableText(draft.violationHistorySummary),
+    scopeReviewRequired: draft.scopeReviewRequired,
+    attorneyScopeRisk: draft.attorneyScopeRisk,
+    officialFormCheckRequired: draft.officialFormCheckRequired,
+    syncCaseMatterDueDate: draft.syncCaseMatterDueDate,
+    deadlineVerifiedAt: nullableDate(draft.deadlineVerifiedAt),
+    verifiedBy: nullableText(draft.verifiedBy),
+    actorName: "Admin",
+    expectedUpdatedAt: immigrationDetail?.updatedAt,
+    expectedCaseUpdatedAt: immigrationDetail ? undefined : caseMatterUpdatedAt
+  };
+}
+
 export function ImmigrationCaseDetailPanel({
   caseMatterId,
   caseMatterUpdatedAt,
@@ -159,34 +227,13 @@ export function ImmigrationCaseDetailPanel({
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          dispositionType: nullableText(draft.dispositionType),
-          dispositionDate: nullableDate(draft.dispositionDate),
-          noticeDate: nullableDate(draft.noticeDate),
-          serviceDate: nullableDate(draft.serviceDate),
-          appealDeadline: nullableDate(draft.appealDeadline),
-          departureDeadline: nullableDate(draft.departureDeadline),
-          detentionStartDate: nullableDate(draft.detentionStartDate),
-          stayExpiryDate: nullableDate(draft.stayExpiryDate),
-          submissionDeadline: nullableDate(draft.submissionDeadline),
-          supplementDeadline: nullableDate(draft.supplementDeadline),
-          resultExpectedDate: nullableDate(draft.resultExpectedDate),
-          nationality: nullableText(draft.nationality),
-          currentStayStatus: nullableText(draft.currentStayStatus),
-          familyInKoreaSummary: nullableText(draft.familyInKoreaSummary),
-          residenceBaseSummary: nullableText(draft.residenceBaseSummary),
-          employmentOrSchoolSummary: nullableText(draft.employmentOrSchoolSummary),
-          violationHistorySummary: nullableText(draft.violationHistorySummary),
-          scopeReviewRequired: draft.scopeReviewRequired,
-          attorneyScopeRisk: draft.attorneyScopeRisk,
-          officialFormCheckRequired: draft.officialFormCheckRequired,
-          syncCaseMatterDueDate: draft.syncCaseMatterDueDate,
-          deadlineVerifiedAt: nullableDate(draft.deadlineVerifiedAt),
-          verifiedBy: nullableText(draft.verifiedBy),
-          actorName: "Admin",
-          expectedUpdatedAt: immigrationDetail?.updatedAt,
-          expectedCaseUpdatedAt: immigrationDetail ? undefined : caseMatterUpdatedAt
-        })
+        body: JSON.stringify(
+          buildImmigrationCaseDetailPatchPayload({
+            draft,
+            immigrationDetail,
+            caseMatterUpdatedAt
+          })
+        )
       });
 
       if (!response.ok) {
