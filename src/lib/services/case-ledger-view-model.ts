@@ -370,6 +370,16 @@ export function applyCaseLedgerFilters(rows: CaseLedgerRow[], filters: CaseLedge
   });
 }
 
+export function buildCaseLedgerSummary(rows: CaseLedgerRow[]): CaseLedgerSummary {
+  return {
+    total: rows.length,
+    active: rows.filter((row) => !["종결", "취소"].includes(row.ledgerStatus)).length,
+    supplement: rows.filter((row) => row.hasSupplement === "있음").length,
+    closed: rows.filter((row) => row.ledgerStatus === "종결").length,
+    submitted: rows.filter((row) => row.submittedAt !== emptyValue || row.receiptNo !== emptyValue).length
+  };
+}
+
 export function buildCaseLedgerViewModel(
   caseMatters: CaseLedgerSource[],
   filters: CaseLedgerFilters = {}
@@ -377,13 +387,7 @@ export function buildCaseLedgerViewModel(
   const rows = applyCaseLedgerFilters(caseMatters.map(buildCaseLedgerRow), filters);
   return {
     rows,
-    summary: {
-      total: rows.length,
-      active: rows.filter((row) => !["종결", "취소"].includes(row.ledgerStatus)).length,
-      supplement: rows.filter((row) => row.hasSupplement === "있음").length,
-      closed: rows.filter((row) => row.ledgerStatus === "종결").length,
-      submitted: rows.filter((row) => row.submittedAt !== emptyValue || row.receiptNo !== emptyValue).length
-    }
+    summary: buildCaseLedgerSummary(rows)
   };
 }
 
