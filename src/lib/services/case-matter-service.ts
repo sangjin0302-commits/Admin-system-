@@ -150,6 +150,35 @@ const operationalInclude = {
       updatedAt: true
     }
   },
+  immigrationDetail: {
+    select: {
+      id: true,
+      dispositionType: true,
+      dispositionDate: true,
+      noticeDate: true,
+      serviceDate: true,
+      appealDeadline: true,
+      departureDeadline: true,
+      detentionStartDate: true,
+      stayExpiryDate: true,
+      submissionDeadline: true,
+      supplementDeadline: true,
+      resultExpectedDate: true,
+      nationality: true,
+      currentStayStatus: true,
+      familyInKoreaSummary: true,
+      residenceBaseSummary: true,
+      employmentOrSchoolSummary: true,
+      violationHistorySummary: true,
+      scopeReviewRequired: true,
+      attorneyScopeRisk: true,
+      officialFormCheckRequired: true,
+      deadlineVerifiedAt: true,
+      verifiedBy: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  },
   quotes: {
     select: {
       status: true,
