@@ -10,6 +10,7 @@ import {
 } from "@/components/admin/case-matter-detail-sections";
 import { CaseAccountingMemoPanel } from "@/components/admin/case-accounting-memo-panel";
 import { CaseTaskManagementPanel } from "@/components/admin/case-task-management-panel";
+import { ImmigrationCaseDetailPanel } from "@/components/admin/immigration-case-detail-panel";
 import { ImmigrationCaseHintPanel } from "@/components/admin/immigration-case-hint-panel";
 import { CaseMatterStatusForm } from "@/components/admin/case-matter-status-form";
 import { RequiredDocumentStatusPanel } from "@/components/admin/required-document-status-panel";
@@ -135,6 +136,34 @@ export default async function AdminCaseMatterDetailPage({
         updatedAt: caseMatter.accountingMemo.updatedAt.toISOString()
       }
     : null;
+  const immigrationDetail = caseMatter.immigrationDetail
+    ? {
+        id: caseMatter.immigrationDetail.id,
+        dispositionType: caseMatter.immigrationDetail.dispositionType,
+        dispositionDate: caseMatter.immigrationDetail.dispositionDate,
+        noticeDate: caseMatter.immigrationDetail.noticeDate,
+        serviceDate: caseMatter.immigrationDetail.serviceDate,
+        appealDeadline: caseMatter.immigrationDetail.appealDeadline,
+        departureDeadline: caseMatter.immigrationDetail.departureDeadline,
+        detentionStartDate: caseMatter.immigrationDetail.detentionStartDate,
+        stayExpiryDate: caseMatter.immigrationDetail.stayExpiryDate,
+        submissionDeadline: caseMatter.immigrationDetail.submissionDeadline,
+        supplementDeadline: caseMatter.immigrationDetail.supplementDeadline,
+        resultExpectedDate: caseMatter.immigrationDetail.resultExpectedDate,
+        nationality: caseMatter.immigrationDetail.nationality,
+        currentStayStatus: caseMatter.immigrationDetail.currentStayStatus,
+        familyInKoreaSummary: caseMatter.immigrationDetail.familyInKoreaSummary,
+        residenceBaseSummary: caseMatter.immigrationDetail.residenceBaseSummary,
+        employmentOrSchoolSummary: caseMatter.immigrationDetail.employmentOrSchoolSummary,
+        violationHistorySummary: caseMatter.immigrationDetail.violationHistorySummary,
+        scopeReviewRequired: caseMatter.immigrationDetail.scopeReviewRequired,
+        attorneyScopeRisk: caseMatter.immigrationDetail.attorneyScopeRisk,
+        officialFormCheckRequired: caseMatter.immigrationDetail.officialFormCheckRequired,
+        deadlineVerifiedAt: caseMatter.immigrationDetail.deadlineVerifiedAt,
+        verifiedBy: caseMatter.immigrationDetail.verifiedBy,
+        updatedAt: caseMatter.immigrationDetail.updatedAt.toISOString()
+      }
+    : null;
 
   return (
     <div className="space-y-6">
@@ -165,6 +194,11 @@ export default async function AdminCaseMatterDetailPage({
       <CaseMatterPartiesSection parties={caseMatter.parties} />
       <CaseMatterInquiryLinkSection inquiry={caseMatter.inquiry} />
       <ImmigrationCaseHintPanel matterType={caseMatter.matterType} />
+      <ImmigrationCaseDetailPanel
+        caseMatterId={caseMatter.id}
+        caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
+        immigrationDetail={immigrationDetail}
+      />
       <RequiredDocumentSummarySection documents={requiredDocuments} locale={locale} />
 
       <CaseMatterStatusForm
