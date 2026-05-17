@@ -134,6 +134,12 @@ export type CaseLedgerRow = {
   paidAmount: string;
   paidAt: string;
   ledgerMemo: string;
+  accountingMemoExists: boolean;
+  feeStatusCode: string | null;
+  paymentStatusCode: string | null;
+  feeAmountValue: number | null;
+  paidAmountValue: number | null;
+  paidAtValue: string | null;
 };
 
 export type CaseLedgerSummary = {
@@ -320,7 +326,13 @@ export function buildCaseLedgerRow(caseMatter: CaseLedgerSource): CaseLedgerRow 
     feeAmount: accounting ? formatMoney(accounting.feeAmount) : emptyValue,
     paidAmount: accounting ? formatMoney(accounting.paidAmount) : emptyValue,
     paidAt: accounting ? isoDate(accounting.paidAt) : emptyValue,
-    ledgerMemo: text(accounting?.ledgerMemo ?? null)
+    ledgerMemo: text(accounting?.ledgerMemo ?? null),
+    accountingMemoExists: Boolean(accounting),
+    feeStatusCode: accounting?.feeStatus ?? null,
+    paymentStatusCode: accounting?.paymentStatus ?? null,
+    feeAmountValue: accounting?.feeAmount ?? null,
+    paidAmountValue: accounting?.paidAmount ?? null,
+    paidAtValue: accounting?.paidAt ? isoDate(accounting.paidAt) : null
   };
 }
 
