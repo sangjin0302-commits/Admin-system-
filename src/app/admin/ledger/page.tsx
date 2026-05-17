@@ -1,10 +1,18 @@
 import Link from "next/link";
 
+import { CaseAccountingFilterPresets } from "@/components/admin/case-accounting-filter-presets";
 import { CaseAccountingSummaryCards } from "@/components/admin/case-accounting-summary-cards";
 import { CaseLedgerTable } from "@/components/admin/case-ledger-table";
 import { Card } from "@/components/ui/card";
-import { buildCaseAccountingSummaryViewModel } from "@/lib/services/case-accounting-summary-view-model";
 import {
+  buildCaseAccountingSummaryViewModel,
+  filterLedgerRowsByAccountingPreset,
+  listAccountingFilterPresets,
+  normalizeAccountingFilterPreset,
+  type AccountingFilterPreset
+} from "@/lib/services/case-accounting-summary-view-model";
+import {
+  buildCaseLedgerSummary,
   listCaseLedgerRows,
   mapCaseMatterStatusToLedgerStatus,
   normalizeLedgerFilters,
@@ -62,6 +70,16 @@ function buildExportHref(filters: CaseLedgerFilters) {
   return query ? `/api/admin/ledger/export?${query}` : "/api/admin/ledger/export";
 }
 
+function buildPresetHref(filters: CaseLedgerFilters, preset: AccountingFilterPreset) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) params.set(key, value);
+  }
+  if (preset !== "all") params.set("accountingPreset", preset);
+  const query = params.toString();
+  return query ? `/admin/ledger?${query}` : "/admin/ledger";
+}
+
 export default async function AdminLedgerPage({
   searchParams
 }: {
@@ -69,8 +87,19 @@ export default async function AdminLedgerPage({
 }) {
   const params = (await searchParams) ?? {};
   const filters = parseFilters(params);
+  const accountingPreset = normalizeAccountingFilterPreset(pickParam(params.accountingPreset));
   const viewModel = await safeListCaseLedgerRows(filters);
-  const accountingSummary = buildCaseAccountingSummaryViewModel(viewModel.rows);
+  const filteredRows = filterLedgerRowsByAccountingPreset(viewModel.rows, accountingPreset);
+  const filteredViewModel: CaseLedgerViewModel = {
+    rows: filteredRows,
+    summary: buildCaseLedgerSummary(filteredRows)
+  };
+  const accountingSummary = buildCaseAccountingSummaryViewModel(filteredViewModel.rows);
+  const accountingFilterItems = listAccountingFilterPresets().map((item) => ({
+    ...item,
+    count: filterLedgerRowsByAccountingPreset(viewModel.rows, item.preset).length,
+    href: buildPresetHref(filters, item.preset)
+  }));
   const statusOptions = caseMatterStatusValues.map((status) => ({
     value: status,
     label: mapCaseMatterStatusToLedgerStatus(status)
@@ -132,9 +161,12 @@ export default async function AdminLedgerPage({
 
       <CaseAccountingSummaryCards summary={accountingSummary} />
 
+      <CaseAccountingFilterPresets activePreset={accountingPreset} items={accountingFilterItems} />
+
       <CaseLedgerTable
-        viewModel={viewModel}
+        viewModel={filteredViewModel}
         filters={filters}
+        accountingPreset={accountingPreset}
         statusOptions={statusOptions}
         matterTypeOptions={matterTypeOptions}
         assignedToOptions={assignedToOptions}

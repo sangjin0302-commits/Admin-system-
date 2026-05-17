@@ -35,11 +35,36 @@ export type CaseAccountingSummaryViewModel = {
   followUpItems: CaseAccountingFollowUpItem[];
 };
 
+export const accountingFilterPresetValues = [
+  "all",
+  "needs_follow_up",
+  "unpaid",
+  "partial",
+  "fee_unset_or_pending",
+  "paid"
+] as const;
+
+export type AccountingFilterPreset = (typeof accountingFilterPresetValues)[number];
+
+export type AccountingFilterPresetViewModel = {
+  preset: AccountingFilterPreset;
+  label: string;
+};
+
 const feeConfirmedStatuses = new Set(["CONFIRMED", "WAIVED"]);
 const feePendingStatuses = new Set(["PENDING", "ESTIMATED"]);
 const paymentUnpaidStatuses = new Set(["UNPAID"]);
 const paymentPartialStatuses = new Set(["PARTIAL"]);
 const paymentPaidStatuses = new Set(["PAID", "REFUNDED"]);
+
+const accountingFilterPresetLabels: Record<AccountingFilterPreset, string> = {
+  all: "전체",
+  needs_follow_up: "확인 필요",
+  unpaid: "미입금",
+  partial: "부분 입금",
+  fee_unset_or_pending: "수임료 미확정",
+  paid: "입금 완료"
+};
 
 function normalizeStatus(value: string | null | undefined) {
   return value?.trim().toUpperCase() || "UNSET";
@@ -106,6 +131,55 @@ function buildFollowUp(row: CaseAccountingSummaryInputRow) {
     feeStatus,
     paymentStatus
   } satisfies CaseAccountingFollowUpItem;
+}
+
+export function normalizeAccountingFilterPreset(value: string | null | undefined): AccountingFilterPreset {
+  return accountingFilterPresetValues.includes(value as AccountingFilterPreset)
+    ? (value as AccountingFilterPreset)
+    : "all";
+}
+
+export function getAccountingPresetLabel(preset: AccountingFilterPreset) {
+  return accountingFilterPresetLabels[preset];
+}
+
+export function listAccountingFilterPresets(): AccountingFilterPresetViewModel[] {
+  return accountingFilterPresetValues.map((preset) => ({
+    preset,
+    label: getAccountingPresetLabel(preset)
+  }));
+}
+
+export function isCaseAccountingFollowUpRow(row: CaseAccountingSummaryInputRow) {
+  return Boolean(buildFollowUp(row));
+}
+
+function isPartialPaymentRow(row: CaseAccountingSummaryInputRow) {
+  return (
+    paymentPartialStatuses.has(normalizeStatus(row.paymentStatusCode)) ||
+    (row.feeAmountValue != null &&
+      row.paidAmountValue != null &&
+      row.paidAmountValue > 0 &&
+      row.paidAmountValue < row.feeAmountValue)
+  );
+}
+
+function isFeeUnsetOrPendingRow(row: CaseAccountingSummaryInputRow) {
+  const feeStatus = normalizeStatus(row.feeStatusCode);
+  return !row.accountingMemoExists || isFeeUnset(feeStatus) || feePendingStatuses.has(feeStatus);
+}
+
+export function filterLedgerRowsByAccountingPreset<Row extends CaseAccountingSummaryInputRow>(
+  rows: readonly Row[],
+  presetValue: string | null | undefined
+): Row[] {
+  const preset = normalizeAccountingFilterPreset(presetValue);
+  if (preset === "all") return [...rows];
+  if (preset === "needs_follow_up") return rows.filter(isCaseAccountingFollowUpRow);
+  if (preset === "unpaid") return rows.filter((row) => paymentUnpaidStatuses.has(normalizeStatus(row.paymentStatusCode)));
+  if (preset === "partial") return rows.filter(isPartialPaymentRow);
+  if (preset === "fee_unset_or_pending") return rows.filter(isFeeUnsetOrPendingRow);
+  return rows.filter((row) => normalizeStatus(row.paymentStatusCode) === "PAID");
 }
 
 export function buildCaseAccountingSummaryViewModel(

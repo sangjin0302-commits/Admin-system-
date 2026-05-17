@@ -3,11 +3,13 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
 import { formatCaseMatterTypeLabel } from "@/lib/immigration";
+import type { AccountingFilterPreset } from "@/lib/services/case-accounting-summary-view-model";
 import type { CaseLedgerFilters, CaseLedgerViewModel } from "@/lib/services/case-ledger-view-model";
 
 type CaseLedgerTableProps = {
   viewModel: CaseLedgerViewModel;
   filters: CaseLedgerFilters;
+  accountingPreset: AccountingFilterPreset;
   statusOptions: Array<{ value: string; label: string }>;
   matterTypeOptions: string[];
   assignedToOptions: string[];
@@ -20,6 +22,7 @@ function selectValue(value: string | null | undefined) {
 export function CaseLedgerTable({
   viewModel,
   filters,
+  accountingPreset,
   statusOptions,
   matterTypeOptions,
   assignedToOptions
@@ -28,6 +31,9 @@ export function CaseLedgerTable({
     <div className="space-y-4">
       <Card className="p-4">
         <form className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]" method="get">
+          {accountingPreset !== "all" ? (
+            <input type="hidden" name="accountingPreset" value={accountingPreset} />
+          ) : null}
           <label className="space-y-1 text-xs font-semibold text-text-muted">
             접수 시작일
             <input
@@ -109,7 +115,7 @@ export function CaseLedgerTable({
       </Card>
 
       {viewModel.rows.length === 0 ? (
-        <EmptyState title="표시할 장부 행이 없습니다." description="필터를 조정하거나 사건을 먼저 생성하세요." />
+        <EmptyState title="해당 조건의 사건이 없습니다." description="필터를 조정하거나 전체 quick filter로 돌아가세요." />
       ) : (
         <Card className="overflow-hidden p-0">
           <div className="overflow-x-auto">
