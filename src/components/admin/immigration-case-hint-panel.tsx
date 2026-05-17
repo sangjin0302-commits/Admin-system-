@@ -1,15 +1,19 @@
 import { Card } from "@/components/ui/card";
 import {
+  buildImmigrationDocumentDraftReadinessListForCase,
   getDocumentDraftTemplatesForMatterType,
   getImmigrationDeadlineFieldsForMatterType,
   getImmigrationMatterTypeDefinition,
   getRequiredDocumentTemplatesForMatterType,
   getSafetyGuardrailsForMatterType,
+  type ImmigrationDocumentDraftCaseData,
+  type ImmigrationDocumentDraftCaseReadiness,
   type ImmigrationMatterCategory
 } from "@/lib/immigration";
 
 type ImmigrationCaseHintPanelProps = {
   matterType: string;
+  caseData?: ImmigrationDocumentDraftCaseData;
 };
 
 const categoryLabels: Record<ImmigrationMatterCategory, string> = {
@@ -31,18 +35,36 @@ const severityLabels = {
   critical: "필수"
 } as const;
 
-export function buildImmigrationCaseHintPanelModel(matterType: string) {
+const readinessStatusLabels: Record<ImmigrationDocumentDraftCaseReadiness["status"], string> = {
+  ready: "준비 가능",
+  missing_required_inputs: "필수 입력 부족",
+  blocked_by_scope_review: "업무범위 검토 필요",
+  blocked_by_official_form_check: "공식 서식 확인 필요",
+  unknown_template: "확인 필요"
+};
+
+function buildReadinessByTemplateId(readinessList: ImmigrationDocumentDraftCaseReadiness[]) {
+  return Object.fromEntries(readinessList.map((readiness) => [readiness.templateId, readiness]));
+}
+
+export function buildImmigrationCaseHintPanelModel(
+  matterType: string,
+  caseData: ImmigrationDocumentDraftCaseData = {}
+) {
   const definition = getImmigrationMatterTypeDefinition(matterType);
   if (!definition) return null;
 
   const deadlineDefinitions = getImmigrationDeadlineFieldsForMatterType(matterType);
+  const draftCandidates = getDocumentDraftTemplatesForMatterType(matterType);
+  const draftReadiness = buildImmigrationDocumentDraftReadinessListForCase(matterType, caseData);
 
   return {
     definition,
     categoryLabel: categoryLabels[definition.category],
     deadlines: deadlineDefinitions,
     requiredDocuments: getRequiredDocumentTemplatesForMatterType(matterType),
-    draftCandidates: getDocumentDraftTemplatesForMatterType(matterType),
+    draftCandidates,
+    draftReadinessByTemplateId: buildReadinessByTemplateId(draftReadiness),
     safetyGuardrails: getSafetyGuardrailsForMatterType(matterType),
     safetyNotice:
       "실제 기한은 처분서 원문, 송달일, 관할기관 기준으로 반드시 수동 확인하세요.",
@@ -57,8 +79,8 @@ export function buildImmigrationCaseHintPanelModel(matterType: string) {
   };
 }
 
-export function ImmigrationCaseHintPanel({ matterType }: ImmigrationCaseHintPanelProps) {
-  const model = buildImmigrationCaseHintPanelModel(matterType);
+export function ImmigrationCaseHintPanel({ matterType, caseData }: ImmigrationCaseHintPanelProps) {
+  const model = buildImmigrationCaseHintPanelModel(matterType, caseData);
   if (!model) return null;
 
   return (
@@ -148,33 +170,57 @@ export function ImmigrationCaseHintPanel({ matterType }: ImmigrationCaseHintPane
           <p className="text-xs text-text-muted">{model.draftNotice}</p>
         </div>
         <div className="mt-3 grid gap-2 lg:grid-cols-2">
-          {model.draftCandidates.map((candidate) => (
-            <div
-              key={candidate.id}
-              className={`rounded-md border p-3 text-sm ${
-                candidate.riskLevel === "high"
-                  ? "border-amber-300 bg-amber-50"
-                  : "border-line bg-surface"
-              }`}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-semibold text-text-strong">{candidate.labelKo}</p>
-                <span className="ui-badge">위험도 {riskLabels[candidate.riskLevel]}</span>
-                {candidate.riskLevel === "high" ? <span className="ui-badge">고위험 문서</span> : null}
-                {candidate.adminOnlyPreview ? <span className="ui-badge">관리자 초안</span> : null}
-                {candidate.noAutomaticSubmission ? <span className="ui-badge">기관 제출 실행 없음</span> : null}
-              </div>
-              <p className="mt-1 text-text-muted">{candidate.descriptionKo}</p>
-              <div className="mt-2 flex flex-wrap gap-2 text-xs text-text-strong">
-                <span className="ui-badge">필수 입력값 {candidate.requiredInputFields.length}개</span>
-                {candidate.optionalInputFields.length > 0 ? (
-                  <span className="ui-badge">선택 입력값 {candidate.optionalInputFields.length}개</span>
+          {model.draftCandidates.map((candidate) => {
+            const readiness = model.draftReadinessByTemplateId[candidate.id];
+            const missingFields = readiness?.missingRequiredFields ?? [];
+
+            return (
+              <div
+                key={candidate.id}
+                className={`rounded-md border p-3 text-sm ${
+                  candidate.riskLevel === "high"
+                    ? "border-amber-300 bg-amber-50"
+                    : "border-line bg-surface"
+                }`}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-text-strong">{candidate.labelKo}</p>
+                  <span className="ui-badge">위험도 {riskLabels[candidate.riskLevel]}</span>
+                  {candidate.riskLevel === "high" ? <span className="ui-badge">고위험 문서</span> : null}
+                  {candidate.adminOnlyPreview ? <span className="ui-badge">관리자 초안</span> : null}
+                  {candidate.noAutomaticSubmission ? <span className="ui-badge">기관 제출 실행 없음</span> : null}
+                </div>
+                <p className="mt-1 text-text-muted">{candidate.descriptionKo}</p>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs text-text-strong">
+                  <span className="ui-badge">필수 입력값 {candidate.requiredInputFields.length}개</span>
+                  {candidate.optionalInputFields.length > 0 ? (
+                    <span className="ui-badge">선택 입력값 {candidate.optionalInputFields.length}개</span>
+                  ) : null}
+                  {candidate.requiresScopeReview ? <span className="ui-badge">업무범위 검토 필요</span> : null}
+                  {candidate.requiresOfficialFormCheck ? <span className="ui-badge">공식 서식 확인 필요</span> : null}
+                </div>
+                {readiness ? (
+                  <div className="mt-3 rounded-md border border-line bg-surface px-3 py-2 text-xs text-text">
+                    <p className="font-semibold text-text-strong">
+                      준비 상태: {readinessStatusLabels[readiness.status]}
+                    </p>
+                    {missingFields.length > 0 ? (
+                      <p className="mt-1 text-text-muted">
+                        부족한 입력값:{" "}
+                        {missingFields.map((field) => `${field.labelKo} (${field.sourceGroup})`).join(", ")}
+                      </p>
+                    ) : null}
+                    {readiness.warnings.length > 0 ? (
+                      <p className="mt-1 text-text-muted">{readiness.warnings.join(" ")}</p>
+                    ) : null}
+                    <p className="mt-1 font-medium text-text-strong">
+                      문서 생성/내보내기는 아직 지원하지 않습니다.
+                    </p>
+                  </div>
                 ) : null}
-                {candidate.requiresScopeReview ? <span className="ui-badge">업무범위 검토 필요</span> : null}
-                {candidate.requiresOfficialFormCheck ? <span className="ui-badge">공식 서식 확인 필요</span> : null}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="mt-3 space-y-2">
           <p className="rounded-md border border-line bg-surface px-3 py-2 text-xs font-medium text-text-strong">

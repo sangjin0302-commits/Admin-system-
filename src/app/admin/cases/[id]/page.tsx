@@ -164,6 +164,24 @@ export default async function AdminCaseMatterDetailPage({
         updatedAt: caseMatter.immigrationDetail.updatedAt.toISOString()
       }
     : null;
+  const immigrationDraftReadinessCaseData = {
+    caseMatter: {
+      caseNo: caseMatter.caseNo,
+      title: caseMatter.title,
+      summary: caseMatter.summary,
+      dueDate: caseMatter.dueDate
+    },
+    immigrationDetail,
+    requiredDocuments: requiredDocuments.map((document) => ({ id: document.id, name: document.name })),
+    caseParties: caseMatter.parties.map((party) => ({
+      role: party.role,
+      name: party.name
+    })),
+    caseEvents: caseMatter.events.map((event) => ({
+      eventType: event.eventType,
+      message: event.message
+    }))
+  };
 
   return (
     <div className="space-y-6">
@@ -193,7 +211,10 @@ export default async function AdminCaseMatterDetailPage({
       <CaseMatterSummaryCards caseMatter={caseMatter} status={currentStatus} locale={locale} />
       <CaseMatterPartiesSection parties={caseMatter.parties} />
       <CaseMatterInquiryLinkSection inquiry={caseMatter.inquiry} />
-      <ImmigrationCaseHintPanel matterType={caseMatter.matterType} />
+      <ImmigrationCaseHintPanel
+        matterType={caseMatter.matterType}
+        caseData={immigrationDraftReadinessCaseData}
+      />
       <ImmigrationCaseDetailPanel
         caseMatterId={caseMatter.id}
         caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
