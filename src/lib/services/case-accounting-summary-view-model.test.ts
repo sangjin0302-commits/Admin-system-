@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 
 import {
+  buildAccountingReasonBreakdown,
   buildCaseAccountingSummaryViewModel,
   filterLedgerRowsByAccountingPreset,
   getAccountingFollowUpReasons,
@@ -121,6 +122,18 @@ assert.equal(summary.paymentPartialCount, 1);
 assert.equal(summary.paymentPaidCount, 2);
 assert.equal(summary.paymentUnsetCount, 3);
 assert.equal(summary.followUpCount, 6);
+assert.deepEqual(
+  summary.followUpReasonBreakdown.map((item) => item.code),
+  [
+    "payment_status_unset",
+    "payment_unpaid",
+    "fee_status_unset",
+    "missing_accounting_memo",
+    "paid_amount_less_than_fee_amount"
+  ]
+);
+assert.equal(summary.followUpReasonBreakdown.every((item) => item.count > 0), true);
+assert.equal(summary.followUpReasonBreakdown.every((item) => item.href.startsWith("/admin/ledger?accountingPreset=")), true);
 assert.ok(summary.followUpItems.some((item) => item.reason.includes("수임/입금 메모 없음")));
 assert.ok(summary.followUpItems.some((item) => item.reason.includes("수임료 확정 전")));
 assert.ok(summary.followUpItems.some((item) => item.reason.includes("미입금 확인 필요")));
@@ -182,6 +195,11 @@ assert.equal(
   ),
   true
 );
+assert.deepEqual(
+  buildAccountingReasonBreakdown(rows, 2).map((item) => item.code),
+  ["payment_status_unset", "payment_unpaid"]
+);
+assert.deepEqual(buildAccountingReasonBreakdown(rows, 0), []);
 
 const serialized = JSON.stringify(summary);
 assert.equal(serialized.includes("세금 신고 완료"), false);
