@@ -280,6 +280,16 @@ function formatMoney(value: number | null | undefined) {
   return `${new Intl.NumberFormat("ko-KR").format(value)}원`;
 }
 
+function formatAccountingFeeStatus(value: AccountingFeeStatus | string | null | undefined) {
+  if (!value) return feePlaceholder;
+  return accountingFeeStatusLabels[value as AccountingFeeStatus] ?? emptyValue;
+}
+
+function formatAccountingPaymentStatus(value: AccountingPaymentStatus | string | null | undefined) {
+  if (!value) return feePlaceholder;
+  return accountingPaymentStatusLabels[value as AccountingPaymentStatus] ?? emptyValue;
+}
+
 function buildNote(caseMatter: CaseLedgerSource, submission: ReturnType<typeof pickSubmission>) {
   const notes: string[] = [];
   if (caseMatter.summary?.trim()) notes.push(caseMatter.summary.trim());
@@ -339,10 +349,8 @@ export function buildCaseLedgerRow(caseMatter: CaseLedgerSource): CaseLedgerRow 
     quoteStatus: text(quote?.status ?? null),
     quoteAmountRange: quote ? formatAmountRange(quote.totalMin, quote.totalMax) : emptyValue,
     contractStatus: text(latestContract?.status ?? null),
-    feeStatus: accounting ? accountingFeeStatusLabels[accounting.feeStatus] : feePlaceholder,
-    paymentStatus: accounting
-      ? accountingPaymentStatusLabels[accounting.paymentStatus]
-      : feePlaceholder,
+    feeStatus: accounting ? formatAccountingFeeStatus(accounting.feeStatus) : feePlaceholder,
+    paymentStatus: accounting ? formatAccountingPaymentStatus(accounting.paymentStatus) : feePlaceholder,
     feeAmount: accounting ? formatMoney(accounting.feeAmount) : emptyValue,
     paidAmount: accounting ? formatMoney(accounting.paidAmount) : emptyValue,
     paidAt: accounting ? isoDate(accounting.paidAt) : emptyValue,
@@ -448,8 +456,9 @@ export const caseLedgerCsvHeaders = [
   "입금상태"
 ];
 
-function escapeCsvCell(value: string) {
-  const safeValue = /^[=+\-@]/.test(value) ? `'${value}` : value;
+function escapeCsvCell(value: string | null | undefined) {
+  const textValue = value ?? emptyValue;
+  const safeValue = /^[=+\-@]/.test(textValue) ? `'${textValue}` : textValue;
   return `"${safeValue.replaceAll("\"", "\"\"")}"`;
 }
 
