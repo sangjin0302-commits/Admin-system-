@@ -156,6 +156,22 @@ const packageFallbackRow = buildCaseLedgerRow(
 );
 assert.equal(packageFallbackRow.targetAgency, "Package Agency");
 
+const unknownAccountingStatusRow = buildCaseLedgerRow(
+  makeCaseMatter({
+    accountingMemo: {
+      feeAmount: 120000,
+      feeStatus: "NOT_VALID" as never,
+      paymentStatus: "NOT_VALID" as never,
+      paidAmount: 0,
+      paidAt: null,
+      ledgerMemo: null
+    }
+  })
+);
+assert.equal(typeof unknownAccountingStatusRow.feeStatus, "string");
+assert.equal(typeof unknownAccountingStatusRow.paymentStatus, "string");
+assert.doesNotThrow(() => buildCaseLedgerCsv([unknownAccountingStatusRow]));
+
 const emptyFallbackRow = buildCaseLedgerRow(
   makeCaseMatter({
     inquiry: null,
