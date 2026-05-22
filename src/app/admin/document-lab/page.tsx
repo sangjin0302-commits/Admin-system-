@@ -60,6 +60,12 @@ const sourcePriorityClassName = {
   low: "border-slate-200 bg-slate-50 text-slate-700"
 } satisfies Record<DocumentTemplateSourceVerificationPriority, string>;
 
+const sourceChecklistStatusClassName = {
+  complete: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  needs_review: "border-amber-200 bg-amber-50 text-amber-800",
+  missing: "border-slate-200 bg-slate-50 text-slate-700"
+} satisfies Record<"complete" | "needs_review" | "missing", string>;
+
 const activeFilterClassName = "border-primary bg-primary text-white";
 const idleFilterClassName = "border-line bg-surface text-text hover:border-line-strong hover:bg-surface-muted";
 
@@ -73,6 +79,10 @@ function formatOptionalText(value: string | null | undefined) {
 
 function formatCanonicalFormats(item: DocumentTemplateInventoryItem) {
   return item.canonicalFormatCandidate.map((format) => format.toUpperCase()).join(", ");
+}
+
+function formatCompactChecklistValue(value: string) {
+  return value.length > 34 ? `${value.slice(0, 34)}...` : value;
 }
 
 function filterLinkClassName(active: boolean) {
@@ -292,6 +302,33 @@ export default async function AdminDocumentLabPage({
                       </div>
                     </div>
                     <p className="mt-2 text-xs text-text-muted">{template.reasonLabelKo}</p>
+                    <div className="mt-3 rounded-lg border border-line bg-surface-muted p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-text-strong">출처 검증 체크</p>
+                        <p className="text-[11px] text-text-muted">
+                          {template.checklist.completeCount}/{template.checklist.totalCount}
+                        </p>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {template.checklist.items.map((item) => (
+                          <span
+                            key={item.id}
+                            title={`${item.labelKo}: ${item.valueKo}`}
+                            className={`inline-flex max-w-full rounded-full border px-2 py-1 text-[11px] font-semibold ${
+                              sourceChecklistStatusClassName[item.status]
+                            }`}
+                          >
+                            {item.labelKo}:{" "}
+                            {item.status === "complete"
+                              ? "완료"
+                              : item.status === "needs_review"
+                                ? "검토 필요"
+                                : "확인 필요"}{" "}
+                            · {formatCompactChecklistValue(item.valueKo)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
