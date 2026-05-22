@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
 import {
+  getTopDocumentTemplateSourceChecklistReasons,
   buildDocumentTemplateSourceVerificationPriority,
   listDocumentTemplateInventory
 } from "@/lib/document-templates";
@@ -176,7 +177,9 @@ export default async function AdminDashboardContent() {
     5
   );
   const caseAccountingSummary = buildCaseAccountingSummaryViewModel(caseAccountingRows);
-  const documentLabPrioritySummary = buildDocumentTemplateSourceVerificationPriority(listDocumentTemplateInventory());
+  const documentTemplateItems = listDocumentTemplateInventory();
+  const documentLabPrioritySummary = buildDocumentTemplateSourceVerificationPriority(documentTemplateItems);
+  const documentLabSourceChecklistReasons = getTopDocumentTemplateSourceChecklistReasons(documentTemplateItems, 3);
 
   const {
     checklistCoverageCount,
@@ -356,7 +359,10 @@ export default async function AdminDashboardContent() {
 
       <CaseAccountingDashboardCard summary={caseAccountingSummary} />
 
-      <DocumentLabDashboardCard summary={documentLabPrioritySummary} />
+      <DocumentLabDashboardCard
+        summary={documentLabPrioritySummary}
+        sourceChecklistReasons={documentLabSourceChecklistReasons}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="p-6">
