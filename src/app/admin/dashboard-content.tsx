@@ -236,6 +236,12 @@ export default async function AdminDashboardContent() {
                 업무처리부
               </Link>
               <Link
+                href="/admin/document-lab"
+                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
+              >
+                문서 실험실
+              </Link>
+              <Link
                 href="/admin/integrations"
                 className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
               >
