@@ -1,15 +1,20 @@
 import {
   documentTemplateInventory,
+  getDocumentTemplateOfficialSourceStatus,
   type DocumentTemplateCategory,
   type DocumentTemplateConversionStatus,
   type DocumentTemplateInventoryItem,
+  type DocumentTemplateOfficialSourceStatus,
   type DocumentTemplateRiskLevel
 } from "./document-template-inventory";
+
+export type DocumentTemplateSourceStatusFilter = DocumentTemplateOfficialSourceStatus;
 
 export type DocumentTemplateInventoryFilters = {
   category: DocumentTemplateCategory | null;
   risk: DocumentTemplateRiskLevel | null;
   conversionStatus: DocumentTemplateConversionStatus | null;
+  sourceStatus: DocumentTemplateSourceStatusFilter | null;
   q: string | null;
 };
 
@@ -34,6 +39,13 @@ export const allDocumentTemplateConversionStatusValues = [
   "manual_only"
 ] satisfies DocumentTemplateConversionStatus[];
 
+export const allDocumentTemplateSourceStatusValues = [
+  "verified",
+  "needs_review",
+  "pending",
+  "manual_only"
+] satisfies DocumentTemplateSourceStatusFilter[];
+
 function pickParam(value: string | string[] | null | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -52,6 +64,12 @@ function isDocumentTemplateConversionStatus(
   return allDocumentTemplateConversionStatusValues.includes(value as DocumentTemplateConversionStatus);
 }
 
+function isDocumentTemplateSourceStatus(
+  value: string | null | undefined
+): value is DocumentTemplateSourceStatusFilter {
+  return allDocumentTemplateSourceStatusValues.includes(value as DocumentTemplateSourceStatusFilter);
+}
+
 export function listDocumentTemplateCategories() {
   return [...allDocumentTemplateCategoryValues];
 }
@@ -64,18 +82,24 @@ export function listDocumentTemplateConversionStatuses() {
   return [...allDocumentTemplateConversionStatusValues];
 }
 
+export function listDocumentTemplateSourceStatuses() {
+  return [...allDocumentTemplateSourceStatusValues];
+}
+
 export function normalizeDocumentTemplateInventoryFilters(
   searchParams: Record<string, string | string[] | null | undefined> = {}
 ): DocumentTemplateInventoryFilters {
   const category = pickParam(searchParams.category);
   const risk = pickParam(searchParams.risk);
   const conversionStatus = pickParam(searchParams.conversionStatus);
+  const sourceStatus = pickParam(searchParams.sourceStatus);
   const q = pickParam(searchParams.q)?.trim() || null;
 
   return {
     category: isDocumentTemplateCategory(category) ? category : null,
     risk: isDocumentTemplateRisk(risk) ? risk : null,
     conversionStatus: isDocumentTemplateConversionStatus(conversionStatus) ? conversionStatus : null,
+    sourceStatus: isDocumentTemplateSourceStatus(sourceStatus) ? sourceStatus : null,
     q
   };
 }
@@ -90,6 +114,7 @@ export function filterDocumentTemplateInventory(
     if (filters.category && item.category !== filters.category) return false;
     if (filters.risk && item.riskLevel !== filters.risk) return false;
     if (filters.conversionStatus && item.conversionStatus !== filters.conversionStatus) return false;
+    if (filters.sourceStatus && getDocumentTemplateOfficialSourceStatus(item) !== filters.sourceStatus) return false;
     if (!query) return true;
 
     return [item.titleKo, item.id, item.officialSourceName]
@@ -117,6 +142,7 @@ export function buildDocumentTemplateFilterHref(
   if (nextFilters.category) params.set("category", nextFilters.category);
   if (nextFilters.risk) params.set("risk", nextFilters.risk);
   if (nextFilters.conversionStatus) params.set("conversionStatus", nextFilters.conversionStatus);
+  if (nextFilters.sourceStatus) params.set("sourceStatus", nextFilters.sourceStatus);
   if (nextFilters.q) params.set("q", nextFilters.q);
   const query = params.toString();
   return query ? `/admin/document-lab?${query}` : "/admin/document-lab";

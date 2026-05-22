@@ -18,6 +18,7 @@ import {
   listDocumentTemplateConversionStatuses,
   listDocumentTemplateInventory,
   listDocumentTemplateRiskLevels,
+  listDocumentTemplateSourceStatuses,
   normalizeDocumentTemplateInventoryFilters,
   type DocumentTemplateInventoryItem,
   type DocumentTemplateOfficialSourceStatus,
@@ -230,6 +231,7 @@ export default async function AdminDocumentLabPage({
               {filters.conversionStatus ? (
                 <input type="hidden" name="conversionStatus" value={filters.conversionStatus} />
               ) : null}
+              {filters.sourceStatus ? <input type="hidden" name="sourceStatus" value={filters.sourceStatus} /> : null}
               <input
                 name="q"
                 defaultValue={filters.q ?? ""}
@@ -297,6 +299,23 @@ export default async function AdminDocumentLabPage({
                   className={filterLinkClassName(filters.conversionStatus === conversionStatus)}
                 >
                   {getDocumentTemplateConversionStatusLabel(conversionStatus)}
+                </Link>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={buildDocumentTemplateFilterHref(filters, { sourceStatus: null })}
+                className={filterLinkClassName(filters.sourceStatus === null)}
+              >
+                전체 source status
+              </Link>
+              {listDocumentTemplateSourceStatuses().map((sourceStatus) => (
+                <Link
+                  key={sourceStatus}
+                  href={buildDocumentTemplateFilterHref(filters, { sourceStatus })}
+                  className={filterLinkClassName(filters.sourceStatus === sourceStatus)}
+                >
+                  {getDocumentTemplateOfficialSourceStatusLabel(sourceStatus)}
                 </Link>
               ))}
             </div>
