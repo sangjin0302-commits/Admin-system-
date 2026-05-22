@@ -28,6 +28,7 @@ for (const route of publicRoutes) {
 
 const protectedRoutes = [
   "/admin",
+  "/admin/document-lab",
   "/admin/inquiries",
   "/admin/intake-sources",
   "/admin/ledger",
