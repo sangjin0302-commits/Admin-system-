@@ -4,10 +4,13 @@ import { Fragment } from "react";
 import { Card } from "@/components/ui/card";
 import {
   buildDocumentTemplateFilterHref,
+  buildDocumentTemplateReadiness,
+  buildDocumentTemplateReadinessSummary,
   filterDocumentTemplateInventory,
   getDocumentTemplateCategoryLabel,
   getDocumentTemplateConversionStatusLabel,
   getDocumentTemplateRiskLabel,
+  getDocumentTemplateReadinessStatusLabel,
   groupDocumentTemplatesByCategory,
   listDocumentTemplateCategories,
   listDocumentTemplateConversionStatuses,
@@ -15,6 +18,7 @@ import {
   listDocumentTemplateRiskLevels,
   normalizeDocumentTemplateInventoryFilters,
   type DocumentTemplateInventoryItem,
+  type DocumentTemplateReadinessStatus,
   type DocumentTemplateRiskLevel
 } from "@/lib/document-templates";
 
@@ -25,6 +29,16 @@ const riskClassName = {
   medium: "border-amber-200 bg-amber-50 text-amber-800",
   high: "border-red-200 bg-red-50 text-red-700"
 } satisfies Record<DocumentTemplateRiskLevel, string>;
+
+const readinessStatusClassName = {
+  not_started: "border-slate-200 bg-slate-50 text-slate-700",
+  needs_source: "border-red-200 bg-red-50 text-red-700",
+  needs_mapping: "border-amber-200 bg-amber-50 text-amber-800",
+  needs_conversion_test: "border-orange-200 bg-orange-50 text-orange-800",
+  needs_review: "border-purple-200 bg-purple-50 text-purple-700",
+  ready_candidate: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  manual_only: "border-slate-200 bg-slate-50 text-slate-700"
+} satisfies Record<DocumentTemplateReadinessStatus, string>;
 
 const activeFilterClassName = "border-primary bg-primary text-white";
 const idleFilterClassName = "border-line bg-surface text-text hover:border-line-strong hover:bg-surface-muted";
@@ -53,7 +67,10 @@ export default async function AdminDocumentLabPage({
   const filters = normalizeDocumentTemplateInventoryFilters(params);
   const filteredTemplates = filterDocumentTemplateInventory(templates, filters);
   const groupedTemplates = groupDocumentTemplatesByCategory(filteredTemplates);
-  const highRiskCount = templates.filter((template) => template.riskLevel === "high").length;
+  const readinessSummary = buildDocumentTemplateReadinessSummary(templates);
+  const readinessByTemplateId = new Map(
+    filteredTemplates.map((template) => [template.id, buildDocumentTemplateReadiness(template)])
+  );
 
   return (
     <div className="space-y-6">
@@ -83,28 +100,33 @@ export default async function AdminDocumentLabPage({
         </p>
       </Card>
 
-      <div className="grid gap-3 md:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-5">
         <Card className="p-4">
           <p className="text-xs font-semibold text-text-muted">Inventory</p>
-          <p className="mt-2 text-2xl font-bold text-text-strong">{templates.length}</p>
+          <p className="mt-2 text-2xl font-bold text-text-strong">{readinessSummary.totalTemplates}</p>
           <p className="mt-1 text-xs text-text-muted">등록된 후보 서식</p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs font-semibold text-text-muted">HWP/HWPX</p>
+          <p className="text-xs font-semibold text-text-muted">Ready candidate</p>
+          <p className="mt-2 text-2xl font-bold text-text-strong">{readinessSummary.readyCandidateCount}</p>
+          <p className="mt-1 text-xs text-text-muted">준비 후보</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs font-semibold text-text-muted">Source needed</p>
+          <p className="mt-2 text-2xl font-bold text-text-strong">{readinessSummary.sourceNeededCount}</p>
+          <p className="mt-1 text-xs text-text-muted">원본 필요</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs font-semibold text-text-muted">Conversion test</p>
           <p className="mt-2 text-2xl font-bold text-text-strong">
-            {templates.filter((template) => template.canonicalFormatCandidate.some((format) => format === "hwpx")).length}
+            {readinessSummary.conversionTestNeededCount}
           </p>
-          <p className="mt-1 text-xs text-text-muted">HWPX 후보</p>
+          <p className="mt-1 text-xs text-text-muted">변환 테스트 필요</p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs font-semibold text-text-muted">High risk</p>
-          <p className="mt-2 text-2xl font-bold text-text-strong">{highRiskCount}</p>
-          <p className="mt-1 text-xs text-text-muted">관리자 검토 필요</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-semibold text-text-muted">Status</p>
-          <p className="mt-2 text-2xl font-bold text-text-strong">0</p>
-          <p className="mt-1 text-xs text-text-muted">검증 완료 서식</p>
+          <p className="text-xs font-semibold text-text-muted">Manual only</p>
+          <p className="mt-2 text-2xl font-bold text-text-strong">{readinessSummary.manualOnlyCount}</p>
+          <p className="mt-1 text-xs text-text-muted">수동 작성 유지</p>
         </Card>
       </div>
 
@@ -249,6 +271,8 @@ export default async function AdminDocumentLabPage({
                 <th className="px-3 py-3">원본</th>
                 <th className="px-3 py-3">후보 포맷</th>
                 <th className="px-3 py-3">변환 상태</th>
+                <th className="px-3 py-3">준비 상태</th>
+                <th className="px-3 py-3">체크리스트</th>
                 <th className="px-3 py-3">위험도</th>
                 <th className="px-3 py-3">필수값</th>
                 <th className="px-3 py-3">공식 출처</th>
@@ -260,12 +284,19 @@ export default async function AdminDocumentLabPage({
               {groupedTemplates.map((group) => (
                 <Fragment key={group.category}>
                   <tr className="bg-surface-muted">
-                    <td colSpan={10} className="px-3 py-2 text-xs font-semibold text-text-strong">
+                    <td colSpan={12} className="px-3 py-2 text-xs font-semibold text-text-strong">
                       {getDocumentTemplateCategoryLabel(group.category)} ({group.items.length})
                     </td>
                   </tr>
-                  {group.items.map((template) => (
-                    <tr key={template.id} className="align-top">
+                  {group.items.map((template) => {
+                    const readiness = readinessByTemplateId.get(template.id) ?? buildDocumentTemplateReadiness(template);
+                    const missingCheckLabels = readiness.missingRequiredChecks
+                      .slice(0, 3)
+                      .map((check) => check.labelKo)
+                      .join(", ");
+
+                    return (
+                      <tr key={template.id} className="align-top">
                   <td className="px-3 py-3">
                     <p className="font-semibold text-text-strong">{template.titleKo}</p>
                     <p className="mt-1 text-xs text-text-muted">{template.id}</p>
@@ -277,6 +308,28 @@ export default async function AdminDocumentLabPage({
                   <td className="px-3 py-3 text-text-muted">{formatCanonicalFormats(template)}</td>
                   <td className="px-3 py-3 text-text-muted">
                     {getDocumentTemplateConversionStatusLabel(template.conversionStatus)}
+                  </td>
+                  <td className="px-3 py-3">
+                    <span
+                      className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${
+                        readinessStatusClassName[readiness.status]
+                      }`}
+                    >
+                      {getDocumentTemplateReadinessStatusLabel(readiness.status)}
+                    </span>
+                    {readiness.warnings.length > 0 ? (
+                      <p className="mt-1 text-xs text-text-muted">{readiness.warnings[0]}</p>
+                    ) : null}
+                  </td>
+                  <td className="px-3 py-3 text-text-muted">
+                    <p className="font-semibold text-text-strong">
+                      필수 준비 {readiness.completedCount}/{readiness.requiredCount}
+                    </p>
+                    {missingCheckLabels ? (
+                      <p className="mt-1 text-xs text-text-muted">부족: {missingCheckLabels}</p>
+                    ) : (
+                      <p className="mt-1 text-xs text-text-muted">필수 준비 항목 충족</p>
+                    )}
                   </td>
                   <td className="px-3 py-3">
                     <span
@@ -292,8 +345,9 @@ export default async function AdminDocumentLabPage({
                   <td className="px-3 py-3 text-text-muted">{template.officialSourceName}</td>
                   <td className="px-3 py-3 text-text-muted">{formatDate(template.latestVerifiedAt)}</td>
                   <td className="max-w-xs px-3 py-3 text-text-muted">{template.notesKo}</td>
-                    </tr>
-                  ))}
+                      </tr>
+                    );
+                  })}
                 </Fragment>
               ))}
             </tbody>

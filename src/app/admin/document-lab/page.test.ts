@@ -13,12 +13,24 @@ assert.match(source, /normalizeDocumentTemplateInventoryFilters/);
 assert.match(source, /filterDocumentTemplateInventory/);
 assert.match(source, /groupDocumentTemplatesByCategory/);
 assert.match(source, /buildDocumentTemplateFilterHref/);
+assert.match(source, /buildDocumentTemplateReadiness/);
+assert.match(source, /buildDocumentTemplateReadinessSummary/);
+assert.match(source, /getDocumentTemplateReadinessStatusLabel/);
 assert.match(source, /Inventory filters/);
 assert.match(source, /category/);
 assert.match(source, /risk/);
 assert.match(source, /conversionStatus/);
 assert.match(source, /filteredTemplates\.length/);
 assert.match(source, /groupedTemplates/);
+assert.match(source, /readinessSummary/);
+assert.match(source, /readinessByTemplateId/);
+assert.match(source, /Ready candidate/);
+assert.match(source, /Source needed/);
+assert.match(source, /Conversion test/);
+assert.match(source, /Manual only/);
+assert.match(source, /준비 상태/);
+assert.match(source, /필수 준비/);
+assert.match(source, /부족:/);
 assert.match(source, /조건에 맞는 서식이 없습니다/);
 assert.match(source, /admin review/);
 assert.match(source, /문서 생성 없음/);
@@ -42,6 +54,9 @@ for (const forbidden of [
   "DOCX export 가능",
   "PDF export 가능",
   "Generate",
+  "Generate document",
+  "Upload file",
+  "Download file",
   "customer send",
   "agency submit"
 ]) {
