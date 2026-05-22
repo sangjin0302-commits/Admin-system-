@@ -55,6 +55,14 @@ export type DocumentTemplateSourceVerificationPrioritySummary = {
   statusByRisk: Record<DocumentTemplateRiskLevel, Record<DocumentTemplateOfficialSourceStatus, number>>;
 };
 
+export type DocumentTemplateSourceChecklistReasonBreakdownItem = {
+  reasonId: DocumentTemplateSourceVerificationChecklistItem["id"];
+  labelKo: string;
+  count: number;
+  severity: "info" | "warning" | "critical";
+  href: string;
+};
+
 const priorityRank = {
   urgent: 0,
   high: 1,
@@ -212,6 +220,75 @@ function buildPriorityItem(template: DocumentTemplateInventoryItem): DocumentTem
     reasonLabelKo: getDocumentTemplateSourceVerificationPriorityReasonLabel(template),
     checklist: buildDocumentTemplateSourceVerificationChecklist(template)
   };
+}
+
+const sourceChecklistReasonMeta = {
+  official_source_reference: {
+    labelKo: "공식 출처 확인 필요",
+    severity: "critical",
+    href: "/admin/document-lab?risk=high&sourceStatus=pending"
+  },
+  latest_verified_at: {
+    labelKo: "최신 확인일 필요",
+    severity: "critical",
+    href: "/admin/document-lab?risk=high&sourceStatus=needs_review"
+  },
+  verified_by: {
+    labelKo: "확인자 기록 필요",
+    severity: "warning",
+    href: "/admin/document-lab?risk=high&sourceStatus=needs_review"
+  },
+  verification_memo: {
+    labelKo: "검토 메모 필요",
+    severity: "warning",
+    href: "/admin/document-lab?risk=high&sourceStatus=needs_review"
+  },
+  manual_only: {
+    labelKo: "수동 작성 유지",
+    severity: "info",
+    href: "/admin/document-lab?sourceStatus=manual_only"
+  }
+} satisfies Record<
+  DocumentTemplateSourceVerificationChecklistItem["id"],
+  Omit<DocumentTemplateSourceChecklistReasonBreakdownItem, "reasonId" | "count">
+>;
+
+export function buildDocumentTemplateSourceChecklistReasonBreakdown(
+  items: DocumentTemplateInventoryItem[],
+  limit = 3
+): DocumentTemplateSourceChecklistReasonBreakdownItem[] {
+  const counts = new Map<DocumentTemplateSourceVerificationChecklistItem["id"], number>();
+  const priorityItems = items
+    .map(buildPriorityItem)
+    .filter((item) => item.priority === "urgent" || item.priority === "high");
+
+  for (const priorityItem of priorityItems) {
+    for (const checklistItem of priorityItem.checklist.items) {
+      if (checklistItem.id === "manual_only") continue;
+      if (checklistItem.status === "complete") continue;
+      counts.set(checklistItem.id, (counts.get(checklistItem.id) ?? 0) + 1);
+    }
+  }
+
+  return Object.entries(sourceChecklistReasonMeta)
+    .map(([reasonId, meta]) => ({
+      reasonId: reasonId as DocumentTemplateSourceVerificationChecklistItem["id"],
+      labelKo: meta.labelKo,
+      severity: meta.severity,
+      href: meta.href,
+      count: counts.get(reasonId as DocumentTemplateSourceVerificationChecklistItem["id"]) ?? 0
+    }))
+    .filter((item) => item.count > 0)
+    .sort((left, right) => {
+      const countDelta = right.count - left.count;
+      if (countDelta !== 0) return countDelta;
+      return left.labelKo.localeCompare(right.labelKo);
+    })
+    .slice(0, limit);
+}
+
+export function getTopDocumentTemplateSourceChecklistReasons(items: DocumentTemplateInventoryItem[], limit = 3) {
+  return buildDocumentTemplateSourceChecklistReasonBreakdown(items, limit);
 }
 
 export function buildDocumentTemplateSourceVerificationPriority(

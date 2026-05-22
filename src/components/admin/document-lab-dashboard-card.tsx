@@ -1,7 +1,10 @@
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
-import type { DocumentTemplateSourceVerificationPrioritySummary } from "@/lib/document-templates";
+import type {
+  DocumentTemplateSourceChecklistReasonBreakdownItem,
+  DocumentTemplateSourceVerificationPrioritySummary
+} from "@/lib/document-templates";
 
 type DocumentLabDashboardCardViewModel = {
   urgentCount: number;
@@ -11,14 +14,17 @@ type DocumentLabDashboardCardViewModel = {
   manualOnlyCount: number;
   primaryHref: string;
   topLabels: string[];
+  topMissingReasons: DocumentTemplateSourceChecklistReasonBreakdownItem[];
 };
 
 type DocumentLabDashboardCardProps = {
   summary: DocumentTemplateSourceVerificationPrioritySummary;
+  sourceChecklistReasons: DocumentTemplateSourceChecklistReasonBreakdownItem[];
 };
 
 export function buildDocumentLabDashboardPriorityCardViewModel(
-  summary: DocumentTemplateSourceVerificationPrioritySummary
+  summary: DocumentTemplateSourceVerificationPrioritySummary,
+  sourceChecklistReasons: DocumentTemplateSourceChecklistReasonBreakdownItem[] = []
 ): DocumentLabDashboardCardViewModel {
   return {
     urgentCount: summary.urgentCount,
@@ -27,7 +33,8 @@ export function buildDocumentLabDashboardPriorityCardViewModel(
     pendingCount: summary.pendingCount,
     manualOnlyCount: summary.manualOnlyCount,
     primaryHref: "/admin/document-lab?risk=high&sourceStatus=needs_review",
-    topLabels: summary.topPriorityTemplates.slice(0, 3).map((item) => item.titleKo)
+    topLabels: summary.topPriorityTemplates.slice(0, 3).map((item) => item.titleKo),
+    topMissingReasons: sourceChecklistReasons.slice(0, 3)
   };
 }
 
@@ -40,8 +47,27 @@ function MiniMetric({ label, value }: { label: string; value: number }) {
   );
 }
 
-export function DocumentLabDashboardCard({ summary }: DocumentLabDashboardCardProps) {
-  const viewModel = buildDocumentLabDashboardPriorityCardViewModel(summary);
+function ReasonTone({ reason }: { reason: DocumentTemplateSourceChecklistReasonBreakdownItem }) {
+  const tone =
+    reason.severity === "critical"
+      ? "border-red-200 bg-red-50 text-red-800"
+      : reason.severity === "warning"
+        ? "border-amber-200 bg-amber-50 text-amber-800"
+        : "border-slate-200 bg-slate-50 text-slate-700";
+
+  return (
+    <Link
+      href={reason.href}
+      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold ${tone}`}
+    >
+      <span>{reason.labelKo}</span>
+      <span>{reason.count}건</span>
+    </Link>
+  );
+}
+
+export function DocumentLabDashboardCard({ summary, sourceChecklistReasons }: DocumentLabDashboardCardProps) {
+  const viewModel = buildDocumentLabDashboardPriorityCardViewModel(summary, sourceChecklistReasons);
 
   return (
     <Card className="p-6">
@@ -87,6 +113,19 @@ export function DocumentLabDashboardCard({ summary }: DocumentLabDashboardCardPr
           </p>
         </div>
       )}
+
+      <div className="mt-4 rounded-xl border border-line bg-surface-muted px-3 py-3">
+        <p className="text-sm font-semibold text-text-strong">주요 누락 사유</p>
+        {viewModel.topMissingReasons.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {viewModel.topMissingReasons.map((reason) => (
+              <ReasonTone key={reason.reasonId} reason={reason} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-text-muted">긴급 검토 누락 사유가 없습니다.</p>
+        )}
+      </div>
     </Card>
   );
 }

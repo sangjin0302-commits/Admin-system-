@@ -3,9 +3,11 @@ import assert from "node:assert/strict";
 import { documentTemplateInventory, type DocumentTemplateInventoryItem } from "./document-template-inventory";
 import {
   buildDocumentTemplateSourceVerificationChecklist,
+  buildDocumentTemplateSourceChecklistReasonBreakdown,
   buildDocumentTemplateSourceVerificationPriority,
   getDocumentTemplateSourceVerificationPriority,
   getDocumentTemplateSourceVerificationChecklistSummary,
+  getTopDocumentTemplateSourceChecklistReasons,
   getDocumentTemplateSourceVerificationPriorityReasonLabel,
   groupSourceVerificationStatusByRisk,
   listHighRiskTemplatesNeedingSourceReview
@@ -132,6 +134,21 @@ assert.deepEqual(
   listHighRiskTemplatesNeedingSourceReview(fixtures).map((item) => item.id).sort(),
   ["high_needs_review", "high_pending"]
 );
+
+const reasonBreakdown = buildDocumentTemplateSourceChecklistReasonBreakdown(fixtures, 5);
+const sourceReason = reasonBreakdown.find((item) => item.reasonId === "official_source_reference");
+const latestReason = reasonBreakdown.find((item) => item.reasonId === "latest_verified_at");
+const reviewerReason = reasonBreakdown.find((item) => item.reasonId === "verified_by");
+const memoReason = reasonBreakdown.find((item) => item.reasonId === "verification_memo");
+assert.equal(sourceReason?.labelKo, "공식 출처 확인 필요");
+assert.equal(sourceReason?.count, 3);
+assert.equal(sourceReason?.severity, "critical");
+assert.equal(sourceReason?.href, "/admin/document-lab?risk=high&sourceStatus=pending");
+assert.equal(latestReason?.count, 3);
+assert.equal(reviewerReason?.count, 3);
+assert.equal(memoReason, undefined);
+assert.equal(buildDocumentTemplateSourceChecklistReasonBreakdown([lowVerified], 5).length, 0);
+assert.equal(getTopDocumentTemplateSourceChecklistReasons(fixtures, 2).length, 2);
 
 const emptySummary = buildDocumentTemplateSourceVerificationPriority([]);
 assert.equal(emptySummary.topPriorityTemplates.length, 0);
