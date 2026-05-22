@@ -33,11 +33,11 @@ export type DocumentTemplateInventoryItem = {
   requiredFields: string[];
   optionalFields: string[];
   officialSourceName: string;
-  officialSourceReferenceKo?: string;
+  officialSourceReferenceKo: string;
   latestVerifiedAt: string | null;
-  verifiedBy?: string | null;
-  verificationMemoKo?: string | null;
-  isManualOnly?: boolean;
+  verifiedBy: string | null;
+  verificationMemoKo: string;
+  isManualOnly: boolean;
   notesKo: string;
 };
 
@@ -54,10 +54,11 @@ export const documentTemplateInventory = [
     requiredFields: ["client.name", "client.address", "admin.name", "case.scope", "today"],
     optionalFields: ["client.contact", "case.referenceNo"],
     officialSourceName: "공통 위임장 원본 확인 필요",
-    officialSourceReferenceKo: "공식 원본 확보 전 placeholder",
+    officialSourceReferenceKo: "정부24 또는 제출기관 공식 서식 확인 필요",
     latestVerifiedAt: null,
     verifiedBy: null,
-    verificationMemoKo: "공식 출처 확인 전까지 자동화 후보로 보지 않습니다.",
+    verificationMemoKo: "공식 원본 확보 전 placeholder입니다.",
+    isManualOnly: false,
     notesKo: "공통 사건 패키지의 기본 서식 후보입니다."
   },
   {
@@ -73,6 +74,10 @@ export const documentTemplateInventory = [
     optionalFields: ["client.representativeName"],
     officialSourceName: "개인정보 수집 동의 서식 원본 확인 필요",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "개인정보보호위원회 또는 제출기관 공식 서식 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "공식 서식 검토 및 업무범위/위험 검토 필요합니다.",
+    isManualOnly: false,
     notesKo: "민감정보 처리 전 공식 서식 최신성 확인이 필요합니다."
   },
   {
@@ -88,6 +93,10 @@ export const documentTemplateInventory = [
     optionalFields: ["client.contact", "consultation.channel"],
     officialSourceName: "사무소 내부 상담일지 서식",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "사무소 내부 운영 서식 기준 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "내부 서식 기준과 보관 정책 확인 전입니다.",
+    isManualOnly: false,
     notesKo: "내부 기록용 후보이며 고객 발송 대상이 아닙니다."
   },
   {
@@ -103,6 +112,10 @@ export const documentTemplateInventory = [
     optionalFields: ["assignedTo", "case.note"],
     officialSourceName: "행정사 업무처리부 원본 확인 필요",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "행정사 업무처리부 관련 공식 기준 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "공식 서식 최신성 확인 전입니다.",
+    isManualOnly: false,
     notesKo: "장부/수임관리 데이터와 후속 연결할 수 있는 내부 운영 서식 후보입니다."
   },
   {
@@ -118,6 +131,10 @@ export const documentTemplateInventory = [
     optionalFields: ["case.dispositionDate", "evidenceList"],
     officialSourceName: "행정심판위원회 공식 서식 확인 필요",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "온라인 행정심판 또는 국가법령정보센터 별지서식 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "행정심판 청구서 공식 서식 최신성 확인 전이며 업무범위 및 공식 서식 검토 필요합니다.",
+    isManualOnly: false,
     notesKo: "고위험 문서입니다. 업무범위와 공식 서식 확인 전 생성하지 않습니다."
   },
   {
@@ -133,6 +150,10 @@ export const documentTemplateInventory = [
     optionalFields: ["case.appealDeadline", "evidenceList"],
     officialSourceName: "행정심판 집행정지 공식 서식 확인 필요",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "온라인 행정심판 또는 국가법령정보센터 별지서식 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "집행정지 신청서 공식 서식 최신성 확인 전이며 업무범위 및 공식 서식 검토 필요합니다.",
+    isManualOnly: false,
     notesKo: "긴급성과 법률 검토가 필요한 고위험 문서 후보입니다."
   },
   {
@@ -148,6 +169,10 @@ export const documentTemplateInventory = [
     optionalFields: ["evidenceList", "case.deadline"],
     officialSourceName: "행정심판 보충서면 서식 확인 필요",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "온라인 행정심판 또는 제출기관 공식 제출 서식 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "보충서면 공식 서식 최신성 확인 전이며 업무범위 및 공식 서식 검토 필요합니다.",
+    isManualOnly: false,
     notesKo: "행정심판 패키지 후보입니다. 관리자 검토 전 사용하지 않습니다."
   },
   {
@@ -163,6 +188,10 @@ export const documentTemplateInventory = [
     optionalFields: ["case.title", "client.name"],
     officialSourceName: "사건별 증거목록 서식",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "제출기관 또는 온라인 행정심판 제출 기준 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "공식 서식 최신성 확인 전입니다.",
+    isManualOnly: false,
     notesKo: "반복 필드와 표 구조 검증이 필요합니다."
   },
   {
@@ -178,6 +207,10 @@ export const documentTemplateInventory = [
     optionalFields: ["case.agency", "client.name"],
     officialSourceName: "제출자료목록 내부 서식",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "제출기관 또는 온라인 행정심판 제출 기준 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "공식 서식 최신성 확인 전입니다.",
+    isManualOnly: false,
     notesKo: "제출 전 자료 누락 점검용 후보입니다."
   },
   {
@@ -193,6 +226,10 @@ export const documentTemplateInventory = [
     optionalFields: ["client.address"],
     officialSourceName: "정보공개포털/기관 공식 서식 확인 필요",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "정보공개포털 또는 제출기관 공식 서식 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "공식 서식 최신성 확인 전입니다.",
+    isManualOnly: false,
     notesKo: "공식 별지 최신성 확인 후 후보로 승격합니다."
   },
   {
@@ -208,6 +245,10 @@ export const documentTemplateInventory = [
     optionalFields: ["disclosureRequestNo"],
     officialSourceName: "정보공개 이의신청 공식 서식 확인 필요",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "정보공개포털 또는 국가법령정보센터 별지서식 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "정보공개 이의신청 공식 서식 최신성 확인 전이며 업무범위 및 공식 서식 검토 필요합니다.",
+    isManualOnly: false,
     notesKo: "불복 기한과 처분 내용 검토가 필요한 후보입니다."
   },
   {
@@ -223,6 +264,10 @@ export const documentTemplateInventory = [
     optionalFields: ["case.reasonSummary", "supportingFacts"],
     officialSourceName: "출입국·외국인청 공식 서식 확인 필요",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "하이코리아 또는 법무부/출입국·외국인청 공식 서식 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "통합신청서 공식 서식 최신성 확인 전이며 업무범위 및 공식 서식 검토 필요합니다.",
+    isManualOnly: false,
     notesKo: "출입국 vertical 핵심 후보입니다. 민감 식별정보는 registry에 직접 저장하지 않습니다."
   },
   {
@@ -238,6 +283,10 @@ export const documentTemplateInventory = [
     optionalFields: ["reasonSummary", "supportingFacts"],
     officialSourceName: "출입국·외국인청 공식 서식 확인 필요",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "하이코리아 또는 법무부/출입국·외국인청 공식 서식 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "체류기간 연장 신청서 공식 서식 최신성 확인 전이며 업무범위 및 공식 서식 검토 필요합니다.",
+    isManualOnly: false,
     notesKo: "체류기간과 제출기한 확인이 필요합니다."
   },
   {
@@ -253,6 +302,10 @@ export const documentTemplateInventory = [
     optionalFields: ["reasonSummary", "employmentOrSchoolSummary"],
     officialSourceName: "출입국·외국인청 공식 서식 확인 필요",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "하이코리아 또는 법무부/출입국·외국인청 공식 서식 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "체류자격 변경 신청서 공식 서식 최신성 확인 전이며 업무범위 및 공식 서식 검토 필요합니다.",
+    isManualOnly: false,
     notesKo: "자격 요건 검토 없이 생성하지 않는 후보입니다."
   },
   {
@@ -268,6 +321,10 @@ export const documentTemplateInventory = [
     optionalFields: ["familyInKoreaSummary", "residenceBaseSummary"],
     officialSourceName: "출입국·외국인청 공식 서식 확인 필요",
     latestVerifiedAt: null,
+    officialSourceReferenceKo: "하이코리아 또는 법무부/출입국·외국인청 공식 서식 확인 필요",
+    verifiedBy: null,
+    verificationMemoKo: "난민인정신청서 공식 서식 최신성 확인 전이며 업무범위 및 공식 서식 검토 필요합니다.",
+    isManualOnly: false,
     notesKo: "민감정보 보호와 관리자 검토가 필수인 고위험 후보입니다."
   }
 ] satisfies DocumentTemplateInventoryItem[];
@@ -321,13 +378,14 @@ export function getDocumentTemplateRiskLabel(riskLevel: DocumentTemplateRiskLeve
 export function getDocumentTemplateOfficialSourceStatus(
   item: Pick<
     DocumentTemplateInventoryItem,
-    "officialSourceName" | "latestVerifiedAt" | "conversionStatus" | "isManualOnly"
+    "officialSourceName" | "officialSourceReferenceKo" | "latestVerifiedAt" | "conversionStatus" | "isManualOnly"
   >
 ): DocumentTemplateOfficialSourceStatus {
   if (item.isManualOnly || item.conversionStatus === "manual_only") return "manual_only";
   const hasSourceName = item.officialSourceName.trim().length > 0;
-  if (hasSourceName && item.latestVerifiedAt) return "verified";
-  if (hasSourceName) return "needs_review";
+  const hasSourceReference = item.officialSourceReferenceKo.trim().length > 0;
+  if (hasSourceName && hasSourceReference && item.latestVerifiedAt) return "verified";
+  if (hasSourceName || hasSourceReference) return "needs_review";
   return "pending";
 }
 
