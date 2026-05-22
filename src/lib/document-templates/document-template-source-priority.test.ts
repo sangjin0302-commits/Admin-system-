@@ -5,12 +5,15 @@ import {
   buildDocumentTemplateSourceVerificationChecklist,
   buildDocumentTemplateSourceChecklistReasonBreakdown,
   buildDocumentTemplateSourceVerificationPriority,
+  buildDocumentTemplateSourceVerificationWorkQueue,
   getDocumentTemplateSourceVerificationPriority,
   getDocumentTemplateSourceVerificationChecklistSummary,
   getTopDocumentTemplateSourceChecklistReasons,
+  getDocumentTemplateSourceVerificationWorkQueueReason,
   getDocumentTemplateSourceVerificationPriorityReasonLabel,
   groupSourceVerificationStatusByRisk,
-  listHighRiskTemplatesNeedingSourceReview
+  listHighRiskTemplatesNeedingSourceReview,
+  sortDocumentTemplateSourceVerificationWorkQueue
 } from "./document-template-source-priority";
 
 const base = documentTemplateInventory[0];
@@ -26,6 +29,7 @@ function fixture(overrides: Partial<DocumentTemplateInventoryItem>): DocumentTem
     latestVerifiedAt: overrides.latestVerifiedAt ?? null,
     conversionStatus: overrides.conversionStatus ?? "not_started",
     isManualOnly: overrides.isManualOnly ?? false,
+    verifiedBy: overrides.verifiedBy ?? base.verifiedBy,
     verificationMemoKo: overrides.verificationMemoKo ?? base.verificationMemoKo
   };
 }
@@ -55,7 +59,9 @@ const lowVerified = fixture({
   id: "low_verified",
   titleKo: "낮은 위험 확인",
   riskLevel: "low",
-  latestVerifiedAt: "2026-05-22"
+  latestVerifiedAt: "2026-05-22",
+  verifiedBy: "Admin",
+  verificationMemoKo: "공식 출처와 최신 확인일을 기록했습니다."
 });
 const manualOnly = fixture({
   id: "manual_only",
@@ -68,6 +74,14 @@ const noMemo = fixture({
   id: "no_memo",
   riskLevel: "medium",
   verificationMemoKo: ""
+});
+const highVerifiedMissingDate = fixture({
+  id: "high_verified_missing_date",
+  riskLevel: "high",
+  officialSourceName: "공식 출처 후보",
+  officialSourceReferenceKo: "공식 출처 후보",
+  latestVerifiedAt: null,
+  verifiedBy: "Admin"
 });
 
 assert.equal(getDocumentTemplateSourceVerificationPriority(highPending), "urgent");
@@ -149,6 +163,47 @@ assert.equal(reviewerReason?.count, 3);
 assert.equal(memoReason, undefined);
 assert.equal(buildDocumentTemplateSourceChecklistReasonBreakdown([lowVerified], 5).length, 0);
 assert.equal(getTopDocumentTemplateSourceChecklistReasons(fixtures, 2).length, 2);
+
+const highPendingReasons = getDocumentTemplateSourceVerificationWorkQueueReason(highPending);
+assert.deepEqual(
+  highPendingReasons.map((reason) => reason.id),
+  [
+    "official_source_missing",
+    "latest_verified_at_missing",
+    "verified_by_missing",
+    "high_risk_review_needed"
+  ]
+);
+assert.equal(highPendingReasons[0].labelKo, "공식 출처 확인 필요");
+
+const highNeedsReviewReasons = getDocumentTemplateSourceVerificationWorkQueueReason(highNeedsReview);
+assert.equal(highNeedsReviewReasons.some((reason) => reason.id === "latest_verified_at_missing"), true);
+assert.equal(highNeedsReviewReasons.some((reason) => reason.id === "verified_by_missing"), true);
+assert.equal(highNeedsReviewReasons.some((reason) => reason.id === "high_risk_review_needed"), true);
+
+const noMemoReasons = getDocumentTemplateSourceVerificationWorkQueueReason(noMemo);
+assert.equal(noMemoReasons.some((reason) => reason.id === "verification_memo_missing"), true);
+
+const manualReasons = getDocumentTemplateSourceVerificationWorkQueueReason(manualOnly);
+assert.deepEqual(manualReasons.map((reason) => reason.id), ["manual_only_review"]);
+
+const workQueue = buildDocumentTemplateSourceVerificationWorkQueue(
+  [mediumPending, lowVerified, highNeedsReview, manualOnly, highPending, highVerifiedMissingDate, noMemo],
+  10
+);
+assert.equal(workQueue.some((item) => item.templateId === "low_verified"), false);
+assert.deepEqual(
+  workQueue.slice(0, 3).map((item) => item.templateId),
+  ["high_pending", "high_needs_review", "high_verified_missing_date"]
+);
+assert.equal(workQueue[0].primaryReasonLabelKo, "공식 출처 확인 필요");
+assert.equal(workQueue[0].href, "/admin/document-lab?risk=high&sourceStatus=pending");
+assert.equal(workQueue.find((item) => item.templateId === "manual_only")?.primaryReasonLabelKo, "수동 작성 유지 검토");
+assert.equal(buildDocumentTemplateSourceVerificationWorkQueue([lowVerified]).length, 0);
+assert.deepEqual(
+  sortDocumentTemplateSourceVerificationWorkQueue([...workQueue].reverse()).map((item) => item.templateId),
+  workQueue.map((item) => item.templateId)
+);
 
 const emptySummary = buildDocumentTemplateSourceVerificationPriority([]);
 assert.equal(emptySummary.topPriorityTemplates.length, 0);
