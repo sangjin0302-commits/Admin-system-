@@ -19,6 +19,8 @@ export type DocumentTemplateConversionStatus =
 
 export type DocumentTemplateRiskLevel = "low" | "medium" | "high";
 
+export type DocumentTemplateOfficialSourceStatus = "verified" | "pending" | "needs_review" | "manual_only";
+
 export type DocumentTemplateInventoryItem = {
   id: string;
   titleKo: string;
@@ -31,7 +33,11 @@ export type DocumentTemplateInventoryItem = {
   requiredFields: string[];
   optionalFields: string[];
   officialSourceName: string;
+  officialSourceReferenceKo?: string;
   latestVerifiedAt: string | null;
+  verifiedBy?: string | null;
+  verificationMemoKo?: string | null;
+  isManualOnly?: boolean;
   notesKo: string;
 };
 
@@ -48,7 +54,10 @@ export const documentTemplateInventory = [
     requiredFields: ["client.name", "client.address", "admin.name", "case.scope", "today"],
     optionalFields: ["client.contact", "case.referenceNo"],
     officialSourceName: "공통 위임장 원본 확인 필요",
+    officialSourceReferenceKo: "공식 원본 확보 전 placeholder",
     latestVerifiedAt: null,
+    verifiedBy: null,
+    verificationMemoKo: "공식 출처 확인 전까지 자동화 후보로 보지 않습니다.",
     notesKo: "공통 사건 패키지의 기본 서식 후보입니다."
   },
   {
@@ -307,4 +316,27 @@ export function getDocumentTemplateRiskLabel(riskLevel: DocumentTemplateRiskLeve
     high: "높음"
   };
   return labels[riskLevel];
+}
+
+export function getDocumentTemplateOfficialSourceStatus(
+  item: Pick<
+    DocumentTemplateInventoryItem,
+    "officialSourceName" | "latestVerifiedAt" | "conversionStatus" | "isManualOnly"
+  >
+): DocumentTemplateOfficialSourceStatus {
+  if (item.isManualOnly || item.conversionStatus === "manual_only") return "manual_only";
+  const hasSourceName = item.officialSourceName.trim().length > 0;
+  if (hasSourceName && item.latestVerifiedAt) return "verified";
+  if (hasSourceName) return "needs_review";
+  return "pending";
+}
+
+export function getDocumentTemplateOfficialSourceStatusLabel(status: DocumentTemplateOfficialSourceStatus) {
+  const labels: Record<DocumentTemplateOfficialSourceStatus, string> = {
+    verified: "공식 출처 확인",
+    pending: "공식 출처 미확인",
+    needs_review: "최신성 확인 필요",
+    manual_only: "수동 작성 유지"
+  };
+  return labels[status];
 }

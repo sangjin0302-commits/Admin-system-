@@ -15,6 +15,8 @@ assert.match(source, /groupDocumentTemplatesByCategory/);
 assert.match(source, /buildDocumentTemplateFilterHref/);
 assert.match(source, /buildDocumentTemplateReadiness/);
 assert.match(source, /buildDocumentTemplateReadinessSummary/);
+assert.match(source, /getDocumentTemplateOfficialSourceStatus/);
+assert.match(source, /getDocumentTemplateOfficialSourceStatusLabel/);
 assert.match(source, /getDocumentTemplateReadinessStatusLabel/);
 assert.match(source, /Inventory filters/);
 assert.match(source, /category/);
@@ -31,6 +33,18 @@ assert.match(source, /Manual only/);
 assert.match(source, /준비 상태/);
 assert.match(source, /필수 준비/);
 assert.match(source, /부족:/);
+assert.match(source, /Official source verified/);
+assert.match(source, /Source review/);
+assert.match(source, /Source pending/);
+assert.match(source, /출처 검증/);
+assert.match(source, /공식 출처/);
+assert.match(source, /최신 확인일/);
+assert.match(source, /확인자/);
+assert.match(source, /검토 메모/);
+assert.match(source, /공식 출처 확인/);
+assert.match(source, /공식 출처 미확인/);
+assert.match(source, /최신성 확인 필요/);
+assert.match(source, /수동 작성 유지/);
 assert.match(source, /조건에 맞는 서식이 없습니다/);
 assert.match(source, /admin review/);
 assert.match(source, /문서 생성 없음/);
@@ -58,7 +72,12 @@ for (const forbidden of [
   "Upload file",
   "Download file",
   "customer send",
-  "agency submit"
+  "agency submit",
+  "drive.google.com",
+  "docs.google.com",
+  "C:\\",
+  "/Users/",
+  "/mnt/"
 ]) {
   assert.equal(source.includes(forbidden), false, `Forbidden wording found: ${forbidden}`);
 }

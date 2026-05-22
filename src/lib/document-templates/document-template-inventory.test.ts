@@ -4,6 +4,8 @@ import { join } from "node:path";
 
 import {
   documentTemplateInventory,
+  getDocumentTemplateOfficialSourceStatus,
+  getDocumentTemplateOfficialSourceStatusLabel,
   getDocumentTemplateInventoryItem,
   getHighRiskDocumentTemplates,
   listDocumentTemplateInventory
@@ -60,6 +62,57 @@ const copy = listDocumentTemplateInventory();
 copy.pop();
 assert.equal(documentTemplateInventory.length, expectedIds.length);
 
+const firstTemplate = getDocumentTemplateInventoryItem("common_power_of_attorney");
+assert.equal(firstTemplate?.officialSourceReferenceKo, "공식 원본 확보 전 placeholder");
+assert.equal(firstTemplate?.verifiedBy, null);
+assert.match(firstTemplate?.verificationMemoKo ?? "", /공식 출처 확인 전/);
+
+assert.equal(
+  getDocumentTemplateOfficialSourceStatus({
+    officialSourceName: "공식 출처",
+    latestVerifiedAt: "2026-05-22",
+    conversionStatus: "not_started"
+  }),
+  "verified"
+);
+assert.equal(
+  getDocumentTemplateOfficialSourceStatus({
+    officialSourceName: "공식 출처",
+    latestVerifiedAt: null,
+    conversionStatus: "not_started"
+  }),
+  "needs_review"
+);
+assert.equal(
+  getDocumentTemplateOfficialSourceStatus({
+    officialSourceName: "",
+    latestVerifiedAt: null,
+    conversionStatus: "not_started"
+  }),
+  "pending"
+);
+assert.equal(
+  getDocumentTemplateOfficialSourceStatus({
+    officialSourceName: "수동 서식",
+    latestVerifiedAt: null,
+    conversionStatus: "manual_only"
+  }),
+  "manual_only"
+);
+assert.equal(
+  getDocumentTemplateOfficialSourceStatus({
+    officialSourceName: "수동 서식",
+    latestVerifiedAt: "2026-05-22",
+    conversionStatus: "verified",
+    isManualOnly: true
+  }),
+  "manual_only"
+);
+assert.equal(getDocumentTemplateOfficialSourceStatusLabel("verified"), "공식 출처 확인");
+assert.equal(getDocumentTemplateOfficialSourceStatusLabel("pending"), "공식 출처 미확인");
+assert.equal(getDocumentTemplateOfficialSourceStatusLabel("needs_review"), "최신성 확인 필요");
+assert.equal(getDocumentTemplateOfficialSourceStatusLabel("manual_only"), "수동 작성 유지");
+
 const source = readFileSync(
   join(process.cwd(), "src/lib/document-templates/document-template-inventory.ts"),
   "utf8"
@@ -71,7 +124,15 @@ for (const forbidden of [
   "법률 판단 완료",
   "HWP 생성 가능",
   "DOCX export 가능",
-  "PDF export 가능"
+  "PDF export 가능",
+  "drive.google.com",
+  "docs.google.com",
+  "C:\\",
+  "/Users/",
+  "/mnt/",
+  "passportNumber",
+  "alienRegistrationNumber",
+  "fullAddress"
 ]) {
   assert.equal(source.includes(forbidden), false, `Forbidden wording found: ${forbidden}`);
 }
