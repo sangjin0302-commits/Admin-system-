@@ -1,11 +1,19 @@
 import Link from "next/link";
+import { Fragment } from "react";
 
 import { Card } from "@/components/ui/card";
 import {
+  buildDocumentTemplateFilterHref,
+  filterDocumentTemplateInventory,
   getDocumentTemplateCategoryLabel,
   getDocumentTemplateConversionStatusLabel,
   getDocumentTemplateRiskLabel,
+  groupDocumentTemplatesByCategory,
+  listDocumentTemplateCategories,
+  listDocumentTemplateConversionStatuses,
   listDocumentTemplateInventory,
+  listDocumentTemplateRiskLevels,
+  normalizeDocumentTemplateInventoryFilters,
   type DocumentTemplateInventoryItem,
   type DocumentTemplateRiskLevel
 } from "@/lib/document-templates";
@@ -18,6 +26,9 @@ const riskClassName = {
   high: "border-red-200 bg-red-50 text-red-700"
 } satisfies Record<DocumentTemplateRiskLevel, string>;
 
+const activeFilterClassName = "border-primary bg-primary text-white";
+const idleFilterClassName = "border-line bg-surface text-text hover:border-line-strong hover:bg-surface-muted";
+
 function formatDate(value: string | null) {
   return value ?? "미확인";
 }
@@ -26,8 +37,22 @@ function formatCanonicalFormats(item: DocumentTemplateInventoryItem) {
   return item.canonicalFormatCandidate.map((format) => format.toUpperCase()).join(", ");
 }
 
-export default function AdminDocumentLabPage() {
+function filterLinkClassName(active: boolean) {
+  return `inline-flex h-9 items-center rounded-full border px-3 text-xs font-semibold transition ${
+    active ? activeFilterClassName : idleFilterClassName
+  }`;
+}
+
+export default async function AdminDocumentLabPage({
+  searchParams
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = (await searchParams) ?? {};
   const templates = listDocumentTemplateInventory();
+  const filters = normalizeDocumentTemplateInventoryFilters(params);
+  const filteredTemplates = filterDocumentTemplateInventory(templates, filters);
+  const groupedTemplates = groupDocumentTemplatesByCategory(filteredTemplates);
   const highRiskCount = templates.filter((template) => template.riskLevel === "high").length;
 
   return (
@@ -121,6 +146,100 @@ export default function AdminDocumentLabPage() {
           </p>
         </div>
 
+        <div className="mt-5 space-y-4 rounded-2xl border border-line bg-surface-muted p-4">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-text-strong">Inventory filters</p>
+              <p className="text-xs text-text-muted">
+                {templates.length}개 중 {filteredTemplates.length}개 표시
+              </p>
+            </div>
+            <form action="/admin/document-lab" className="flex flex-col gap-2 sm:flex-row">
+              {filters.category ? <input type="hidden" name="category" value={filters.category} /> : null}
+              {filters.risk ? <input type="hidden" name="risk" value={filters.risk} /> : null}
+              {filters.conversionStatus ? (
+                <input type="hidden" name="conversionStatus" value={filters.conversionStatus} />
+              ) : null}
+              <input
+                name="q"
+                defaultValue={filters.q ?? ""}
+                placeholder="서식명/ID/출처 검색"
+                className="h-9 rounded-full border border-line bg-white px-3 text-sm text-text-strong"
+              />
+              <button
+                type="submit"
+                className="h-9 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-text-strong"
+              >
+                검색
+              </button>
+              <Link href="/admin/document-lab" className={filterLinkClassName(false)}>
+                초기화
+              </Link>
+            </form>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={buildDocumentTemplateFilterHref(filters, { category: null })}
+                className={filterLinkClassName(filters.category === null)}
+              >
+                전체 category
+              </Link>
+              {listDocumentTemplateCategories().map((category) => (
+                <Link
+                  key={category}
+                  href={buildDocumentTemplateFilterHref(filters, { category })}
+                  className={filterLinkClassName(filters.category === category)}
+                >
+                  {getDocumentTemplateCategoryLabel(category)}
+                </Link>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={buildDocumentTemplateFilterHref(filters, { risk: null })}
+                className={filterLinkClassName(filters.risk === null)}
+              >
+                전체 risk
+              </Link>
+              {listDocumentTemplateRiskLevels().map((risk) => (
+                <Link
+                  key={risk}
+                  href={buildDocumentTemplateFilterHref(filters, { risk })}
+                  className={filterLinkClassName(filters.risk === risk)}
+                >
+                  {getDocumentTemplateRiskLabel(risk)}
+                </Link>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={buildDocumentTemplateFilterHref(filters, { conversionStatus: null })}
+                className={filterLinkClassName(filters.conversionStatus === null)}
+              >
+                전체 conversion status
+              </Link>
+              {listDocumentTemplateConversionStatuses().map((conversionStatus) => (
+                <Link
+                  key={conversionStatus}
+                  href={buildDocumentTemplateFilterHref(filters, { conversionStatus })}
+                  className={filterLinkClassName(filters.conversionStatus === conversionStatus)}
+                >
+                  {getDocumentTemplateConversionStatusLabel(conversionStatus)}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {filteredTemplates.length === 0 ? (
+          <Card muted className="mt-5 p-5">
+            <p className="text-sm font-semibold text-text-strong">조건에 맞는 서식이 없습니다.</p>
+            <p className="mt-2 text-sm text-text-muted">필터를 초기화하거나 다른 검색어를 사용하세요.</p>
+          </Card>
+        ) : null}
+
         <div className="mt-5 overflow-x-auto">
           <table className="min-w-full divide-y divide-line text-left text-sm">
             <thead>
@@ -138,8 +257,15 @@ export default function AdminDocumentLabPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {templates.map((template) => (
-                <tr key={template.id} className="align-top">
+              {groupedTemplates.map((group) => (
+                <Fragment key={group.category}>
+                  <tr className="bg-surface-muted">
+                    <td colSpan={10} className="px-3 py-2 text-xs font-semibold text-text-strong">
+                      {getDocumentTemplateCategoryLabel(group.category)} ({group.items.length})
+                    </td>
+                  </tr>
+                  {group.items.map((template) => (
+                    <tr key={template.id} className="align-top">
                   <td className="px-3 py-3">
                     <p className="font-semibold text-text-strong">{template.titleKo}</p>
                     <p className="mt-1 text-xs text-text-muted">{template.id}</p>
@@ -166,7 +292,9 @@ export default function AdminDocumentLabPage() {
                   <td className="px-3 py-3 text-text-muted">{template.officialSourceName}</td>
                   <td className="px-3 py-3 text-text-muted">{formatDate(template.latestVerifiedAt)}</td>
                   <td className="max-w-xs px-3 py-3 text-text-muted">{template.notesKo}</td>
-                </tr>
+                    </tr>
+                  ))}
+                </Fragment>
               ))}
             </tbody>
           </table>
