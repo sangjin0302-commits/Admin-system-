@@ -43,6 +43,12 @@ for (const item of documentTemplateInventory) {
   assert.ok(item.sourceFormat, `${item.id} sourceFormat required`);
   assert.ok(item.conversionStatus, `${item.id} conversionStatus required`);
   assert.ok(item.riskLevel, `${item.id} riskLevel required`);
+  assert.ok(item.officialSourceReferenceKo, `${item.id} officialSourceReferenceKo required`);
+  assert.equal(typeof item.isManualOnly, "boolean", `${item.id} isManualOnly required`);
+  assert.ok(item.verificationMemoKo, `${item.id} verificationMemoKo required`);
+  if (!item.latestVerifiedAt) {
+    assert.equal(getDocumentTemplateOfficialSourceStatus(item) === "verified", false);
+  }
   assert.equal(/\.(hwp|hwpx|docx|pdf|html)$/i.test(item.officialSourceName), false);
   assert.equal(JSON.stringify(item).includes("passportNumber"), false);
   assert.equal(JSON.stringify(item).includes("alienRegistrationNumber"), false);
@@ -57,51 +63,64 @@ assert.ok(highRiskTemplates.every((item) => item.riskLevel === "high"));
 assert.equal(getDocumentTemplateInventoryItem("admin_appeal_petition")?.riskLevel, "high");
 assert.equal(getDocumentTemplateInventoryItem("stay_of_execution_application")?.riskLevel, "high");
 assert.equal(getDocumentTemplateInventoryItem("refugee_status_application")?.riskLevel, "high");
+for (const item of highRiskTemplates) {
+  assert.match(item.verificationMemoKo, /공식 서식 검토/);
+  assert.match(item.verificationMemoKo, /업무범위|위험 검토/);
+}
 
 const copy = listDocumentTemplateInventory();
 copy.pop();
 assert.equal(documentTemplateInventory.length, expectedIds.length);
 
 const firstTemplate = getDocumentTemplateInventoryItem("common_power_of_attorney");
-assert.equal(firstTemplate?.officialSourceReferenceKo, "공식 원본 확보 전 placeholder");
+assert.equal(firstTemplate?.officialSourceReferenceKo, "정부24 또는 제출기관 공식 서식 확인 필요");
 assert.equal(firstTemplate?.verifiedBy, null);
-assert.match(firstTemplate?.verificationMemoKo ?? "", /공식 출처 확인 전/);
+assert.match(firstTemplate?.verificationMemoKo ?? "", /공식 원본 확보 전 placeholder/);
 
 assert.equal(
   getDocumentTemplateOfficialSourceStatus({
     officialSourceName: "공식 출처",
+    officialSourceReferenceKo: "공식 출처 후보",
     latestVerifiedAt: "2026-05-22",
-    conversionStatus: "not_started"
+    conversionStatus: "not_started",
+    isManualOnly: false
   }),
   "verified"
 );
 assert.equal(
   getDocumentTemplateOfficialSourceStatus({
     officialSourceName: "공식 출처",
+    officialSourceReferenceKo: "공식 출처 후보",
     latestVerifiedAt: null,
-    conversionStatus: "not_started"
+    conversionStatus: "not_started",
+    isManualOnly: false
   }),
   "needs_review"
 );
 assert.equal(
   getDocumentTemplateOfficialSourceStatus({
     officialSourceName: "",
+    officialSourceReferenceKo: "",
     latestVerifiedAt: null,
-    conversionStatus: "not_started"
+    conversionStatus: "not_started",
+    isManualOnly: false
   }),
   "pending"
 );
 assert.equal(
   getDocumentTemplateOfficialSourceStatus({
     officialSourceName: "수동 서식",
+    officialSourceReferenceKo: "수동 기준",
     latestVerifiedAt: null,
-    conversionStatus: "manual_only"
+    conversionStatus: "manual_only",
+    isManualOnly: false
   }),
   "manual_only"
 );
 assert.equal(
   getDocumentTemplateOfficialSourceStatus({
     officialSourceName: "수동 서식",
+    officialSourceReferenceKo: "수동 기준",
     latestVerifiedAt: "2026-05-22",
     conversionStatus: "verified",
     isManualOnly: true

@@ -21,7 +21,11 @@ const baseTemplate = {
   requiredFields: ["client.name"],
   optionalFields: ["case.memo"],
   officialSourceName: "QA 공식 출처",
+  officialSourceReferenceKo: "QA 공식 출처 확인 기록",
   latestVerifiedAt: "2026-05-22",
+  verifiedBy: "QA Reviewer",
+  verificationMemoKo: "QA 공식 출처 확인 fixture입니다.",
+  isManualOnly: false,
   notesKo: "QA only"
 } satisfies DocumentTemplateInventoryItem;
 
