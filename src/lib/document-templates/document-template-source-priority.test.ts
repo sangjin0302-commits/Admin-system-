@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 
 import { documentTemplateInventory, type DocumentTemplateInventoryItem } from "./document-template-inventory";
 import {
+  buildDocumentTemplateSourceVerificationChecklist,
   buildDocumentTemplateSourceVerificationPriority,
   getDocumentTemplateSourceVerificationPriority,
+  getDocumentTemplateSourceVerificationChecklistSummary,
   getDocumentTemplateSourceVerificationPriorityReasonLabel,
   groupSourceVerificationStatusByRisk,
   listHighRiskTemplatesNeedingSourceReview
@@ -60,6 +62,11 @@ const manualOnly = fixture({
   conversionStatus: "manual_only",
   isManualOnly: true
 });
+const noMemo = fixture({
+  id: "no_memo",
+  riskLevel: "medium",
+  verificationMemoKo: ""
+});
 
 assert.equal(getDocumentTemplateSourceVerificationPriority(highPending), "urgent");
 assert.equal(getDocumentTemplateSourceVerificationPriority(highNeedsReview), "urgent");
@@ -71,6 +78,30 @@ assert.equal(getDocumentTemplateSourceVerificationPriorityReasonLabel(highPendin
 assert.equal(getDocumentTemplateSourceVerificationPriorityReasonLabel(highNeedsReview), "고위험 서식의 최신성 확인 필요");
 assert.equal(getDocumentTemplateSourceVerificationPriorityReasonLabel(mediumPending), "공식 출처 미확인");
 assert.equal(getDocumentTemplateSourceVerificationPriorityReasonLabel(manualOnly), "수동 작성 유지");
+
+const highNeedsReviewChecklist = buildDocumentTemplateSourceVerificationChecklist(highNeedsReview);
+assert.equal(highNeedsReviewChecklist.totalCount, 5);
+assert.equal(highNeedsReviewChecklist.items.find((item) => item.id === "official_source_reference")?.status, "needs_review");
+assert.equal(highNeedsReviewChecklist.items.find((item) => item.id === "latest_verified_at")?.status, "missing");
+assert.equal(highNeedsReviewChecklist.items.find((item) => item.id === "verified_by")?.status, "missing");
+assert.equal(highNeedsReviewChecklist.items.find((item) => item.id === "verification_memo")?.status, "complete");
+assert.equal(highNeedsReviewChecklist.items.find((item) => item.id === "manual_only")?.valueKo, "아니오");
+assert.equal(getDocumentTemplateSourceVerificationChecklistSummary(highNeedsReview).includes("최신일 확인 필요"), true);
+
+const highPendingChecklist = buildDocumentTemplateSourceVerificationChecklist(highPending);
+assert.equal(highPendingChecklist.items.find((item) => item.id === "official_source_reference")?.status, "missing");
+assert.equal(highPendingChecklist.items.find((item) => item.id === "official_source_reference")?.valueKo, "확인 필요");
+
+const lowVerifiedChecklist = buildDocumentTemplateSourceVerificationChecklist(lowVerified);
+assert.equal(lowVerifiedChecklist.items.find((item) => item.id === "official_source_reference")?.status, "complete");
+assert.equal(lowVerifiedChecklist.items.find((item) => item.id === "latest_verified_at")?.status, "complete");
+
+const manualChecklist = buildDocumentTemplateSourceVerificationChecklist(manualOnly);
+assert.equal(manualChecklist.items.find((item) => item.id === "manual_only")?.status, "complete");
+assert.equal(manualChecklist.items.find((item) => item.id === "manual_only")?.valueKo, "수동 작성 유지");
+
+const noMemoChecklist = buildDocumentTemplateSourceVerificationChecklist(noMemo);
+assert.equal(noMemoChecklist.items.find((item) => item.id === "verification_memo")?.status, "missing");
 
 const fixtures = [mediumPending, lowVerified, highNeedsReview, manualOnly, highPending];
 const summary = buildDocumentTemplateSourceVerificationPriority(fixtures);
@@ -88,6 +119,7 @@ assert.deepEqual(
 );
 assert.equal(summary.topPriorityTemplates[0].priority, "urgent");
 assert.equal(summary.topPriorityTemplates[0].reasonLabelKo, "고위험 서식의 최신성 확인 필요");
+assert.equal(summary.topPriorityTemplates[0].checklist.items.length, 5);
 
 const byRisk = groupSourceVerificationStatusByRisk(fixtures);
 assert.equal(byRisk.high.pending, 1);

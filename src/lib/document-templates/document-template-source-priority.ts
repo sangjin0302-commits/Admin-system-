@@ -10,6 +10,24 @@ import {
 
 export type DocumentTemplateSourceVerificationPriority = "urgent" | "high" | "normal" | "low";
 
+export type DocumentTemplateSourceVerificationChecklistItem = {
+  id:
+    | "official_source_reference"
+    | "latest_verified_at"
+    | "verified_by"
+    | "verification_memo"
+    | "manual_only";
+  labelKo: string;
+  status: "complete" | "missing" | "needs_review";
+  valueKo: string;
+};
+
+export type DocumentTemplateSourceVerificationChecklistSummary = {
+  completeCount: number;
+  totalCount: number;
+  items: DocumentTemplateSourceVerificationChecklistItem[];
+};
+
 export type DocumentTemplateSourceVerificationPriorityItem = {
   id: string;
   titleKo: string;
@@ -20,6 +38,7 @@ export type DocumentTemplateSourceVerificationPriorityItem = {
   sourceStatusLabelKo: string;
   priority: DocumentTemplateSourceVerificationPriority;
   reasonLabelKo: string;
+  checklist: DocumentTemplateSourceVerificationChecklistSummary;
 };
 
 export type DocumentTemplateSourceVerificationPrioritySummary = {
@@ -92,6 +111,72 @@ export function getDocumentTemplateSourceVerificationPriorityReasonLabel(
   return "공식 출처 확인";
 }
 
+function hasText(value: string | null | undefined) {
+  return Boolean(value?.trim());
+}
+
+export function buildDocumentTemplateSourceVerificationChecklist(
+  template: DocumentTemplateInventoryItem
+): DocumentTemplateSourceVerificationChecklistSummary {
+  const sourceStatus = getDocumentTemplateOfficialSourceStatus(template);
+  const hasSourceReference = hasText(template.officialSourceReferenceKo) || hasText(template.officialSourceName);
+  const sourceReferenceStatus = !hasSourceReference
+    ? "missing"
+    : sourceStatus === "verified"
+      ? "complete"
+      : "needs_review";
+
+  const items: DocumentTemplateSourceVerificationChecklistItem[] = [
+    {
+      id: "official_source_reference",
+      labelKo: "공식 출처",
+      status: sourceReferenceStatus,
+      valueKo: template.officialSourceReferenceKo || template.officialSourceName || "확인 필요"
+    },
+    {
+      id: "latest_verified_at",
+      labelKo: "최신일",
+      status: template.latestVerifiedAt ? "complete" : "missing",
+      valueKo: template.latestVerifiedAt ?? "미확인"
+    },
+    {
+      id: "verified_by",
+      labelKo: "확인자",
+      status: hasText(template.verifiedBy) ? "complete" : "missing",
+      valueKo: template.verifiedBy ?? "미확인"
+    },
+    {
+      id: "verification_memo",
+      labelKo: "메모",
+      status: hasText(template.verificationMemoKo) ? "complete" : "missing",
+      valueKo: template.verificationMemoKo || "확인 필요"
+    },
+    {
+      id: "manual_only",
+      labelKo: "수동",
+      status: template.isManualOnly ? "complete" : "missing",
+      valueKo: template.isManualOnly ? "수동 작성 유지" : "아니오"
+    }
+  ];
+
+  return {
+    completeCount: items.filter((item) => item.status === "complete").length,
+    totalCount: items.length,
+    items
+  };
+}
+
+export function getDocumentTemplateSourceVerificationChecklistSummary(
+  template: DocumentTemplateInventoryItem
+): string {
+  const checklist = buildDocumentTemplateSourceVerificationChecklist(template);
+  return checklist.items
+    .filter((item) => item.status !== "complete")
+    .slice(0, 3)
+    .map((item) => `${item.labelKo} ${item.status === "needs_review" ? "검토 필요" : "확인 필요"}`)
+    .join(" · ");
+}
+
 export function listHighRiskTemplatesNeedingSourceReview(items: DocumentTemplateInventoryItem[]) {
   return items.filter((template) => {
     const sourceStatus = getDocumentTemplateOfficialSourceStatus(template);
@@ -124,7 +209,8 @@ function buildPriorityItem(template: DocumentTemplateInventoryItem): DocumentTem
     sourceStatus,
     sourceStatusLabelKo: getDocumentTemplateOfficialSourceStatusLabel(sourceStatus),
     priority: getDocumentTemplateSourceVerificationPriority(template),
-    reasonLabelKo: getDocumentTemplateSourceVerificationPriorityReasonLabel(template)
+    reasonLabelKo: getDocumentTemplateSourceVerificationPriorityReasonLabel(template),
+    checklist: buildDocumentTemplateSourceVerificationChecklist(template)
   };
 }
 
