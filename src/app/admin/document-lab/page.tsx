@@ -9,6 +9,8 @@ import {
   filterDocumentTemplateInventory,
   getDocumentTemplateCategoryLabel,
   getDocumentTemplateConversionStatusLabel,
+  getDocumentTemplateOfficialSourceStatus,
+  getDocumentTemplateOfficialSourceStatusLabel,
   getDocumentTemplateRiskLabel,
   getDocumentTemplateReadinessStatusLabel,
   groupDocumentTemplatesByCategory,
@@ -18,6 +20,7 @@ import {
   listDocumentTemplateRiskLevels,
   normalizeDocumentTemplateInventoryFilters,
   type DocumentTemplateInventoryItem,
+  type DocumentTemplateOfficialSourceStatus,
   type DocumentTemplateReadinessStatus,
   type DocumentTemplateRiskLevel
 } from "@/lib/document-templates";
@@ -40,11 +43,22 @@ const readinessStatusClassName = {
   manual_only: "border-slate-200 bg-slate-50 text-slate-700"
 } satisfies Record<DocumentTemplateReadinessStatus, string>;
 
+const officialSourceStatusClassName = {
+  verified: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  pending: "border-slate-200 bg-slate-50 text-slate-700",
+  needs_review: "border-amber-200 bg-amber-50 text-amber-800",
+  manual_only: "border-slate-200 bg-slate-50 text-slate-700"
+} satisfies Record<DocumentTemplateOfficialSourceStatus, string>;
+
 const activeFilterClassName = "border-primary bg-primary text-white";
 const idleFilterClassName = "border-line bg-surface text-text hover:border-line-strong hover:bg-surface-muted";
 
 function formatDate(value: string | null) {
   return value ?? "미확인";
+}
+
+function formatOptionalText(value: string | null | undefined) {
+  return value?.trim() || "미확인";
 }
 
 function formatCanonicalFormats(item: DocumentTemplateInventoryItem) {
@@ -70,6 +84,17 @@ export default async function AdminDocumentLabPage({
   const readinessSummary = buildDocumentTemplateReadinessSummary(templates);
   const readinessByTemplateId = new Map(
     filteredTemplates.map((template) => [template.id, buildDocumentTemplateReadiness(template)])
+  );
+  const officialSourceStatusSummary = templates.reduce(
+    (summary, template) => {
+      const status = getDocumentTemplateOfficialSourceStatus(template);
+      summary[status] += 1;
+      return summary;
+    },
+    { verified: 0, pending: 0, needs_review: 0, manual_only: 0 } satisfies Record<
+      DocumentTemplateOfficialSourceStatus,
+      number
+    >
   );
 
   return (
@@ -126,6 +151,29 @@ export default async function AdminDocumentLabPage({
         <Card className="p-4">
           <p className="text-xs font-semibold text-text-muted">Manual only</p>
           <p className="mt-2 text-2xl font-bold text-text-strong">{readinessSummary.manualOnlyCount}</p>
+          <p className="mt-1 text-xs text-text-muted">수동 작성 유지</p>
+        </Card>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-4">
+        <Card className="p-4">
+          <p className="text-xs font-semibold text-text-muted">Official source verified</p>
+          <p className="mt-2 text-2xl font-bold text-text-strong">{officialSourceStatusSummary.verified}</p>
+          <p className="mt-1 text-xs text-text-muted">공식 출처 확인</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs font-semibold text-text-muted">Source review</p>
+          <p className="mt-2 text-2xl font-bold text-text-strong">{officialSourceStatusSummary.needs_review}</p>
+          <p className="mt-1 text-xs text-text-muted">최신성 확인 필요</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs font-semibold text-text-muted">Source pending</p>
+          <p className="mt-2 text-2xl font-bold text-text-strong">{officialSourceStatusSummary.pending}</p>
+          <p className="mt-1 text-xs text-text-muted">공식 출처 미확인</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs font-semibold text-text-muted">Manual only</p>
+          <p className="mt-2 text-2xl font-bold text-text-strong">{officialSourceStatusSummary.manual_only}</p>
           <p className="mt-1 text-xs text-text-muted">수동 작성 유지</p>
         </Card>
       </div>
@@ -273,10 +321,13 @@ export default async function AdminDocumentLabPage({
                 <th className="px-3 py-3">변환 상태</th>
                 <th className="px-3 py-3">준비 상태</th>
                 <th className="px-3 py-3">체크리스트</th>
+                <th className="px-3 py-3">출처 검증</th>
                 <th className="px-3 py-3">위험도</th>
                 <th className="px-3 py-3">필수값</th>
                 <th className="px-3 py-3">공식 출처</th>
-                <th className="px-3 py-3">확인일</th>
+                <th className="px-3 py-3">최신 확인일</th>
+                <th className="px-3 py-3">확인자</th>
+                <th className="px-3 py-3">검토 메모</th>
                 <th className="px-3 py-3">메모</th>
               </tr>
             </thead>
@@ -284,12 +335,13 @@ export default async function AdminDocumentLabPage({
               {groupedTemplates.map((group) => (
                 <Fragment key={group.category}>
                   <tr className="bg-surface-muted">
-                    <td colSpan={12} className="px-3 py-2 text-xs font-semibold text-text-strong">
+                    <td colSpan={15} className="px-3 py-2 text-xs font-semibold text-text-strong">
                       {getDocumentTemplateCategoryLabel(group.category)} ({group.items.length})
                     </td>
                   </tr>
                   {group.items.map((template) => {
                     const readiness = readinessByTemplateId.get(template.id) ?? buildDocumentTemplateReadiness(template);
+                    const officialSourceStatus = getDocumentTemplateOfficialSourceStatus(template);
                     const missingCheckLabels = readiness.missingRequiredChecks
                       .slice(0, 3)
                       .map((check) => check.labelKo)
@@ -333,6 +385,18 @@ export default async function AdminDocumentLabPage({
                   </td>
                   <td className="px-3 py-3">
                     <span
+                      className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${
+                        officialSourceStatusClassName[officialSourceStatus]
+                      }`}
+                    >
+                      {getDocumentTemplateOfficialSourceStatusLabel(officialSourceStatus)}
+                    </span>
+                    {officialSourceStatus === "manual_only" ? (
+                      <p className="mt-1 text-xs text-text-muted">manual-only</p>
+                    ) : null}
+                  </td>
+                  <td className="px-3 py-3">
+                    <span
                       className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${riskClassName[template.riskLevel]}`}
                     >
                       {getDocumentTemplateRiskLabel(template.riskLevel)}
@@ -342,8 +406,17 @@ export default async function AdminDocumentLabPage({
                     ) : null}
                   </td>
                   <td className="px-3 py-3 text-text-muted">{template.requiredFields.length}개</td>
-                  <td className="px-3 py-3 text-text-muted">{template.officialSourceName}</td>
+                  <td className="px-3 py-3 text-text-muted">
+                    <p>{template.officialSourceName || "공식 출처 미확인"}</p>
+                    {template.officialSourceReferenceKo ? (
+                      <p className="mt-1 text-xs text-text-muted">{template.officialSourceReferenceKo}</p>
+                    ) : null}
+                  </td>
                   <td className="px-3 py-3 text-text-muted">{formatDate(template.latestVerifiedAt)}</td>
+                  <td className="px-3 py-3 text-text-muted">{formatOptionalText(template.verifiedBy)}</td>
+                  <td className="max-w-xs px-3 py-3 text-text-muted">
+                    {formatOptionalText(template.verificationMemoKo)}
+                  </td>
                   <td className="max-w-xs px-3 py-3 text-text-muted">{template.notesKo}</td>
                       </tr>
                     );
