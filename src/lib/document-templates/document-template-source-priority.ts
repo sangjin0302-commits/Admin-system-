@@ -63,6 +63,33 @@ export type DocumentTemplateSourceChecklistReasonBreakdownItem = {
   href: string;
 };
 
+export type DocumentTemplateSourceVerificationWorkQueueReasonId =
+  | "official_source_missing"
+  | "latest_verified_at_missing"
+  | "verified_by_missing"
+  | "verification_memo_missing"
+  | "high_risk_review_needed"
+  | "manual_only_review";
+
+export type DocumentTemplateSourceVerificationWorkQueueReason = {
+  id: DocumentTemplateSourceVerificationWorkQueueReasonId;
+  labelKo: string;
+};
+
+export type DocumentTemplateSourceVerificationWorkQueueItem = {
+  templateId: string;
+  titleKo: string;
+  category: DocumentTemplateCategory;
+  categoryLabelKo: string;
+  riskLevel: DocumentTemplateRiskLevel;
+  sourceStatus: DocumentTemplateOfficialSourceStatus;
+  sourceStatusLabelKo: string;
+  priority: DocumentTemplateSourceVerificationPriority;
+  missingReasons: DocumentTemplateSourceVerificationWorkQueueReason[];
+  primaryReasonLabelKo: string;
+  href: string;
+};
+
 const priorityRank = {
   urgent: 0,
   high: 1,
@@ -289,6 +316,112 @@ export function buildDocumentTemplateSourceChecklistReasonBreakdown(
 
 export function getTopDocumentTemplateSourceChecklistReasons(items: DocumentTemplateInventoryItem[], limit = 3) {
   return buildDocumentTemplateSourceChecklistReasonBreakdown(items, limit);
+}
+
+function sourceStatusHref(
+  sourceStatus: DocumentTemplateOfficialSourceStatus,
+  riskLevel: DocumentTemplateRiskLevel
+) {
+  if (sourceStatus === "manual_only") return "/admin/document-lab?sourceStatus=manual_only";
+  if (riskLevel === "high" && sourceStatus === "pending") {
+    return "/admin/document-lab?risk=high&sourceStatus=pending";
+  }
+  if (riskLevel === "high" && sourceStatus === "needs_review") {
+    return "/admin/document-lab?risk=high&sourceStatus=needs_review";
+  }
+  if (sourceStatus === "pending") return "/admin/document-lab?sourceStatus=pending";
+  if (sourceStatus === "needs_review") return "/admin/document-lab?sourceStatus=needs_review";
+  return "/admin/document-lab";
+}
+
+export function getDocumentTemplateSourceVerificationWorkQueueReason(
+  template: DocumentTemplateInventoryItem
+): DocumentTemplateSourceVerificationWorkQueueReason[] {
+  const sourceStatus = getDocumentTemplateOfficialSourceStatus(template);
+  if (sourceStatus === "manual_only") {
+    return [{ id: "manual_only_review", labelKo: "수동 작성 유지 검토" }];
+  }
+
+  const checklist = buildDocumentTemplateSourceVerificationChecklist(template);
+  const checklistById = new Map(checklist.items.map((item) => [item.id, item]));
+  const reasons: DocumentTemplateSourceVerificationWorkQueueReason[] = [];
+
+  if (checklistById.get("official_source_reference")?.status === "missing") {
+    reasons.push({ id: "official_source_missing", labelKo: "공식 출처 확인 필요" });
+  }
+  if (checklistById.get("latest_verified_at")?.status === "missing") {
+    reasons.push({ id: "latest_verified_at_missing", labelKo: "최신 확인일 필요" });
+  }
+  if (checklistById.get("verified_by")?.status === "missing") {
+    reasons.push({ id: "verified_by_missing", labelKo: "확인자 기록 필요" });
+  }
+  if (checklistById.get("verification_memo")?.status === "missing") {
+    reasons.push({ id: "verification_memo_missing", labelKo: "검토 메모 필요" });
+  }
+  if (template.riskLevel === "high" && (sourceStatus === "pending" || sourceStatus === "needs_review")) {
+    reasons.push({ id: "high_risk_review_needed", labelKo: "고위험 서식 검토 필요" });
+  }
+
+  return reasons;
+}
+
+function workQueueSortRank(item: DocumentTemplateSourceVerificationWorkQueueItem) {
+  if (item.riskLevel === "high" && item.sourceStatus === "pending") return 0;
+  if (item.riskLevel === "high" && item.sourceStatus === "needs_review") return 10;
+  if (
+    item.riskLevel === "high" &&
+    item.missingReasons.some((reason) => reason.id === "latest_verified_at_missing")
+  ) {
+    return 20;
+  }
+  if (item.riskLevel === "medium" && (item.sourceStatus === "pending" || item.sourceStatus === "needs_review")) {
+    return 30;
+  }
+  if (item.missingReasons.some((reason) => reason.id === "verified_by_missing")) return 40;
+  if (item.sourceStatus === "manual_only") return 60;
+  return 70;
+}
+
+export function sortDocumentTemplateSourceVerificationWorkQueue(
+  items: DocumentTemplateSourceVerificationWorkQueueItem[]
+) {
+  return [...items].sort((left, right) => {
+    const rankDelta = workQueueSortRank(left) - workQueueSortRank(right);
+    if (rankDelta !== 0) return rankDelta;
+    const priorityDelta = priorityRank[left.priority] - priorityRank[right.priority];
+    if (priorityDelta !== 0) return priorityDelta;
+    const riskDelta = riskRank[left.riskLevel] - riskRank[right.riskLevel];
+    if (riskDelta !== 0) return riskDelta;
+    return left.templateId.localeCompare(right.templateId);
+  });
+}
+
+export function buildDocumentTemplateSourceVerificationWorkQueue(
+  items: DocumentTemplateInventoryItem[],
+  limit = 8
+): DocumentTemplateSourceVerificationWorkQueueItem[] {
+  const queueItems = items.flatMap((template) => {
+    const missingReasons = getDocumentTemplateSourceVerificationWorkQueueReason(template);
+    if (missingReasons.length === 0) return [];
+    const sourceStatus = getDocumentTemplateOfficialSourceStatus(template);
+    return [
+      {
+        templateId: template.id,
+        titleKo: template.titleKo,
+        category: template.category,
+        categoryLabelKo: getDocumentTemplateCategoryLabel(template.category),
+        riskLevel: template.riskLevel,
+        sourceStatus,
+        sourceStatusLabelKo: getDocumentTemplateOfficialSourceStatusLabel(sourceStatus),
+        priority: getDocumentTemplateSourceVerificationPriority(template),
+        missingReasons,
+        primaryReasonLabelKo: missingReasons[0].labelKo,
+        href: sourceStatusHref(sourceStatus, template.riskLevel)
+      }
+    ];
+  });
+
+  return sortDocumentTemplateSourceVerificationWorkQueue(queueItems).slice(0, limit);
 }
 
 export function buildDocumentTemplateSourceVerificationPriority(
