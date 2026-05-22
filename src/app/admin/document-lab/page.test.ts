@@ -16,6 +16,7 @@ assert.match(source, /buildDocumentTemplateFilterHref/);
 assert.match(source, /buildDocumentTemplateSourceStatusFilterOptions/);
 assert.match(source, /buildDocumentTemplateReadiness/);
 assert.match(source, /buildDocumentTemplateReadinessSummary/);
+assert.match(source, /buildDocumentTemplateSourceVerificationPriority/);
 assert.match(source, /getDocumentTemplateOfficialSourceStatus/);
 assert.match(source, /getDocumentTemplateOfficialSourceStatusLabel/);
 assert.match(source, /getDocumentTemplateReadinessStatusLabel/);
@@ -41,6 +42,19 @@ assert.match(source, /부족:/);
 assert.match(source, /Official source verified/);
 assert.match(source, /Source review/);
 assert.match(source, /Source pending/);
+assert.match(source, /Official source priority/);
+assert.match(source, /공식 출처 검토 우선순위/);
+assert.match(source, /sourcePrioritySummary/);
+assert.match(source, /topPriorityTemplates/);
+assert.match(source, /고위험 최신성 확인/);
+assert.match(source, /고위험 출처 미확인/);
+assert.match(source, /긴급 검토/);
+assert.match(source, /고위험 미확인/);
+assert.match(source, /우선 검토 대상/);
+assert.match(source, /우선 검토 대상 서식이 없습니다/);
+assert.match(source, /Risk별 출처 상태/);
+assert.match(source, /risk: "high", sourceStatus: "needs_review"/);
+assert.match(source, /risk: "high", sourceStatus: "pending"/);
 assert.match(source, /출처 검증/);
 assert.match(source, /공식 출처/);
 assert.match(source, /최신 확인일/);
@@ -79,6 +93,8 @@ for (const forbidden of [
   "Download file",
   "customer send",
   "agency submit",
+  "생성 가능",
+  "제출 가능",
   "drive.google.com",
   "docs.google.com",
   "C:\\",
