@@ -6,6 +6,7 @@ import {
   buildDocumentTemplateFilterHref,
   buildDocumentTemplateReadiness,
   buildDocumentTemplateReadinessSummary,
+  buildDocumentTemplateSourceStatusFilterOptions,
   filterDocumentTemplateInventory,
   getDocumentTemplateCategoryLabel,
   getDocumentTemplateConversionStatusLabel,
@@ -18,7 +19,6 @@ import {
   listDocumentTemplateConversionStatuses,
   listDocumentTemplateInventory,
   listDocumentTemplateRiskLevels,
-  listDocumentTemplateSourceStatuses,
   normalizeDocumentTemplateInventoryFilters,
   type DocumentTemplateInventoryItem,
   type DocumentTemplateOfficialSourceStatus,
@@ -82,6 +82,7 @@ export default async function AdminDocumentLabPage({
   const filters = normalizeDocumentTemplateInventoryFilters(params);
   const filteredTemplates = filterDocumentTemplateInventory(templates, filters);
   const groupedTemplates = groupDocumentTemplatesByCategory(filteredTemplates);
+  const sourceStatusFilterOptions = buildDocumentTemplateSourceStatusFilterOptions(templates, filters);
   const readinessSummary = buildDocumentTemplateReadinessSummary(templates);
   const readinessByTemplateId = new Map(
     filteredTemplates.map((template) => [template.id, buildDocumentTemplateReadiness(template)])
@@ -303,19 +304,20 @@ export default async function AdminDocumentLabPage({
               ))}
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link
-                href={buildDocumentTemplateFilterHref(filters, { sourceStatus: null })}
-                className={filterLinkClassName(filters.sourceStatus === null)}
-              >
-                전체 source status
-              </Link>
-              {listDocumentTemplateSourceStatuses().map((sourceStatus) => (
+              {sourceStatusFilterOptions.map((option) => (
                 <Link
-                  key={sourceStatus}
-                  href={buildDocumentTemplateFilterHref(filters, { sourceStatus })}
-                  className={filterLinkClassName(filters.sourceStatus === sourceStatus)}
+                  key={option.sourceStatus ?? "all"}
+                  href={option.href}
+                  className={filterLinkClassName(option.isActive)}
                 >
-                  {getDocumentTemplateOfficialSourceStatusLabel(sourceStatus)}
+                  <span>{option.labelKo}</span>
+                  <span
+                    className={`ml-2 rounded-full px-2 py-0.5 text-[11px] ${
+                      option.isActive ? "bg-white/20 text-white" : "bg-surface text-text-muted"
+                    }`}
+                  >
+                    {option.count}
+                  </span>
                 </Link>
               ))}
             </div>

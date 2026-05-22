@@ -1,6 +1,7 @@
 import {
   documentTemplateInventory,
   getDocumentTemplateOfficialSourceStatus,
+  getDocumentTemplateOfficialSourceStatusLabel,
   type DocumentTemplateCategory,
   type DocumentTemplateConversionStatus,
   type DocumentTemplateInventoryItem,
@@ -16,6 +17,14 @@ export type DocumentTemplateInventoryFilters = {
   conversionStatus: DocumentTemplateConversionStatus | null;
   sourceStatus: DocumentTemplateSourceStatusFilter | null;
   q: string | null;
+};
+
+export type DocumentTemplateSourceStatusFilterOption = {
+  sourceStatus: DocumentTemplateSourceStatusFilter | null;
+  labelKo: string;
+  count: number;
+  href: string;
+  isActive: boolean;
 };
 
 export const allDocumentTemplateCategoryValues = [
@@ -122,6 +131,49 @@ export function filterDocumentTemplateInventory(
       .toLocaleLowerCase("ko-KR")
       .includes(query);
   });
+}
+
+export function countDocumentTemplatesBySourceStatus(
+  items: DocumentTemplateInventoryItem[] = documentTemplateInventory,
+  filters: DocumentTemplateInventoryFilters
+): Record<DocumentTemplateSourceStatusFilter | "all", number> {
+  const baseItems = filterDocumentTemplateInventory(items, { ...filters, sourceStatus: null });
+  const counts = {
+    all: baseItems.length,
+    verified: 0,
+    needs_review: 0,
+    pending: 0,
+    manual_only: 0
+  } satisfies Record<DocumentTemplateSourceStatusFilter | "all", number>;
+
+  for (const item of baseItems) {
+    counts[getDocumentTemplateOfficialSourceStatus(item)] += 1;
+  }
+
+  return counts;
+}
+
+export function buildDocumentTemplateSourceStatusFilterOptions(
+  items: DocumentTemplateInventoryItem[] = documentTemplateInventory,
+  filters: DocumentTemplateInventoryFilters
+): DocumentTemplateSourceStatusFilterOption[] {
+  const counts = countDocumentTemplatesBySourceStatus(items, filters);
+  return [
+    {
+      sourceStatus: null,
+      labelKo: "전체 source status",
+      count: counts.all,
+      href: buildDocumentTemplateFilterHref(filters, { sourceStatus: null }),
+      isActive: filters.sourceStatus === null
+    },
+    ...listDocumentTemplateSourceStatuses().map((sourceStatus) => ({
+      sourceStatus,
+      labelKo: getDocumentTemplateOfficialSourceStatusLabel(sourceStatus),
+      count: counts[sourceStatus],
+      href: buildDocumentTemplateFilterHref(filters, { sourceStatus }),
+      isActive: filters.sourceStatus === sourceStatus
+    }))
+  ];
 }
 
 export function groupDocumentTemplatesByCategory(items: DocumentTemplateInventoryItem[]) {

@@ -5,7 +5,9 @@ import {
   getDocumentTemplateOfficialSourceStatus
 } from "./document-template-inventory";
 import {
+  buildDocumentTemplateSourceStatusFilterOptions,
   buildDocumentTemplateFilterHref,
+  countDocumentTemplatesBySourceStatus,
   filterDocumentTemplateInventory,
   groupDocumentTemplatesByCategory,
   listDocumentTemplateCategories,
@@ -148,6 +150,50 @@ assert.equal(
   ).length > 0,
   true
 );
+
+const sourceStatusCounts = countDocumentTemplatesBySourceStatus(
+  sourceStatusFixtures,
+  normalizeDocumentTemplateInventoryFilters({ sourceStatus: "needs_review" })
+);
+assert.deepEqual(sourceStatusCounts, {
+  all: 4,
+  verified: 1,
+  needs_review: 1,
+  pending: 1,
+  manual_only: 1
+});
+
+const immigrationSourceStatusCounts = countDocumentTemplatesBySourceStatus(
+  documentTemplateInventory,
+  normalizeDocumentTemplateInventoryFilters({ category: "immigration" })
+);
+assert.equal(immigrationSourceStatusCounts.all, 4);
+assert.equal(immigrationSourceStatusCounts.needs_review, 4);
+
+const querySourceStatusCounts = countDocumentTemplatesBySourceStatus(
+  sourceStatusFixtures,
+  normalizeDocumentTemplateInventoryFilters({ q: "verified_fixture" })
+);
+assert.equal(querySourceStatusCounts.all, 1);
+assert.equal(querySourceStatusCounts.verified, 1);
+assert.equal(querySourceStatusCounts.needs_review, 0);
+
+const sourceStatusOptions = buildDocumentTemplateSourceStatusFilterOptions(
+  sourceStatusFixtures,
+  normalizeDocumentTemplateInventoryFilters({ sourceStatus: "needs_review", category: "common" })
+);
+assert.equal(sourceStatusOptions.length, 5);
+assert.equal(sourceStatusOptions[0].labelKo, "전체 source status");
+assert.equal(sourceStatusOptions[0].count, 4);
+assert.equal(sourceStatusOptions.find((option) => option.sourceStatus === "needs_review")?.isActive, true);
+assert.equal(sourceStatusOptions.find((option) => option.sourceStatus === "pending")?.count, 1);
+assert.equal(sourceStatusOptions.find((option) => option.sourceStatus === "pending")?.href.includes("category=common"), true);
+
+const zeroCountOptions = buildDocumentTemplateSourceStatusFilterOptions(
+  [verifiedFixture],
+  normalizeDocumentTemplateInventoryFilters({})
+);
+assert.equal(zeroCountOptions.find((option) => option.sourceStatus === "pending")?.count, 0);
 
 const href = buildDocumentTemplateFilterHref(
   normalizeDocumentTemplateInventoryFilters({ sourceStatus: "needs_review", category: "immigration", q: "통합" }),
