@@ -7,9 +7,14 @@ import {
 } from "@/components/admin/dashboard-shared";
 import { CaseAccountingDashboardCard } from "@/components/admin/case-accounting-dashboard-card";
 import { CaseMatterActionSummaryCard } from "@/components/admin/case-matter-action-summary-card";
+import { DocumentLabDashboardCard } from "@/components/admin/document-lab-dashboard-card";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
+import {
+  buildDocumentTemplateSourceVerificationPriority,
+  listDocumentTemplateInventory
+} from "@/lib/document-templates";
 import { prisma } from "@/lib/prisma/client";
 import { buildAdminDashboardPageData } from "@/lib/services/admin-dashboard-page-data";
 import {
@@ -171,6 +176,7 @@ export default async function AdminDashboardContent() {
     5
   );
   const caseAccountingSummary = buildCaseAccountingSummaryViewModel(caseAccountingRows);
+  const documentLabPrioritySummary = buildDocumentTemplateSourceVerificationPriority(listDocumentTemplateInventory());
 
   const {
     checklistCoverageCount,
@@ -349,6 +355,8 @@ export default async function AdminDashboardContent() {
       <CaseMatterActionSummaryCard summary={caseMatterActionSummary} locale="ko" />
 
       <CaseAccountingDashboardCard summary={caseAccountingSummary} />
+
+      <DocumentLabDashboardCard summary={documentLabPrioritySummary} />
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="p-6">
