@@ -78,8 +78,11 @@ Admin-system의 목적은 AI가 행정사를 대체하는 것이 아니라, 행�
    - CSV/Excel export
    - 종결/비고/수임료 반영
 
-7. 문서 템플릿/DOCX/PDF 자동작성
+7. 문서 템플릿/HWP-HWPX-aware 자동화
    - template registry
+   - HWP/HWPX first-class requirement
+   - HWP source asset 보존
+   - HWPX/DOCX/HTML runtime template 후보 검증
    - 위임장
    - 개인정보동의서
    - 사실확인서
@@ -88,8 +91,8 @@ Admin-system의 목적은 AI가 행정사를 대체하는 것이 아니라, 행�
    - 정보공개청구서
    - admin-only preview
    - approval flow
-   - DOCX/PDF export
-   - HWP compatibility는 장기 과제
+   - DOCX는 내부 편집/검토 보조 포맷
+   - PDF는 preview/final archive/export 포맷
 
 8. 보안/권한/감사로그/보존/파기
    - 관리자 계정 체계
@@ -176,11 +179,14 @@ Admin-system의 최우선 전문 업무영역은 출입국·체류·강제퇴거
 
 ### 자동작성 원칙
 
-- admin-only preview 먼저 구현한다.
+- HWP/HWPX는 장기 과제가 아니라 공공서식 자동화의 first-class requirement다.
+- HWP 원본은 source asset으로 보존한다.
+- HWPX/DOCX/HTML 중 검증된 포맷만 runtime template 후보로 둔다.
+- DOCX는 내부 편집/검토 보조 포맷으로 사용한다.
+- PDF는 preview/final archive/export 포맷으로 사용한다.
+- admin-only preview를 먼저 검증한다.
 - 고객 발송 전 관리자 검토를 필수로 한다.
 - 기관 제출 자동화는 하지 않는다.
-- DOCX/PDF export를 먼저 검토한다.
-- HWP 호환은 장기 과제로 둔다.
 - 공식 서식과 제출기관 기준은 항상 최신 여부를 확인한다.
 
 ### 안전장치
@@ -203,9 +209,10 @@ Admin-system의 최우선 전문 업무영역은 출입국·체류·강제퇴거
 4. 행정심판/강제퇴거 checklist
 5. 문서 template registry
 6. admin-only 문서 초안 preview
-7. DOCX/PDF export
-8. 파일 보안/업로드
-9. 고객 자료제출 portal
+7. HWP/HWPX-aware template pipeline
+8. DOCX/PDF preview/archive/export
+9. 파일 보안/업로드
+10. 고객 자료제출 portal
 
 ## 4. Ideal Case Card
 
@@ -260,15 +267,26 @@ Admin-system의 최우선 전문 업무영역은 출입국·체류·강제퇴거
 - `/admin/intake-sources`
 - Inquiry -> CaseMatter 전환 구조
 - CaseMatter / RequiredDocument / CaseEvent 등 사건관리 모델
+- `/admin/ledger` 장부/수임관리 read-only 운영 UX
+- 장부 summary, dashboard card, filter presets, reason badges
+- ledger CSV export safety
+- accounting follow-up runbook
+- `/admin/document-lab` read-only 문서 실험실
+- document template inventory/filter/readiness/source verification/work queue
+- `/admin` Document Lab priority card
+- HWP/HWPX template pipeline 문서와 source verification runbook
+- public website 3D brand entrance plan
 
 현재 부족한 영역:
 
 - CaseMatter 상세 화면이 아직 실무 사건 카드로 부족
-- 업무처리부/수임관리대장 자동 생성 부족
+- 업무처리부/수임관리대장은 read-only 운영 UX 이후 실제 생성/수정 workflow가 부족
 - 실제 파일 업로드/증빙관리 부족
 - 제출이력/보완요청 등록 화면 부족
-- 수임료/입금관리 부족
-- 문서 템플릿 자동작성 부족
+- 수임료/입금관리 write workflow 부족
+- 문서 템플릿 자동작성은 아직 생성 전 read-only 준비 단계
+- HWP/HWPX/DOCX/PDF generation 미구현
+- CaseMatter document generation 연결 미구현
 - 권한/감사/보존/파기 정책 부족
 
 현재 도달 수준은 대략 다음과 같이 본다.
@@ -283,17 +301,19 @@ Admin-system의 최우선 전문 업무영역은 출입국·체류·강제퇴거
 - CaseMatter 실무 화면: 35~45%
 - 필수자료 checklist: 45~55%
 - 제출/보완 관리: 25~35%
-- 업무처리부/수임대장: 20~30%
-- 문서 자동작성: 25~35%
+- 업무처리부/수임대장: 85~92%
+- 문서 자동화 기반: 70~76%
 - 파일/증빙관리: 10~20%
-- 수임료/입금관리: 10~20%
+- 수임료/입금관리: 35~45%
 - 보안/권한/감사: 35~45%
 
 전체 이상향 대비 현재 위치:
 
-- 이상향 대비: 45~55%
-- 실제 업무 보조용: 65~70%
-- 메인 업무관리툴로 사용하기에는: 50~55%
+- 운영 MVP: 96~98%
+- 출입국 vertical: 95~98%
+- 장부/수임관리: 85~92%
+- 문서 자동화 기반: 70~76%
+- 최종 운영 OS 전체: 65~75%
 
 ## 6. Development Roadmap
 
@@ -326,11 +346,15 @@ Admin-system의 최우선 전문 업무영역은 출입국·체류·강제퇴거
 
 목표:
 
-사건 데이터 기반으로 장부 row를 자동 생성한다.
+사건 데이터 기반 장부/수임관리 상태를 안정적으로 읽고, 이후 승인된 workflow에서 row 생성/수정으로 확장한다.
 
 범위:
 
 - 사건별 ledger row
+- ledger summary
+- `/admin` accounting dashboard card
+- quick filter presets
+- accounting follow-up reason badges
 - 접수일자
 - 의뢰인명
 - 업무유형
@@ -339,13 +363,15 @@ Admin-system의 최우선 전문 업무영역은 출입국·체류·강제퇴거
 - 제출기관
 - 종결일자
 - 비고
-- CSV/Excel export
+- CSV export safety
 
 추후 확장:
 
 - 수임료
 - 입금 상태
 - 세금계산서/현금영수증 메모
+- write workflow
+- 승인/감사 로그
 
 ### Phase 3. 기한관리/오늘 할 일
 
@@ -382,27 +408,36 @@ Admin-system의 최우선 전문 업무영역은 출입국·체류·강제퇴거
 - 보완 대응 이력
 - 결과 수령
 
-### Phase 5. 문서 자동작성
+### Phase 5. HWP/HWPX 문서 자동화 기반
 
 목표:
 
-반복 문서를 template 기반으로 생성한다.
+HWP/HWPX 공공서식 자동화 전에 공식 출처, 최신성, readiness, work queue를 안전하게 관리한다.
 
 우선순위:
 
-1. 위임장
-2. 개인정보동의서
-3. 사실확인서
-4. 진술서
-5. 내용증명
-6. 정보공개청구서
+1. HWP/HWPX official source verification
+2. `/admin/document-lab` read-only inventory
+3. category/risk/conversion status/search/source status filters
+4. readiness checklist/status
+5. official source verification metadata
+6. source verification priority summary
+7. source verification work queue
+8. admin-only preview experiment
+9. sample placeholder mapping
+10. HWPX/DOCX/HTML conversion test
 
 원칙:
 
-- admin-only preview 먼저
-- 승인 전 고객 발송 금지
-- DOCX/PDF 먼저
-- HWP는 장기 과제
+- HWP/HWPX는 first-class requirement
+- DOCX는 내부 편집/검토 보조 포맷
+- PDF는 preview/final archive/export 포맷
+- file upload 금지
+- document generation 금지
+- HWP/HWPX/DOCX/PDF generation 금지
+- CaseMatter document generation 연결 금지
+- customer send 금지
+- agency submission 금지
 
 ### Phase 6. 보안/권한/감사 강화
 
@@ -441,6 +476,16 @@ Admin-system의 최우선 전문 업무영역은 출입국·체류·강제퇴거
 - 운영 분석
 - 전환율 분석
 
+### Public Website Direction
+
+Public website는 신뢰형 행정사·출입국 전문 브랜드 입구로 둔다.
+
+- 3D brand entrance는 첫 hero section에 제한적으로 적용한다.
+- 시작은 static mock과 첫 hero prototype이다.
+- 전체 3D 사이트화는 하지 않는다.
+- 상담/조회 CTA 접근성을 3D 연출보다 우선한다.
+- 모바일 fallback과 성능 QA를 필수로 둔다.
+
 ## 7. Product Principles
 
 1. Case-centered
@@ -467,34 +512,47 @@ Admin-system의 최우선 전문 업무영역은 출입국·체류·강제퇴거
 8. Practical over fancy
    - 예쁜 화면보다 사건 누락 방지, 기한 관리, 자료 상태, 제출 이력, 장부 자동화가 우선이다.
 
+9. HWP/HWPX first-class
+   - 한국 공공서식 실무에서는 HWP/HWPX 원본과 레이아웃 검증이 핵심 요구사항이다.
+
+10. Risk-based PR size
+   - docs/read-only/helper/test 변경은 같은 목적이면 묶을 수 있다. DB/API/mutation/file generation/security/env 변경은 작고 격리된 PR로 유지한다.
+
 ## 8. What Not To Do Yet
 
 아래 기능은 충분한 설계 전까지 서두르지 않는다.
 
 - 고객 파일 업로드
 - 실제 이메일/SMS/AlimTalk 발송
-- HWP 자동 생성
+- document generation
+- HWP/HWPX/DOCX/PDF generation
+- CaseMatter document generation 연결
 - 결제 연동
 - 외부 기관 자동 제출
 - 민감정보 대량 저장
 - 자동 법률 판단/자동 수임 결정
 - AI 단독 고객 안내
+- customer send
+- agency submission
 
 ## 9. Near-term Priority
 
 현재 가장 중요한 다음 작업은:
 
-`/admin/cases/[id]`를 실무 사건 카드로 확장하는 것이다.
+`/admin/document-lab`의 official source verification 운영 기준을 실제 검토 workflow로 연결하기 전, read-only 표면과 runbook 정합성을 계속 고정하는 것이다.
 
 그 다음 순서:
 
-1. CaseMatter 사건 카드 MVP
-2. 업무처리부/수임관리대장 기본 row
-3. 기한관리/오늘 할 일
-4. 자료요청/제출/보완 관리
-5. 문서 자동작성
-6. 파일 보안/업로드
-7. 권한/감사/파기 고도화
+1. README/product vision/docs link 정합성
+2. Document Lab official source verification workflow 설계
+3. sample placeholder mapping
+4. HTML/admin-only preview experiment
+5. HWPX/DOCX conversion test script 조사
+6. TemplateRegistry schema 설계
+7. GeneratedDocument/AuditLog 설계
+8. CaseMatter read-only documents tab
+9. 파일 보안/업로드
+10. 권한/감사/파기 고도화
 
 ## 10. Success Definition
 
@@ -508,3 +566,15 @@ Admin-system이 "업무에 무리 없이 안정적으로 쓸 수 있다"고 판�
 - 고객 안내 이력이 남는다.
 - 민감정보와 파일 접근이 통제된다.
 - 종결 후 보존/파기 예정일을 관리할 수 있다.
+
+## 11. Related Docs
+
+- HWP/HWPX template pipeline: `docs/hwp-hwpx-template-pipeline-plan.md`
+- Document template inventory: `docs/document-template-inventory.md`
+- Document Lab readiness runbook: `docs/runbooks/document-lab-readiness.md`
+- Official source verification runbook: `docs/runbooks/document-template-official-source-verification.md`
+- Document Lab source work queue runbook: `docs/runbooks/document-lab-source-work-queue.md`
+- Accounting follow-up runbook: `docs/runbooks/case-accounting-follow-up.md`
+- Immigration due date sync QA runbook: `docs/runbooks/immigration-due-date-sync-qa.md`
+- Public website 3D brand entrance: `docs/public-website-3d-brand-entrance.md`
+- OSS upgrade/reference roadmap: `docs/oss-upgrade-roadmap.md`
