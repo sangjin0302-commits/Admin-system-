@@ -7,8 +7,10 @@ import {
   buildDocumentTemplateReadiness,
   buildDocumentTemplateReadinessSummary,
   buildDocumentTemplateSourceVerificationPriority,
+  buildDocumentTemplateSourceVerificationWorkQueueReasonFilterOptions,
   buildDocumentTemplateSourceVerificationWorkQueue,
   buildDocumentTemplateSourceStatusFilterOptions,
+  filterDocumentTemplateSourceVerificationWorkQueue,
   filterDocumentTemplateInventory,
   getDocumentTemplateCategoryLabel,
   getDocumentTemplateConversionStatusLabel,
@@ -105,7 +107,16 @@ export default async function AdminDocumentLabPage({
   const sourceStatusFilterOptions = buildDocumentTemplateSourceStatusFilterOptions(templates, filters);
   const readinessSummary = buildDocumentTemplateReadinessSummary(templates);
   const sourcePrioritySummary = buildDocumentTemplateSourceVerificationPriority(templates);
-  const sourceVerificationWorkQueue = buildDocumentTemplateSourceVerificationWorkQueue(templates, 8);
+  const sourceVerificationWorkQueueBase = buildDocumentTemplateSourceVerificationWorkQueue(filteredTemplates, 50);
+  const sourceVerificationWorkQueue = filterDocumentTemplateSourceVerificationWorkQueue(
+    sourceVerificationWorkQueueBase,
+    filters.missingReason
+  ).slice(0, 8);
+  const missingReasonFilterOptions = buildDocumentTemplateSourceVerificationWorkQueueReasonFilterOptions(
+    sourceVerificationWorkQueueBase,
+    filters.missingReason,
+    (missingReason) => buildDocumentTemplateFilterHref(filters, { missingReason })
+  );
   const readinessByTemplateId = new Map(
     filteredTemplates.map((template) => [template.id, buildDocumentTemplateReadiness(template)])
   );
@@ -369,12 +380,42 @@ export default async function AdminDocumentLabPage({
               이 큐는 검토 우선순위 안내이며, 문서 생성 단계 도달을 의미하지 않습니다.
             </p>
           </div>
-          <Link
-            href={buildDocumentTemplateFilterHref(filters, { risk: "high", sourceStatus: "needs_review" })}
-            className="text-sm font-medium text-primary"
-          >
-            고위험 최신성 확인 보기
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={buildDocumentTemplateFilterHref(filters, { risk: "high", sourceStatus: "needs_review" })}
+              className={filterLinkClassName(false)}
+            >
+              고위험 최신성 확인
+            </Link>
+            <Link
+              href={buildDocumentTemplateFilterHref(filters, { risk: "high", sourceStatus: "pending" })}
+              className={filterLinkClassName(false)}
+            >
+              고위험 출처 미확인
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-2xl border border-line bg-surface-muted p-4">
+          <p className="text-sm font-semibold text-text-strong">누락 사유 quick filter</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {missingReasonFilterOptions.map((option) => (
+              <Link
+                key={option.missingReason ?? "all"}
+                href={option.href}
+                className={filterLinkClassName(option.isActive)}
+              >
+                <span>{option.labelKo}</span>
+                <span
+                  className={`ml-2 rounded-full px-2 py-0.5 text-[11px] ${
+                    option.isActive ? "bg-white/20 text-white" : "bg-surface text-text-muted"
+                  }`}
+                >
+                  {option.count}
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
 
         {sourceVerificationWorkQueue.length === 0 ? (
@@ -495,6 +536,9 @@ export default async function AdminDocumentLabPage({
                 <input type="hidden" name="conversionStatus" value={filters.conversionStatus} />
               ) : null}
               {filters.sourceStatus ? <input type="hidden" name="sourceStatus" value={filters.sourceStatus} /> : null}
+              {filters.missingReason ? (
+                <input type="hidden" name="missingReason" value={filters.missingReason} />
+              ) : null}
               <input
                 name="q"
                 defaultValue={filters.q ?? ""}

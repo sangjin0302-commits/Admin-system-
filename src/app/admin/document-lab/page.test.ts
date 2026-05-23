@@ -18,6 +18,8 @@ assert.match(source, /buildDocumentTemplateReadiness/);
 assert.match(source, /buildDocumentTemplateReadinessSummary/);
 assert.match(source, /buildDocumentTemplateSourceVerificationPriority/);
 assert.match(source, /buildDocumentTemplateSourceVerificationWorkQueue/);
+assert.match(source, /buildDocumentTemplateSourceVerificationWorkQueueReasonFilterOptions/);
+assert.match(source, /filterDocumentTemplateSourceVerificationWorkQueue/);
 assert.match(source, /getDocumentTemplateOfficialSourceStatus/);
 assert.match(source, /getDocumentTemplateOfficialSourceStatusLabel/);
 assert.match(source, /getDocumentTemplateReadinessStatusLabel/);
@@ -47,6 +49,8 @@ assert.match(source, /Official source priority/);
 assert.match(source, /공식 출처 검토 우선순위/);
 assert.match(source, /sourcePrioritySummary/);
 assert.match(source, /sourceVerificationWorkQueue/);
+assert.match(source, /sourceVerificationWorkQueueBase/);
+assert.match(source, /missingReasonFilterOptions/);
 assert.match(source, /topPriorityTemplates/);
 assert.match(source, /template\.checklist/);
 assert.match(source, /sourceChecklistStatusClassName/);
@@ -65,6 +69,8 @@ assert.match(source, /Risk별 출처 상태/);
 assert.match(source, /risk: "high", sourceStatus: "needs_review"/);
 assert.match(source, /risk: "high", sourceStatus: "pending"/);
 assert.match(source, /공식 출처 검토 워크큐/);
+assert.match(source, /누락 사유 quick filter/);
+assert.match(source, /missingReason/);
 assert.match(source, /검토자 미기록/);
 assert.match(source, /최신 확인일 미기록/);
 assert.match(source, /공식 출처 미확인/);
@@ -102,6 +108,8 @@ for (const forbidden of [
   "즉시 제출",
   "법률 판단 완료",
   "고객 발송 가능",
+  "다운로드 가능",
+  "자동작성 완료",
   "HWP 생성 가능",
   "DOCX export 가능",
   "PDF export 가능",
