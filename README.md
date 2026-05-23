@@ -6,6 +6,9 @@
 ## 주요 기능
 - 공개 접수 페이지: `/intake`
 - 관리자 운영 화면: `/admin`
+- 사건 카드/필수자료/태스크 중심 운영 화면
+- 장부/수임관리 read-only 요약, 필터, CSV export safety
+- 문서 실험실: `/admin/document-lab` read-only inventory, readiness, official source work queue
 - 사건 분석/체크리스트/견적/운영 메모
 - Lawbot 및 Marketing 연동 준비 구조
 - 운영 점검 화면: `/admin/monitoring`
@@ -49,6 +52,18 @@ npm run dev
 
 ## 문서
 - 제품 비전/로드맵: `docs/admin-system-product-vision.md`
+- HWP/HWPX template pipeline: `docs/hwp-hwpx-template-pipeline-plan.md`
+- 문서 template inventory: `docs/document-template-inventory.md`
+- Public website 3D brand entrance plan: `docs/public-website-3d-brand-entrance.md`
+- Open-source/OSS upgrade reference: `docs/oss-upgrade-roadmap.md`
 - 운영 메모: `OPERATIONS.md`
 - 보안 가이드: `docs/security-hardening.md`
 - 인코딩 무결성: `docs/encoding-integrity.md`
+
+### Runbooks
+
+- Document Lab readiness: `docs/runbooks/document-lab-readiness.md`
+- Document template official source verification: `docs/runbooks/document-template-official-source-verification.md`
+- Document Lab source work queue: `docs/runbooks/document-lab-source-work-queue.md`
+- Case accounting follow-up: `docs/runbooks/case-accounting-follow-up.md`
+- Immigration due date sync QA: `docs/runbooks/immigration-due-date-sync-qa.md`
