@@ -12,6 +12,7 @@ import {
   groupDocumentTemplatesByCategory,
   listDocumentTemplateCategories,
   listDocumentTemplateConversionStatuses,
+  listDocumentTemplateMissingReasons,
   listDocumentTemplateRiskLevels,
   listDocumentTemplateSourceStatuses,
   normalizeDocumentTemplateInventoryFilters
@@ -29,12 +30,21 @@ assert.deepEqual(listDocumentTemplateRiskLevels(), ["low", "medium", "high"]);
 assert.ok(listDocumentTemplateConversionStatuses().includes("not_started"));
 assert.ok(listDocumentTemplateConversionStatuses().includes("manual_only"));
 assert.deepEqual(listDocumentTemplateSourceStatuses(), ["verified", "needs_review", "pending", "manual_only"]);
+assert.deepEqual(listDocumentTemplateMissingReasons(), [
+  "official_source_missing",
+  "latest_verified_at_missing",
+  "verified_by_missing",
+  "verification_memo_missing",
+  "high_risk_review_needed",
+  "manual_only_review"
+]);
 
 const invalid = normalizeDocumentTemplateInventoryFilters({
   category: "bad",
   risk: "critical",
   conversionStatus: "done",
   sourceStatus: "unknown",
+  missingReason: "wrong",
   q: "  "
 });
 assert.deepEqual(invalid, {
@@ -42,6 +52,7 @@ assert.deepEqual(invalid, {
   risk: null,
   conversionStatus: null,
   sourceStatus: null,
+  missingReason: null,
   q: null
 });
 assert.equal(filterDocumentTemplateInventory(documentTemplateInventory, invalid).length, documentTemplateInventory.length);
@@ -196,10 +207,16 @@ const zeroCountOptions = buildDocumentTemplateSourceStatusFilterOptions(
 assert.equal(zeroCountOptions.find((option) => option.sourceStatus === "pending")?.count, 0);
 
 const href = buildDocumentTemplateFilterHref(
-  normalizeDocumentTemplateInventoryFilters({ sourceStatus: "needs_review", category: "immigration", q: "통합" }),
+  normalizeDocumentTemplateInventoryFilters({
+    sourceStatus: "needs_review",
+    missingReason: "latest_verified_at_missing",
+    category: "immigration",
+    q: "통합"
+  }),
   { risk: "high" }
 );
 assert.equal(href.includes("sourceStatus=needs_review"), true);
+assert.equal(href.includes("missingReason=latest_verified_at_missing"), true);
 assert.equal(href.includes("category=immigration"), true);
 assert.equal(href.includes("risk=high"), true);
 assert.equal(href.includes("q="), true);

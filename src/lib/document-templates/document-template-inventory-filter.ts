@@ -8,14 +8,17 @@ import {
   type DocumentTemplateOfficialSourceStatus,
   type DocumentTemplateRiskLevel
 } from "./document-template-inventory";
+import type { DocumentTemplateSourceVerificationWorkQueueReasonId } from "./document-template-source-priority";
 
 export type DocumentTemplateSourceStatusFilter = DocumentTemplateOfficialSourceStatus;
+export type DocumentTemplateMissingReasonFilter = DocumentTemplateSourceVerificationWorkQueueReasonId;
 
 export type DocumentTemplateInventoryFilters = {
   category: DocumentTemplateCategory | null;
   risk: DocumentTemplateRiskLevel | null;
   conversionStatus: DocumentTemplateConversionStatus | null;
   sourceStatus: DocumentTemplateSourceStatusFilter | null;
+  missingReason: DocumentTemplateMissingReasonFilter | null;
   q: string | null;
 };
 
@@ -55,6 +58,15 @@ export const allDocumentTemplateSourceStatusValues = [
   "manual_only"
 ] satisfies DocumentTemplateSourceStatusFilter[];
 
+export const allDocumentTemplateMissingReasonValues = [
+  "official_source_missing",
+  "latest_verified_at_missing",
+  "verified_by_missing",
+  "verification_memo_missing",
+  "high_risk_review_needed",
+  "manual_only_review"
+] satisfies DocumentTemplateMissingReasonFilter[];
+
 function pickParam(value: string | string[] | null | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -79,6 +91,12 @@ function isDocumentTemplateSourceStatus(
   return allDocumentTemplateSourceStatusValues.includes(value as DocumentTemplateSourceStatusFilter);
 }
 
+function isDocumentTemplateMissingReason(
+  value: string | null | undefined
+): value is DocumentTemplateMissingReasonFilter {
+  return allDocumentTemplateMissingReasonValues.includes(value as DocumentTemplateMissingReasonFilter);
+}
+
 export function listDocumentTemplateCategories() {
   return [...allDocumentTemplateCategoryValues];
 }
@@ -95,6 +113,10 @@ export function listDocumentTemplateSourceStatuses() {
   return [...allDocumentTemplateSourceStatusValues];
 }
 
+export function listDocumentTemplateMissingReasons() {
+  return [...allDocumentTemplateMissingReasonValues];
+}
+
 export function normalizeDocumentTemplateInventoryFilters(
   searchParams: Record<string, string | string[] | null | undefined> = {}
 ): DocumentTemplateInventoryFilters {
@@ -102,6 +124,7 @@ export function normalizeDocumentTemplateInventoryFilters(
   const risk = pickParam(searchParams.risk);
   const conversionStatus = pickParam(searchParams.conversionStatus);
   const sourceStatus = pickParam(searchParams.sourceStatus);
+  const missingReason = pickParam(searchParams.missingReason);
   const q = pickParam(searchParams.q)?.trim() || null;
 
   return {
@@ -109,6 +132,7 @@ export function normalizeDocumentTemplateInventoryFilters(
     risk: isDocumentTemplateRisk(risk) ? risk : null,
     conversionStatus: isDocumentTemplateConversionStatus(conversionStatus) ? conversionStatus : null,
     sourceStatus: isDocumentTemplateSourceStatus(sourceStatus) ? sourceStatus : null,
+    missingReason: isDocumentTemplateMissingReason(missingReason) ? missingReason : null,
     q
   };
 }
@@ -195,6 +219,7 @@ export function buildDocumentTemplateFilterHref(
   if (nextFilters.risk) params.set("risk", nextFilters.risk);
   if (nextFilters.conversionStatus) params.set("conversionStatus", nextFilters.conversionStatus);
   if (nextFilters.sourceStatus) params.set("sourceStatus", nextFilters.sourceStatus);
+  if (nextFilters.missingReason) params.set("missingReason", nextFilters.missingReason);
   if (nextFilters.q) params.set("q", nextFilters.q);
   const query = params.toString();
   return query ? `/admin/document-lab?${query}` : "/admin/document-lab";

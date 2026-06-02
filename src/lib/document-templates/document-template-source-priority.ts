@@ -76,6 +76,14 @@ export type DocumentTemplateSourceVerificationWorkQueueReason = {
   labelKo: string;
 };
 
+export type DocumentTemplateSourceVerificationWorkQueueReasonFilterOption = {
+  missingReason: DocumentTemplateSourceVerificationWorkQueueReasonId | null;
+  labelKo: string;
+  count: number;
+  href: string;
+  isActive: boolean;
+};
+
 export type DocumentTemplateSourceVerificationWorkQueueItem = {
   templateId: string;
   titleKo: string;
@@ -90,6 +98,24 @@ export type DocumentTemplateSourceVerificationWorkQueueItem = {
   href: string;
 };
 
+export const allDocumentTemplateSourceVerificationWorkQueueReasonValues = [
+  "official_source_missing",
+  "latest_verified_at_missing",
+  "verified_by_missing",
+  "verification_memo_missing",
+  "high_risk_review_needed",
+  "manual_only_review"
+] satisfies DocumentTemplateSourceVerificationWorkQueueReasonId[];
+
+const workQueueReasonLabels = {
+  official_source_missing: "공식 출처 확인 필요",
+  latest_verified_at_missing: "최신 확인일 필요",
+  verified_by_missing: "확인자 기록 필요",
+  verification_memo_missing: "검토 메모 필요",
+  high_risk_review_needed: "고위험 서식 검토 필요",
+  manual_only_review: "수동 작성 유지 검토"
+} satisfies Record<DocumentTemplateSourceVerificationWorkQueueReasonId, string>;
+
 const priorityRank = {
   urgent: 0,
   high: 1,
@@ -102,6 +128,16 @@ const riskRank = {
   medium: 1,
   low: 2
 } satisfies Record<DocumentTemplateRiskLevel, number>;
+
+export function listDocumentTemplateSourceVerificationWorkQueueReasons() {
+  return [...allDocumentTemplateSourceVerificationWorkQueueReasonValues];
+}
+
+export function getDocumentTemplateSourceVerificationWorkQueueReasonLabel(
+  reason: DocumentTemplateSourceVerificationWorkQueueReasonId
+) {
+  return workQueueReasonLabels[reason];
+}
 
 function emptyStatusCounts(): Record<DocumentTemplateOfficialSourceStatus, number> {
   return {
@@ -339,7 +375,12 @@ export function getDocumentTemplateSourceVerificationWorkQueueReason(
 ): DocumentTemplateSourceVerificationWorkQueueReason[] {
   const sourceStatus = getDocumentTemplateOfficialSourceStatus(template);
   if (sourceStatus === "manual_only") {
-    return [{ id: "manual_only_review", labelKo: "수동 작성 유지 검토" }];
+    return [
+      {
+        id: "manual_only_review",
+        labelKo: getDocumentTemplateSourceVerificationWorkQueueReasonLabel("manual_only_review")
+      }
+    ];
   }
 
   const checklist = buildDocumentTemplateSourceVerificationChecklist(template);
@@ -347,38 +388,50 @@ export function getDocumentTemplateSourceVerificationWorkQueueReason(
   const reasons: DocumentTemplateSourceVerificationWorkQueueReason[] = [];
 
   if (checklistById.get("official_source_reference")?.status === "missing") {
-    reasons.push({ id: "official_source_missing", labelKo: "공식 출처 확인 필요" });
+    reasons.push({
+      id: "official_source_missing",
+      labelKo: getDocumentTemplateSourceVerificationWorkQueueReasonLabel("official_source_missing")
+    });
   }
   if (checklistById.get("latest_verified_at")?.status === "missing") {
-    reasons.push({ id: "latest_verified_at_missing", labelKo: "최신 확인일 필요" });
+    reasons.push({
+      id: "latest_verified_at_missing",
+      labelKo: getDocumentTemplateSourceVerificationWorkQueueReasonLabel("latest_verified_at_missing")
+    });
   }
   if (checklistById.get("verified_by")?.status === "missing") {
-    reasons.push({ id: "verified_by_missing", labelKo: "확인자 기록 필요" });
+    reasons.push({
+      id: "verified_by_missing",
+      labelKo: getDocumentTemplateSourceVerificationWorkQueueReasonLabel("verified_by_missing")
+    });
   }
   if (checklistById.get("verification_memo")?.status === "missing") {
-    reasons.push({ id: "verification_memo_missing", labelKo: "검토 메모 필요" });
+    reasons.push({
+      id: "verification_memo_missing",
+      labelKo: getDocumentTemplateSourceVerificationWorkQueueReasonLabel("verification_memo_missing")
+    });
   }
   if (template.riskLevel === "high" && (sourceStatus === "pending" || sourceStatus === "needs_review")) {
-    reasons.push({ id: "high_risk_review_needed", labelKo: "고위험 서식 검토 필요" });
+    reasons.push({
+      id: "high_risk_review_needed",
+      labelKo: getDocumentTemplateSourceVerificationWorkQueueReasonLabel("high_risk_review_needed")
+    });
   }
 
   return reasons;
 }
 
 function workQueueSortRank(item: DocumentTemplateSourceVerificationWorkQueueItem) {
-  if (item.riskLevel === "high" && item.sourceStatus === "pending") return 0;
-  if (item.riskLevel === "high" && item.sourceStatus === "needs_review") return 10;
-  if (
-    item.riskLevel === "high" &&
-    item.missingReasons.some((reason) => reason.id === "latest_verified_at_missing")
-  ) {
-    return 20;
-  }
-  if (item.riskLevel === "medium" && (item.sourceStatus === "pending" || item.sourceStatus === "needs_review")) {
-    return 30;
-  }
-  if (item.missingReasons.some((reason) => reason.id === "verified_by_missing")) return 40;
-  if (item.sourceStatus === "manual_only") return 60;
+  const hasReason = (reasonId: DocumentTemplateSourceVerificationWorkQueueReasonId) =>
+    item.missingReasons.some((reason) => reason.id === reasonId);
+
+  if (item.riskLevel === "high" && hasReason("official_source_missing")) return 0;
+  if (item.riskLevel === "high" && hasReason("latest_verified_at_missing")) return 10;
+  if (item.riskLevel === "high" && hasReason("verified_by_missing")) return 20;
+  if (item.riskLevel === "high" && hasReason("verification_memo_missing")) return 30;
+  if (item.riskLevel === "medium" && hasReason("official_source_missing")) return 40;
+  if (item.riskLevel === "medium" && hasReason("latest_verified_at_missing")) return 45;
+  if (hasReason("manual_only_review")) return 60;
   return 70;
 }
 
@@ -422,6 +475,60 @@ export function buildDocumentTemplateSourceVerificationWorkQueue(
   });
 
   return sortDocumentTemplateSourceVerificationWorkQueue(queueItems).slice(0, limit);
+}
+
+export function filterDocumentTemplateSourceVerificationWorkQueue(
+  queueItems: DocumentTemplateSourceVerificationWorkQueueItem[],
+  missingReason: DocumentTemplateSourceVerificationWorkQueueReasonId | null
+) {
+  if (!missingReason) return [...queueItems];
+  return queueItems.filter((item) => item.missingReasons.some((reason) => reason.id === missingReason));
+}
+
+export function countDocumentTemplateSourceVerificationWorkQueueByMissingReason(
+  queueItems: DocumentTemplateSourceVerificationWorkQueueItem[]
+): Record<DocumentTemplateSourceVerificationWorkQueueReasonId | "all", number> {
+  const counts = {
+    all: queueItems.length,
+    official_source_missing: 0,
+    latest_verified_at_missing: 0,
+    verified_by_missing: 0,
+    verification_memo_missing: 0,
+    high_risk_review_needed: 0,
+    manual_only_review: 0
+  } satisfies Record<DocumentTemplateSourceVerificationWorkQueueReasonId | "all", number>;
+
+  for (const item of queueItems) {
+    for (const reason of item.missingReasons) {
+      counts[reason.id] += 1;
+    }
+  }
+
+  return counts;
+}
+
+export function buildDocumentTemplateSourceVerificationWorkQueueReasonFilterOptions(
+  queueItems: DocumentTemplateSourceVerificationWorkQueueItem[],
+  activeMissingReason: DocumentTemplateSourceVerificationWorkQueueReasonId | null,
+  buildHref: (missingReason: DocumentTemplateSourceVerificationWorkQueueReasonId | null) => string
+): DocumentTemplateSourceVerificationWorkQueueReasonFilterOption[] {
+  const counts = countDocumentTemplateSourceVerificationWorkQueueByMissingReason(queueItems);
+  return [
+    {
+      missingReason: null,
+      labelKo: "전체 누락 사유",
+      count: counts.all,
+      href: buildHref(null),
+      isActive: activeMissingReason === null
+    },
+    ...listDocumentTemplateSourceVerificationWorkQueueReasons().map((missingReason) => ({
+      missingReason,
+      labelKo: getDocumentTemplateSourceVerificationWorkQueueReasonLabel(missingReason),
+      count: counts[missingReason],
+      href: buildHref(missingReason),
+      isActive: activeMissingReason === missingReason
+    }))
+  ];
 }
 
 export function buildDocumentTemplateSourceVerificationPriority(

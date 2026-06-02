@@ -6,13 +6,18 @@ import {
   buildDocumentTemplateSourceChecklistReasonBreakdown,
   buildDocumentTemplateSourceVerificationPriority,
   buildDocumentTemplateSourceVerificationWorkQueue,
+  buildDocumentTemplateSourceVerificationWorkQueueReasonFilterOptions,
+  countDocumentTemplateSourceVerificationWorkQueueByMissingReason,
+  filterDocumentTemplateSourceVerificationWorkQueue,
   getDocumentTemplateSourceVerificationPriority,
   getDocumentTemplateSourceVerificationChecklistSummary,
   getTopDocumentTemplateSourceChecklistReasons,
   getDocumentTemplateSourceVerificationWorkQueueReason,
+  getDocumentTemplateSourceVerificationWorkQueueReasonLabel,
   getDocumentTemplateSourceVerificationPriorityReasonLabel,
   groupSourceVerificationStatusByRisk,
   listHighRiskTemplatesNeedingSourceReview,
+  listDocumentTemplateSourceVerificationWorkQueueReasons,
   sortDocumentTemplateSourceVerificationWorkQueue
 } from "./document-template-source-priority";
 
@@ -83,6 +88,48 @@ const highVerifiedMissingDate = fixture({
   latestVerifiedAt: null,
   verifiedBy: "Admin"
 });
+const highReviewerMissing = fixture({
+  id: "high_reviewer_missing",
+  riskLevel: "high",
+  officialSourceName: "공식 출처 후보",
+  officialSourceReferenceKo: "공식 출처 후보",
+  latestVerifiedAt: "2026-05-22",
+  verifiedBy: null,
+  verificationMemoKo: "공식 출처 검토 메모"
+});
+const highMemoMissing = fixture({
+  id: "high_memo_missing",
+  riskLevel: "high",
+  officialSourceName: "공식 출처 후보",
+  officialSourceReferenceKo: "공식 출처 후보",
+  latestVerifiedAt: "2026-05-22",
+  verifiedBy: "Admin",
+  verificationMemoKo: ""
+});
+
+assert.deepEqual(listDocumentTemplateSourceVerificationWorkQueueReasons(), [
+  "official_source_missing",
+  "latest_verified_at_missing",
+  "verified_by_missing",
+  "verification_memo_missing",
+  "high_risk_review_needed",
+  "manual_only_review"
+]);
+assert.equal(
+  getDocumentTemplateSourceVerificationWorkQueueReasonLabel("official_source_missing"),
+  "공식 출처 확인 필요"
+);
+assert.equal(
+  getDocumentTemplateSourceVerificationWorkQueueReasonLabel("latest_verified_at_missing"),
+  "최신 확인일 필요"
+);
+assert.equal(getDocumentTemplateSourceVerificationWorkQueueReasonLabel("verified_by_missing"), "확인자 기록 필요");
+assert.equal(getDocumentTemplateSourceVerificationWorkQueueReasonLabel("verification_memo_missing"), "검토 메모 필요");
+assert.equal(
+  getDocumentTemplateSourceVerificationWorkQueueReasonLabel("high_risk_review_needed"),
+  "고위험 서식 검토 필요"
+);
+assert.equal(getDocumentTemplateSourceVerificationWorkQueueReasonLabel("manual_only_review"), "수동 작성 유지 검토");
 
 assert.equal(getDocumentTemplateSourceVerificationPriority(highPending), "urgent");
 assert.equal(getDocumentTemplateSourceVerificationPriority(highNeedsReview), "urgent");
@@ -188,18 +235,66 @@ const manualReasons = getDocumentTemplateSourceVerificationWorkQueueReason(manua
 assert.deepEqual(manualReasons.map((reason) => reason.id), ["manual_only_review"]);
 
 const workQueue = buildDocumentTemplateSourceVerificationWorkQueue(
-  [mediumPending, lowVerified, highNeedsReview, manualOnly, highPending, highVerifiedMissingDate, noMemo],
+  [
+    mediumPending,
+    lowVerified,
+    highNeedsReview,
+    manualOnly,
+    highPending,
+    highVerifiedMissingDate,
+    highReviewerMissing,
+    highMemoMissing,
+    noMemo
+  ],
   10
 );
 assert.equal(workQueue.some((item) => item.templateId === "low_verified"), false);
 assert.deepEqual(
-  workQueue.slice(0, 3).map((item) => item.templateId),
-  ["high_pending", "high_needs_review", "high_verified_missing_date"]
+  workQueue.slice(0, 5).map((item) => item.templateId),
+  ["high_pending", "high_needs_review", "high_verified_missing_date", "high_reviewer_missing", "high_memo_missing"]
 );
 assert.equal(workQueue[0].primaryReasonLabelKo, "공식 출처 확인 필요");
 assert.equal(workQueue[0].href, "/admin/document-lab?risk=high&sourceStatus=pending");
 assert.equal(workQueue.find((item) => item.templateId === "manual_only")?.primaryReasonLabelKo, "수동 작성 유지 검토");
 assert.equal(buildDocumentTemplateSourceVerificationWorkQueue([lowVerified]).length, 0);
+
+const workQueueReasonCounts = countDocumentTemplateSourceVerificationWorkQueueByMissingReason(workQueue);
+assert.equal(workQueueReasonCounts.all, workQueue.length);
+assert.equal(workQueueReasonCounts.official_source_missing, 2);
+assert.equal(workQueueReasonCounts.latest_verified_at_missing, 5);
+assert.equal(workQueueReasonCounts.verified_by_missing, 5);
+assert.equal(workQueueReasonCounts.verification_memo_missing, 2);
+assert.equal(workQueueReasonCounts.high_risk_review_needed, 3);
+assert.equal(workQueueReasonCounts.manual_only_review, 1);
+
+assert.deepEqual(
+  filterDocumentTemplateSourceVerificationWorkQueue(workQueue, "verified_by_missing").map((item) => item.templateId),
+  ["high_pending", "high_needs_review", "high_reviewer_missing", "medium_pending", "no_memo"]
+);
+assert.deepEqual(
+  filterDocumentTemplateSourceVerificationWorkQueue(workQueue, "manual_only_review").map((item) => item.templateId),
+  ["manual_only"]
+);
+assert.deepEqual(
+  filterDocumentTemplateSourceVerificationWorkQueue(workQueue, null).map((item) => item.templateId),
+  workQueue.map((item) => item.templateId)
+);
+
+const reasonOptions = buildDocumentTemplateSourceVerificationWorkQueueReasonFilterOptions(
+  workQueue,
+  "latest_verified_at_missing",
+  (missingReason) => (missingReason ? `/admin/document-lab?missingReason=${missingReason}` : "/admin/document-lab")
+);
+assert.equal(reasonOptions.length, 7);
+assert.equal(reasonOptions[0].labelKo, "전체 누락 사유");
+assert.equal(reasonOptions[0].count, workQueue.length);
+assert.equal(reasonOptions.find((option) => option.missingReason === "latest_verified_at_missing")?.isActive, true);
+assert.equal(
+  reasonOptions.find((option) => option.missingReason === "latest_verified_at_missing")?.href,
+  "/admin/document-lab?missingReason=latest_verified_at_missing"
+);
+assert.equal(reasonOptions.find((option) => option.missingReason === "manual_only_review")?.count, 1);
+
 assert.deepEqual(
   sortDocumentTemplateSourceVerificationWorkQueue([...workQueue].reverse()).map((item) => item.templateId),
   workQueue.map((item) => item.templateId)
