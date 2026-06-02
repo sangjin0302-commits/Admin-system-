@@ -17,19 +17,19 @@ const practiceAreas = [
   {
     title: "출입국·체류",
     description: "체류기간 연장, 체류자격 변경, 초청, 국내 생활기반 자료를 사안별로 정리합니다.",
-    href: "/services/visa",
+    href: "/services/immigration",
     accent: "border-emerald-200 bg-emerald-50 text-emerald-800"
   },
   {
     title: "강제퇴거·출국명령·입국금지",
     description: "처분서, 통지일, 불복 기한, 소명 자료를 확인하고 다음 대응 범위를 검토합니다.",
-    href: "/services/administrative-appeal",
+    href: "/services/appeal",
     accent: "border-red-200 bg-red-50 text-red-700"
   },
   {
     title: "행정심판·이의신청",
     description: "처분 내용, 기한, 사실관계, 증빙자료를 정리해 제출 준비 흐름을 만듭니다.",
-    href: "/services/administrative-appeal",
+    href: "/services/appeal",
     accent: "border-amber-200 bg-amber-50 text-amber-800"
   },
   {

@@ -48,23 +48,41 @@ assert.equal(getPublicMarketingService("missing"), null);
 
 const rootPagePath = join(root, "src/app/page.tsx");
 const servicesPagePath = join(root, "src/app/services/page.tsx");
+const immigrationPagePath = join(root, "src/app/services/immigration/page.tsx");
+const appealPagePath = join(root, "src/app/services/appeal/page.tsx");
 const serviceDetailPagePath = join(root, "src/app/services/[slug]/page.tsx");
+const intakePageSafePath = join(root, "src/app/intake/page-safe.tsx");
 const appShellPath = join(root, "src/components/layout/app-shell-safe.tsx");
 const packageJsonPath = join(root, "package.json");
 
-for (const path of [rootPagePath, servicesPagePath, serviceDetailPagePath, appShellPath, packageJsonPath]) {
+for (const path of [
+  rootPagePath,
+  servicesPagePath,
+  immigrationPagePath,
+  appealPagePath,
+  serviceDetailPagePath,
+  intakePageSafePath,
+  appShellPath,
+  packageJsonPath
+]) {
   assert.equal(existsSync(path), true, `Missing source: ${path}`);
 }
 
 const rootSource = readFileSync(rootPagePath, "utf8");
 const servicesSource = readFileSync(servicesPagePath, "utf8");
+const immigrationSource = readFileSync(immigrationPagePath, "utf8");
+const appealSource = readFileSync(appealPagePath, "utf8");
+const intakePageSafeSource = readFileSync(intakePageSafePath, "utf8");
 const combinedSource = [
   rootSource,
   servicesSource,
+  immigrationSource,
+  appealSource,
+  intakePageSafeSource,
   readFileSync(serviceDetailPagePath, "utf8"),
   readFileSync(join(root, "src/lib/services/public-marketing-pages.ts"), "utf8")
 ].join("\n");
-const publicPageSource = [rootSource, servicesSource].join("\n");
+const publicPageSource = [rootSource, servicesSource, immigrationSource, appealSource, intakePageSafeSource].join("\n");
 const packageSource = readFileSync(packageJsonPath, "utf8");
 
 for (const label of ["비자", "법인", "행정심판", "사실조사", "인허가", "아랍어 통번역", "기타 민원"]) {
@@ -124,6 +142,10 @@ for (const requiredHomeToken of ["사무소 입구", "접수번호", "자료요�
   assert.equal(rootSource.includes(requiredHomeToken), true, `Missing home visual token: ${requiredHomeToken}`);
 }
 
+for (const requiredHomeLink of ['href: "/services/immigration"', 'href: "/services/appeal"']) {
+  assert.equal(rootSource.includes(requiredHomeLink), true, `Missing home vertical link: ${requiredHomeLink}`);
+}
+
 for (const requiredServicesToken of [
   "공통 서식·문서 준비",
   "상담 전 확인",
@@ -149,11 +171,66 @@ for (const requiredServicesToken of [
   assert.equal(servicesSource.includes(requiredServicesToken), true, `Missing services token: ${requiredServicesToken}`);
 }
 
+for (const requiredServicesLink of ['href: "/services/immigration"', 'href: "/services/appeal"']) {
+  assert.equal(servicesSource.includes(requiredServicesLink), true, `Missing services vertical link: ${requiredServicesLink}`);
+}
+
+for (const requiredImmigrationToken of [
+  "출입국·체류 업무 안내",
+  "체류기간 연장",
+  "체류자격 변경",
+  "사증·외국인등록 관련 서류 준비",
+  "보완 요청 대응",
+  "체류기간 만료일",
+  "여권",
+  "외국인등록증",
+  "가족관계·고용·소득·거주 자료",
+  "상담 진행 흐름",
+  "행정심판·이의신청 보기",
+  'href="/services/appeal"',
+  'href="/track"'
+]) {
+  assert.equal(
+    immigrationSource.includes(requiredImmigrationToken),
+    true,
+    `Missing immigration token: ${requiredImmigrationToken}`
+  );
+}
+
+for (const requiredAppealToken of [
+  "행정심판·이의신청·소명 업무 안내",
+  "강제퇴거명령",
+  "출국명령",
+  "입국금지",
+  "체류기간 연장 불허",
+  "체류자격 변경 불허",
+  "처분서 또는 통지서 수령",
+  "불복 또는 신청 기한",
+  "업무범위와 안전 안내",
+  "변호사 업무 가능성 검토가 필요할 수 있습니다.",
+  "출입국·체류 업무 보기",
+  'href="/services/immigration"',
+  'href="/track"'
+]) {
+  assert.equal(appealSource.includes(requiredAppealToken), true, `Missing appeal token: ${requiredAppealToken}`);
+}
+
+for (const requiredIntakeToken of [
+  "접수 전 확인",
+  "처분일, 통지일, 송달일",
+  "체류기간 만료일, 제출기한, 보완기한",
+  "접수 후 사안별로 필요한 자료를 안내합니다.",
+  "제출기관 기준과 공식 서식"
+]) {
+  assert.equal(intakePageSafeSource.includes(requiredIntakeToken), true, `Missing intake token: ${requiredIntakeToken}`);
+}
+
 for (const forbidden of [
   "100% 허가",
   "확실한 해결",
   "즉시 수임",
   "결과 보장",
+  "처분 취소 보장",
   "무조건 가능",
   "최단기간 보장",
   "승소 보장",
