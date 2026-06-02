@@ -66,6 +66,34 @@ export default async function IntakePageSafe({
         </Card>
 
         <Card className="p-5 sm:p-6">
+          <h2 className="ui-page-title">
+            {locale === "ko" ? "접수 전 확인" : "Before you submit"}
+          </h2>
+          <ul className="mt-4 space-y-2.5">
+            <li className="intake-prep-item">
+              {locale === "ko"
+                ? "처분서나 통지서를 받은 경우 처분일, 통지일, 송달일을 확인해 주세요."
+                : "If you received a notice or disposition, check the decision, notice, and delivery dates."}
+            </li>
+            <li className="intake-prep-item">
+              {locale === "ko"
+                ? "체류기간 만료일, 제출기한, 보완기한이 중요할 수 있습니다."
+                : "Visa expiry dates, filing deadlines, and supplement deadlines may be important."}
+            </li>
+            <li className="intake-prep-item">
+              {locale === "ko"
+                ? "접수 후 사안별로 필요한 자료를 안내합니다."
+                : "After intake, we guide required materials by matter."}
+            </li>
+            <li className="intake-prep-item">
+              {locale === "ko"
+                ? "결과를 보장하지 않으며, 제출기관 기준과 공식 서식을 확인합니다."
+                : "Outcomes are not promised; official forms and authority requirements must be checked."}
+            </li>
+          </ul>
+        </Card>
+
+        <Card className="p-5 sm:p-6">
           <div className="mb-5 border-b border-line pb-4">
             <h2 className="ui-page-title whitespace-nowrap">{t("formTitle")}</h2>
             <p className="mt-2 text-sm text-text-muted">{t("formDescription")}</p>

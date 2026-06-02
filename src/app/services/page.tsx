@@ -20,7 +20,7 @@ const featuredGroups = [
   {
     title: "출입국·체류",
     description: "체류기간 연장, 체류자격 변경, 초청, 출입국 관련 자료 정리를 검토합니다.",
-    href: "/services/visa",
+    href: "/services/immigration",
     situations: ["체류기간 연장", "체류자격 변경", "초청·방문 목적 정리"],
     checks: ["체류자격", "기한", "제출기관 기준"],
     preparation: ["여권·외국인등록 자료", "체류 관련 통지서", "소득·거주 자료"]
@@ -28,7 +28,7 @@ const featuredGroups = [
   {
     title: "행정심판·이의신청",
     description: "처분서, 통지일, 기한, 사실관계, 증빙자료를 중심으로 진행 가능 범위를 확인합니다.",
-    href: "/services/administrative-appeal",
+    href: "/services/appeal",
     situations: ["거부·불허 처분", "강제퇴거·출국명령", "이의신청 검토"],
     checks: ["처분 내용", "불복기한", "증빙자료"],
     preparation: ["처분서", "통지일 확인 자료", "사실관계 설명 자료"]
