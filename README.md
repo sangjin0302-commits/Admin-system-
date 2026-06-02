@@ -58,6 +58,7 @@ npm run dev
 - Open-source/OSS upgrade reference: `docs/oss-upgrade-roadmap.md`
 - Notion integration strategy: `docs/notion-integration-strategy.md`
 - Notion schema mapping snapshot: `docs/notion-schema-mapping-snapshot.md`
+- Notion safe summary export design: `docs/notion-export-safe-summary-design.md`
 - 운영 메모: `OPERATIONS.md`
 - 보안 가이드: `docs/security-hardening.md`
 - 인코딩 무결성: `docs/encoding-integrity.md`
