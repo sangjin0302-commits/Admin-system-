@@ -97,11 +97,55 @@ for (const required of [
   assert.equal(combinedSource.includes(required), true, `Missing required token: ${required}`);
 }
 
+for (const requiredHomePhase2Token of [
+  "상담 이후 흐름",
+  "상담 신청 후 무엇을 확인하는지 먼저 보여드립니다.",
+  "내부적으로 추적하는 항목",
+  "출입국, 행정심판, 자료요청, 기한관리 중심의 업무 흐름",
+  "신뢰와 준비 기준",
+  "먼저 확인하고, 보장처럼 말하지 않습니다.",
+  "사안마다 필요한 자료와 절차가 다릅니다.",
+  "접수 후 사실관계와 자료를 먼저 확인합니다.",
+  "기한과 제출처를 확인합니다.",
+  "진행 상황은 내부적으로 관리합니다.",
+  "결과를 보장하지 않습니다.",
+  "AI가 최종 판단하지 않고 시스템이 기관에 바로 제출하지 않습니다.",
+  "자주 묻는 질문",
+  "상담 신청 후 바로 진행되나요?",
+  "어떤 자료를 준비해야 하나요?",
+  "진행상황은 어떻게 확인하나요?",
+  "출입국 업무도 상담 가능한가요?",
+  "행정심판이나 이의신청도 상담 가능한가요?"
+]) {
+  assert.equal(rootSource.includes(requiredHomePhase2Token), true, `Missing home phase 2 token: ${requiredHomePhase2Token}`);
+}
+
 for (const requiredHomeToken of ["사무소 입구", "접수번호", "자료요청", "기한관리", "서식검토"]) {
   assert.equal(rootSource.includes(requiredHomeToken), true, `Missing home visual token: ${requiredHomeToken}`);
 }
 
-for (const requiredServicesToken of ["공통 서식·문서 준비", "상담 전 확인", "상세 분야"]) {
+for (const requiredServicesToken of [
+  "공통 서식·문서 준비",
+  "상담 전 확인",
+  "상세 분야",
+  "대표 상황",
+  "사무소 확인",
+  "준비 자료",
+  "체류기간 연장",
+  "거부·불허 처분",
+  "정보공개청구",
+  "위임장·동의서",
+  "상담 진행 절차",
+  "1단계",
+  "2단계",
+  "3단계",
+  "4단계",
+  "자료 확인 후 필요한 업무 범위를 안내합니다.",
+  "업무 분야 FAQ",
+  "업무 분야를 정확히 몰라도 신청할 수 있나요?",
+  "자료가 부족하면 어떻게 되나요?",
+  "기관 제출까지 대신 진행되나요?"
+]) {
   assert.equal(servicesSource.includes(requiredServicesToken), true, `Missing services token: ${requiredServicesToken}`);
 }
 
@@ -113,6 +157,11 @@ for (const forbidden of [
   "무조건 가능",
   "최단기간 보장",
   "승소 보장",
+  "즉시 해결",
+  "확실히 가능",
+  "성공률",
+  "승소함",
+  "보장합니다",
   "자동 해결",
   "자동 제출",
   "AI가 판단",

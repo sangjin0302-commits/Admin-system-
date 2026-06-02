@@ -56,6 +56,61 @@ const trustPrinciples = [
   "사안별 상담 필요"
 ] as const;
 
+const conversionFlow = [
+  {
+    title: "상담 신청",
+    description: "현재 상황, 받은 처분서나 통지서, 희망하는 다음 단계를 짧게 남깁니다."
+  },
+  {
+    title: "자료 확인",
+    description: "필요 자료와 절차가 사안마다 다르므로 먼저 사실관계와 자료 범위를 확인합니다."
+  },
+  {
+    title: "기한·제출처 검토",
+    description: "제출기관, 불복기한, 보완 가능성, 공식 서식 기준을 차례로 봅니다."
+  },
+  {
+    title: "진행상황 조회",
+    description: "접수번호가 있으면 내부 관리 상태와 다음 안내를 조회할 수 있습니다."
+  }
+] as const;
+
+const readinessNotes = [
+  "사안마다 필요한 자료와 절차가 다릅니다.",
+  "접수 후 사실관계와 자료를 먼저 확인합니다.",
+  "기한과 제출처를 확인합니다.",
+  "진행 상황은 내부적으로 관리합니다.",
+  "결과를 보장하지 않습니다.",
+  "AI가 최종 판단하지 않고 시스템이 기관에 바로 제출하지 않습니다."
+] as const;
+
+const homeFaqItems = [
+  {
+    question: "상담 신청 후 바로 진행되나요?",
+    answer: "사실관계와 자료를 확인한 뒤 가능한 범위와 다음 단계를 안내합니다."
+  },
+  {
+    question: "어떤 자료를 준비해야 하나요?",
+    answer: "처분서, 통지서, 여권·체류 관련 자료, 기존 제출자료 등은 사안별로 다릅니다."
+  },
+  {
+    question: "진행상황은 어떻게 확인하나요?",
+    answer: "접수 후 받은 접수번호로 자료요청, 검토 상태, 다음 안내를 확인할 수 있습니다."
+  },
+  {
+    question: "출입국 업무도 상담 가능한가요?",
+    answer: "체류, 자격변경, 초청, 처분 대응 등은 자료 확인 후 상담 가능 범위를 봅니다."
+  },
+  {
+    question: "행정심판이나 이의신청도 상담 가능한가요?",
+    answer: "처분 내용과 기한, 제출기관을 확인한 뒤 사안별 검토가 필요합니다."
+  },
+  {
+    question: "결과를 보장하나요?",
+    answer: "결과를 보장하지 않습니다. 자료 확인 후 안내하며, AI가 최종 판단하지 않습니다."
+  }
+] as const;
+
 function PrimaryCta({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
@@ -204,6 +259,37 @@ export default function PublicMarketingHomePage() {
         <p className="text-sm text-text-muted">외부 기관 제출은 관리자 검토와 사안별 확인 후 별도 안내합니다.</p>
       </section>
 
+      <section className="space-y-4" aria-labelledby="conversion-heading">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="ui-kicker">상담 이후 흐름</p>
+            <h2 id="conversion-heading" className="ui-section-title">
+              상담 신청 후 무엇을 확인하는지 먼저 보여드립니다.
+            </h2>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <PrimaryCta href={intakeHref}>상담 신청하기</PrimaryCta>
+            <SecondaryCta href="/track">진행상황 조회</SecondaryCta>
+            <SecondaryCta href="/services">전문 분야 보기</SecondaryCta>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {conversionFlow.map((item) => (
+            <Card key={item.title} className="p-5">
+              <h3 className="text-lg font-semibold text-text-strong">{item.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-text-muted">{item.description}</p>
+            </Card>
+          ))}
+        </div>
+        <Card muted className="p-5">
+          <h3 className="text-base font-semibold text-text-strong">내부적으로 추적하는 항목</h3>
+          <p className="mt-2 text-sm leading-6 text-text-muted">
+            출입국, 행정심판, 자료요청, 기한관리 중심의 업무 흐름을 내부적으로 정리합니다. 이는 진행 관리
+            목적이며 결과를 약속하는 의미가 아닙니다.
+          </p>
+        </Card>
+      </section>
+
       <section className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
         <Card className="p-6">
           <p className="ui-kicker">진행상황 조회</p>
@@ -228,6 +314,39 @@ export default function PublicMarketingHomePage() {
           </div>
           <p className="mt-4 text-sm leading-6 text-text-muted">{PUBLIC_MARKETING_SAFE_NOTICE}</p>
         </Card>
+      </section>
+
+      <section className="space-y-4" aria-labelledby="readiness-heading">
+        <div>
+          <p className="ui-kicker">신뢰와 준비 기준</p>
+          <h2 id="readiness-heading" className="ui-section-title">
+            먼저 확인하고, 보장처럼 말하지 않습니다.
+          </h2>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {readinessNotes.map((note) => (
+            <div key={note} className="rounded-md border border-line bg-surface px-4 py-3 text-sm leading-6 text-text">
+              {note}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-4" aria-labelledby="home-faq-heading">
+        <div>
+          <p className="ui-kicker">자주 묻는 질문</p>
+          <h2 id="home-faq-heading" className="ui-section-title">
+            접수 전에 많이 묻는 내용을 정리했습니다.
+          </h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {homeFaqItems.map((item) => (
+            <Card key={item.question} className="p-5">
+              <h3 className="text-base font-semibold text-text-strong">{item.question}</h3>
+              <p className="mt-3 text-sm leading-6 text-text-muted">{item.answer}</p>
+            </Card>
+          ))}
+        </div>
       </section>
 
       <section className="rounded-lg border border-line bg-surface p-6 shadow-panel">
