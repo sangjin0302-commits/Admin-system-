@@ -578,3 +578,5 @@ Admin-system이 "업무에 무리 없이 안정적으로 쓸 수 있다"고 판�
 - Immigration due date sync QA runbook: `docs/runbooks/immigration-due-date-sync-qa.md`
 - Public website 3D brand entrance: `docs/public-website-3d-brand-entrance.md`
 - OSS upgrade/reference roadmap: `docs/oss-upgrade-roadmap.md`
+- Notion integration strategy: `docs/notion-integration-strategy.md`
+- Notion schema mapping snapshot: `docs/notion-schema-mapping-snapshot.md`
