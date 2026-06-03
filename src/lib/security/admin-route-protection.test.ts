@@ -41,6 +41,7 @@ const protectedRoutes = [
   "/api/admin/case-matters/example-id/tasks/task-id",
   "/api/admin/case-matters/example-id/accounting",
   "/api/admin/case-matters/example-id/immigration-detail",
+  "/api/admin/case-matters/example-id/notion-export/dry-run",
   "/api/admin/case-matters/example-id/supplement-requests",
   "/api/admin/case-matters/example-id/supplement-requests/supplement-id"
 ];
