@@ -581,3 +581,4 @@ Admin-system이 "업무에 무리 없이 안정적으로 쓸 수 있다"고 판�
 - Notion integration strategy: `docs/notion-integration-strategy.md`
 - Notion schema mapping snapshot: `docs/notion-schema-mapping-snapshot.md`
 - Notion safe summary export design: `docs/notion-export-safe-summary-design.md`
+- Notion export dry-run route contract: `docs/notion-export-dry-run-route-contract.md`
