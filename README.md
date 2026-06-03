@@ -59,6 +59,7 @@ npm run dev
 - Notion integration strategy: `docs/notion-integration-strategy.md`
 - Notion schema mapping snapshot: `docs/notion-schema-mapping-snapshot.md`
 - Notion safe summary export design: `docs/notion-export-safe-summary-design.md`
+- Notion export dry-run route contract: `docs/notion-export-dry-run-route-contract.md`
 - 운영 메모: `OPERATIONS.md`
 - 보안 가이드: `docs/security-hardening.md`
 - 인코딩 무결성: `docs/encoding-integrity.md`
