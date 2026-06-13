@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Card } from "@/components/ui/card";
 
 export function UploadClient() {
   const router = useRouter();
@@ -39,7 +38,7 @@ export function UploadClient() {
   }
 
   return (
-    <Card className="mt-8 p-6">
+    <div className="ethos-card mt-8 p-6">
       <form onSubmit={onSubmit} className="space-y-4">
         <input
           type="file"
@@ -65,6 +64,6 @@ export function UploadClient() {
           ← 포털 대시보드
         </Link>
       </form>
-    </Card>
+    </div>
   );
 }

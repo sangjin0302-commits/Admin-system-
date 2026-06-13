@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useState, type FormEvent } from "react";
 
-import { Card } from "@/components/ui/card";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -43,7 +42,7 @@ export default function SignInPage() {
         <p className="mt-2 text-sm text-text-muted">사건 진행 상황과 자료를 직접 확인하세요.</p>
       </div>
 
-      <Card className="mt-8 p-7">
+      <div className="ethos-card mt-8 p-7">
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="font-serif text-sm font-bold text-primary">이메일</label>
@@ -92,7 +91,7 @@ export default function SignInPage() {
             비밀번호를 잊으셨나요?
           </Link>
         </div>
-      </Card>
+      </div>
 
       <p className="mt-6 text-center text-xs text-text-muted">
         접수번호만 알고 있다면{" "}

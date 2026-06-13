@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Card } from "@/components/ui/card";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -42,7 +41,7 @@ export default function SignUpPage() {
         <p className="mt-2 text-sm text-text-muted">진행 상황 조회·자료 업로드를 위한 계정을 만드세요.</p>
       </div>
 
-      <Card className="mt-8 p-7">
+      <div className="ethos-card mt-8 p-7">
         <form onSubmit={onSubmit} className="space-y-4">
           {(
             [
@@ -90,7 +89,7 @@ export default function SignUpPage() {
             로그인
           </Link>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

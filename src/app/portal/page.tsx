@@ -1,17 +1,62 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { Card } from "@/components/ui/card";
+import { PortalHeader } from "@/components/layout/portal-header";
 import { auth, signOut } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/client";
 
 export const dynamic = "force-dynamic";
 
+const STATUS_LABEL: Record<string, string> = {
+  INTAKE_REVIEW: "접수 검토",
+  CONSULTING: "상담 중",
+  QUOTED: "견적 안내",
+  CONTRACT_PENDING: "계약 준비",
+  OPEN: "진행 중",
+  DOCUMENT_COLLECTING: "자료 수집",
+  DOCUMENT_REVIEWING: "자료 검토",
+  READY_TO_SUBMIT: "제출 준비",
+  SUBMITTED: "제출 완료",
+  SUPPLEMENT_REQUESTED: "보완 요청",
+  WAITING_AGENCY: "기관 처리 대기",
+  RESULT_RECEIVED: "결과 통보",
+  CLOSING: "마무리",
+  CLOSED: "종결",
+  CANCELLED: "취소",
+  ON_HOLD: "보류"
+};
+
+// 상태별 대략적 진행률 (0~100)
+const STATUS_PROGRESS: Record<string, number> = {
+  INTAKE_REVIEW: 8,
+  CONSULTING: 16,
+  QUOTED: 24,
+  CONTRACT_PENDING: 32,
+  OPEN: 40,
+  DOCUMENT_COLLECTING: 52,
+  DOCUMENT_REVIEWING: 62,
+  READY_TO_SUBMIT: 72,
+  SUBMITTED: 80,
+  SUPPLEMENT_REQUESTED: 76,
+  WAITING_AGENCY: 88,
+  RESULT_RECEIVED: 94,
+  CLOSING: 97,
+  CLOSED: 100,
+  CANCELLED: 100,
+  ON_HOLD: 40
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+  VISA_STAY: "비자/체류",
+  ADMIN_APPEAL: "행정심판",
+  CONTRACT_INVESTIGATION: "계약서/사실조사",
+  LICENSE_PERMIT: "인허가",
+  OTHER: "기타"
+};
+
 export default async function PortalDashboard() {
   const session = await auth();
-  if (!session?.user) {
-    redirect("/portal/signin");
-  }
+  if (!session?.user) redirect("/portal/signin");
 
   const userId = (session.user as { id?: string }).id;
   const client = userId
@@ -21,7 +66,6 @@ export default async function PortalDashboard() {
       })
     : null;
 
-  // 연결된 inquiry 조회 (이메일 일치)
   const inquiries = client
     ? await prisma.inquiry.findMany({
         where: { email: client.email },
@@ -40,142 +84,192 @@ export default async function PortalDashboard() {
       })
     : [];
 
+  const allCases = inquiries.flatMap((i) => i.caseMatters);
+
   return (
-    <div className="mx-auto max-w-5xl space-y-10 px-4 py-12 sm:px-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">Client Portal</p>
-          <h1 className="mt-2 font-serif text-3xl font-bold text-primary">
-            {client?.name}님, 환영합니다
+    <div className="min-h-screen bg-canvas">
+      <PortalHeader clientName={client?.name} />
+
+      <main className="mx-auto max-w-5xl space-y-10 px-4 py-10 sm:px-6">
+        {/* 인사 */}
+        <section className="ethos-card ethos-grain relative overflow-hidden p-8 sm:p-10">
+          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gold/8" />
+          <p className="ethos-eyebrow relative">Welcome</p>
+          <h1 className="ethos-display relative mt-3 text-3xl sm:text-4xl">
+            {client?.name}님, 안녕하세요
           </h1>
-          <p className="mt-1 text-sm text-text-muted">{client?.email}</p>
-        </div>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/" });
-          }}
-        >
-          <button
-            type="submit"
-            className="rounded-lg border border-gold/40 bg-surface px-4 py-2 text-sm font-semibold text-primary hover:bg-gold-soft/30"
-          >
-            로그아웃
-          </button>
-        </form>
-      </div>
-
-      {/* Quick stats */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Stat title="문의" value={inquiries.length} />
-        <Stat title="진행 사건" value={inquiries.flatMap((i) => i.caseMatters).length} />
-        <Stat title="업로드 자료" value={client?.uploadedFiles.length ?? 0} />
-      </div>
-
-      {/* 문의 목록 */}
-      <section>
-        <h2 className="font-serif text-xl font-bold text-primary">내 문의 / 사건</h2>
-        {inquiries.length === 0 ? (
-          <Card className="mt-4 p-8 text-center">
-            <p className="text-sm text-text-muted">아직 접수된 문의가 없습니다.</p>
+          <p className="relative mt-2 text-sm text-text-muted">{client?.email}</p>
+          <div className="relative mt-6 flex flex-wrap gap-3">
+            <Link
+              href="/portal/upload"
+              className="inline-flex h-10 items-center rounded-lg bg-primary px-5 text-sm font-bold text-white transition hover:bg-text-strong"
+            >
+              자료 업로드
+            </Link>
             <Link
               href="/intake"
-              className="mt-4 inline-flex h-10 items-center rounded-lg bg-primary px-5 text-sm font-bold text-white hover:bg-text-strong"
+              className="inline-flex h-10 items-center rounded-lg border border-gold/40 bg-surface px-5 text-sm font-semibold text-primary transition hover:bg-gold-soft/30"
             >
-              상담 신청하기
+              새 상담 신청
             </Link>
-          </Card>
-        ) : (
-          <div className="mt-4 space-y-3">
-            {inquiries.map((iq) => (
-              <Card key={iq.id} className="p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-serif text-base font-bold text-primary">{iq.title}</p>
-                    <p className="mt-1 text-xs text-text-muted">
-                      {new Date(iq.createdAt).toLocaleDateString("ko-KR")} · 상태: {iq.status}
-                    </p>
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/" });
+              }}
+            >
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center rounded-lg border border-line px-5 text-sm font-medium text-text-muted transition hover:bg-surface-muted"
+              >
+                로그아웃
+              </button>
+            </form>
+          </div>
+        </section>
+
+        {/* 통계 */}
+        <section className="grid gap-4 sm:grid-cols-3">
+          <Stat label="문의" value={inquiries.length} />
+          <Stat label="진행 사건" value={allCases.length} />
+          <Stat label="업로드 자료" value={client?.uploadedFiles.length ?? 0} />
+        </section>
+
+        {/* 사건 목록 */}
+        <section>
+          <div className="ethos-divider mb-6 justify-start">
+            <h2 className="ethos-display text-xl">내 문의 / 사건</h2>
+          </div>
+
+          {inquiries.length === 0 ? (
+            <div className="ethos-card p-10 text-center">
+              <p className="text-sm text-text-muted">아직 접수된 문의가 없습니다.</p>
+              <Link
+                href="/intake"
+                className="mt-5 inline-flex h-11 items-center rounded-lg bg-primary px-6 text-sm font-bold text-white transition hover:bg-text-strong"
+              >
+                상담 신청하기
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {inquiries.map((iq) => (
+                <div key={iq.id} className="ethos-card ethos-card-hover p-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-serif text-base font-bold text-primary">{iq.title}</p>
+                      <p className="mt-1 text-xs text-text-muted">
+                        {new Date(iq.createdAt).toLocaleDateString("ko-KR")} 접수
+                      </p>
+                    </div>
+                    {iq.publicTrackingCode && (
+                      <Link
+                        href={`/track?code=${iq.publicTrackingCode}`}
+                        className="flex-shrink-0 rounded-full bg-gold-soft/60 px-3 py-1 font-mono text-xs font-bold text-gold-deep transition hover:bg-gold-soft"
+                      >
+                        {iq.publicTrackingCode}
+                      </Link>
+                    )}
                   </div>
-                  {iq.publicTrackingCode && (
-                    <Link
-                      href={`/track?code=${iq.publicTrackingCode}`}
-                      className="rounded-full bg-gold-soft/60 px-3 py-1 text-xs font-bold text-gold-deep"
-                    >
-                      {iq.publicTrackingCode}
-                    </Link>
+
+                  {iq.caseMatters.length > 0 && (
+                    <div className="mt-4 space-y-3 border-t border-gold/15 pt-4">
+                      {iq.caseMatters.map((c) => {
+                        const progress = STATUS_PROGRESS[c.status] ?? 40;
+                        return (
+                          <Link
+                            key={c.id}
+                            href={`/portal/cases/${c.id}`}
+                            className="block rounded-xl border border-transparent p-3 transition hover:border-gold/30 hover:bg-gold-soft/15"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="rounded-full bg-primary/8 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                    {CATEGORY_LABEL[c.category] ?? c.category}
+                                  </span>
+                                  <span className="truncate font-semibold text-text-strong">{c.title}</span>
+                                </div>
+                                <p className="mt-0.5 text-xs text-text-muted">{c.caseNo ?? "사건번호 부여 전"}</p>
+                              </div>
+                              <span className="flex-shrink-0 rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium text-text">
+                                {STATUS_LABEL[c.status] ?? c.status}
+                              </span>
+                            </div>
+                            {/* 진행률 바 */}
+                            <div className="mt-3 flex items-center gap-3">
+                              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-muted">
+                                <div
+                                  className="h-full rounded-full bg-gradient-to-r from-gold to-gold-deep transition-all"
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                              <span className="font-mono text-[11px] font-bold text-gold-deep">{progress}%</span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
-                {iq.caseMatters.length > 0 && (
-                  <div className="mt-3 space-y-2 border-t border-gold/20 pt-3">
-                    {iq.caseMatters.map((c) => (
-                      <Link
-                        key={c.id}
-                        href={`/portal/cases/${c.id}`}
-                        className="flex items-center justify-between rounded-lg px-2 py-1 text-sm hover:bg-gold-soft/30"
-                      >
-                        <div>
-                          <span className="font-bold text-text-strong">{c.title}</span>
-                          <span className="ml-2 text-xs text-text-muted">{c.caseNo ?? "-"}</span>
-                        </div>
-                        <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs">{c.status}</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          )}
+        </section>
 
-      {/* 자료 업로드 */}
-      <section>
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-xl font-bold text-primary">내 자료</h2>
-          <Link
-            href="/portal/upload"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-text-strong"
-          >
-            자료 업로드
-          </Link>
-        </div>
-        {!client?.uploadedFiles.length ? (
-          <Card className="mt-4 p-6 text-center text-sm text-text-muted">아직 업로드한 자료가 없습니다.</Card>
-        ) : (
-          <Card className="mt-4 overflow-hidden p-0">
-            <table className="w-full text-sm">
-              <thead className="bg-surface-muted/60 text-xs uppercase tracking-wider text-gold-deep">
-                <tr>
-                  <th className="px-4 py-3 text-left font-serif">파일명</th>
-                  <th className="px-4 py-3 text-left font-serif">크기</th>
-                  <th className="px-4 py-3 text-left font-serif">업로드 일자</th>
-                </tr>
-              </thead>
-              <tbody>
-                {client.uploadedFiles.map((f) => (
-                  <tr key={f.id} className="border-t border-gold/15">
-                    <td className="px-4 py-3 font-bold text-text-strong">{f.fileName}</td>
-                    <td className="px-4 py-3 text-text-muted">{(f.sizeBytes / 1024).toFixed(1)} KB</td>
-                    <td className="px-4 py-3 text-text-muted">
-                      {new Date(f.uploadedAt).toLocaleDateString("ko-KR")}
-                    </td>
+        {/* 업로드 자료 */}
+        <section>
+          <div className="mb-6 flex items-center justify-between">
+            <div className="ethos-divider justify-start">
+              <h2 className="ethos-display text-xl">내 자료</h2>
+            </div>
+            <Link
+              href="/portal/upload"
+              className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-bold text-white transition hover:bg-text-strong"
+            >
+              업로드
+            </Link>
+          </div>
+
+          {!client?.uploadedFiles.length ? (
+            <div className="ethos-card p-8 text-center text-sm text-text-muted">
+              아직 업로드한 자료가 없습니다.
+            </div>
+          ) : (
+            <div className="ethos-card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gold/20 bg-surface-muted/50 text-left text-xs uppercase tracking-wider text-gold-deep">
+                    <th className="px-5 py-3 font-serif font-bold">파일명</th>
+                    <th className="px-5 py-3 font-serif font-bold">크기</th>
+                    <th className="px-5 py-3 font-serif font-bold">업로드</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-        )}
-      </section>
+                </thead>
+                <tbody>
+                  {client.uploadedFiles.map((f) => (
+                    <tr key={f.id} className="border-b border-gold/10 transition hover:bg-gold-soft/10 last:border-0">
+                      <td className="px-5 py-3 font-medium text-text-strong">{f.fileName}</td>
+                      <td className="px-5 py-3 text-text-muted">{(f.sizeBytes / 1024).toFixed(1)} KB</td>
+                      <td className="px-5 py-3 text-text-muted">
+                        {new Date(f.uploadedAt).toLocaleDateString("ko-KR")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 }
 
-function Stat({ title, value }: { title: string; value: number }) {
+function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <Card className="p-5">
-      <p className="font-serif text-xs uppercase tracking-wider text-gold-deep">{title}</p>
-      <p className="mt-2 font-serif text-3xl font-bold text-primary">{value}</p>
-    </Card>
+    <div className="ethos-card ethos-card-hover p-6 text-center">
+      <p className="ethos-display text-4xl text-primary">{value}</p>
+      <p className="mt-2 font-serif text-xs uppercase tracking-wider text-gold-deep">{label}</p>
+    </div>
   );
 }

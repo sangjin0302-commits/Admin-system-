@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Card } from "@/components/ui/card";
 
 export default function ResetPage() {
   const router = useRouter();
@@ -50,7 +49,7 @@ export default function ResetPage() {
         <h1 className="mt-3 font-serif text-3xl font-bold text-primary">새 비밀번호 설정</h1>
       </div>
 
-      <Card className="mt-8 p-7">
+      <div className="ethos-card mt-8 p-7">
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="font-serif text-sm font-bold text-primary">
@@ -74,7 +73,7 @@ export default function ResetPage() {
             {loading ? "변경 중..." : "비밀번호 변경"}
           </button>
         </form>
-      </Card>
+      </div>
     </div>
   );
 }

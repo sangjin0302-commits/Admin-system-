@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
+import { PortalHeader } from "@/components/layout/portal-header";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/client";
 
@@ -39,7 +40,9 @@ export default async function PortalCaseDetail({
   });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 px-4 py-12 sm:px-6">
+    <div className="min-h-screen bg-canvas">
+      <PortalHeader clientName={client.name} />
+      <div className="mx-auto max-w-4xl space-y-8 px-4 py-12 sm:px-6">
       <Link href="/portal" className="text-xs text-text-muted hover:text-primary">
         ← 포털 대시보드
       </Link>
@@ -117,6 +120,7 @@ export default async function PortalCaseDetail({
           </ol>
         )}
       </Card>
+      </div>
     </div>
   );
 }

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
-import { Card } from "@/components/ui/card";
 
 export default function ForgotPage() {
   const [email, setEmail] = useState("");
@@ -29,7 +28,7 @@ export default function ForgotPage() {
         <h1 className="mt-3 font-serif text-3xl font-bold text-primary">비밀번호 재설정</h1>
       </div>
 
-      <Card className="mt-8 p-7">
+      <div className="ethos-card mt-8 p-7">
         {sent ? (
           <div className="text-center">
             <p className="text-sm text-text">
@@ -65,7 +64,7 @@ export default function ForgotPage() {
             </p>
           </form>
         )}
-      </Card>
+      </div>
     </div>
   );
 }
