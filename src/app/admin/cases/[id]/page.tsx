@@ -12,6 +12,12 @@ import { CaseAccountingMemoPanel } from "@/components/admin/case-accounting-memo
 import { CaseTaskManagementPanel } from "@/components/admin/case-task-management-panel";
 import { ImmigrationCaseDetailPanel } from "@/components/admin/immigration-case-detail-panel";
 import { ImmigrationCaseHintPanel } from "@/components/admin/immigration-case-hint-panel";
+import { AdminAppealDetailPanel } from "@/components/admin/admin-appeal-detail-panel";
+import { ContractDetailPanel } from "@/components/admin/contract-detail-panel";
+import { LicenseDetailPanel } from "@/components/admin/license-detail-panel";
+import { CaseMatterCategoryPanel } from "@/components/admin/case-matter-category-panel";
+import { PortalUploadedFilesPanel } from "@/components/admin/portal-uploaded-files-panel";
+import { prisma } from "@/lib/prisma/client";
 import { CaseMatterStatusForm } from "@/components/admin/case-matter-status-form";
 import { RequiredDocumentStatusPanel } from "@/components/admin/required-document-status-panel";
 import { SupplementRequestManagementPanel } from "@/components/admin/supplement-request-management-panel";
@@ -201,6 +207,18 @@ export default async function AdminCaseMatterDetailPage({
     requiredDocuments
   });
 
+  // 의뢰인 포털 업로드 자료 — inquiry.email 매칭
+  const inquiryEmail = caseMatter.inquiry?.email ?? null;
+  const portalUploads = inquiryEmail
+    ? await prisma.portalUploadedFile.findMany({
+        where: {
+          client: { email: inquiryEmail }
+        },
+        orderBy: { uploadedAt: "desc" },
+        take: 30
+      })
+    : [];
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
@@ -212,12 +230,36 @@ export default async function AdminCaseMatterDetailPage({
               {caseMatter.caseNo ?? t("caseNoMissing")} | {formatCaseMatterTypeLabel(caseMatter.matterType)}
             </p>
           </div>
-          <Link
-            href="/admin/cases"
-            className="inline-flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
-          >
-            {t("backToList")}
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={`/api/admin/case-matters/${caseMatter.id}/contract-pdf`}
+              className="inline-flex h-10 items-center rounded-lg border border-gold/40 bg-surface px-4 text-sm font-medium text-primary transition hover:bg-gold-soft/30"
+            >
+              계약서 PDF
+            </a>
+            {(caseMatter.category === "CONTRACT_INVESTIGATION" || caseMatter.contractDetail) && (
+              <a
+                href={`/api/admin/case-matters/${caseMatter.id}/report-pdf`}
+                className="inline-flex h-10 items-center rounded-lg border border-gold/40 bg-surface px-4 text-sm font-medium text-primary transition hover:bg-gold-soft/30"
+              >
+                조사보고서 PDF
+              </a>
+            )}
+            {(caseMatter.category === "ADMIN_APPEAL" || caseMatter.adminAppealDetail) && (
+              <a
+                href={`/api/admin/case-matters/${caseMatter.id}/appeal-pdf`}
+                className="inline-flex h-10 items-center rounded-lg border border-gold/40 bg-surface px-4 text-sm font-medium text-primary transition hover:bg-gold-soft/30"
+              >
+                심판 청구서 PDF
+              </a>
+            )}
+            <Link
+              href="/admin/cases"
+              className="inline-flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
+            >
+              {t("backToList")}
+            </Link>
+          </div>
         </div>
 
         <div className="mt-5 rounded-xl border border-line bg-surface-muted p-3">
@@ -226,18 +268,59 @@ export default async function AdminCaseMatterDetailPage({
         </div>
       </Card>
 
+      <CaseMatterCategoryPanel
+        caseMatterId={caseMatter.id}
+        currentCategory={caseMatter.category ?? "OTHER"}
+      />
       <CaseMatterSummaryCards caseMatter={caseMatter} status={currentStatus} locale={locale} />
       <CaseMatterPartiesSection parties={caseMatter.parties} />
       <CaseMatterInquiryLinkSection inquiry={caseMatter.inquiry} />
-      <ImmigrationCaseHintPanel
-        matterType={caseMatter.matterType}
-        caseData={immigrationDraftReadinessCaseData}
-      />
-      <ImmigrationCaseDetailPanel
-        caseMatterId={caseMatter.id}
-        caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
-        immigrationDetail={immigrationDetail}
-      />
+      {(caseMatter.category === "VISA_STAY" || caseMatter.immigrationDetail) && (
+        <>
+          <ImmigrationCaseHintPanel
+            matterType={caseMatter.matterType}
+            caseData={immigrationDraftReadinessCaseData}
+          />
+          <ImmigrationCaseDetailPanel
+            caseMatterId={caseMatter.id}
+            caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
+            immigrationDetail={immigrationDetail}
+          />
+        </>
+      )}
+
+      {(caseMatter.category === "ADMIN_APPEAL" || caseMatter.adminAppealDetail) && (
+        <AdminAppealDetailPanel
+          caseMatterId={caseMatter.id}
+          caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
+          appealDetail={caseMatter.adminAppealDetail ? {
+            ...caseMatter.adminAppealDetail,
+            updatedAt: caseMatter.adminAppealDetail.updatedAt.toISOString()
+          } : null}
+        />
+      )}
+
+      {(caseMatter.category === "CONTRACT_INVESTIGATION" || caseMatter.contractDetail) && (
+        <ContractDetailPanel
+          caseMatterId={caseMatter.id}
+          caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
+          contractDetail={caseMatter.contractDetail ? {
+            ...caseMatter.contractDetail,
+            updatedAt: caseMatter.contractDetail.updatedAt.toISOString()
+          } : null}
+        />
+      )}
+
+      {(caseMatter.category === "LICENSE_PERMIT" || caseMatter.licenseDetail) && (
+        <LicenseDetailPanel
+          caseMatterId={caseMatter.id}
+          caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
+          licenseDetail={caseMatter.licenseDetail ? {
+            ...caseMatter.licenseDetail,
+            updatedAt: caseMatter.licenseDetail.updatedAt.toISOString()
+          } : null}
+        />
+      )}
       <RequiredDocumentSummarySection documents={requiredDocuments} locale={locale} />
 
       <CaseMatterStatusForm
@@ -284,6 +367,7 @@ export default async function AdminCaseMatterDetailPage({
         submissions={caseMatter.submissions}
         supplementRequests={caseMatter.supplementRequests}
       />
+      <PortalUploadedFilesPanel uploads={portalUploads} />
       <CaseMatterEventTimeline events={caseMatter.events} />
     </div>
   );

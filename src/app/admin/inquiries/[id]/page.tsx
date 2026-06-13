@@ -184,6 +184,7 @@ export default async function AdminInquiryDetailPage({
                 inquiryId={inquiry.id}
                 inquiryTitle={inquiry.title}
                 inquiryType={inquiryType}
+                intakeCategory={inquiry.intakeCategory ?? null}
                 latestCaseMatter={
                   latestCaseMatter
                     ? {

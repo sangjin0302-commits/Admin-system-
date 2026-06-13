@@ -166,6 +166,16 @@ export async function createInquiry(payload: unknown) {
       console.error("Failed to sync consultation to Notion", error);
     }
 
+    // 자동 lawbot 분석 (best-effort, await 안 함 — 응답 지연 방지)
+    if (process.env.LAWBOT_BRIDGE_BASE_URL) {
+      const { autoAnalyzeInquiryWithLawbot } = await import("@/lib/services/auto-lawbot-analysis");
+      autoAnalyzeInquiryWithLawbot({
+        inquiryId: updated.id,
+        factInput: `${updated.title}\n${updated.description}`,
+        intakeCategoryKey: updated.intakeCategory
+      }).catch((err) => console.warn("[auto-lawbot] background error", err));
+    }
+
     return updated;
   })();
 

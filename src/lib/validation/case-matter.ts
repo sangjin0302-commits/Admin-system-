@@ -9,9 +9,18 @@ import {
   supplementStatusValues
 } from "@/types/case-matter";
 
+export const caseMatterCategoryValues = [
+  "VISA_STAY",
+  "ADMIN_APPEAL",
+  "CONTRACT_INVESTIGATION",
+  "LICENSE_PERMIT",
+  "OTHER"
+] as const;
+
 export const convertInquiryToCaseMatterSchema = z.object({
   title: z.string().trim().min(2).max(120).optional(),
   matterType: z.string().trim().min(2).max(80).optional(),
+  category: z.enum(caseMatterCategoryValues).optional().default("OTHER"),
   assignedTo: z.string().trim().max(80).optional(),
   actorName: z.string().trim().max(80).optional(),
   forceCreate: z.boolean().optional().default(false),

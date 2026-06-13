@@ -11,6 +11,7 @@ import {
 } from "@/lib/immigration";
 import { parseClientApiError } from "@/lib/http/client-api";
 import { normalizeInquiryType, type InquiryType } from "@/types/inquiry";
+import { intakeCategoryToCaseMatterCategory } from "@/types/intake-category";
 
 type ExistingCaseMatterSummary = {
   id: string;
@@ -33,6 +34,7 @@ type InquiryCaseConversionPanelProps = {
   inquiryId: string;
   inquiryTitle: string;
   inquiryType: InquiryType;
+  intakeCategory?: string | null;
   latestCaseMatter: ExistingCaseMatterSummary;
 };
 
@@ -59,6 +61,7 @@ export function InquiryCaseConversionPanel({
   inquiryId,
   inquiryTitle,
   inquiryType,
+  intakeCategory,
   latestCaseMatter
 }: InquiryCaseConversionPanelProps) {
   const normalizedInquiryType = normalizeInquiryType(inquiryType);
@@ -68,6 +71,13 @@ export function InquiryCaseConversionPanel({
     suggestMatterTypeForInquiryType(normalizedInquiryType)
   );
   const [customMatterType, setCustomMatterType] = useState("");
+  const [category, setCategory] = useState(() => {
+    if (intakeCategory && intakeCategoryToCaseMatterCategory[intakeCategory as keyof typeof intakeCategoryToCaseMatterCategory]) {
+      return intakeCategoryToCaseMatterCategory[intakeCategory as keyof typeof intakeCategoryToCaseMatterCategory];
+    }
+    if (normalizedInquiryType === "FOREIGNER_VISA" || normalizedInquiryType === "IMMIGRATION_STAY") return "VISA_STAY";
+    return "OTHER";
+  });
   const [assignedTo, setAssignedTo] = useState("");
   const [forceCreate, setForceCreate] = useState(false);
   const [updateInquiryStatusToWon, setUpdateInquiryStatusToWon] = useState(false);
@@ -86,6 +96,7 @@ export function InquiryCaseConversionPanel({
       const payload = {
         title: title.trim() || undefined,
         matterType: effectiveMatterType || undefined,
+        category,
         assignedTo: assignedTo.trim() || undefined,
         actorName: "admin",
         forceCreate,
@@ -163,6 +174,21 @@ export function InquiryCaseConversionPanel({
             onChange={(event) => setTitle(event.target.value)}
             className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm text-text-strong outline-none focus:border-line-strong"
           />
+        </label>
+
+        <label className="space-y-1 text-sm font-medium text-text">
+          업무 카테고리
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm text-text-strong outline-none focus:border-line-strong"
+          >
+            <option value="VISA_STAY">비자/외국인 체류</option>
+            <option value="ADMIN_APPEAL">행정심판</option>
+            <option value="CONTRACT_INVESTIGATION">계약서/사실조사</option>
+            <option value="LICENSE_PERMIT">인허가</option>
+            <option value="OTHER">기타</option>
+          </select>
         </label>
 
         <div className="grid gap-3 lg:grid-cols-2">

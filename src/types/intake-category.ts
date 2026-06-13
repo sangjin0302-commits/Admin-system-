@@ -50,6 +50,16 @@ export const intakeCategoryInquiryTypeMap: Record<IntakeCategory, InquiryType> =
   civil_petition: "GENERAL_ADMIN_CIVIL"
 };
 
+export const intakeCategoryToCaseMatterCategory: Record<IntakeCategory, string> = {
+  visa: "VISA_STAY",
+  corporation: "OTHER",
+  administrative_appeal: "ADMIN_APPEAL",
+  fact_finding_contract: "CONTRACT_INVESTIGATION",
+  permit_license: "LICENSE_PERMIT",
+  arabic_translation: "OTHER",
+  civil_petition: "OTHER"
+};
+
 export const intakeCategoryClientTypeMap: Record<IntakeCategory, ClientType> = {
   visa: "INDIVIDUAL",
   corporation: "COMPANY",

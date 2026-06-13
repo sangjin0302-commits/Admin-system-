@@ -46,6 +46,7 @@ export function buildCreateInquiryData(
     serviceTags: JSON.stringify(evaluation.serviceTags),
     generatedSummary,
     generatedGuidance: "",
-    generatedReceiptMessage: ""
+    generatedReceiptMessage: "",
+    intakeCategory: input.category ?? null
   } satisfies Prisma.InquiryCreateInput;
 }

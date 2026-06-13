@@ -1,6 +1,7 @@
 import type {
   AccountingFeeStatus,
   AccountingPaymentStatus,
+  CaseMatterCategory,
   CaseMatterStatus,
   CaseTaskPriority,
   CaseTaskStatus,
@@ -179,6 +180,70 @@ const operationalInclude = {
       updatedAt: true
     }
   },
+  adminAppealDetail: {
+    select: {
+      id: true,
+      appealType: true,
+      disposingAgency: true,
+      reviewingAgency: true,
+      dispositionContent: true,
+      dispositionDate: true,
+      noticeReceivedDate: true,
+      filingDeadline: true,
+      filedAt: true,
+      hearingDate: true,
+      decisionExpectedDate: true,
+      decisionReceivedDate: true,
+      result: true,
+      resultSummary: true,
+      groundsSummary: true,
+      evidenceSummary: true,
+      caseNoOfficial: true,
+      deadlineVerifiedAt: true,
+      verifiedBy: true,
+      updatedAt: true
+    }
+  },
+  contractDetail: {
+    select: {
+      id: true,
+      contractType: true,
+      counterpartyName: true,
+      counterpartyContact: true,
+      contractDate: true,
+      contractAmount: true,
+      contractSummary: true,
+      disputeContent: true,
+      investigationStatus: true,
+      investigationScope: true,
+      reportDueDate: true,
+      reportDeliveredAt: true,
+      keyFindings: true,
+      legalBasisSummary: true,
+      updatedAt: true
+    }
+  },
+  licenseDetail: {
+    select: {
+      id: true,
+      permitType: true,
+      targetAgency: true,
+      applicationNo: true,
+      businessName: true,
+      businessAddress: true,
+      applicationDate: true,
+      reviewDeadline: true,
+      approvalDate: true,
+      expiryDate: true,
+      stage: true,
+      requirementsSummary: true,
+      missingRequirements: true,
+      supplementContent: true,
+      supplementDueDate: true,
+      conditionsSummary: true,
+      updatedAt: true
+    }
+  },
   quotes: {
     select: {
       status: true,
@@ -209,6 +274,7 @@ export type ConvertInquiryToCaseMatterInput = {
   inquiryId: string;
   title?: string | null;
   matterType?: string | null;
+  category?: string | null;
   assignedTo?: string | null;
   actorName?: string | null;
   forceCreate?: boolean;
@@ -757,8 +823,22 @@ export async function getLatestCaseMatterForInquiry(inquiryId: string) {
   return attachNextAction(caseMatter);
 }
 
-export async function listCaseMatters() {
+export async function listCaseMatters(category?: string, query?: string) {
+  const where: Prisma.CaseMatterWhereInput = {};
+  if (category) where.category = category as never;
+  if (query && query.trim()) {
+    const q = query.trim();
+    where.OR = [
+      { title: { contains: q } },
+      { caseNo: { contains: q } },
+      { summary: { contains: q } },
+      { inquiry: { contactName: { contains: q } } },
+      { inquiry: { phone: { contains: q } } },
+      { inquiry: { email: { contains: q } } }
+    ];
+  }
   const caseMatters = await prisma.caseMatter.findMany({
+    where,
     include: operationalInclude,
     orderBy: [{ updatedAt: "desc" }]
   });
@@ -840,6 +920,7 @@ export async function convertInquiryToCaseMatter(
         caseNo,
         title,
         matterType,
+        category: (input.category ?? "OTHER") as CaseMatterCategory,
         status: inferCaseMatterStatus(inquiry.status),
         priority: inferPriority(inquiry.urgencyLevel),
         riskLevel: inferRiskLevel(inquiry.urgencyLevel),

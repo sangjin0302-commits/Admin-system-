@@ -14,6 +14,38 @@ enum ClientType {
   COMPANY
 }
 
+model PortalClient {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  hashedPassword  String
+  name            String
+  phone           String?
+  emailVerified   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  linkedInquiryIds String   @default("[]")
+  uploadedFiles   PortalUploadedFile[]
+
+  @@index([email])
+}
+
+model PortalUploadedFile {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      PortalClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  inquiryId   String?
+  caseId      String?
+  fileName    String
+  storedPath  String
+  mimeType    String
+  sizeBytes   Int
+  uploadedAt  DateTime @default(now())
+
+  @@index([clientId])
+  @@index([inquiryId])
+  @@index([caseId])
+}
+
 enum InquiryType {
   FOREIGNER_VISA
   IMMIGRATION_STAY
@@ -110,6 +142,14 @@ enum CaseStage {
   ACTIVE
   ON_HOLD
   CLOSED
+}
+
+enum CaseMatterCategory {
+  VISA_STAY        // 비자/외국인 체류
+  ADMIN_APPEAL     // 행정심판
+  CONTRACT_INVESTIGATION // 계약서/사실조사
+  LICENSE_PERMIT   // 인허가
+  OTHER
 }
 
 enum BridgeWorkflowStatus {
@@ -350,6 +390,7 @@ model Inquiry {
   bridgeRiskFlags          String        @default("[]")
   bridgePractitionerGuide  String?
   bridgeCaseOutlook        String?
+  intakeCategory           String?
   quotes                   Quote[]
   contractDrafts           ContractDraft[]
   cases                    CaseRecord[]
@@ -554,6 +595,7 @@ model CaseMatter {
   caseNo              String?            @unique
   title               String
   matterType          String
+  category            CaseMatterCategory @default(OTHER)
   status              CaseMatterStatus   @default(INTAKE_REVIEW)
   riskLevel           RiskLevel          @default(NORMAL)
   priority            CasePriority       @default(NORMAL)
@@ -582,9 +624,13 @@ model CaseMatter {
   contractDrafts      ContractDraft[]    @relation("CaseMatterContractDrafts")
   accountingMemo      CaseAccountingMemo?
   immigrationDetail   ImmigrationCaseDetail?
+  adminAppealDetail   AdminAppealDetail?
+  contractDetail      ContractInvestigationDetail?
+  licenseDetail       LicensePermitDetail?
 
   @@index([status])
   @@index([matterType])
+  @@index([category])
   @@index([dueDate])
   @@index([nextActionAt])
   @@index([priority])
@@ -643,6 +689,147 @@ model ImmigrationCaseDetail {
   @@index([departureDeadline])
   @@index([stayExpiryDate])
   @@index([deadlineVerifiedAt])
+}
+
+enum AdminAppealResult {
+  PENDING
+  ACCEPTED
+  PARTIALLY_ACCEPTED
+  REJECTED
+  WITHDRAWN
+  DISMISSED
+}
+
+enum AdminAppealType {
+  ADMINISTRATIVE_APPEAL      // 행정심판
+  ADMINISTRATIVE_LITIGATION  // 행정소송
+  OBJECTION                  // 이의신청
+  PETITION                   // 진정
+}
+
+model AdminAppealDetail {
+  id                    String             @id @default(cuid())
+  caseId                String             @unique
+  caseMatter            CaseMatter         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  appealType            AdminAppealType    @default(ADMINISTRATIVE_APPEAL)
+  disposingAgency       String?            // 처분청
+  reviewingAgency       String?            // 재결청
+  dispositionContent    String?            // 처분 내용
+  dispositionDate       DateTime?          // 처분일
+  noticeReceivedDate    DateTime?          // 처분 통지 수령일
+  filingDeadline        DateTime?          // 청구기한 (처분일로부터 90일)
+  filedAt               DateTime?          // 실제 청구일
+  hearingDate           DateTime?          // 심리기일
+  decisionExpectedDate  DateTime?          // 재결 예정일
+  decisionReceivedDate  DateTime?          // 재결서 수령일
+  result                AdminAppealResult  @default(PENDING)
+  resultSummary         String?            // 재결 요지
+  groundsSummary        String?            // 청구 이유 요약
+  evidenceSummary       String?            // 주요 증거 요약
+  caseNoOfficial        String?            // 공식 사건번호
+  deadlineVerifiedAt    DateTime?
+  verifiedBy            String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([appealType])
+  @@index([filingDeadline])
+  @@index([result])
+  @@index([dispositionDate])
+}
+
+enum ContractType {
+  SERVICE_CONTRACT       // 용역계약
+  LEASE_CONTRACT         // 임대차계약
+  EMPLOYMENT_CONTRACT    // 고용계약
+  PARTNERSHIP_CONTRACT   // 동업계약
+  FACT_INVESTIGATION     // 사실조사
+  OTHER
+}
+
+enum InvestigationStatus {
+  REQUESTED
+  IN_PROGRESS
+  REPORT_DRAFTED
+  REPORT_DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum LicensePermitType {
+  BUSINESS_LICENSE       // 사업허가
+  CONSTRUCTION_PERMIT    // 건축허가
+  FOOD_SERVICE_LICENSE   // 식품영업허가
+  MEDICAL_LICENSE        // 의료업허가
+  FOREIGNER_EMPLOYMENT   // 외국인 고용허가
+  TELECOM_LICENSE        // 통신사업허가
+  ENVIRONMENT_PERMIT     // 환경관련 허가
+  OTHER
+}
+
+enum LicensePermitStage {
+  CONSULTATION           // 사전 상담
+  DOCUMENT_PREP          // 서류 준비
+  APPLICATION_FILED      // 신청 접수
+  UNDER_REVIEW           // 심사 중
+  SUPPLEMENT_REQUESTED   // 보완 요청
+  APPROVED               // 허가
+  REJECTED               // 불허
+  APPEALING              // 불복 진행 중
+  COMPLETED              // 완료
+}
+
+model LicensePermitDetail {
+  id                    String             @id @default(cuid())
+  caseId                String             @unique
+  caseMatter            CaseMatter         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  permitType            LicensePermitType  @default(OTHER)
+  targetAgency          String?            // 허가 관청
+  applicationNo         String?            // 접수번호
+  businessName          String?            // 사업체명
+  businessAddress       String?            // 사업장 소재지
+  applicationDate       DateTime?          // 신청일
+  reviewDeadline        DateTime?          // 처리기한
+  approvalDate          DateTime?          // 허가일
+  expiryDate            DateTime?          // 유효기간 만료일
+  stage                 LicensePermitStage @default(CONSULTATION)
+  requirementsSummary   String?            // 허가 요건 요약
+  missingRequirements   String?            // 미충족 요건
+  supplementContent     String?            // 보완 요청 내용
+  supplementDueDate     DateTime?          // 보완 기한
+  conditionsSummary     String?            // 허가 조건
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([permitType])
+  @@index([stage])
+  @@index([reviewDeadline])
+  @@index([supplementDueDate])
+}
+
+model ContractInvestigationDetail {
+  id                    String              @id @default(cuid())
+  caseId                String              @unique
+  caseMatter            CaseMatter          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  contractType          ContractType        @default(OTHER)
+  counterpartyName      String?             // 상대방
+  counterpartyContact   String?
+  contractDate          DateTime?           // 계약일
+  contractAmount        Int?                // 계약금액 (원)
+  contractSummary       String?             // 계약 내용 요약
+  disputeContent        String?             // 분쟁 내용
+  investigationStatus   InvestigationStatus @default(REQUESTED)
+  investigationScope    String?             // 사실조사 범위
+  reportDueDate         DateTime?           // 보고서 기한
+  reportDeliveredAt     DateTime?           // 보고서 납부일
+  keyFindings           String?             // 주요 조사 결과
+  legalBasisSummary     String?             // 법적 근거 요약
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@index([contractType])
+  @@index([investigationStatus])
+  @@index([reportDueDate])
 }
 
 model CaseParty {

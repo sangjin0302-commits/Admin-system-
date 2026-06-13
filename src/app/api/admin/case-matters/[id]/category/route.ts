@@ -1,0 +1,48 @@
+import { normalizeAdminEntityId } from "@/lib/http/admin-id";
+import { createAdminRequestContext, safeReadJsonBody } from "@/lib/http/admin-api";
+import { prisma } from "@/lib/prisma/client";
+
+const VALID_CATEGORIES = ["VISA_STAY", "ADMIN_APPEAL", "CONTRACT_INVESTIGATION", "LICENSE_PERMIT", "OTHER"] as const;
+
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  const api = createAdminRequestContext("admin.case-matters.category.patch");
+  const { id: rawCaseMatterId } = await context.params;
+  const caseMatterId = normalizeAdminEntityId(rawCaseMatterId);
+
+  if (!caseMatterId) {
+    return api.error(400, "Invalid case matter id format.", { code: "INVALID_CASE_MATTER_ID" });
+  }
+
+  const bodyResult = await safeReadJsonBody(request);
+  if (!bodyResult.ok) {
+    return api.error(400, "Check request JSON body.", { code: "INVALID_JSON_BODY" });
+  }
+
+  const body = bodyResult.body as Record<string, unknown>;
+  const category = body.category;
+
+  if (typeof category !== "string" || !VALID_CATEGORIES.includes(category as never)) {
+    return api.error(400, "Invalid category value.", { code: "INVALID_CATEGORY" });
+  }
+
+  try {
+    const existing = await prisma.caseMatter.findUnique({
+      where: { id: caseMatterId },
+      select: { id: true }
+    });
+
+    if (!existing) {
+      return api.error(404, "Case matter not found.", { code: "CASE_MATTER_NOT_FOUND" });
+    }
+
+    await prisma.caseMatter.update({
+      where: { id: caseMatterId },
+      data: { category: category as never }
+    });
+
+    return api.ok({ ok: true, category });
+  } catch (error) {
+    api.logError(error);
+    return api.error(500, "Failed to update category.", { code: "PATCH_CATEGORY_FAILED" });
+  }
+}
