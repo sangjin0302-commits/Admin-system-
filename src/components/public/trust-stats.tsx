@@ -1,0 +1,109 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+type Stat = {
+  value: number;
+  suffix?: string;
+  label: string;
+  description: string;
+};
+
+const STATS: readonly Stat[] = [
+  { value: 500, suffix: "+", label: "처리 사건", description: "비자·심판·계약·인허가 분야" },
+  { value: 98, suffix: "%", label: "고객 만족도", description: "사후 안내 응답률 기준" },
+  { value: 4, suffix: "분야", label: "전문 영역", description: "4대 분야 전담 워크플로우" },
+  { value: 24, suffix: "h", label: "회신 평균", description: "영업일 기준 평균 회신" }
+];
+
+function useCountUp(target: number, durationMs: number, start: boolean) {
+  const [value, setValue] = useState(0);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!start) return;
+    const startTime = performance.now();
+    function tick(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / durationMs, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(target * eased));
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    }
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [target, durationMs, start]);
+
+  return value;
+}
+
+function StatCard({ stat, visible }: { stat: Stat; visible: boolean }) {
+  const value = useCountUp(stat.value, 1500, visible);
+
+  return (
+    <div className="text-center">
+      <div className="flex items-baseline justify-center font-serif text-primary">
+        <span className="text-5xl font-bold sm:text-6xl">{value.toLocaleString()}</span>
+        {stat.suffix && (
+          <span className="ml-1 text-2xl font-bold text-gold-deep sm:text-3xl">
+            {stat.suffix}
+          </span>
+        )}
+      </div>
+      <p className="mt-3 font-serif text-base font-bold text-text-strong">{stat.label}</p>
+      <p className="mt-1 text-xs text-text-muted">{stat.description}</p>
+    </div>
+  );
+}
+
+export function TrustStats() {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setVisible(true);
+            observer.disconnect();
+            break;
+          }
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <section
+      ref={ref}
+      className="relative overflow-hidden rounded-2xl border border-gold/30 bg-gradient-to-br from-surface-muted/40 via-surface to-gold-soft/20 p-8 sm:p-12"
+    >
+      <div className="text-center">
+        <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">Trust in Numbers</p>
+        <h2 className="mt-3 font-serif text-2xl font-bold text-primary sm:text-3xl">
+          숫자로 보는 신뢰
+        </h2>
+        <p className="mt-2 text-xs text-text-muted">
+          ※ 표시 수치는 사무소 운영 기준이며, 사안별 결과를 보장하지 않습니다.
+        </p>
+      </div>
+
+      <div className="mt-10 grid gap-8 md:grid-cols-4">
+        {STATS.map((s) => (
+          <StatCard key={s.label} stat={s} visible={visible} />
+        ))}
+      </div>
+    </section>
+  );
+}

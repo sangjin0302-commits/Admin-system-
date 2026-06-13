@@ -1,263 +1,108 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 
 import { Card } from "@/components/ui/card";
-import {
-  buildServiceIntakeHref,
-  buildWebsiteIntakeHref,
-  PUBLIC_MARKETING_SAFE_NOTICE,
-  PUBLIC_MARKETING_SERVICES
-} from "@/lib/services/public-marketing-pages";
-
-export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "출입국·행정심판·정보공개 업무 분야 안내",
-  description: "출입국·체류, 행정심판·이의신청, 정보공개, 일반 행정서류 상담 분야를 안내합니다."
+  title: "업무 분야 — ETHOS 행정사사무소",
+  description: "비자/체류, 행정심판, 계약서/사실조사, 인허가 — 네 가지 주력 분야를 안내합니다."
 };
 
-const featuredGroups = [
+type Area = {
+  href: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  icon: ReactNode;
+};
+
+const AREAS: readonly Area[] = [
   {
-    title: "출입국·체류",
-    description: "체류기간 연장, 체류자격 변경, 초청, 출입국 관련 자료 정리를 검토합니다.",
     href: "/services/immigration",
-    situations: ["체류기간 연장", "체류자격 변경", "초청·방문 목적 정리"],
-    checks: ["체류자격", "기한", "제출기관 기준"],
-    preparation: ["여권·외국인등록 자료", "체류 관련 통지서", "소득·거주 자료"]
+    title: "비자 / 외국인 체류",
+    subtitle: "VISA & IMMIGRATION",
+    description: "체류 자격 변경·연장, 사업/투자 비자, 강제퇴거 대응까지.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-8 w-8" stroke="currentColor" strokeWidth="1.4">
+        <path d="M12 21s-7-4.5-7-11a7 7 0 1 1 14 0c0 6.5-7 11-7 11z" />
+        <circle cx="12" cy="10" r="2.5" />
+      </svg>
+    )
   },
   {
-    title: "행정심판·이의신청",
-    description: "처분서, 통지일, 기한, 사실관계, 증빙자료를 중심으로 진행 가능 범위를 확인합니다.",
     href: "/services/appeal",
-    situations: ["거부·불허 처분", "강제퇴거·출국명령", "이의신청 검토"],
-    checks: ["처분 내용", "불복기한", "증빙자료"],
-    preparation: ["처분서", "통지일 확인 자료", "사실관계 설명 자료"]
+    title: "행정심판",
+    subtitle: "ADMINISTRATIVE APPEAL",
+    description: "처분 통지부터 청구·심리·재결까지 함께 준비합니다.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-8 w-8" stroke="currentColor" strokeWidth="1.4">
+        <path d="M12 3v18M6 8h12M5 13l7-3 7 3M5 13v3a7 7 0 0 0 14 0v-3" />
+      </svg>
+    )
   },
   {
-    title: "정보공개·일반 행정",
-    description: "정보공개청구, 민원, 사실관계 정리, 제출기관별 요구자료를 확인합니다.",
-    href: "/services/civil-petition",
-    situations: ["정보공개청구", "민원·진정", "기관 제출자료 정리"],
-    checks: ["청구 대상 기관", "공개 범위", "제출 방식"],
-    preparation: ["기관명", "청구 취지", "관련 사실관계"]
+    href: "/services/contract",
+    title: "계약서 / 사실조사",
+    subtitle: "CONTRACT & INVESTIGATION",
+    description: "계약 검토·작성, 분쟁 사실관계 조사, 조사보고서 작성.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-8 w-8" stroke="currentColor" strokeWidth="1.4">
+        <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+        <path d="M14 3v6h6M8 13h8M8 17h5" />
+      </svg>
+    )
   },
   {
-    title: "공통 서식·문서 준비",
-    description: "위임장, 개인정보 동의, 사실확인, 제출자료 목록 등 반복 서식 준비 흐름을 정리합니다.",
-    href: "/services/fact-contract",
-    situations: ["위임장·동의서", "사실확인서", "제출자료 목록 정리"],
-    checks: ["서식 최신성", "필수 입력값", "민감정보 포함 여부"],
-    preparation: ["기본 인적사항", "사실관계 메모", "첨부자료 목록"]
+    href: "/services/license",
+    title: "인허가",
+    subtitle: "LICENSE & PERMIT",
+    description: "사업·건축·식품·의료 등 허가 신청, 보완·불복 대응.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-8 w-8" stroke="currentColor" strokeWidth="1.4">
+        <rect x="4" y="5" width="16" height="14" rx="2" />
+        <path d="M8 3v4M16 3v4M4 11h16M9 15l2 2 4-4" />
+      </svg>
+    )
   }
-] as const;
+];
 
-const servicesProcess = [
-  ["1단계", "상담 신청", "업무 분야와 현재 상황을 접수합니다."],
-  ["2단계", "사실관계 및 자료 확인", "처분서, 통지일, 제출기관, 준비자료를 확인합니다."],
-  ["3단계", "절차·기한 검토", "기한과 공식 서식, 제출처 기준을 검토합니다."],
-  ["4단계", "필요 업무 안내", "진행 가능 범위와 다음 준비사항을 안내합니다."]
-] as const;
-
-const servicesFaqItems = [
-  {
-    question: "업무 분야를 정확히 몰라도 신청할 수 있나요?",
-    answer: "가능합니다. 접수 내용과 자료를 확인한 뒤 적절한 검토 범위를 안내합니다."
-  },
-  {
-    question: "자료가 부족하면 어떻게 되나요?",
-    answer: "자료 확인 후 필요한 자료를 안내합니다. 사안별 검토가 필요합니다."
-  },
-  {
-    question: "기관 제출까지 대신 진행되나요?",
-    answer: "제출 가능 여부와 방식은 별도 확인이 필요하며, 시스템이 바로 기관에 내지 않습니다."
-  },
-  {
-    question: "결과를 약속하나요?",
-    answer: "결과를 보장하지 않습니다. 공식 기준과 자료를 확인한 뒤 안내합니다."
-  }
-] as const;
-
-export default function ServicesPage() {
-  const intakeHref = buildWebsiteIntakeHref("services");
-
+export default function ServicesIndex() {
   return (
-    <main className="mx-auto max-w-6xl space-y-9">
-      <section className="grid gap-5 lg:grid-cols-[1fr_0.72fr] lg:items-end">
-        <div>
-          <p className="ui-kicker">전문 분야</p>
-          <h1 className="mt-2 text-4xl font-semibold leading-tight text-text-strong">
-            출입국·행정심판·정보공개 업무를 사안별로 검토합니다.
-          </h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-text-muted">
-            상담 신청 전 업무 영역을 확인하고, 접수 후에는 접수번호로 진행상황을 조회할 수 있습니다.
-            각 업무는 공식 기준과 제출기관 요구사항 확인이 필요합니다.
-          </p>
-        </div>
-        <Card muted className="p-5">
-          <h2 className="text-base font-semibold text-text-strong">상담 전 확인</h2>
-          <p className="mt-2 text-sm leading-6 text-text-muted">{PUBLIC_MARKETING_SAFE_NOTICE}</p>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row lg:flex-col">
-            <Link
-              href={intakeHref}
-              className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-[#143d5d]"
-            >
-              상담 신청하기
-            </Link>
-            <Link
-              href="/track"
-              className="inline-flex h-10 items-center justify-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
-            >
-              진행상황 조회
-            </Link>
-          </div>
-        </Card>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2" aria-label="핵심 업무 영역">
-        {featuredGroups.map((group) => (
-          <Card key={group.title} className="p-5">
-            <h2 className="text-xl font-semibold text-text-strong">{group.title}</h2>
-            <p className="mt-3 text-sm leading-6 text-text-muted">{group.description}</p>
-            <div className="mt-5 grid gap-3 text-sm leading-6 text-text-muted sm:grid-cols-3">
-              <div>
-                <h3 className="font-semibold text-text-strong">대표 상황</h3>
-                <ul className="mt-2 space-y-1">
-                  {group.situations.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold text-text-strong">사무소 확인</h3>
-                <ul className="mt-2 space-y-1">
-                  {group.checks.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold text-text-strong">준비 자료</h3>
-                <ul className="mt-2 space-y-1">
-                  {group.preparation.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-              <Link
-                href={intakeHref}
-                className="inline-flex h-10 flex-1 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-[#143d5d]"
-              >
-                상담 신청하기
-              </Link>
-              <Link
-                href={group.href}
-                className="inline-flex h-10 flex-1 items-center justify-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
-              >
-                자세히 보기
-              </Link>
-            </div>
-          </Card>
-        ))}
-      </section>
-
-      <section className="space-y-4" aria-label="상세 업무 분야 목록">
-        <div>
-          <p className="ui-kicker">상세 분야</p>
-          <h2 className="ui-section-title">필요한 업무를 선택해 자료 준비 범위를 확인하세요.</h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {PUBLIC_MARKETING_SERVICES.map((service) => (
-            <Card key={service.slug} className="flex h-full flex-col p-5 transition hover:border-primary">
-              <div className="flex-1">
-                <p className="ui-kicker">{service.practiceArea}</p>
-                <h3 className="mt-2 text-xl font-semibold text-text-strong">{service.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-text-muted">{service.summary}</p>
-                <p className="mt-3 text-xs leading-5 text-text-muted">사안별 검토와 공식 기준 확인이 필요합니다.</p>
-              </div>
-              <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-                <Link
-                  href={`/services/${service.slug}`}
-                  className="inline-flex h-10 flex-1 items-center justify-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
-                >
-                  자세히 보기
-                </Link>
-                <Link
-                  href={buildServiceIntakeHref(service)}
-                  className="inline-flex h-10 flex-1 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-[#143d5d]"
-                >
-                  상담 신청하기
-                </Link>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-4" aria-labelledby="services-process-heading">
-        <div>
-          <p className="ui-kicker">상담 진행 절차</p>
-          <h2 id="services-process-heading" className="ui-section-title">
-            자료 확인 후 필요한 업무 범위를 안내합니다.
-          </h2>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {servicesProcess.map(([step, title, description]) => (
-            <Card key={step} muted className="p-4">
-              <p className="text-xs font-semibold text-primary">{step}</p>
-              <h3 className="mt-2 text-base font-semibold text-text-strong">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-text-muted">{description}</p>
-            </Card>
-          ))}
-        </div>
-        <p className="text-sm leading-6 text-text-muted">
-          결과를 보장하지 않습니다. 자료 확인 후 안내드리며, AI가 최종 판단하지 않습니다.
+    <div className="mx-auto max-w-6xl space-y-14 px-4 py-16 sm:px-6 sm:py-20">
+      <section className="text-center">
+        <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">Practice Areas</p>
+        <h1 className="mt-4 font-serif text-4xl font-bold text-primary sm:text-5xl">업무 분야</h1>
+        <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-text-muted">
+          네 가지 주력 분야 — 각 분야별 전문 워크플로우로 사안을 체계적으로 정리합니다.
         </p>
       </section>
 
-      <Card className="p-6">
-        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div>
-            <p className="ui-kicker">다음 단계</p>
-            <h2 className="mt-2 ui-section-title">업무 분야를 고르기 어렵다면 상담 신청에서 상황을 남겨주세요.</h2>
-            <p className="mt-3 text-sm leading-6 text-text-muted">
-              접수 후 필요한 자료와 진행 가능 범위를 확인합니다. 이미 접수했다면 접수번호로 진행상황을 조회하세요.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Link
-              href={intakeHref}
-              className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-[#143d5d]"
-            >
-              상담 신청하기
-            </Link>
-            <Link
-              href="/track"
-              className="inline-flex h-10 items-center justify-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
-            >
-              진행상황 조회
-            </Link>
-          </div>
-        </div>
-      </Card>
-
-      <section className="space-y-4" aria-labelledby="services-faq-heading">
-        <div>
-          <p className="ui-kicker">업무 분야 FAQ</p>
-          <h2 id="services-faq-heading" className="ui-section-title">
-            상담 전 확인할 내용을 짧게 정리했습니다.
-          </h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {servicesFaqItems.map((item) => (
-            <Card key={item.question} className="p-5">
-              <h3 className="text-base font-semibold text-text-strong">{item.question}</h3>
-              <p className="mt-3 text-sm leading-6 text-text-muted">{item.answer}</p>
+      <div className="grid gap-5 md:grid-cols-2">
+        {AREAS.map((a) => (
+          <Link key={a.href} href={a.href} className="group">
+            <Card className="flex h-full flex-col p-7 transition group-hover:shadow-md">
+              <div className="flex items-start gap-4">
+                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border-2 border-gold/40 bg-gold-soft/30 text-primary">
+                  {a.icon}
+                </div>
+                <div>
+                  <p className="font-serif text-[11px] font-bold tracking-[0.2em] text-gold-deep">
+                    {a.subtitle}
+                  </p>
+                  <h3 className="mt-1 font-serif text-2xl font-bold text-primary group-hover:text-gold-deep">
+                    {a.title}
+                  </h3>
+                </div>
+              </div>
+              <p className="mt-5 text-sm leading-7 text-text">{a.description}</p>
+              <div className="mt-6 border-t border-gold/20 pt-4 font-serif text-sm font-semibold text-primary group-hover:text-gold-deep">
+                자세히 보기 →
+              </div>
             </Card>
-          ))}
-        </div>
-      </section>
-    </main>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }

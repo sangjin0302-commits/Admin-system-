@@ -1,23 +1,29 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Nanum+Myeongjo:wght@400;700;800&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   color-scheme: light;
-  --color-canvas: 244 246 248;
-  --color-surface: 255 255 255;
-  --color-surface-muted: 247 249 251;
+  /* ETHOS Brand: Deep Navy + Gold + Ivory */
+  --color-canvas: 250 246 239;          /* warm ivory */
+  --color-surface: 255 253 248;         /* off-white */
+  --color-surface-muted: 245 237 224;   /* soft beige */
   --color-surface-raised: 255 255 255;
-  --color-line: 218 224 230;
-  --color-line-strong: 197 206 214;
-  --color-text-strong: 22 33 43;
-  --color-text: 58 71 82;
-  --color-text-muted: 103 118 130;
-  --color-primary: 24 72 109;
-  --color-primary-soft: 231 240 247;
+  --color-line: 224 215 195;            /* warm beige border */
+  --color-line-strong: 196 178 142;     /* gold-tinted */
+  --color-text-strong: 26 60 95;        /* deep navy */
+  --color-text: 53 73 95;
+  --color-text-muted: 110 100 84;       /* warm muted */
+  --color-primary: 26 60 95;            /* ETHOS deep navy */
+  --color-primary-soft: 240 232 215;    /* ivory tint */
   --color-success: 40 112 76;
-  --color-warning: 161 104 36;
+  --color-warning: 184 130 60;          /* gold */
   --color-danger: 166 63 63;
+  --color-gold: 201 169 97;             /* ETHOS gold */
+  --color-gold-soft: 240 224 188;
+  --color-gold-deep: 168 134 71;
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
@@ -26,6 +32,44 @@
   --shadow-floating: 0 18px 40px rgba(16, 24, 32, 0.1);
   --motion-fast: 160ms;
   --motion-base: 220ms;
+}
+
+/* ETHOS — Aurora + grid pattern utilities */
+.ethos-grid-pattern {
+  background-image:
+    linear-gradient(rgba(201, 169, 97, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 169, 97, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 75%);
+          mask-image: radial-gradient(ellipse at center, black 40%, transparent 75%);
+}
+
+.ethos-aurora {
+  position: absolute;
+  inset: -40% -20% auto -20%;
+  height: 600px;
+  background:
+    radial-gradient(ellipse 60% 40% at 30% 40%, rgba(201, 169, 97, 0.18), transparent 60%),
+    radial-gradient(ellipse 50% 35% at 70% 60%, rgba(26, 60, 95, 0.16), transparent 60%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(240, 224, 188, 0.25), transparent 70%);
+  filter: blur(40px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes ethos-aurora-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(2%, -3%) scale(1.05); }
+}
+
+.ethos-aurora-animated {
+  animation: ethos-aurora-drift 20s ease-in-out infinite;
+}
+
+/* Subtle gold shimmer line */
+.ethos-gold-line {
+  background: linear-gradient(90deg, transparent, rgb(201 169 97 / 0.6), transparent);
+  height: 1px;
 }
 
 html {

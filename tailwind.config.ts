@@ -5,7 +5,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Segoe UI"', '"Apple SD Gothic Neo"', '"Noto Sans KR"', '"Malgun Gothic"', "sans-serif"]
+        sans: ['"Segoe UI"', '"Apple SD Gothic Neo"', '"Noto Sans KR"', '"Malgun Gothic"', "sans-serif"],
+        serif: ['"Playfair Display"', '"Nanum Myeongjo"', '"Noto Serif KR"', "Georgia", "serif"]
       },
       colors: {
         canvas: "rgb(var(--color-canvas) / <alpha-value>)",
@@ -21,7 +22,10 @@ const config: Config = {
         "primary-soft": "rgb(var(--color-primary-soft) / <alpha-value>)",
         success: "rgb(var(--color-success) / <alpha-value>)",
         warning: "rgb(var(--color-warning) / <alpha-value>)",
-        danger: "rgb(var(--color-danger) / <alpha-value>)"
+        danger: "rgb(var(--color-danger) / <alpha-value>)",
+        gold: "rgb(var(--color-gold) / <alpha-value>)",
+        "gold-soft": "rgb(var(--color-gold-soft) / <alpha-value>)",
+        "gold-deep": "rgb(var(--color-gold-deep) / <alpha-value>)"
       },
       boxShadow: {
         panel: "var(--shadow-panel)",

@@ -1,16 +1,32 @@
 import type { Metadata } from "next";
 
 import { AppShellSafe } from "@/components/layout/app-shell-safe";
+import { Analytics } from "@/components/public/analytics";
 import "./globals.css";
 
-const KO_SYSTEM_TITLE = "\uD589\uC815\uC0AC \uC5C5\uBB34 \uAD00\uB9AC \uC2DC\uC2A4\uD15C";
-const KO_SYSTEM_DESCRIPTION =
-  "\uD589\uC815\uC0AC \uBB38\uC758 \uC811\uC218, \uC790\uB3D9 \uBD84\uB958, \uACAC\uC801, \uC0AC\uAC74 \uAD00\uB9AC, \uC6B4\uC601 \uB300\uC2DC\uBCF4\uB4DC\uB97C \uC704\uD55C \uC2DC\uC2A4\uD15C";
+const SITE_TITLE = "ETHOS \uD589\uC815\uC0AC\uC0AC\uBB34\uC18C";
+const SITE_DESCRIPTION =
+  "\uBE44\uC790/\uCCB4\uB958, \uD589\uC815\uC2EC\uD310, \uACC4\uC57D\uC11C\u00B7\uC0AC\uC2E4\uC870\uC0AC, \uC778\uD5C8\uAC00 \uC5C5\uBB34. \uC808\uCC28\uC5D0\uB294 \uC774\uC131\uC744, \uC0AC\uB78C\uC5D0\uAC8C\uB294 \uACF5\uAC10\uC744, \uC77C\uC5D0\uB294 \uC2E0\uB8B0\uB97C.";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethos.kr";
 
 export const metadata: Metadata = {
-  title: KO_SYSTEM_TITLE,
-  description: KO_SYSTEM_DESCRIPTION,
-  applicationName: "\uD589\uC815\uC0AC \uC9C4\uD589\uC0C1\uD669 \uC870\uD68C",
+  title: { default: SITE_TITLE, template: "%s | ETHOS" },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_TITLE,
+  metadataBase: new URL(SITE_URL),
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    siteName: SITE_TITLE,
+    locale: "ko_KR",
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION
+  },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -50,6 +66,7 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
     <html lang="ko">
       <body>
         <AppShellSafe>{children}</AppShellSafe>
+        <Analytics />
       </body>
     </html>
   );

@@ -1,0 +1,127 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+
+import { Card } from "@/components/ui/card";
+import { PUBLIC_CASES, getPublicCaseBySlug } from "@/lib/public-cases";
+
+export function generateStaticParams() {
+  return PUBLIC_CASES.map((c) => ({ slug: c.slug }));
+}
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const c = getPublicCaseBySlug(slug);
+  if (!c) return { title: "사례를 찾을 수 없습니다" };
+  return {
+    title: `${c.title} — 처리 사례 | ETHOS 행정사사무소`,
+    description: c.summary
+  };
+}
+
+export default async function CaseDetailPage({
+  params
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const c = getPublicCaseBySlug(slug);
+  if (!c) notFound();
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-12 px-4 py-16 sm:px-6 sm:py-20">
+      {/* Back */}
+      <Link href="/cases" className="font-serif text-xs text-text-muted hover:text-primary">
+        ← 처리 사례 목록
+      </Link>
+
+      {/* Header */}
+      <section>
+        <span className="inline-block rounded-full bg-gold-soft/60 px-3 py-1 font-serif text-xs font-bold text-gold-deep">
+          {c.categoryLabel}
+        </span>
+        <h1 className="mt-4 font-serif text-3xl font-bold leading-tight text-primary sm:text-4xl">
+          {c.title}
+        </h1>
+        <p className="mt-4 text-base leading-7 text-text-muted">{c.summary}</p>
+
+        <div className="mt-6 grid gap-3 rounded-xl border border-gold/30 bg-surface-muted/40 p-4 sm:grid-cols-2">
+          <div>
+            <p className="font-serif text-xs uppercase tracking-wider text-gold-deep">진행 결과</p>
+            <p className="mt-1 text-sm font-bold text-text-strong">{c.outcome}</p>
+          </div>
+          <div>
+            <p className="font-serif text-xs uppercase tracking-wider text-gold-deep">소요 기간</p>
+            <p className="mt-1 text-sm font-bold text-text-strong">{c.duration}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Background */}
+      <Section title="사안 배경">
+        <p className="text-sm leading-7 text-text">{c.background}</p>
+      </Section>
+
+      {/* Approach */}
+      <Section title="진행 방법">
+        <ol className="space-y-3">
+          {c.approach.map((a, i) => (
+            <li key={i} className="flex items-start gap-3 rounded-lg border border-gold/20 bg-surface px-4 py-3">
+              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary font-serif text-xs font-bold text-white">
+                {i + 1}
+              </span>
+              <span className="text-sm leading-6 text-text">{a}</span>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      {/* Result */}
+      <Section title="결과">
+        <Card className="p-5">
+          <p className="text-sm leading-7 text-text">{c.result}</p>
+        </Card>
+      </Section>
+
+      {/* Lessons */}
+      <Section title="배운 점">
+        <ul className="space-y-2">
+          {c.lessons.map((l, i) => (
+            <li key={i} className="flex items-start gap-2 text-sm leading-7 text-text">
+              <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rotate-45 bg-gold" />
+              {l}
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <p className="rounded-lg border border-gold/30 bg-surface-muted/40 px-4 py-3 text-xs italic text-text-muted">
+        ※ 본 사례는 익명화되었으며, 개별 사안의 결과를 보장하지 않습니다.
+      </p>
+
+      {/* CTA */}
+      <section className="rounded-2xl bg-primary p-10 text-center text-white">
+        <h2 className="font-serif text-2xl font-bold sm:text-3xl">비슷한 사안이 있으신가요?</h2>
+        <Link
+          href="/intake"
+          className="mt-6 inline-flex h-12 items-center rounded-lg bg-gold px-6 font-bold text-primary transition hover:bg-gold-soft"
+        >
+          상담 신청
+        </Link>
+      </section>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">{title}</p>
+      <div className="mt-3">{children}</div>
+    </section>
+  );
+}
