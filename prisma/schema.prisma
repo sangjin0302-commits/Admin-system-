@@ -24,9 +24,12 @@ model PortalClient {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   linkedInquiryIds String   @default("[]")
+  resetTokenHash      String?
+  resetTokenExpiresAt DateTime?
   uploadedFiles   PortalUploadedFile[]
 
   @@index([email])
+  @@index([resetTokenHash])
 }
 
 model PortalUploadedFile {

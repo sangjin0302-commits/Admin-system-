@@ -16,7 +16,8 @@ export type NotificationEvent =
   | "inquiry_received"        // 의뢰인 — 문의 접수 완료
   | "case_status_changed"     // 의뢰인 — 사건 상태 변경
   | "document_requested"      // 의뢰인 — 자료 요청
-  | "case_closed";            // 의뢰인 — 사건 종결
+  | "case_closed"             // 의뢰인 — 사건 종결
+  | "password_reset";         // 의뢰인 — 비밀번호 재설정 링크
 
 export type NotificationPayload = {
   event: NotificationEvent;
@@ -59,6 +60,15 @@ const TEMPLATES: Record<NotificationEvent, { subject: string; bodyTemplate: stri
       "{{name}}님, 사건 {{caseNo}}이 종결되었습니다.\n\n" +
       "결과 요약: {{resultSummary}}\n\n" +
       "감사합니다.\n\n" +
+      "ETHOS 행정사사무소"
+  },
+  password_reset: {
+    subject: "[ETHOS] 비밀번호 재설정 안내",
+    bodyTemplate:
+      "{{name}}님, 비밀번호 재설정 요청을 받았습니다.\n\n" +
+      "아래 링크에서 1시간 이내에 새 비밀번호를 설정하세요.\n" +
+      "{{resetUrl}}\n\n" +
+      "본인이 요청하지 않으셨다면 이 메일을 무시해 주세요.\n\n" +
       "ETHOS 행정사사무소"
   }
 };

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createLawbotBridgeHttpClientFromEnv, LawbotBridgeError } from "@/lib/services/lawbot-bridge-http-client";
+import { buildCitationsFromLawbotSources, extractLawNames, buildLawDeeplink } from "@/lib/services/law-deeplink";
 import { consumeRateLimit, getClientIpFromHeaders } from "@/lib/security/rate-limit";
 
 const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5 min
@@ -64,6 +65,20 @@ export async function POST(request: Request) {
       factInput: fact
     });
 
+    // 법령 인용 자동 추출
+    const mustVerifyArr = response.must_verify ?? [];
+    const sourcesArr = response.must_verify_sources ?? [];
+    const factCitationNames = extractLawNames(fact);
+    const factCitations = factCitationNames.map((name) => ({
+      name,
+      url: buildLawDeeplink(name)
+    }));
+    const sourceCitations = buildCitationsFromLawbotSources([...mustVerifyArr, ...sourcesArr]);
+    const allCitations = [...factCitations, ...sourceCitations];
+    const dedupedCitations = Array.from(
+      new Map(allCitations.map((c) => [c.name, c])).values()
+    );
+
     // 공개용 안전 응답 — 민감 필드 제외
     return NextResponse.json({
       ok: true,
@@ -72,11 +87,12 @@ export async function POST(request: Request) {
       domain: response.domain ?? null,
       scope: response.scope ?? null,
       reviewRequired: response.review_required ?? true,
-      mustVerify: response.must_verify ?? [],
+      mustVerify: mustVerifyArr,
       riskFlags: response.risk_flags ?? [],
       caseOutlook: response.case_outlook ?? null,
       practitionerGuide: response.practitioner_guide ?? null,
-      matchedSubtypes: response.matched_subtype_keys ?? []
+      matchedSubtypes: response.matched_subtype_keys ?? [],
+      citations: dedupedCitations
     });
   } catch (error) {
     console.error("[public/quick-check] lawbot error", error);

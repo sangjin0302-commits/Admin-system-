@@ -1,6 +1,7 @@
 import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { createAdminRequestContext, safeReadJsonBody } from "@/lib/http/admin-api";
 import { prisma } from "@/lib/prisma/client";
+import { seedCategoryRequiredDocuments } from "@/lib/services/category-required-documents";
 
 const VALID_CATEGORIES = ["VISA_STAY", "ADMIN_APPEAL", "CONTRACT_INVESTIGATION", "LICENSE_PERMIT", "OTHER"] as const;
 
@@ -40,7 +41,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       data: { category: category as never }
     });
 
-    return api.ok({ ok: true, category });
+    // 카테고리 변경 시 해당 카테고리 기본 체크리스트 자동 시드
+    const seed = await seedCategoryRequiredDocuments(caseMatterId, category);
+
+    return api.ok({ ok: true, category, seededRequiredDocuments: seed });
   } catch (error) {
     api.logError(error);
     return api.error(500, "Failed to update category.", { code: "PATCH_CATEGORY_FAILED" });

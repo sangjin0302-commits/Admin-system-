@@ -237,6 +237,12 @@ export default async function AdminCaseMatterDetailPage({
             >
               계약서 PDF
             </a>
+            <a
+              href={`/api/admin/case-matters/${caseMatter.id}/contract-docx?template=SERVICE`}
+              className="inline-flex h-10 items-center rounded-lg border border-gold/40 bg-surface px-4 text-sm font-medium text-primary transition hover:bg-gold-soft/30"
+            >
+              계약서 DOCX (용역)
+            </a>
             {(caseMatter.category === "CONTRACT_INVESTIGATION" || caseMatter.contractDetail) && (
               <a
                 href={`/api/admin/case-matters/${caseMatter.id}/report-pdf`}

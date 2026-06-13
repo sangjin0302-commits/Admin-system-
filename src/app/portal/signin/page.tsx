@@ -81,10 +81,15 @@ export default function SignInPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-text-muted">
-          아직 계정이 없으신가요?{" "}
-          <Link href="/portal/signup" className="font-bold text-primary hover:underline">
-            가입하기
+        <div className="mt-6 flex flex-col items-center gap-2 text-center text-xs text-text-muted">
+          <p>
+            아직 계정이 없으신가요?{" "}
+            <Link href="/portal/signup" className="font-bold text-primary hover:underline">
+              가입하기
+            </Link>
+          </p>
+          <Link href="/portal/forgot" className="hover:text-primary">
+            비밀번호를 잊으셨나요?
           </Link>
         </div>
       </Card>

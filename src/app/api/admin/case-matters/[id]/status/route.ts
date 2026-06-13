@@ -34,6 +34,14 @@ export async function PATCH(
       ...payload
     });
 
+    // 의뢰인 자동 알림 (best-effort, await 안 함 — 응답 지연 방지)
+    {
+      const { notifyClientCaseStatusChanged } = await import("@/lib/services/case-status-notify");
+      notifyClientCaseStatusChanged(caseMatterId, payload.status).catch((err) =>
+        console.warn("[case-status-notify] background error", err)
+      );
+    }
+
     return api.ok({
       ok: true,
       caseMatter

@@ -957,6 +957,21 @@ export async function convertInquiryToCaseMatter(
       }
     });
 
+    // 카테고리 기본 체크리스트 자동 시드 (transaction 내)
+    const { CATEGORY_DOCUMENT_TEMPLATES } = await import("@/lib/services/category-required-documents");
+    const tmpls = CATEGORY_DOCUMENT_TEMPLATES[input.category ?? "OTHER"] ?? CATEGORY_DOCUMENT_TEMPLATES.OTHER;
+    if (tmpls.length > 0) {
+      await tx.requiredDocument.createMany({
+        data: tmpls.map((t) => ({
+          caseId: createdCaseMatter.id,
+          name: t.name,
+          description: t.description ?? null,
+          required: t.required,
+          status: "NEEDED" as never
+        }))
+      });
+    }
+
     await tx.caseEvent.create({
       data: {
         caseId: createdCaseMatter.id,

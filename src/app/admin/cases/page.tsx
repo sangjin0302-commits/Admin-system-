@@ -76,6 +76,12 @@ export default async function AdminCasesPage({
             >
               CSV 내보내기
             </a>
+            <a
+              href={`/api/admin/cases/export-xlsx${activeCategory ? `?category=${activeCategory}` : ""}${query ? `${activeCategory ? "&" : "?"}q=${encodeURIComponent(query)}` : ""}`}
+              className="inline-flex h-10 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
+            >
+              Excel 내보내기
+            </a>
             <div className="rounded-full bg-surface-muted px-4 py-2 text-sm font-semibold text-text-strong">
               {t("totalCases")}: {cases.length}
             </div>
