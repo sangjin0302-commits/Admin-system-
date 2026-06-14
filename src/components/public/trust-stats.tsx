@@ -9,12 +9,29 @@ type Stat = {
   description: string;
 };
 
-const STATS: readonly Stat[] = [
+const DEFAULT_STATS: readonly Stat[] = [
   { value: 500, suffix: "+", label: "처리 사건", description: "비자·심판·계약·인허가 분야" },
   { value: 98, suffix: "%", label: "고객 만족도", description: "사후 안내 응답률 기준" },
   { value: 4, suffix: "분야", label: "전문 영역", description: "4대 분야 전담 워크플로우" },
   { value: 24, suffix: "h", label: "회신 평균", description: "영업일 기준 평균 회신" }
 ];
+
+/**
+ * "500+ 처리 사건 | 비자·심판 분야" 형식 파싱.
+ * 앞 숫자 → value, 뒤 비숫자 → suffix, "|"로 제목·설명 분리.
+ */
+function parseStat(raw: string, fallback: Stat): Stat {
+  if (!raw?.trim()) return fallback;
+  const [head, label, description] = raw.split("|").map((s) => s.trim());
+  const m = head?.match(/^([\d,]+)\s*(.*)$/);
+  if (!m) return { ...fallback, label: label || fallback.label, description: description || fallback.description };
+  return {
+    value: Number(m[1].replace(/,/g, "")) || 0,
+    suffix: m[2] || "",
+    label: label || fallback.label,
+    description: description || fallback.description
+  };
+}
 
 function useCountUp(target: number, durationMs: number, start: boolean) {
   const [value, setValue] = useState(0);
@@ -61,9 +78,11 @@ function StatCard({ stat, visible }: { stat: Stat; visible: boolean }) {
   );
 }
 
-export function TrustStats() {
+export function TrustStats({ overrides }: { overrides?: (string | undefined)[] }) {
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const STATS = DEFAULT_STATS.map((s, i) => parseStat(overrides?.[i] ?? "", s));
 
   useEffect(() => {
     const el = ref.current;

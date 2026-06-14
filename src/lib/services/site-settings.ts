@@ -16,7 +16,11 @@ export type SiteSettingsKey =
   | "contact.address"
   | "contact.hours"
   | "contact.kakaoUrl"
-  | "naver.blogId"; // 네이버 블로그 ID (RSS 연동)
+  | "naver.blogId" // 네이버 블로그 ID (RSS 연동)
+  | "home.stat1"
+  | "home.stat2"
+  | "home.stat3"
+  | "home.stat4";
 
 export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "home.heroBadge": "행정사 사무소 · Logos · Pathos · Ethos",
@@ -30,7 +34,11 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "contact.address": "서울특별시 (주소 등록 예정)",
   "contact.hours": "평일 09:00 - 18:00",
   "contact.kakaoUrl": "http://pf.kakao.com/_xXxXxXx",
-  "naver.blogId": ""
+  "naver.blogId": "",
+  "home.stat1": "500+ 처리 사건 | 비자·심판·계약·인허가 분야",
+  "home.stat2": "98% 고객 만족도 | 사후 안내 응답률 기준",
+  "home.stat3": "4분야 전문 영역 | 4대 분야 전담 워크플로우",
+  "home.stat4": "24h 회신 평균 | 영업일 기준 평균 회신"
 };
 
 export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint?: string; multiline?: boolean }> = {
@@ -46,7 +54,11 @@ export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint
   "naver.blogId": {
     label: "네이버 블로그 ID",
     hint: "blog.naver.com/<ID> 의 ID만 입력하면 칼럼 페이지에 자동 연동됩니다"
-  }
+  },
+  "home.stat1": { label: "홈 통계 ①", hint: "형식: 숫자+단위 | 제목 | 설명  (예: 500+ 처리 사건 | 비자·심판 분야)" },
+  "home.stat2": { label: "홈 통계 ②", hint: "형식: 숫자+단위 | 제목 | 설명" },
+  "home.stat3": { label: "홈 통계 ③", hint: "형식: 숫자+단위 | 제목 | 설명" },
+  "home.stat4": { label: "홈 통계 ④", hint: "형식: 숫자+단위 | 제목 | 설명" }
 };
 
 /** 전체 설정 조회 (DB + 기본값 병합). */

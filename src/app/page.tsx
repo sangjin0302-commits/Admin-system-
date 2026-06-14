@@ -249,7 +249,9 @@ export default async function PublicMarketingHomePage({
       <section className="ethos-band ethos-band-soft py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal>
-            <TrustStats />
+            <TrustStats
+          overrides={[site["home.stat1"], site["home.stat2"], site["home.stat3"], site["home.stat4"]]}
+        />
           </Reveal>
         </div>
       </section>
