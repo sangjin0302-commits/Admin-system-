@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 const NAV_ITEMS = [
   { href: "/", label: "홈" },
@@ -14,10 +14,34 @@ const NAV_ITEMS = [
   { href: "/track", label: "진행상황" }
 ] as const;
 
-export function PublicHeader() {
-  const pathname = usePathname();
+function LangToggle({ pathname }: { pathname: string }) {
   const sp = useSearchParams();
   const lang = sp.get("lang") === "en" ? "en" : "ko";
+  return (
+    <div className="hidden items-center gap-1 border-r border-gold/30 pr-3 lg:flex">
+      <Link
+        href={`${pathname}?lang=ko`}
+        className={`px-2 font-serif text-xs font-bold ${
+          lang === "ko" ? "text-primary" : "text-text-muted hover:text-primary"
+        }`}
+      >
+        KO
+      </Link>
+      <span className="text-gold/40">|</span>
+      <Link
+        href={`${pathname}?lang=en`}
+        className={`px-2 font-serif text-xs font-bold ${
+          lang === "en" ? "text-primary" : "text-text-muted hover:text-primary"
+        }`}
+      >
+        EN
+      </Link>
+    </div>
+  );
+}
+
+export function PublicHeader() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -75,25 +99,9 @@ export function PublicHeader() {
         </nav>
 
         {/* 언어 토글 */}
-        <div className="hidden items-center gap-1 border-r border-gold/30 pr-3 lg:flex">
-          <Link
-            href={`${pathname}?lang=ko`}
-            className={`px-2 font-serif text-xs font-bold ${
-              lang === "ko" ? "text-primary" : "text-text-muted hover:text-primary"
-            }`}
-          >
-            KO
-          </Link>
-          <span className="text-gold/40">|</span>
-          <Link
-            href={`${pathname}?lang=en`}
-            className={`px-2 font-serif text-xs font-bold ${
-              lang === "en" ? "text-primary" : "text-text-muted hover:text-primary"
-            }`}
-          >
-            EN
-          </Link>
-        </div>
+        <Suspense fallback={<div className="hidden lg:flex" />}>
+          <LangToggle pathname={pathname} />
+        </Suspense>
 
         {/* CTA */}
         <div className="hidden items-center gap-2 lg:flex">

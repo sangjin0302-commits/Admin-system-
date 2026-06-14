@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 
-
-export default function SignInPage() {
+function SignInForm() {
   const router = useRouter();
   const sp = useSearchParams();
   const callbackUrl = sp.get("callbackUrl") ?? "/portal";
@@ -35,6 +34,57 @@ export default function SignInPage() {
   }
 
   return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div>
+        <label className="font-serif text-sm font-bold text-primary">이메일</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="email"
+          className="mt-1 w-full rounded-lg border border-gold/40 bg-surface px-4 py-2.5 text-sm focus:border-gold focus:outline-none"
+        />
+      </div>
+      <div>
+        <label className="font-serif text-sm font-bold text-primary">비밀번호</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="current-password"
+          className="mt-1 w-full rounded-lg border border-gold/40 bg-surface px-4 py-2.5 text-sm focus:border-gold focus:outline-none"
+        />
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+      )}
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-primary font-serif text-sm font-bold text-white transition hover:bg-text-strong disabled:opacity-50"
+      >
+        {loading ? "로그인 중..." : "로그인"}
+      </button>
+    </form>
+  );
+}
+
+function FormFallback() {
+  return (
+    <div className="space-y-4">
+      <div className="h-12 rounded-lg bg-surface-muted" />
+      <div className="h-12 rounded-lg bg-surface-muted" />
+      <div className="h-11 rounded-lg bg-surface-muted" />
+    </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
     <div className="mx-auto max-w-md px-4 py-16 sm:py-20">
       <div className="text-center">
         <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">Client Portal</p>
@@ -43,42 +93,9 @@ export default function SignInPage() {
       </div>
 
       <div className="ethos-card mt-8 p-7">
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label className="font-serif text-sm font-bold text-primary">이메일</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              className="mt-1 w-full rounded-lg border border-gold/40 bg-surface px-4 py-2.5 text-sm focus:border-gold focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="font-serif text-sm font-bold text-primary">비밀번호</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className="mt-1 w-full rounded-lg border border-gold/40 bg-surface px-4 py-2.5 text-sm focus:border-gold focus:outline-none"
-            />
-          </div>
-
-          {error && (
-            <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-primary font-serif text-sm font-bold text-white transition hover:bg-text-strong disabled:opacity-50"
-          >
-            {loading ? "로그인 중..." : "로그인"}
-          </button>
-        </form>
+        <Suspense fallback={<FormFallback />}>
+          <SignInForm />
+        </Suspense>
 
         <div className="mt-6 flex flex-col items-center gap-2 text-center text-xs text-text-muted">
           <p>
