@@ -4,7 +4,16 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { Reveal } from "@/components/public/reveal";
-import type { PublicCase } from "@/lib/public-cases";
+
+type CaseCard = {
+  slug: string;
+  category: string;
+  categoryLabel: string;
+  title: string;
+  summary: string;
+  outcome: string;
+  duration: string;
+};
 
 const CATEGORY_COLORS: Record<string, string> = {
   VISA_STAY: "bg-emerald-100 text-emerald-800",
@@ -21,7 +30,7 @@ const FILTERS = [
   { key: "LICENSE_PERMIT", label: "인허가" }
 ] as const;
 
-export function CasesGrid({ cases }: { cases: readonly PublicCase[] }) {
+export function CasesGrid({ cases }: { cases: readonly CaseCard[] }) {
   const [active, setActive] = useState<string>("ALL");
   const [query, setQuery] = useState("");
 

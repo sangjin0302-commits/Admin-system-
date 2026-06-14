@@ -3,14 +3,17 @@ import type { Metadata } from "next";
 
 import { CasesGrid } from "@/components/public/cases-grid";
 import { Reveal } from "@/components/public/reveal";
-import { PUBLIC_CASES } from "@/lib/public-cases";
+import { listPublicCaseStudies } from "@/lib/services/case-studies";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "처리 사례 — ETHOS 행정사사무소",
   description: "에토스 행정사사무소의 익명화된 처리 사례 모음."
 };
 
-export default function CasesPage() {
+export default async function CasesPage() {
+  const cases = await listPublicCaseStudies();
   return (
     <div className="overflow-x-clip">
       {/* HERO */}
@@ -35,7 +38,7 @@ export default function CasesPage() {
 
       {/* 필터 + 그리드 */}
       <section className="py-12 sm:py-16">
-        <CasesGrid cases={PUBLIC_CASES} />
+        <CasesGrid cases={cases} />
       </section>
 
       {/* CTA */}

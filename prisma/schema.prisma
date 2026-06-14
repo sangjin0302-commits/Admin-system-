@@ -49,6 +49,21 @@ model PortalUploadedFile {
   @@index([caseId])
 }
 
+model CaseStudy {
+  id          String   @id @default(cuid())
+  category    String   // VISA_STAY | ADMIN_APPEAL | CONTRACT_INVESTIGATION | LICENSE_PERMIT
+  title       String
+  summary     String
+  outcome     String
+  duration    String
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
 model SiteSetting {
   key       String   @id            // e.g. "home.heroTitle", "naver.blogId"
   value     String                  // 텍스트 / JSON 문자열
