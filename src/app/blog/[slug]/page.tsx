@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { Card } from "@/components/ui/card";
+import { ShareButtons } from "@/components/public/share-buttons";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/blog-posts";
 
 export async function generateStaticParams() {
@@ -62,6 +63,8 @@ export default async function BlogDetailPage({
           className="prose prose-sm max-w-none font-serif text-base leading-8 text-text [&_h2]:font-serif [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-primary [&_h2]:mt-8 [&_h2]:mb-3 [&_p]:my-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_strong]:text-primary"
           dangerouslySetInnerHTML={{ __html: post.contentHtml }}
         />
+
+        <ShareButtons title={post.title} />
       </article>
 
       <Card className="mt-12 bg-primary p-7 text-center text-white">
