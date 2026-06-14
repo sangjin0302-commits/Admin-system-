@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { EthosLogo } from "@/components/brand/ethos-logo";
+import { FaqAccordion } from "@/components/public/faq-accordion";
 import { TrustStats } from "@/components/public/trust-stats";
 import { Testimonials } from "@/components/public/testimonials";
 import { Reveal } from "@/components/public/reveal";
@@ -453,23 +454,7 @@ export default async function PublicMarketingHomePage({
             </h2>
           </Reveal>
 
-          <div className="mx-auto mt-14 grid max-w-4xl gap-4 md:grid-cols-2">
-            {FAQ_ITEMS.map((item, i) => (
-              <Reveal key={item.q} delay={((i % 2) + 1) as 1 | 2}>
-                <div className="ethos-card ethos-card-hover h-full p-6">
-                  <div className="flex items-start gap-3">
-                    <span className="ethos-quote mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gold-soft text-sm font-bold text-gold-deep">
-                      Q
-                    </span>
-                    <div>
-                      <h3 className="font-serif text-base font-bold text-primary">{item.q}</h3>
-                      <p className="mt-2 text-sm leading-7 text-text-muted">{item.a}</p>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <FaqAccordion items={FAQ_ITEMS} />
         </div>
       </section>
 

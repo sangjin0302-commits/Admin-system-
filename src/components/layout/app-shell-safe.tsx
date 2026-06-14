@@ -7,6 +7,7 @@ import { FloatingContact } from "@/components/layout/floating-contact";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { PublicHeader } from "@/components/layout/public-header";
+import { ScrollEnhancements } from "@/components/layout/scroll-enhancements";
 
 /**
  * Routes that use the system shell (admin/portal — internal tools).
@@ -65,6 +66,7 @@ export function AppShellSafe({ children }: Readonly<{ children: React.ReactNode 
       <PublicFooter />
       <FloatingContact />
       <MobileBottomNav />
+      <ScrollEnhancements />
     </>
   );
 }
