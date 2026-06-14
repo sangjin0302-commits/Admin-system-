@@ -72,6 +72,65 @@
   height: 1px;
 }
 
+/* ── Full-bleed band (breaks out of container) ───── */
+.ethos-band {
+  position: relative;
+  width: 100vw;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
+
+/* Dark navy editorial band */
+.ethos-band-dark {
+  background:
+    radial-gradient(ellipse 80% 60% at 80% 0%, rgb(201 169 97 / 0.12), transparent 60%),
+    linear-gradient(160deg, rgb(22 50 80), rgb(26 60 95) 55%, rgb(18 42 68));
+  color: rgb(250 246 239);
+}
+
+/* Soft ivory editorial band */
+.ethos-band-soft {
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgb(240 224 188 / 0.5), transparent 60%),
+    linear-gradient(180deg, rgb(245 237 224 / 0.5), rgb(250 246 239));
+}
+
+/* Vertical index number for editorial sections */
+.ethos-index {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 800;
+  font-size: clamp(3rem, 8vw, 6rem);
+  line-height: 0.8;
+  color: rgb(201 169 97 / 0.22);
+  letter-spacing: -0.04em;
+}
+
+/* Editorial pull-quote */
+.ethos-quote {
+  font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+/* Hero kinetic gradient text accent */
+.ethos-underline-gold {
+  position: relative;
+  display: inline-block;
+}
+.ethos-underline-gold::after {
+  content: "";
+  position: absolute;
+  left: -0.06em;
+  right: -0.06em;
+  bottom: 0.08em;
+  height: 0.34em;
+  background: linear-gradient(90deg, rgb(201 169 97 / 0.35), rgb(201 169 97 / 0.18));
+  z-index: -1;
+  border-radius: 2px;
+}
+
 /* ── Scroll reveal ───────────────────────────────── */
 .reveal {
   opacity: 0;
