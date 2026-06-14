@@ -30,6 +30,24 @@ const nextConfig: NextConfig = {
       config.cache = false;
     }
     return config;
+  },
+  async headers() {
+    // 전역 보안 헤더 (클릭재킹/MIME 스니핑/HTTPS 강제/정보 누출 방어)
+    const securityHeaders = [
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      {
+        key: "Strict-Transport-Security",
+        value: "max-age=63072000; includeSubDomains; preload"
+      },
+      {
+        key: "Permissions-Policy",
+        value: "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+      },
+      { key: "X-DNS-Prefetch-Control", value: "on" }
+    ];
+    return [{ source: "/:path*", headers: securityHeaders }];
   }
 };
 
