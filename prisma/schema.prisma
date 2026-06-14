@@ -49,6 +49,19 @@ model PortalUploadedFile {
   @@index([caseId])
 }
 
+model FeeItem {
+  id          String   @id @default(cuid())
+  category    String   // VISA_STAY | ADMIN_APPEAL | CONTRACT_INVESTIGATION | LICENSE_PERMIT | ETC
+  service     String
+  amount      String   // 자유 형식: "33만원", "사안별 협의", "착수 50만 + 성공보수"
+  note        String   @default("")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, sortOrder])
+}
+
 model Testimonial {
   id          String   @id @default(cuid())
   category    String   // VISA_STAY | ADMIN_APPEAL | CONTRACT_INVESTIGATION | LICENSE_PERMIT
