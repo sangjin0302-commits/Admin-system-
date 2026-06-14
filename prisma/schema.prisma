@@ -49,6 +49,20 @@ model PortalUploadedFile {
   @@index([caseId])
 }
 
+model Testimonial {
+  id          String   @id @default(cuid())
+  category    String   // VISA_STAY | ADMIN_APPEAL | CONTRACT_INVESTIGATION | LICENSE_PERMIT
+  quote       String
+  author      String
+  context     String
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
 model CaseStudy {
   id          String   @id @default(cuid())
   category    String   // VISA_STAY | ADMIN_APPEAL | CONTRACT_INVESTIGATION | LICENSE_PERMIT

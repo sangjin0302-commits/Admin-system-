@@ -48,6 +48,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               사례 관리
             </Link>
             <Link
+              href="/admin/testimonials"
+              className="inline-flex h-10 items-center rounded-full border border-line-strong bg-surface px-4 text-sm font-medium text-text-strong transition hover:bg-surface-muted"
+            >
+              후기 관리
+            </Link>
+            <Link
               href="/admin/integrations"
               className="inline-flex h-10 items-center rounded-full border border-line-strong bg-surface px-4 text-sm font-medium text-text-strong transition hover:bg-surface-muted"
             >

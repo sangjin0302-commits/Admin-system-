@@ -9,6 +9,7 @@ import { Reveal } from "@/components/public/reveal";
 import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
 import { getSiteSettings } from "@/lib/services/site-settings";
+import { listPublicTestimonials } from "@/lib/services/testimonials";
 
 export const dynamic = "force-dynamic";
 
@@ -163,6 +164,7 @@ export default async function PublicMarketingHomePage({
   const heroDescription =
     lang === "ko" && site["home.heroDescription"] ? site["home.heroDescription"] : t.heroDescription;
   const noticeBanner = site["home.noticeBanner"]?.trim();
+  const testimonials = await listPublicTestimonials();
 
   return (
     <div className="overflow-x-clip">
@@ -439,7 +441,7 @@ export default async function PublicMarketingHomePage({
       </section>
 
       {/* ═══════════════ 의뢰인 후기 ═══════════════ */}
-      <Testimonials />
+      <Testimonials items={testimonials} />
 
       {/* ═══════════════ FAQ — soft band ═══════════════ */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28" aria-labelledby="home-faq-heading">

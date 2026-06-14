@@ -1,51 +1,12 @@
 import { Reveal } from "@/components/public/reveal";
+import {
+  TESTIMONIAL_CATEGORY_LABELS as CATEGORY_BADGE,
+  type PublicTestimonial
+} from "@/lib/services/testimonials";
 
-type Testimonial = {
-  quote: string;
-  author: string;
-  context: string;
-  category: string;
-};
-
-const TESTIMONIALS: readonly Testimonial[] = [
-  {
-    quote:
-      "처분서를 받고 막막했는데, 처음 상담 때부터 청구기한과 다음 단계를 정확히 짚어주셔서 마음이 놓였습니다.",
-    author: "박○○",
-    context: "영업정지 처분 행정심판",
-    category: "ADMIN_APPEAL"
-  },
-  {
-    quote:
-      "체류 자격 변경 자료가 복잡했는데, 점수제 항목별로 무엇이 부족한지 명확히 안내해주셔서 차근차근 준비할 수 있었습니다.",
-    author: "Mr. T",
-    context: "F-2 자격 변경",
-    category: "VISA_STAY"
-  },
-  {
-    quote:
-      "분쟁 사실관계가 너무 얽혀 있었는데, 시점별로 정리해주신 보고서가 이후 협의에 결정적이었습니다.",
-    author: "김○○",
-    context: "용역계약 사실조사",
-    category: "CONTRACT_INVESTIGATION"
-  },
-  {
-    quote:
-      "보완 요청을 받고 당황했지만 어떤 자료를 어떻게 보완하면 되는지 단계별로 알려주셔서 빠르게 대응할 수 있었습니다.",
-    author: "이○○",
-    context: "음식점 영업허가",
-    category: "LICENSE_PERMIT"
-  }
-];
-
-const CATEGORY_BADGE: Record<string, string> = {
-  VISA_STAY: "비자/체류",
-  ADMIN_APPEAL: "행정심판",
-  CONTRACT_INVESTIGATION: "계약서/사실조사",
-  LICENSE_PERMIT: "인허가"
-};
-
-export function Testimonials() {
+export function Testimonials({ items }: { items: PublicTestimonial[] }) {
+  const TESTIMONIALS = items;
+  if (TESTIMONIALS.length === 0) return null;
   return (
     <section className="ethos-band ethos-band-soft py-24 sm:py-28" aria-labelledby="testimonials-heading">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
