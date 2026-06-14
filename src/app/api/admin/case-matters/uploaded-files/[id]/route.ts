@@ -1,13 +1,6 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-
 import { createAdminRequestContext } from "@/lib/http/admin-api";
 import { prisma } from "@/lib/prisma/client";
-
-function getUploadDir(): string {
-  const dir = process.env.PORTAL_UPLOAD_DIR ?? "./uploads";
-  return path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
-}
+import { getFile } from "@/lib/storage/file-storage";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const api = createAdminRequestContext("admin.uploaded-files.download");
@@ -18,7 +11,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   if (!record) return api.error(404, "File not found.", { code: "NOT_FOUND" });
 
   try {
-    const buffer = await readFile(path.join(getUploadDir(), record.storedPath));
+    const buffer = await getFile(record.storedPath);
     return new Response(buffer as unknown as BodyInit, {
       status: 200,
       headers: {

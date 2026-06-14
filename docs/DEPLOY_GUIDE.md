@@ -9,20 +9,59 @@
 ## 2. 데이터베이스 — Railway PostgreSQL
 
 ```
-1. railway.app 가입
-2. New Project → Provision PostgreSQL
-3. Variables 탭에서 DATABASE_URL 복사 (postgres://...)
-4. 로컬 .env 에 DATABASE_URL_RAILWAY=... 로 저장
-5. schema.prisma의 datasource를 postgres로 전환:
+1. railway.app 가입 → New Project → Add Service → Database → PostgreSQL
+2. 생성된 Postgres 서비스 → Variables 탭에서 DATABASE_URL 복사
+   (형식: postgresql://user:pass@host:port/db)
+3. 로컬 .env 에 잠시 그 값을 DATABASE_URL=... 로 넣어 push 실행:
    npm run db:push:postgres
-6. 마이그레이션 적용 후 시드 (선택)
+   → prisma/schema.postgresql.prisma 기준으로 테이블 전체 생성됨
+4. 생성 확인 후 Railway Variables에 영구 등록 (다음 단계 Vercel에서도 동일 값 사용)
 ```
 
-env 키:
+env 키 (Vercel/Railway 동일):
 ```
 PRISMA_DB_PROVIDER=postgresql
-DATABASE_URL=postgres://...
+DATABASE_URL=postgresql://...
 ```
+
+### 적용되는 신규 모델 (자동 포함됨)
+- `PortalClient`, `PortalUploadedFile` — 의뢰인 포털
+- `AdminAppealDetail`, `ContractInvestigationDetail`, `LicensePermitDetail` — 4 카테고리
+- `CaseMatter.category`, `Inquiry.intakeCategory`, reset 토큰 컬럼 등
+
+## 2-1. 파일 저장소 — Cloudflare R2 (권장) 또는 AWS S3
+
+Vercel은 서버리스라 로컬 디스크가 휘발됨 → 외부 스토리지 필수.
+
+### Cloudflare R2 (egress 무료, 추천)
+```
+1. dash.cloudflare.com → R2 → Create bucket: ethos-uploads
+2. R2 → API Tokens → Create API Token (Object Read & Write)
+3. 받은 값을 Vercel env 등록:
+   STORAGE_DRIVER=s3
+   S3_BUCKET=ethos-uploads
+   S3_REGION=auto
+   S3_ENDPOINT=https://<account_id>.r2.cloudflarestorage.com
+   S3_ACCESS_KEY_ID=...
+   S3_SECRET_ACCESS_KEY=...
+   S3_PREFIX=portal-uploads
+```
+
+### AWS S3
+```
+1. S3 콘솔 → 버킷 생성 (서울: ap-northeast-2)
+2. IAM 사용자 생성 → AmazonS3FullAccess (또는 특정 버킷만 권한)
+3. Access Key 발급 → Vercel env:
+   STORAGE_DRIVER=s3
+   S3_BUCKET=ethos-uploads
+   S3_REGION=ap-northeast-2
+   S3_ENDPOINT=    (비움)
+   S3_ACCESS_KEY_ID=...
+   S3_SECRET_ACCESS_KEY=...
+   S3_PREFIX=portal-uploads
+```
+
+스토리지 키 미설정 시 자동으로 로컬 디스크 fallback (개발 환경용).
 
 ## 3. 앱 배포 — Vercel
 

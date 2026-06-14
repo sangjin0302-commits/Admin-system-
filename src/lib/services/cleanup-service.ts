@@ -10,6 +10,7 @@ import { unlink, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
 import { prisma } from "@/lib/prisma/client";
+import { activeStorageDriver } from "@/lib/storage/file-storage";
 
 const ARCHIVE_AFTER_DAYS = 90;
 const ORPHAN_FILE_DAYS = 30;
@@ -46,8 +47,16 @@ export async function runCleanup(): Promise<{
     data: { status: "CANCELLED" }
   });
 
-  // 3. 미연결 + 오래된 업로드 파일 삭제
+  // 3. 미연결 + 오래된 업로드 파일 삭제 (로컬 디스크에만 적용)
   let orphanCount = 0;
+  if (activeStorageDriver() !== "local") {
+    // S3/R2는 별도 lifecycle rule (버킷 정책) 사용 권장
+    return {
+      archivedTasks: archivedTasks.count,
+      expiredTokensCleared: expiredTokens.count,
+      orphanFilesRemoved: 0
+    };
+  }
   try {
     const dir = getUploadDir();
     const files = await readdir(dir).catch(() => []);

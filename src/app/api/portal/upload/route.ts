@@ -1,12 +1,12 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import crypto from "node:crypto";
+import path from "node:path";
 
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/client";
 import { logAudit } from "@/lib/services/audit-log";
+import { putFile } from "@/lib/storage/file-storage";
 
 const ALLOWED_MIME = new Set([
   "application/pdf",
@@ -21,11 +21,6 @@ const ALLOWED_MIME = new Set([
 function getMaxBytes(): number {
   const env = Number(process.env.PORTAL_UPLOAD_MAX_BYTES ?? "10485760");
   return Number.isFinite(env) && env > 0 ? env : 10 * 1024 * 1024;
-}
-
-function getUploadDir(): string {
-  const dir = process.env.PORTAL_UPLOAD_DIR ?? "./uploads";
-  return path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
 }
 
 export async function POST(request: Request) {
@@ -61,15 +56,22 @@ export async function POST(request: Request) {
     );
   }
 
-  // 저장
-  const dir = getUploadDir();
-  await mkdir(dir, { recursive: true });
   const safeBaseName = path.basename(file.name).replace(/[^\w.\-가-힣]/g, "_").slice(0, 80);
   const uniq = crypto.randomBytes(8).toString("hex");
-  const stored = `${userId}-${uniq}-${safeBaseName}`;
-  const fullPath = path.join(dir, stored);
+  const storedName = `${userId}-${uniq}-${safeBaseName}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(fullPath, buffer);
+
+  let storedKey: string;
+  try {
+    const put = await putFile(storedName, buffer, file.type);
+    storedKey = put.key;
+  } catch (error) {
+    console.error("[portal/upload] storage put failed", error);
+    return NextResponse.json(
+      { ok: false, error: "파일 저장에 실패했습니다." },
+      { status: 500 }
+    );
+  }
 
   const record = await prisma.portalUploadedFile.create({
     data: {
@@ -77,7 +79,7 @@ export async function POST(request: Request) {
       inquiryId: typeof inquiryId === "string" && inquiryId ? inquiryId : null,
       caseId: typeof caseId === "string" && caseId ? caseId : null,
       fileName: safeBaseName,
-      storedPath: stored,
+      storedPath: storedKey,
       mimeType: file.type,
       sizeBytes: file.size
     }
