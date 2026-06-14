@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { Card } from "@/components/ui/card";
+import { BlogToc } from "@/components/public/blog-toc";
 import { ShareButtons } from "@/components/public/share-buttons";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/blog-posts";
 
@@ -35,7 +36,14 @@ export default async function BlogDetailPage({
   if (!post) notFound();
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
+    <div className="relative mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
+      {/* 데스크탑 우측 목차 (xl 이상) */}
+      <div className="absolute left-full top-20 hidden h-full pl-10 xl:block">
+        <div className="w-56">
+          <BlogToc />
+        </div>
+      </div>
+
       <Link href="/blog" className="font-serif text-xs text-text-muted hover:text-primary">
         ← 법률 칼럼 목록
       </Link>
