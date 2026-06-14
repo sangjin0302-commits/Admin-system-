@@ -13,9 +13,9 @@
   --color-surface-raised: 255 255 255;
   --color-line: 224 215 195;            /* warm beige border */
   --color-line-strong: 196 178 142;     /* gold-tinted */
-  --color-text-strong: 26 60 95;        /* deep navy */
-  --color-text: 53 73 95;
-  --color-text-muted: 110 100 84;       /* warm muted */
+  --color-text-strong: 22 52 84;        /* deep navy (darker for contrast) */
+  --color-text: 44 62 82;               /* primary body, ~8:1 on ivory */
+  --color-text-muted: 92 84 68;         /* warm muted, ~6.5:1 on ivory */
   --color-primary: 26 60 95;            /* ETHOS deep navy */
   --color-primary-soft: 240 232 215;    /* ivory tint */
   --color-success: 40 112 76;
@@ -111,7 +111,8 @@
 .ethos-quote {
   font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
   font-style: italic;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
+  color: rgb(44 62 82);            /* sensible default so it's never invisible */
 }
 
 /* Hero kinetic gradient text accent */
@@ -195,17 +196,19 @@
 /* ── Typography helpers ──────────────────────────── */
 .ethos-eyebrow {
   font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.34em;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgb(168 134 71);
+  color: rgb(150 118 60);          /* darker gold for AA contrast */
 }
 .ethos-display {
   font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
   font-weight: 700;
-  letter-spacing: -0.01em;
-  color: rgb(26 60 95);
+  letter-spacing: -0.005em;
+  line-height: 1.18;
+  color: rgb(22 52 84);
+  word-break: keep-all;            /* avoid awkward Korean mid-word breaks */
 }
 
 /* Section divider with diamond */
@@ -265,6 +268,17 @@ html {
 
 body {
   @apply min-h-screen bg-canvas font-sans text-text antialiased;
+  line-height: 1.65;
+  letter-spacing: -0.003em;
+  word-break: keep-all;            /* Korean: break on word boundaries, not mid-syllable */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Korean headings should not break awkwardly */
+h1, h2, h3 {
+  word-break: keep-all;
 }
 
 * {
