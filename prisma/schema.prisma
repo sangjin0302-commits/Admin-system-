@@ -49,6 +49,23 @@ model PortalUploadedFile {
   @@index([caseId])
 }
 
+model PortalNotification {
+  id          String   @id @default(cuid())
+  clientId    String
+  caseId      String?
+  inquiryId   String?
+  event       String   // case_status_changed, document_requested, case_closed, message, etc.
+  title       String
+  body        String
+  link        String?  // e.g., /portal/cases/abc123
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([clientId, readAt])
+  @@index([caseId])
+  @@index([inquiryId])
+}
+
 enum InquiryType {
   FOREIGNER_VISA
   IMMIGRATION_STAY

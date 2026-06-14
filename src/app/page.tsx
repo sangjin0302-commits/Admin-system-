@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { EthosLogo } from "@/components/brand/ethos-logo";
 import { TrustStats } from "@/components/public/trust-stats";
+import { Testimonials } from "@/components/public/testimonials";
 import { Reveal } from "@/components/public/reveal";
 import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
@@ -421,6 +422,9 @@ export default async function PublicMarketingHomePage({
           </div>
         </div>
       </section>
+
+      {/* ═══════════════ 의뢰인 후기 ═══════════════ */}
+      <Testimonials />
 
       {/* ═══════════════ FAQ — soft band ═══════════════ */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28" aria-labelledby="home-faq-heading">

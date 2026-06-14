@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { FloatingContact } from "@/components/layout/floating-contact";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { PublicHeader } from "@/components/layout/public-header";
 
@@ -63,6 +64,7 @@ export function AppShellSafe({ children }: Readonly<{ children: React.ReactNode 
       </main>
       <PublicFooter />
       <FloatingContact />
+      <MobileBottomNav />
     </>
   );
 }

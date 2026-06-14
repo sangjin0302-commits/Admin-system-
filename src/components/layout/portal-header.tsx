@@ -16,6 +16,16 @@ export function PortalHeader({ clientName }: { clientName?: string | null }) {
 
         <nav className="flex items-center gap-2">
           <Link
+            href="/portal/notifications"
+            aria-label="알림"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-text-muted transition hover:bg-gold-soft/30 hover:text-primary"
+          >
+            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.7">
+              <path d="M18 16v-5a6 6 0 0 0-12 0v5l-2 3h16l-2-3z" />
+              <path d="M9 19a3 3 0 0 0 6 0" />
+            </svg>
+          </Link>
+          <Link
             href="/"
             className="hidden h-9 items-center rounded-lg px-3 text-sm font-medium text-text-muted transition hover:text-primary sm:inline-flex"
           >

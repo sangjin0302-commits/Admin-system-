@@ -7,6 +7,7 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { sendClientNotification } from "@/lib/services/client-notifications";
+import { createPortalNotification } from "@/lib/services/portal-notifications";
 
 const STATUS_LABELS: Record<string, string> = {
   INTAKE_REVIEW: "접수 검토 중",
@@ -48,23 +49,47 @@ export async function notifyClientCaseStatusChanged(
     }
   });
 
-  if (!caseMatter?.inquiry?.email) {
+  const email = caseMatter?.inquiry?.email;
+  if (!caseMatter || !email) {
     console.log("[case-status-notify] no email — skip", caseMatterId);
     return;
   }
 
+  const statusLabel = STATUS_LABELS[newStatus] ?? newStatus;
+
+  // 이메일 발송 (best-effort)
   await sendClientNotification({
     event: "case_status_changed",
-    toEmail: caseMatter.inquiry.email,
+    toEmail: email,
     toName: caseMatter.inquiry.contactName,
     trackingCode: caseMatter.inquiry.publicTrackingCode ?? undefined,
     variables: {
       caseNo: caseMatter.caseNo ?? "-",
       caseTitle: caseMatter.title,
-      newStatus: STATUS_LABELS[newStatus] ?? newStatus,
+      newStatus: statusLabel,
       nextAction: caseMatter.nextActionAt
         ? caseMatter.nextActionAt.toISOString().slice(0, 10)
         : "사무소에서 다음 안내 예정"
     }
   });
+
+  // 포털 알림 inbox에도 기록 (의뢰인이 포털 가입돼 있으면)
+  try {
+    const portalClient = await prisma.portalClient.findUnique({
+      where: { email },
+      select: { id: true }
+    });
+    if (portalClient) {
+      await createPortalNotification({
+        clientId: portalClient.id,
+        caseId: caseMatterId,
+        event: "case_status_changed",
+        title: `사건 상태 업데이트: ${statusLabel}`,
+        body: `${caseMatter.caseNo ?? caseMatter.title} — 상태가 '${statusLabel}'로 변경되었습니다.`,
+        link: `/portal/cases/${caseMatterId}`
+      });
+    }
+  } catch (error) {
+    console.warn("[case-status-notify] portal notification failed", error);
+  }
 }

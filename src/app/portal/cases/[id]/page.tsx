@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
 import { PortalHeader } from "@/components/layout/portal-header";
+import { CaseTimeline } from "@/components/public/case-timeline";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/client";
 
@@ -59,6 +60,9 @@ export default async function PortalCaseDetail({
           </p>
         )}
       </Card>
+
+      {/* 진행 단계 타임라인 */}
+      <CaseTimeline status={caseMatter.status} />
 
       {/* 필요 자료 */}
       <Card className="p-7">
