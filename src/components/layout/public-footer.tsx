@@ -1,6 +1,32 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+const FALLBACK = { phone: "02-0000-0000", email: "contact@ethos.kr", hours: "평일 09:00 - 18:00" };
 
 export function PublicFooter() {
+  const [contact, setContact] = useState(FALLBACK);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/public/site-contact")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.ok) {
+          setContact({ phone: d.phone ?? FALLBACK.phone, email: d.email ?? FALLBACK.email, hours: d.hours ?? FALLBACK.hours });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const phone = contact.phone;
+  const phoneTel = phone.replace(/[^0-9]/g, "");
+  const email = contact.email;
+  const hours = contact.hours;
   return (
     <footer className="mt-24 border-t border-gold/30 bg-primary text-white/90">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -54,19 +80,19 @@ export function PublicFooter() {
             <ul className="mt-4 space-y-3 text-sm text-white/80">
               <li>
                 <p className="text-xs text-white/60">전화</p>
-                <a href="tel:0000000000" className="font-serif text-base font-bold text-white">
-                  02-0000-0000
+                <a href={`tel:${phoneTel}`} className="font-serif text-base font-bold text-white">
+                  {phone}
                 </a>
               </li>
               <li>
                 <p className="text-xs text-white/60">이메일</p>
-                <a href="mailto:contact@ethos.kr" className="text-sm text-white">
-                  contact@ethos.kr
+                <a href={`mailto:${email}`} className="text-sm text-white">
+                  {email}
                 </a>
               </li>
               <li>
                 <p className="text-xs text-white/60">운영시간</p>
-                <p className="text-sm">평일 09:00 - 18:00</p>
+                <p className="text-sm">{hours}</p>
               </li>
             </ul>
           </div>
