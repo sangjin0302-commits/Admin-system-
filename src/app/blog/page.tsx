@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { BlogGrid } from "@/components/public/blog-grid";
 import { Reveal } from "@/components/public/reveal";
 import { listBlogPosts } from "@/lib/blog-posts";
 
@@ -45,52 +46,19 @@ export default async function BlogPage() {
           {/* Featured — DARK band */}
           <FeaturedSection post={posts[0]} />
 
-          {/* 카테고리 칩 */}
-          {posts.length > 1 && (
-            <section className="pt-20 pb-4">
-              <div className="mx-auto max-w-6xl px-4 sm:px-6">
-                <Reveal>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {["전체", "비자/체류", "행정심판", "계약서/사실조사", "인허가"].map((label) => (
-                      <span
-                        key={label}
-                        className="rounded-full border border-gold/40 bg-surface px-4 py-1.5 font-serif text-xs font-semibold text-primary"
-                      >
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                </Reveal>
-              </div>
-            </section>
-          )}
-
-          {/* 나머지 칼럼 */}
+          {/* 나머지 칼럼 — 필터 + 검색 */}
           {posts.length > 1 && (
             <section className="py-16 sm:py-20">
-              <div className="mx-auto max-w-6xl px-4 sm:px-6">
-                <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                  {posts.slice(1).map((p, i) => (
-                    <Reveal key={p.slug} delay={((i % 3) + 1) as 1 | 2 | 3}>
-                      <Link href={`/blog/${p.slug}`} className="group block h-full">
-                        <div className="ethos-card ethos-card-hover ethos-card-topline flex h-full flex-col p-7">
-                          <span className="self-start rounded-full bg-gold-soft/60 px-3 py-1 text-[11px] font-bold text-gold-deep">
-                            {p.category}
-                          </span>
-                          <h3 className="ethos-display mt-5 text-lg leading-snug group-hover:text-gold-deep">
-                            {p.title}
-                          </h3>
-                          <p className="mt-3 flex-1 text-sm leading-7 text-text-muted">{p.excerpt}</p>
-                          <div className="mt-5 flex items-center justify-between border-t border-gold/15 pt-4 text-xs text-text-muted">
-                            <span>{p.date}</span>
-                            <span>{p.readMin}분 소요</span>
-                          </div>
-                        </div>
-                      </Link>
-                    </Reveal>
-                  ))}
-                </div>
-              </div>
+              <BlogGrid
+                posts={posts.slice(1).map((p) => ({
+                  slug: p.slug,
+                  title: p.title,
+                  excerpt: p.excerpt,
+                  category: p.category,
+                  date: p.date,
+                  readMin: p.readMin
+                }))}
+              />
             </section>
           )}
         </>
