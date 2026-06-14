@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 
 import { EthosLogo } from "@/components/brand/ethos-logo";
 import { Reveal } from "@/components/public/reveal";
+import { getSiteSetting } from "@/lib/services/site-settings";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "사무소 소개 — ETHOS 행정사사무소",
@@ -34,7 +37,8 @@ const VALUES = [
   }
 ] as const;
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const greeting = await getSiteSetting("about.greeting");
   return (
     <div className="overflow-x-clip">
       {/* HERO */}
@@ -71,10 +75,7 @@ export default function AboutPage() {
           </Reveal>
           <div className="mt-10 space-y-6 text-base leading-8 text-white/80">
             <Reveal delay={1}>
-              <p>
-                행정 문제는 단순히 서류를 작성하고 절차를 밟는 일만은 아닙니다. 그 안에는 누군가의 생계,
-                체류, 권리, 억울함, 가족, 사업, 그리고 앞으로의 삶이 함께 담겨 있습니다.
-              </p>
+              <p>{greeting}</p>
             </Reveal>
             <Reveal delay={2}>
               <p>

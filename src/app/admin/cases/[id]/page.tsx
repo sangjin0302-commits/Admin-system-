@@ -17,6 +17,7 @@ import { ContractDetailPanel } from "@/components/admin/contract-detail-panel";
 import { LicenseDetailPanel } from "@/components/admin/license-detail-panel";
 import { CaseMatterCategoryPanel } from "@/components/admin/case-matter-category-panel";
 import { PortalUploadedFilesPanel } from "@/components/admin/portal-uploaded-files-panel";
+import { ClientMessageBox } from "@/components/admin/client-message-box";
 import { prisma } from "@/lib/prisma/client";
 import { CaseMatterStatusForm } from "@/components/admin/case-matter-status-form";
 import { RequiredDocumentStatusPanel } from "@/components/admin/required-document-status-panel";
@@ -374,6 +375,7 @@ export default async function AdminCaseMatterDetailPage({
         supplementRequests={caseMatter.supplementRequests}
       />
       <PortalUploadedFilesPanel uploads={portalUploads} />
+      <ClientMessageBox caseId={caseMatter.id} />
       <CaseMatterEventTimeline events={caseMatter.events} />
     </div>
   );

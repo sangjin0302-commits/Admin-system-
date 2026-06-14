@@ -2,13 +2,24 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
+import { getSiteSettings } from "@/lib/services/site-settings";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "오시는 길 — ETHOS 행정사사무소",
   description: "에토스 행정사사무소 위치, 연락처, 운영시간 안내."
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const site = await getSiteSettings();
+  const phone = site["contact.phone"];
+  const phoneTel = phone.replace(/[^0-9]/g, "");
+  const email = site["contact.email"];
+  const address = site["contact.address"];
+  const hours = site["contact.hours"];
+  const kakaoUrl = site["contact.kakaoUrl"];
+
   return (
     <div className="overflow-x-clip">
       {/* HERO */}
@@ -41,20 +52,20 @@ export default function ContactPage() {
                 <div className="mt-8 space-y-6">
                   <div>
                     <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">전화</p>
-                    <a href="tel:020000000" className="mt-1 block font-serif text-3xl font-bold text-white">
-                      02-0000-0000
+                    <a href={`tel:${phoneTel}`} className="mt-1 block font-serif text-3xl font-bold text-white">
+                      {phone}
                     </a>
                   </div>
                   <div>
                     <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">이메일</p>
-                    <a href="mailto:contact@ethos.kr" className="mt-1 block text-base text-white hover:text-gold-soft">
-                      contact@ethos.kr
+                    <a href={`mailto:${email}`} className="mt-1 block text-base text-white hover:text-gold-soft">
+                      {email}
                     </a>
                   </div>
                   <div>
                     <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">카카오톡</p>
                     <a
-                      href="http://pf.kakao.com/_xXxXxXx"
+                      href={kakaoUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="mt-2 inline-flex items-center gap-2 rounded-lg bg-[#FEE500] px-4 py-2 text-sm font-bold text-[#3C1E1E]"
@@ -64,7 +75,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">운영시간</p>
-                    <p className="mt-1 text-base text-white">평일 09:00 - 18:00</p>
+                    <p className="mt-1 text-base text-white">{hours}</p>
                     <p className="text-xs text-white/60">주말 / 공휴일 휴무 (사전 예약 시 가능)</p>
                   </div>
                 </div>
@@ -85,7 +96,7 @@ export default function ContactPage() {
                 <h2 className="ethos-display mt-3 text-2xl">사무소 위치</h2>
                 <div className="mt-7 space-y-2">
                   <p className="font-serif text-xs uppercase tracking-wider text-gold-deep">주소</p>
-                  <p className="text-base text-text-strong">서울특별시 (주소 등록 예정)</p>
+                  <p className="text-base text-text-strong">{address}</p>
                   <p className="text-sm text-text-muted">지하철 / 버스 정보 (등록 예정)</p>
                 </div>
 
