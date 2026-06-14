@@ -13,7 +13,11 @@ export const FEE_CATEGORY_LABELS: Record<string, string> = {
 };
 
 export async function listFeeItems() {
-  return prisma.feeItem.findMany({
-    orderBy: [{ category: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }]
-  });
+  try {
+    return await prisma.feeItem.findMany({
+      orderBy: [{ category: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }]
+    });
+  } catch {
+    return [];
+  }
 }
