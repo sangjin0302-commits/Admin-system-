@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { IntakeFormSafeV3 } from "@/components/intake/intake-form-safe-v3";
-import { Card } from "@/components/ui/card";
+import { Reveal } from "@/components/public/reveal";
 import { intakePageMessages } from "@/i18n/locales/intake-page";
 import { buildIntakeSourceTrackingFromSearchParams } from "@/lib/services/intake-source-tracking";
 import { createTranslator, normalizeUiLocale } from "@/i18n/shared";
@@ -19,87 +19,126 @@ export default async function IntakePageSafe({
   const t = createTranslator(intakePageMessages, locale);
   const intakeTracking = buildIntakeSourceTrackingFromSearchParams(params);
 
+  const prepChips = locale === "ko"
+    ? ["현재 상황", "목표/마감", "보유 문서", "제출처"]
+    : ["Current status", "Goal & deadline", "Available documents", "Target authority"];
+
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <section className="ui-analysis-hero px-5 py-6 sm:px-8 sm:py-7">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl space-y-3">
-            <p className="ui-kicker">{t("heroKicker")}</p>
-            <h1 className="ui-page-title">{t("heroTitle")}</h1>
-            <p className="max-w-2xl text-sm text-text sm:text-base">{t("heroDescription")}</p>
-          </div>
-          <Link
-            href={locale === "ko" ? "/intake?lang=en" : "/intake"}
-            className="ui-cta-pill"
-          >
-            {locale === "ko" ? t("switchToEnglish") : t("switchToKorean")}
-          </Link>
+    <div className="overflow-x-clip">
+      {/* HERO */}
+      <section className="relative overflow-hidden pt-20 pb-12 sm:pt-28 sm:pb-16">
+        <div className="ethos-aurora ethos-aurora-animated" aria-hidden />
+        <div className="absolute inset-0 -z-10 ethos-grid-pattern" aria-hidden />
+        <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
+          <Reveal>
+            <p className="ethos-eyebrow">{t("heroKicker")}</p>
+          </Reveal>
+          <Reveal delay={1}>
+            <h1 className="ethos-display mt-5 text-4xl sm:text-[3.6rem]">{t("heroTitle")}</h1>
+          </Reveal>
+          <Reveal delay={2}>
+            <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-text-muted">
+              {t("heroDescription")}
+            </p>
+          </Reveal>
+          <Reveal delay={3}>
+            <div className="mt-7 flex justify-center">
+              <Link
+                href={locale === "ko" ? "/intake?lang=en" : "/intake"}
+                className="inline-flex h-10 items-center rounded-full border border-gold/40 bg-surface px-5 font-serif text-xs font-semibold text-primary transition hover:bg-gold-soft/30"
+              >
+                {locale === "ko" ? t("switchToEnglish") : t("switchToKorean")}
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      <section className="space-y-4">
-        <Card className="ui-analysis-panel p-5 sm:p-6">
-          <div className="space-y-3">
-            <h2 className="ui-page-title">{t("prepTitle")}</h2>
-            <p className="text-sm text-text-muted">{t("prepDescription")}</p>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="ui-analysis-chip">
-              {locale === "ko" ? "현재 상황" : "Current status"}
-            </span>
-            <span className="ui-analysis-chip">
-              {locale === "ko" ? "목표/마감" : "Goal & deadline"}
-            </span>
-            <span className="ui-analysis-chip">
-              {locale === "ko" ? "보유 문서" : "Available documents"}
-            </span>
-            <span className="ui-analysis-chip">
-              {locale === "ko" ? "제출처" : "Target authority"}
-            </span>
-          </div>
-          <ul className="mt-4 space-y-2.5">
-            <li className="intake-prep-item">{t("prepItemCurrentStatus")}</li>
-            <li className="intake-prep-item">{t("prepItemGoalAndDeadline")}</li>
-            <li className="intake-prep-item">{t("prepItemAvailableDocuments")}</li>
-            <li className="intake-prep-item">{t("prepItemTargetAgency")}</li>
-          </ul>
-        </Card>
+      {/* PREP — soft band */}
+      <section className="ethos-band ethos-band-soft py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Reveal>
+              <div className="ethos-card h-full p-8">
+                <p className="ethos-eyebrow">Step 1</p>
+                <h2 className="ethos-display mt-3 text-2xl">{t("prepTitle")}</h2>
+                <p className="mt-4 text-sm leading-7 text-text-muted">{t("prepDescription")}</p>
 
-        <Card className="p-5 sm:p-6">
-          <h2 className="ui-page-title">
-            {locale === "ko" ? "접수 전 확인" : "Before you submit"}
-          </h2>
-          <ul className="mt-4 space-y-2.5">
-            <li className="intake-prep-item">
-              {locale === "ko"
-                ? "처분서나 통지서를 받은 경우 처분일, 통지일, 송달일을 확인해 주세요."
-                : "If you received a notice or disposition, check the decision, notice, and delivery dates."}
-            </li>
-            <li className="intake-prep-item">
-              {locale === "ko"
-                ? "체류기간 만료일, 제출기한, 보완기한이 중요할 수 있습니다."
-                : "Visa expiry dates, filing deadlines, and supplement deadlines may be important."}
-            </li>
-            <li className="intake-prep-item">
-              {locale === "ko"
-                ? "접수 후 사안별로 필요한 자료를 안내합니다."
-                : "After intake, we guide required materials by matter."}
-            </li>
-            <li className="intake-prep-item">
-              {locale === "ko"
-                ? "결과를 보장하지 않으며, 제출기관 기준과 공식 서식을 확인합니다."
-                : "Outcomes are not promised; official forms and authority requirements must be checked."}
-            </li>
-          </ul>
-        </Card>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {prepChips.map((c) => (
+                    <span
+                      key={c}
+                      className="rounded-full border border-gold/40 bg-gold-soft/30 px-3 py-1 font-serif text-[11px] font-bold text-gold-deep"
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </div>
 
-        <Card className="p-5 sm:p-6">
-          <div className="mb-5 border-b border-line pb-4">
-            <h2 className="ui-page-title whitespace-nowrap">{t("formTitle")}</h2>
-            <p className="mt-2 text-sm text-text-muted">{t("formDescription")}</p>
+                <ul className="mt-7 space-y-3">
+                  {[
+                    t("prepItemCurrentStatus"),
+                    t("prepItemGoalAndDeadline"),
+                    t("prepItemAvailableDocuments"),
+                    t("prepItemTargetAgency")
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 border-l-2 border-gold/40 pl-4 text-sm leading-7 text-text">
+                      <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-gold" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+
+            <Reveal delay={1}>
+              <div className="ethos-card h-full p-8">
+                <p className="ethos-eyebrow">Step 2</p>
+                <h2 className="ethos-display mt-3 text-2xl">
+                  {locale === "ko" ? "접수 전 확인" : "Before you submit"}
+                </h2>
+                <ul className="mt-7 space-y-3">
+                  {[
+                    locale === "ko"
+                      ? "처분서나 통지서를 받은 경우 처분일, 통지일, 송달일을 확인해 주세요."
+                      : "If you received a notice or disposition, check the decision, notice, and delivery dates.",
+                    locale === "ko"
+                      ? "체류기간 만료일, 제출기한, 보완기한이 중요할 수 있습니다."
+                      : "Visa expiry dates, filing deadlines, and supplement deadlines may be important.",
+                    locale === "ko"
+                      ? "접수 후 사안별로 필요한 자료를 안내합니다."
+                      : "After intake, we guide required materials by matter.",
+                    locale === "ko"
+                      ? "결과를 보장하지 않으며, 제출기관 기준과 공식 서식을 확인합니다."
+                      : "Outcomes are not promised; official forms and authority requirements must be checked."
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 border-l-2 border-gold/40 pl-4 text-sm leading-7 text-text">
+                      <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-gold" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
           </div>
-          <IntakeFormSafeV3 initialLocale={locale} initialTracking={intakeTracking} />
-        </Card>
+        </div>
+      </section>
+
+      {/* FORM */}
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <Reveal className="text-center">
+            <p className="ethos-eyebrow">Step 3 — Application</p>
+            <h2 className="ethos-display mt-3 text-3xl sm:text-4xl">{t("formTitle")}</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-text-muted">{t("formDescription")}</p>
+          </Reveal>
+
+          <Reveal delay={1}>
+            <div className="ethos-card ethos-card-topline mt-12 p-8 sm:p-10">
+              <IntakeFormSafeV3 initialLocale={locale} initialTracking={intakeTracking} />
+            </div>
+          </Reveal>
+        </div>
       </section>
     </div>
   );
