@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
+import { getSiteSetting } from "@/lib/services/site-settings";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "계약서 / 사실조사 — ETHOS 행정사사무소",
   description: "계약 검토·작성, 분쟁 사실관계 조사, 조사보고서 작성을 지원합니다."
 };
 
-export default function ContractPage() {
+export default async function ContractPage() {
+  const descOverride = await getSiteSetting("services.contract.desc");
   return (
     <ServicePage
+      descriptionOverride={descOverride}
       data={{
         kicker: "Contract & Investigation",
         title: "계약서 / 사실조사",

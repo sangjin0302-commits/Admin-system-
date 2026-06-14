@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
+import { getSiteSetting } from "@/lib/services/site-settings";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "행정심판 — ETHOS 행정사사무소",
   description: "처분 통지부터 청구·심리·재결까지 행정심판 절차를 함께 준비합니다."
 };
 
-export default function AppealPage() {
+export default async function AppealPage() {
+  const descOverride = await getSiteSetting("services.appeal.desc");
   return (
     <ServicePage
+      descriptionOverride={descOverride}
       data={{
         kicker: "Administrative Appeal",
         title: "행정심판",

@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
+import { getSiteSetting } from "@/lib/services/site-settings";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "비자/외국인 체류 — ETHOS 행정사사무소",
   description: "체류 자격 변경·연장, 사업/투자 비자, 강제퇴거 대응까지 한 흐름으로 정리합니다."
 };
 
-export default function VisaPage() {
+export default async function VisaPage() {
+  const descOverride = await getSiteSetting("services.immigration.desc");
   return (
     <ServicePage
+      descriptionOverride={descOverride}
       data={{
         kicker: "Visa & Immigration",
         title: "비자 / 외국인 체류",

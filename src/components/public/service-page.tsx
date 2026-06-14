@@ -17,8 +17,15 @@ export type ServicePageData = {
   faq: readonly { q: string; a: string }[];
 };
 
-export function ServicePage({ data }: { data: ServicePageData }) {
+export function ServicePage({
+  data,
+  descriptionOverride
+}: {
+  data: ServicePageData;
+  descriptionOverride?: string;
+}) {
   const intakeHref = buildWebsiteIntakeHref();
+  const description = descriptionOverride?.trim() ? descriptionOverride : data.description;
 
   return (
     <div className="overflow-x-clip">
@@ -43,7 +50,7 @@ export function ServicePage({ data }: { data: ServicePageData }) {
             <p className="ethos-quote mt-4 text-base text-gold-deep">{data.tagline}</p>
           </Reveal>
           <Reveal delay={3}>
-            <p className="mx-auto mt-8 max-w-2xl text-base leading-8 text-text">{data.description}</p>
+            <p className="mx-auto mt-8 max-w-2xl text-base leading-8 text-text">{description}</p>
           </Reveal>
         </div>
       </section>

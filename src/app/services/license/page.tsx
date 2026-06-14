@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
+import { getSiteSetting } from "@/lib/services/site-settings";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "인허가 — ETHOS 행정사사무소",
   description: "사업·건축·식품·의료 등 인허가 신청, 보완 대응, 불복 절차를 함께 합니다."
 };
 
-export default function LicensePage() {
+export default async function LicensePage() {
+  const descOverride = await getSiteSetting("services.license.desc");
   return (
     <ServicePage
+      descriptionOverride={descOverride}
       data={{
         kicker: "License & Permit",
         title: "인허가",

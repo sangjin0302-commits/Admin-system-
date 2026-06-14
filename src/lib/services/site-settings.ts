@@ -20,7 +20,11 @@ export type SiteSettingsKey =
   | "home.stat1"
   | "home.stat2"
   | "home.stat3"
-  | "home.stat4";
+  | "home.stat4"
+  | "services.immigration.desc"
+  | "services.appeal.desc"
+  | "services.contract.desc"
+  | "services.license.desc";
 
 export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "home.heroBadge": "행정사 사무소 · Logos · Pathos · Ethos",
@@ -38,7 +42,11 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "home.stat1": "500+ 처리 사건 | 비자·심판·계약·인허가 분야",
   "home.stat2": "98% 고객 만족도 | 사후 안내 응답률 기준",
   "home.stat3": "4분야 전문 영역 | 4대 분야 전담 워크플로우",
-  "home.stat4": "24h 회신 평균 | 영업일 기준 평균 회신"
+  "home.stat4": "24h 회신 평균 | 영업일 기준 평균 회신",
+  "services.immigration.desc": "",
+  "services.appeal.desc": "",
+  "services.contract.desc": "",
+  "services.license.desc": ""
 };
 
 export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint?: string; multiline?: boolean }> = {
@@ -58,7 +66,11 @@ export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint
   "home.stat1": { label: "홈 통계 ①", hint: "형식: 숫자+단위 | 제목 | 설명  (예: 500+ 처리 사건 | 비자·심판 분야)" },
   "home.stat2": { label: "홈 통계 ②", hint: "형식: 숫자+단위 | 제목 | 설명" },
   "home.stat3": { label: "홈 통계 ③", hint: "형식: 숫자+단위 | 제목 | 설명" },
-  "home.stat4": { label: "홈 통계 ④", hint: "형식: 숫자+단위 | 제목 | 설명" }
+  "home.stat4": { label: "홈 통계 ④", hint: "형식: 숫자+단위 | 제목 | 설명" },
+  "services.immigration.desc": { label: "서비스: 비자/체류 소개글", hint: "비우면 기본 문구 사용", multiline: true },
+  "services.appeal.desc": { label: "서비스: 행정심판 소개글", hint: "비우면 기본 문구 사용", multiline: true },
+  "services.contract.desc": { label: "서비스: 계약서/사실조사 소개글", hint: "비우면 기본 문구 사용", multiline: true },
+  "services.license.desc": { label: "서비스: 인허가 소개글", hint: "비우면 기본 문구 사용", multiline: true }
 };
 
 /** 전체 설정 조회 (DB + 기본값 병합). */
