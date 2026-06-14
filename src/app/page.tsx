@@ -8,6 +8,7 @@ import { Testimonials } from "@/components/public/testimonials";
 import { Reveal } from "@/components/public/reveal";
 import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
+import { getSiteSettings } from "@/lib/services/site-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -156,8 +157,22 @@ export default async function PublicMarketingHomePage({
   const t = HOME_COPY[lang];
   const intakeHref = buildWebsiteIntakeHref();
 
+  // 관리자 운영란 컨텐츠 (한국어에서만 override, 영어는 기본 카피)
+  const site = await getSiteSettings();
+  const heroBadge = lang === "ko" && site["home.heroBadge"] ? site["home.heroBadge"] : t.heroTagBadge;
+  const heroDescription =
+    lang === "ko" && site["home.heroDescription"] ? site["home.heroDescription"] : t.heroDescription;
+  const noticeBanner = site["home.noticeBanner"]?.trim();
+
   return (
     <div className="overflow-x-clip">
+      {/* 공지 배너 (운영란에서 입력 시 표시) */}
+      {noticeBanner && (
+        <div className="border-b border-gold/30 bg-primary px-4 py-2.5 text-center text-sm text-white">
+          <span className="font-serif text-gold-soft">공지</span> · {noticeBanner}
+        </div>
+      )}
+
       {/* ═══════════════ HERO ═══════════════ */}
       <section className="relative overflow-hidden">
         <div className="ethos-aurora ethos-aurora-animated" aria-hidden />
@@ -168,7 +183,7 @@ export default async function PublicMarketingHomePage({
             <Reveal>
               <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold-soft/20 px-4 py-1.5 text-xs font-semibold text-gold-deep backdrop-blur">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-                {t.heroTagBadge}
+                {heroBadge}
               </span>
             </Reveal>
 
@@ -184,7 +199,7 @@ export default async function PublicMarketingHomePage({
             </Reveal>
 
             <Reveal delay={2}>
-              <p className="mt-8 max-w-xl text-base leading-8 text-text">{t.heroDescription}</p>
+              <p className="mt-8 max-w-xl text-base leading-8 text-text">{heroDescription}</p>
             </Reveal>
 
             <Reveal delay={3}>

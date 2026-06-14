@@ -1,0 +1,91 @@
+/**
+ * 사이트 운영 설정 (관리자가 직접 편집하는 홈페이지 컨텐츠).
+ *
+ * DB(SiteSetting) 우선, 없으면 DEFAULT 사용 → 관리자가 비워두면 자동으로 기본값.
+ */
+
+import { prisma } from "@/lib/prisma/client";
+
+export type SiteSettingsKey =
+  | "home.heroBadge"
+  | "home.heroDescription"
+  | "home.noticeBanner"
+  | "about.greeting"
+  | "contact.phone"
+  | "contact.email"
+  | "contact.address"
+  | "contact.hours"
+  | "contact.kakaoUrl"
+  | "naver.blogId"; // 네이버 블로그 ID (RSS 연동)
+
+export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
+  "home.heroBadge": "행정사 사무소 · Logos · Pathos · Ethos",
+  "home.heroDescription":
+    "비자/외국인 체류, 행정심판, 계약서·사실조사, 인허가 — 행정 문제 뒤에 있는 사람의 마음까지 함께 헤아립니다.",
+  "home.noticeBanner": "",
+  "about.greeting":
+    "행정 문제는 단순히 서류를 작성하고 절차를 밟는 일만은 아닙니다. 그 안에는 누군가의 생계, 체류, 권리, 가족, 사업, 그리고 앞으로의 삶이 함께 담겨 있습니다.",
+  "contact.phone": "02-0000-0000",
+  "contact.email": "contact@ethos.kr",
+  "contact.address": "서울특별시 (주소 등록 예정)",
+  "contact.hours": "평일 09:00 - 18:00",
+  "contact.kakaoUrl": "http://pf.kakao.com/_xXxXxXx",
+  "naver.blogId": ""
+};
+
+export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint?: string; multiline?: boolean }> = {
+  "home.heroBadge": { label: "홈 상단 배지 문구" },
+  "home.heroDescription": { label: "홈 히어로 소개글", multiline: true },
+  "home.noticeBanner": { label: "공지 배너 (비우면 숨김)", hint: "전 페이지 상단에 표시되는 공지", multiline: true },
+  "about.greeting": { label: "사무소 소개 인사말", multiline: true },
+  "contact.phone": { label: "대표 전화" },
+  "contact.email": { label: "이메일" },
+  "contact.address": { label: "사무소 주소" },
+  "contact.hours": { label: "운영시간" },
+  "contact.kakaoUrl": { label: "카카오 채널 URL" },
+  "naver.blogId": {
+    label: "네이버 블로그 ID",
+    hint: "blog.naver.com/<ID> 의 ID만 입력하면 칼럼 페이지에 자동 연동됩니다"
+  }
+};
+
+/** 전체 설정 조회 (DB + 기본값 병합). */
+export async function getSiteSettings(): Promise<Record<SiteSettingsKey, string>> {
+  const rows = await prisma.siteSetting.findMany().catch(() => []);
+  const map: Record<string, string> = { ...SITE_SETTINGS_DEFAULTS };
+  for (const row of rows) {
+    if (row.key in SITE_SETTINGS_DEFAULTS && row.value !== "") {
+      map[row.key] = row.value;
+    } else if (row.key in SITE_SETTINGS_DEFAULTS) {
+      map[row.key] = row.value; // 빈 문자열도 명시적 저장값 반영 (공지 숨김 등)
+    }
+  }
+  return map as Record<SiteSettingsKey, string>;
+}
+
+/** 단일 키 조회. */
+export async function getSiteSetting(key: SiteSettingsKey): Promise<string> {
+  const row = await prisma.siteSetting.findUnique({ where: { key } }).catch(() => null);
+  if (row && row.value !== "") return row.value;
+  if (row && key === "home.noticeBanner") return row.value; // 공지는 빈값 허용
+  return SITE_SETTINGS_DEFAULTS[key];
+}
+
+/** 일괄 저장. */
+export async function saveSiteSettings(
+  values: Partial<Record<SiteSettingsKey, string>>,
+  updatedBy?: string
+): Promise<void> {
+  const entries = Object.entries(values) as [SiteSettingsKey, string][];
+  await Promise.all(
+    entries
+      .filter(([key]) => key in SITE_SETTINGS_DEFAULTS)
+      .map(([key, value]) =>
+        prisma.siteSetting.upsert({
+          where: { key },
+          create: { key, value, updatedBy: updatedBy ?? null },
+          update: { value, updatedBy: updatedBy ?? null }
+        })
+      )
+  );
+}

@@ -2,8 +2,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { BlogGrid } from "@/components/public/blog-grid";
+import { NaverBlogSection } from "@/components/public/naver-blog-section";
 import { Reveal } from "@/components/public/reveal";
 import { listBlogPosts } from "@/lib/blog-posts";
+import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
+import { getSiteSetting } from "@/lib/services/site-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +17,8 @@ export const metadata: Metadata = {
 
 export default async function BlogPage() {
   const posts = await listBlogPosts();
+  const naverBlogId = await getSiteSetting("naver.blogId");
+  const naverPosts = naverBlogId ? await fetchNaverBlogPosts(naverBlogId, 9) : [];
 
   return (
     <div className="overflow-x-clip">
@@ -63,6 +68,9 @@ export default async function BlogPage() {
           )}
         </>
       )}
+
+      {/* 네이버 블로그 연동 */}
+      {naverPosts.length > 0 && <NaverBlogSection posts={naverPosts} blogId={naverBlogId} />}
 
       {/* CTA */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28">

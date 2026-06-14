@@ -50,6 +50,13 @@ model PortalUploadedFile {
   @@index([caseId])
 }
 
+model SiteSetting {
+  key       String   @id            // e.g. "home.heroTitle", "naver.blogId"
+  value     String                  // 텍스트 / JSON 문자열
+  updatedAt DateTime @updatedAt
+  updatedBy String?                 // 수정한 관리자 식별자 (선택)
+}
+
 model PortalNotification {
   id          String   @id @default(cuid())
   clientId    String

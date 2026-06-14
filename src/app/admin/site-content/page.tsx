@@ -1,0 +1,31 @@
+import { getSiteSettings, SITE_SETTINGS_LABELS, type SiteSettingsKey } from "@/lib/services/site-settings";
+
+import { SiteContentForm } from "./form";
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminSiteContentPage() {
+  const settings = await getSiteSettings();
+
+  const fields = (Object.keys(SITE_SETTINGS_LABELS) as SiteSettingsKey[]).map((key) => ({
+    key,
+    value: settings[key] ?? "",
+    label: SITE_SETTINGS_LABELS[key].label,
+    hint: SITE_SETTINGS_LABELS[key].hint,
+    multiline: SITE_SETTINGS_LABELS[key].multiline ?? false
+  }));
+
+  return (
+    <section className="rounded-[20px] border border-line bg-surface px-5 py-6 shadow-panel sm:px-7">
+      <p className="ui-kicker">홈페이지 운영</p>
+      <h2 className="mt-2 text-xl font-semibold text-text-strong">사이트 컨텐츠 관리</h2>
+      <p className="mt-2 text-sm text-text-muted">
+        홈페이지에 노출되는 소개글, 연락처, 공지, 네이버 블로그 연동을 직접 편집합니다. 비워두면 기본값이 표시됩니다.
+      </p>
+
+      <div className="mt-6">
+        <SiteContentForm initialFields={fields} />
+      </div>
+    </section>
+  );
+}

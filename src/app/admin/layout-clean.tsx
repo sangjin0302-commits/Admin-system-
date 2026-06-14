@@ -36,6 +36,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               사건 목록
             </Link>
             <Link
+              href="/admin/site-content"
+              className="inline-flex h-10 items-center rounded-full border border-primary bg-primary px-4 text-sm font-medium text-white transition hover:bg-[#143d5d]"
+            >
+              홈페이지 운영
+            </Link>
+            <Link
               href="/admin/integrations"
               className="inline-flex h-10 items-center rounded-full border border-line-strong bg-surface px-4 text-sm font-medium text-text-strong transition hover:bg-surface-muted"
             >
