@@ -42,8 +42,8 @@ function TrackingResultCard({ result }: { result: PublicTrackViewModel }) {
     <Card className="space-y-5 p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="ui-kicker">진행상황</p>
-          <h2 className="mt-2 ui-section-title">접수 진행상황 요약</h2>
+          <p className="ethos-eyebrow">Status</p>
+          <h2 className="ethos-display mt-2 text-xl">접수 진행상황 요약</h2>
         </div>
         <Badge>{result.customerStatusLabel}</Badge>
       </div>
@@ -131,8 +131,8 @@ export function PublicTrackClient() {
     <div className="mx-auto max-w-3xl space-y-5">
       <Card className="space-y-5 p-5 sm:p-6">
         <div className="space-y-2">
-          <p className="ui-kicker">접수 조회</p>
-          <h1 className="ui-page-title">접수 진행상황 확인</h1>
+          <p className="ethos-eyebrow">Track Your Case</p>
+          <h1 className="ethos-display text-3xl">접수 진행상황 확인</h1>
           <p className="text-sm text-text-muted">
             이 화면은 고객용 진행상황 요약만 제공합니다. 자세한 상담 내용은 담당자 연락을 통해 확인해 주세요.
           </p>
