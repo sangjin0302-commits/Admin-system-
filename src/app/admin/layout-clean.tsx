@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminOpsBanner } from "@/components/admin/admin-ops-banner";
+import { AdminSearchBar } from "@/components/admin/admin-search-bar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <p className="mt-2 text-sm text-text-muted">
               문의 접수부터 상담, 견적, 사건 진행, 분석 연동 준비 상태까지 한 곳에서 보는 관리자 화면입니다.
             </p>
+            <div className="mt-4">
+              <AdminSearchBar />
+            </div>
           </div>
           <nav className="flex flex-wrap gap-2">
             <Link
