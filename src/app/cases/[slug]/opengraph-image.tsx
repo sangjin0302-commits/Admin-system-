@@ -1,15 +1,15 @@
 import { ImageResponse } from "next/og";
 
 import { getPublicCaseBySlug } from "@/lib/public-cases";
-import { getDbCaseStudyBySlug } from "@/lib/services/case-studies";
 
 export const alt = "ETHOS 처리 사례";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+// OG 이미지는 prisma 의존 없이 기본 사례만 맞춤 렌더(안정성). DB 사례는 일반 카드.
 export default async function CaseOgImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const c = getPublicCaseBySlug(slug) ?? (await getDbCaseStudyBySlug(slug).catch(() => null));
+  const c = getPublicCaseBySlug(slug);
   const title = c?.title ?? "처리 사례";
   const category = c?.categoryLabel ?? "ETHOS";
   const outcome = c?.outcome ?? "";
