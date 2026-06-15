@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 import { Card } from "@/components/ui/card";
 import { getPublicCaseBySlug } from "@/lib/public-cases";
-import { getDbCaseStudyBySlug } from "@/lib/services/case-studies";
+import { getDbCaseStudyBySlug, listPublicCaseStudies } from "@/lib/services/case-studies";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +34,13 @@ export default async function CaseDetailPage({
   if (!c) notFound();
   // DB 사례는 상세 필드(background/approach 등)가 없으므로 안전 접근
   const hasRich = Boolean(richCase);
+
+  // 관련 사례 (같은 분야 우선, 현재 제외, 최대 3건)
+  const allCases = await listPublicCaseStudies();
+  const related = [
+    ...allCases.filter((x) => x.slug !== c.slug && x.category === c.category),
+    ...allCases.filter((x) => x.slug !== c.slug && x.category !== c.category)
+  ].slice(0, 3);
 
   return (
     <div className="mx-auto max-w-4xl space-y-12 px-4 py-16 sm:px-6 sm:py-20">
@@ -109,6 +116,33 @@ export default async function CaseDetailPage({
       <p className="rounded-lg border border-gold/30 bg-surface-muted/40 px-4 py-3 text-xs italic text-text-muted">
         ※ 본 사례는 익명화되었으며, 개별 사안의 결과를 보장하지 않습니다.
       </p>
+
+      {/* 관련 사례 */}
+      {related.length > 0 && (
+        <section>
+          <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">관련 사례 더보기</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            {related.map((r) => (
+              <Link
+                key={r.slug}
+                href={`/cases/${r.slug}`}
+                className="group block rounded-xl border border-gold/20 bg-surface p-5 transition hover:border-gold/50 hover:shadow-panel"
+              >
+                <span className="inline-block rounded-full bg-gold-soft/50 px-2.5 py-0.5 font-serif text-[11px] font-bold text-gold-deep">
+                  {r.categoryLabel}
+                </span>
+                <h3 className="mt-3 font-serif text-base font-bold leading-snug text-primary group-hover:text-gold-deep">
+                  {r.title}
+                </h3>
+                <p className="mt-2 line-clamp-2 text-xs leading-6 text-text-muted">{r.summary}</p>
+                <span className="mt-3 inline-flex items-center gap-1 font-serif text-xs font-semibold text-primary group-hover:text-gold-deep">
+                  자세히 <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="rounded-2xl bg-primary p-10 text-center text-white">
