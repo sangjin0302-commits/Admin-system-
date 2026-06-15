@@ -28,6 +28,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               대시보드
             </Link>
             <Link
+              href="/admin/advisor"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full border border-primary bg-primary px-4 text-sm font-medium text-white transition hover:bg-[#143d5d]"
+            >
+              <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.8">
+                <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2zM9 21h6M10 17v4M14 17v4" />
+              </svg>
+              운영 참모
+            </Link>
+            <Link
               href="/admin/search"
               className="inline-flex h-10 items-center gap-1.5 rounded-full border border-line-strong bg-surface px-4 text-sm font-medium text-text-strong transition hover:bg-surface-muted"
             >
