@@ -35,6 +35,13 @@ export default async function BlogDetailPage({
   const post = await getBlogPostBySlug(slug);
   if (!post) notFound();
 
+  // 관련 글 (같은 카테고리 우선, 현재 제외, 최대 3)
+  const all = await listBlogPosts();
+  const related = [
+    ...all.filter((p) => p.slug !== post.slug && p.category === post.category),
+    ...all.filter((p) => p.slug !== post.slug && p.category !== post.category)
+  ].slice(0, 3);
+
   return (
     <div className="relative mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
       {/* 데스크탑 우측 목차 (xl 이상) */}
@@ -74,6 +81,30 @@ export default async function BlogDetailPage({
 
         <ShareButtons title={post.title} />
       </article>
+
+      {/* 관련 글 */}
+      {related.length > 0 && (
+        <section className="mt-14 border-t border-gold/20 pt-10">
+          <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">관련 칼럼</p>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            {related.map((r) => (
+              <Link
+                key={r.slug}
+                href={`/blog/${r.slug}`}
+                className="group block rounded-xl border border-gold/20 bg-surface p-5 transition hover:border-gold/50 hover:shadow-panel"
+              >
+                <span className="inline-block rounded-full bg-gold-soft/50 px-2.5 py-0.5 font-serif text-[11px] font-bold text-gold-deep">
+                  {r.category}
+                </span>
+                <h3 className="mt-3 font-serif text-sm font-bold leading-snug text-primary group-hover:text-gold-deep">
+                  {r.title}
+                </h3>
+                <p className="mt-2 line-clamp-2 text-xs leading-6 text-text-muted">{r.excerpt}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <Card className="mt-12 bg-primary p-7 text-center text-white">
         <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-soft">관련 사안 상담</p>

@@ -50,6 +50,86 @@ model PortalUploadedFile {
   @@index([caseId])
 }
 
+model Credential {
+  id          String   @id @default(cuid())
+  type        String   @default("CAREER") // CAREER | LICENSE | EDUCATION | AWARD | ACTIVITY
+  year        String   // "2020", "2020.03", "2020~현재"
+  title       String
+  detail      String   @default("")
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model FeeItem {
+  id          String   @id @default(cuid())
+  category    String   // VISA_STAY | ADMIN_APPEAL | CONTRACT_INVESTIGATION | LICENSE_PERMIT | ETC
+  service     String
+  amount      String   // 자유 형식: "33만원", "사안별 협의", "착수 50만 + 성공보수"
+  note        String   @default("")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, sortOrder])
+}
+
+model Testimonial {
+  id          String   @id @default(cuid())
+  category    String   // VISA_STAY | ADMIN_APPEAL | CONTRACT_INVESTIGATION | LICENSE_PERMIT
+  quote       String
+  author      String
+  context     String
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model CaseStudy {
+  id          String   @id @default(cuid())
+  category    String   // VISA_STAY | ADMIN_APPEAL | CONTRACT_INVESTIGATION | LICENSE_PERMIT
+  title       String
+  summary     String
+  outcome     String
+  duration    String
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model SiteSetting {
+  key       String   @id            // e.g. "home.heroTitle", "naver.blogId"
+  value     String                  // 텍스트 / JSON 문자열
+  updatedAt DateTime @updatedAt
+  updatedBy String?                 // 수정한 관리자 식별자 (선택)
+}
+
+model PortalNotification {
+  id          String   @id @default(cuid())
+  clientId    String
+  caseId      String?
+  inquiryId   String?
+  event       String   // case_status_changed, document_requested, case_closed, message, etc.
+  title       String
+  body        String
+  link        String?  // e.g., /portal/cases/abc123
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([clientId, readAt])
+  @@index([caseId])
+  @@index([inquiryId])
+}
+
 enum InquiryType {
   FOREIGNER_VISA
   IMMIGRATION_STAY
