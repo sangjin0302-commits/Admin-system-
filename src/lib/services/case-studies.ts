@@ -54,6 +54,28 @@ export async function listPublicCaseStudies(): Promise<MergedCase[]> {
   return [...dbCases, ...defaults];
 }
 
+/** slug로 DB 사례 1건 조회 (db-<id> 형식). 없으면 null. */
+export async function getDbCaseStudyBySlug(slug: string): Promise<MergedCase | null> {
+  if (!slug.startsWith("db-")) return null;
+  const id = slug.slice(3);
+  try {
+    const r = await prisma.caseStudy.findFirst({ where: { id, published: true } });
+    if (!r) return null;
+    return {
+      slug: `db-${r.id}`,
+      category: r.category,
+      categoryLabel: CASE_CATEGORY_LABELS[r.category] ?? r.category,
+      title: r.title,
+      summary: r.summary,
+      outcome: r.outcome,
+      duration: r.duration,
+      source: "db"
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** 관리자용 — DB 사례 전체 (미게시 포함). */
 export async function listAdminCaseStudies() {
   return prisma.caseStudy.findMany({
