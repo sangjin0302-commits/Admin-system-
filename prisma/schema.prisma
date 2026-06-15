@@ -49,6 +49,20 @@ model PortalUploadedFile {
   @@index([caseId])
 }
 
+model Credential {
+  id          String   @id @default(cuid())
+  type        String   @default("CAREER") // CAREER | LICENSE | EDUCATION | AWARD | ACTIVITY
+  year        String   // "2020", "2020.03", "2020~현재"
+  title       String
+  detail      String   @default("")
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
 model FeeItem {
   id          String   @id @default(cuid())
   category    String   // VISA_STAY | ADMIN_APPEAL | CONTRACT_INVESTIGATION | LICENSE_PERMIT | ETC

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { EthosLogo } from "@/components/brand/ethos-logo";
 import { Reveal } from "@/components/public/reveal";
 import { getSiteSetting } from "@/lib/services/site-settings";
+import { listPublicCredentials, CREDENTIAL_TYPE_LABELS } from "@/lib/services/credentials";
 
 export const dynamic = "force-dynamic";
 
@@ -11,13 +12,6 @@ export const metadata: Metadata = {
   title: "사무소 소개 — ETHOS 행정사사무소",
   description: "에토스 행정사사무소의 철학, 대표 행정사 소개, 운영 원칙을 안내합니다."
 };
-
-const TIMELINE = [
-  { year: "2020", label: "행정사 자격 취득" },
-  { year: "2022", label: "출입국·체류 전문 분야 경험 축적" },
-  { year: "2024", label: "행정심판·인허가 업무 확장" },
-  { year: "2026", label: "에토스 행정사사무소 개업" }
-] as const;
 
 const VALUES = [
   {
@@ -39,6 +33,7 @@ const VALUES = [
 
 export default async function AboutPage() {
   const greeting = await getSiteSetting("about.greeting");
+  const credentials = await listPublicCredentials();
   return (
     <div className="overflow-x-clip">
       {/* HERO */}
@@ -162,10 +157,16 @@ export default async function AboutPage() {
                 </div>
 
                 <div className="mt-9 space-y-3 border-l-2 border-gold/50 pl-6">
-                  {TIMELINE.map((t) => (
-                    <div key={t.year} className="flex items-baseline gap-5">
-                      <span className="ethos-quote text-xl text-gold-deep">{t.year}</span>
-                      <span className="text-sm text-text">{t.label}</span>
+                  {credentials.map((c, i) => (
+                    <div key={i} className="flex items-baseline gap-4">
+                      <span className="ethos-quote w-16 flex-shrink-0 text-xl text-gold-deep">{c.year}</span>
+                      <span className="rounded bg-gold-soft/50 px-1.5 py-0.5 text-[10px] font-bold text-gold-deep">
+                        {CREDENTIAL_TYPE_LABELS[c.type] ?? c.type}
+                      </span>
+                      <span className="text-sm text-text">
+                        {c.title}
+                        {c.detail ? <span className="text-text-muted"> · {c.detail}</span> : null}
+                      </span>
                     </div>
                   ))}
                 </div>
