@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type CaseOption = { id: string; label: string };
 
 type Citation = { name: string; url: string };
 type Result = {
@@ -21,6 +23,34 @@ export function LawbotConsole() {
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
+
+  const [cases, setCases] = useState<CaseOption[]>([]);
+  const [caseId, setCaseId] = useState("");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  useEffect(() => {
+    fetch("/api/admin/case-matters/options")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.ok) setCases(d.items ?? []);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function saveToCase() {
+    if (!caseId || !result) return;
+    setSaveState("saving");
+    try {
+      const res = await fetch("/api/admin/lawbot/save-to-case", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseId, analysis: result })
+      });
+      setSaveState(res.ok ? "saved" : "error");
+    } catch {
+      setSaveState("error");
+    }
+  }
 
   async function analyze() {
     if (fact.trim().length < 10) {
@@ -156,6 +186,40 @@ export function LawbotConsole() {
               </ul>
             </Block>
           )}
+
+          {/* 사건에 저장 */}
+          <div className="rounded-[14px] border border-primary/20 bg-primary/5 p-4">
+            <h3 className="text-sm font-bold text-primary">이 분석을 사건에 저장</h3>
+            <p className="mt-1 text-xs text-text-muted">선택한 사건의 진행 기록(타임라인)에 분석 결과가 남습니다.</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <select
+                value={caseId}
+                onChange={(e) => {
+                  setCaseId(e.target.value);
+                  setSaveState("idle");
+                }}
+                className="h-10 min-w-[16rem] rounded-lg border border-line bg-surface px-3 text-sm"
+              >
+                <option value="">사건 선택…</option>
+                {cases.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={saveToCase}
+                disabled={!caseId || saveState === "saving"}
+                className="inline-flex h-10 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-white transition hover:bg-[#143d5d] disabled:opacity-50"
+              >
+                {saveState === "saving" ? "저장 중…" : "사건에 저장"}
+              </button>
+              {saveState === "saved" && <span className="text-sm font-semibold text-emerald-600">✓ 저장됨</span>}
+              {saveState === "error" && <span className="text-sm font-semibold text-rose-600">저장 실패</span>}
+              {cases.length === 0 && <span className="text-xs text-text-muted">등록된 사건이 없습니다.</span>}
+            </div>
+          </div>
         </div>
       )}
     </div>
