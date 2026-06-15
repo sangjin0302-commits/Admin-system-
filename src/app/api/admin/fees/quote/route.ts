@@ -2,9 +2,29 @@ import { prisma } from "@/lib/prisma/client";
 import { generateQuotePdf, type QuotePdfLine } from "@/lib/pdf/generate";
 import { FEE_CATEGORY_LABELS } from "@/lib/services/fee-items";
 
+/** 견적 생성 시 사건 타임라인에 기록 (선택). best-effort. */
+async function recordQuoteEvent(caseId: string, lines: QuotePdfLine[], totalText?: string) {
+  try {
+    const exists = await prisma.caseMatter.findUnique({ where: { id: caseId }, select: { id: true } });
+    if (!exists) return;
+    const summary = lines.map((l) => `${l.service} ${l.amount}`).join(", ").slice(0, 400);
+    await prisma.caseEvent.create({
+      data: {
+        caseId,
+        eventType: "quote_generated",
+        actorName: "관리자 (견적)",
+        message: `견적서 생성: ${summary}${totalText ? ` / 합계 ${totalText}` : ""}`.slice(0, 500),
+        payloadJson: JSON.stringify({ lines, totalText }).slice(0, 8000)
+      }
+    });
+  } catch {
+    /* 기록 실패해도 PDF 생성은 진행 */
+  }
+}
+
 /**
  * 선택한 비용 항목으로 견적서 PDF 생성.
- * body: { clientName, feeItemIds: string[], totalText?, signature? }
+ * body: { clientName, feeItemIds: string[], totalText?, signature?, caseId? }
  * /api/admin/* — Basic Auth 보호.
  */
 export async function POST(request: Request) {
@@ -24,6 +44,11 @@ export async function POST(request: Request) {
     amount: i.amount,
     note: i.note || undefined
   }));
+
+  // 사건에 견적 이력 기록 (caseId가 있으면)
+  if (typeof body.caseId === "string" && body.caseId) {
+    await recordQuoteEvent(body.caseId, lines, typeof body.totalText === "string" ? body.totalText.trim() : undefined);
+  }
 
   const date = new Date().toISOString().slice(0, 10);
   const pdf = await generateQuotePdf({

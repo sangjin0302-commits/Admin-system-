@@ -315,6 +315,14 @@ function MiniList({ title, empty, rows }: { title: string; empty: string; rows: 
   );
 }
 
+const EVENT_TYPE_META: Record<string, { label: string; badge: string; accent: string }> = {
+  lawbot_analysis: { label: "AI 분석", badge: "bg-violet-100 text-violet-800", accent: "border-l-violet-400" },
+  quote_generated: { label: "견적서", badge: "bg-amber-100 text-amber-800", accent: "border-l-amber-400" },
+  case_status_changed: { label: "상태 변경", badge: "bg-sky-100 text-sky-800", accent: "border-l-sky-400" },
+  message: { label: "메시지", badge: "bg-emerald-100 text-emerald-800", accent: "border-l-emerald-400" },
+  admin: { label: "관리", badge: "bg-surface text-text-muted", accent: "border-l-line" }
+};
+
 export function CaseMatterEventTimeline({ events }: { events: CaseMatterDetail["events"] }) {
   return (
     <Card className="p-6">
@@ -325,16 +333,21 @@ export function CaseMatterEventTimeline({ events }: { events: CaseMatterDetail["
         </p>
       ) : (
         <ol className="space-y-3">
-          {events.map((event) => (
-            <li key={event.id} className="rounded-xl border border-line bg-surface-muted p-4">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm font-semibold text-text-strong">{event.eventType}</p>
-                <p className="text-xs text-text-muted">{formatDateTime(event.createdAt)}</p>
-              </div>
-              <p className="mt-2 text-sm text-text">{event.message}</p>
-              <p className="mt-1 text-xs text-text-muted">actor: {valueOrDash(event.actorName)}</p>
-            </li>
-          ))}
+          {events.map((event) => {
+            const meta = EVENT_TYPE_META[event.eventType] ?? { label: event.eventType, badge: "bg-surface text-text-muted", accent: "border-line" };
+            return (
+              <li key={event.id} className={`rounded-xl border-l-4 border border-line bg-surface-muted p-4 ${meta.accent}`}>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <span className={`inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${meta.badge}`}>
+                    {meta.label}
+                  </span>
+                  <p className="text-xs text-text-muted">{formatDateTime(event.createdAt)}</p>
+                </div>
+                <p className="mt-2 text-sm text-text">{event.message}</p>
+                <p className="mt-1 text-xs text-text-muted">actor: {valueOrDash(event.actorName)}</p>
+              </li>
+            );
+          })}
         </ol>
       )}
     </Card>

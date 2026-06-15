@@ -24,6 +24,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               대시보드
             </Link>
             <Link
+              href="/admin/search"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full border border-line-strong bg-surface px-4 text-sm font-medium text-text-strong transition hover:bg-surface-muted"
+            >
+              <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.3-4.3" />
+              </svg>
+              통합 검색
+            </Link>
+            <Link
               href="/admin/inquiries"
               className="inline-flex h-10 items-center rounded-full border border-line-strong bg-surface px-4 text-sm font-medium text-text-strong transition hover:bg-surface-muted"
             >

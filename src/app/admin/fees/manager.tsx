@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type CaseOption = { id: string; label: string };
 
 type Item = {
   id: string;
@@ -30,6 +32,17 @@ export function FeesManager({ initialItems }: { initialItems: Item[] }) {
   const [quoteClient, setQuoteClient] = useState("");
   const [quoteTotal, setQuoteTotal] = useState("");
   const [quoteBusy, setQuoteBusy] = useState(false);
+  const [quoteCaseId, setQuoteCaseId] = useState("");
+  const [cases, setCases] = useState<CaseOption[]>([]);
+
+  useEffect(() => {
+    fetch("/api/admin/case-matters/options")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.ok) setCases(d.items ?? []);
+      })
+      .catch(() => {});
+  }, []);
 
   function toggleSelect(id: string) {
     setSelected((prev) => {
@@ -50,7 +63,8 @@ export function FeesManager({ initialItems }: { initialItems: Item[] }) {
         body: JSON.stringify({
           clientName: quoteClient,
           feeItemIds: Array.from(selected),
-          totalText: quoteTotal
+          totalText: quoteTotal,
+          caseId: quoteCaseId || undefined
         })
       });
       if (res.ok) {
@@ -232,6 +246,18 @@ export function FeesManager({ initialItems }: { initialItems: Item[] }) {
               placeholder="합계 표기 (예: 부가세 별도)"
               className="h-10 w-56 rounded-lg border border-line bg-surface px-3 text-sm"
             />
+            <select
+              value={quoteCaseId}
+              onChange={(e) => setQuoteCaseId(e.target.value)}
+              className="h-10 min-w-[14rem] rounded-lg border border-line bg-surface px-3 text-sm"
+            >
+              <option value="">사건 연결 안 함</option>
+              {cases.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               onClick={downloadQuote}
