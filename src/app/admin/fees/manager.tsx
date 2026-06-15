@@ -25,6 +25,50 @@ export function FeesManager({ initialItems }: { initialItems: Item[] }) {
   const [form, setForm] = useState({ ...EMPTY });
   const [busy, setBusy] = useState(false);
 
+  // 견적서 생성용 상태
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [quoteClient, setQuoteClient] = useState("");
+  const [quoteTotal, setQuoteTotal] = useState("");
+  const [quoteBusy, setQuoteBusy] = useState(false);
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function downloadQuote() {
+    if (selected.size === 0) return;
+    setQuoteBusy(true);
+    try {
+      const res = await fetch("/api/admin/fees/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName: quoteClient,
+          feeItemIds: Array.from(selected),
+          totalText: quoteTotal
+        })
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `quote-${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        alert((await res.text()) || "견적서 생성 실패");
+      }
+    } finally {
+      setQuoteBusy(false);
+    }
+  }
+
   async function add() {
     if (!form.service.trim() || !form.amount.trim()) return;
     setBusy(true);
@@ -128,6 +172,7 @@ export function FeesManager({ initialItems }: { initialItems: Item[] }) {
               <table className="mt-2 w-full text-sm">
                 <thead>
                   <tr className="border-b border-line text-left text-xs text-text-muted">
+                    <th className="w-8 py-2" />
                     <th className="py-2 font-medium">항목</th>
                     <th className="py-2 font-medium">금액</th>
                     <th className="py-2 font-medium">비고</th>
@@ -137,6 +182,15 @@ export function FeesManager({ initialItems }: { initialItems: Item[] }) {
                 <tbody>
                   {g.rows.map((r) => (
                     <tr key={r.id} className="border-b border-line/60">
+                      <td className="py-2.5">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(r.id)}
+                          onChange={() => toggleSelect(r.id)}
+                          aria-label="견적서 포함"
+                          className="h-4 w-4 accent-[#1a3c5f]"
+                        />
+                      </td>
                       <td className="py-2.5 font-medium text-text-strong">{r.service}</td>
                       <td className="py-2.5 text-primary">{r.amount}</td>
                       <td className="py-2.5 text-text-muted">{r.note || "—"}</td>
@@ -155,6 +209,38 @@ export function FeesManager({ initialItems }: { initialItems: Item[] }) {
               </table>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* 견적서 생성 */}
+      {items.length > 0 && (
+        <div className="rounded-[16px] border border-primary/20 bg-primary/5 p-5">
+          <h3 className="text-sm font-bold text-primary">견적서 PDF 생성</h3>
+          <p className="mt-1 text-xs text-text-muted">
+            위 표에서 체크한 항목({selected.size}개)으로 견적서를 만듭니다. 공개되지 않으며, 의뢰인 안내용으로만 사용하세요.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <input
+              value={quoteClient}
+              onChange={(e) => setQuoteClient(e.target.value)}
+              placeholder="의뢰인명 (선택)"
+              className="h-10 w-48 rounded-lg border border-line bg-surface px-3 text-sm"
+            />
+            <input
+              value={quoteTotal}
+              onChange={(e) => setQuoteTotal(e.target.value)}
+              placeholder="합계 표기 (예: 부가세 별도)"
+              className="h-10 w-56 rounded-lg border border-line bg-surface px-3 text-sm"
+            />
+            <button
+              type="button"
+              onClick={downloadQuote}
+              disabled={selected.size === 0 || quoteBusy}
+              className="inline-flex h-10 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-white transition hover:bg-[#143d5d] disabled:opacity-50"
+            >
+              {quoteBusy ? "생성 중…" : "견적서 PDF 다운로드"}
+            </button>
+          </div>
         </div>
       )}
     </div>
