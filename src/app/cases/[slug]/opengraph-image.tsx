@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 
 import { getPublicCaseBySlug } from "@/lib/public-cases";
 
+export const dynamic = "force-dynamic";
 export const alt = "ETHOS 처리 사례";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
