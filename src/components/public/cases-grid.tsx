@@ -84,7 +84,7 @@ export function CasesGrid({ cases }: { cases: readonly CaseCard[] }) {
             {filtered.map((c, idx) => (
               <Reveal key={c.slug} delay={((idx % 3) + 1) as 1 | 2 | 3}>
                 <Link href={`/cases/${c.slug}`} className="group block h-full">
-                  <div className="ethos-card ethos-card-hover ethos-card-topline flex h-full flex-col p-7">
+                  <div className="ethos-card ethos-card-hover ethos-card-topline ethos-cta-shine flex h-full flex-col p-7">
                     <div className="flex items-center justify-between">
                       <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${CATEGORY_COLORS[c.category]}`}>
                         {c.categoryLabel}
