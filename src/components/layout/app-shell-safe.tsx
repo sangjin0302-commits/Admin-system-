@@ -8,6 +8,7 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { PublicHeader } from "@/components/layout/public-header";
 import { ScrollEnhancements } from "@/components/layout/scroll-enhancements";
+import { StickyCta } from "@/components/layout/sticky-cta";
 
 /**
  * Routes that use the system shell (admin/portal — internal tools).
@@ -67,6 +68,7 @@ export function AppShellSafe({ children }: Readonly<{ children: React.ReactNode 
       <FloatingContact />
       <MobileBottomNav />
       <ScrollEnhancements />
+      <StickyCta />
     </>
   );
 }

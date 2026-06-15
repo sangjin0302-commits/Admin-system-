@@ -299,6 +299,41 @@ a {
   box-shadow: 0 0 0 4px rgba(24, 72, 109, 0.16);
 }
 
+/* CTA 골드 shine 스윕 (hover 시 빛이 지나감) */
+.ethos-cta-shine {
+  position: relative;
+  overflow: hidden;
+}
+.ethos-cta-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(201, 169, 97, 0.45),
+    transparent
+  );
+  transform: skewX(-18deg);
+  transition: left 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+.ethos-cta-shine:hover::after {
+  left: 130%;
+}
+
+/* CTA 부드러운 펄스 (주의 환기, 은은하게) */
+@keyframes ethos-cta-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 169, 97, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(201, 169, 97, 0.12); }
+}
+.ethos-cta-pulse {
+  animation: ethos-cta-pulse 2.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

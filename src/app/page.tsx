@@ -130,7 +130,7 @@ function PrimaryCta({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
       href={href}
-      className="group inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-7 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-text-strong hover:shadow-lg hover:shadow-primary/20"
+      className="ethos-cta-shine group inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-7 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-text-strong hover:shadow-lg hover:shadow-primary/20"
     >
       {children}
       <span className="transition-transform duration-300 group-hover:translate-x-0.5">→</span>
