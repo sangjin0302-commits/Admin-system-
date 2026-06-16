@@ -11,6 +11,7 @@ export async function GET() {
     ok: true,
     phone: site["contact.phone"],
     email: site["contact.email"],
-    hours: site["contact.hours"]
+    hours: site["contact.hours"],
+    kakaoUrl: site["contact.kakaoUrl"]
   });
 }

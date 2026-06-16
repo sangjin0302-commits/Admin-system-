@@ -1,9 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const FALLBACK = { phone: "02-0000-0000", kakaoUrl: "http://pf.kakao.com/_xXxXxXx" };
 
 export function FloatingContact() {
   const [expanded, setExpanded] = useState(false);
+  const [contact, setContact] = useState(FALLBACK);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/public/site-contact")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.ok) {
+          setContact({ phone: d.phone ?? FALLBACK.phone, kakaoUrl: d.kakaoUrl ?? FALLBACK.kakaoUrl });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const tel = `tel:${contact.phone.replace(/[^0-9]/g, "")}`;
 
   return (
     <>
@@ -12,7 +32,7 @@ export function FloatingContact() {
         {expanded && (
           <div className="flex flex-col gap-2 rounded-2xl border border-gold/40 bg-surface p-3 shadow-floating">
             <a
-              href="http://pf.kakao.com/_xXxXxXx"
+              href={contact.kakaoUrl}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-3 rounded-xl bg-[#FEE500] px-4 py-3 text-sm font-bold text-[#3C1E1E] transition hover:brightness-95"
@@ -21,11 +41,11 @@ export function FloatingContact() {
               카카오톡 상담
             </a>
             <a
-              href="tel:020000000"
+              href={tel}
               className="flex items-center gap-3 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:bg-text-strong"
             >
               <PhoneIcon />
-              02-0000-0000
+              {contact.phone}
             </a>
             <a
               href="/intake"
@@ -58,14 +78,14 @@ export function FloatingContact() {
       {/* 모바일 sticky bar (하단) */}
       <div className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-3 border-t border-gold/30 bg-surface/95 backdrop-blur lg:hidden">
         <a
-          href="tel:020000000"
+          href={tel}
           className="flex flex-col items-center justify-center gap-1 border-r border-gold/20 py-3 text-primary"
         >
           <PhoneIcon className="h-5 w-5" />
           <span className="text-[11px] font-bold">전화</span>
         </a>
         <a
-          href="http://pf.kakao.com/_xXxXxXx"
+          href={contact.kakaoUrl}
           target="_blank"
           rel="noreferrer"
           className="flex flex-col items-center justify-center gap-1 border-r border-gold/20 bg-[#FEE500]/90 py-3 text-[#3C1E1E]"
