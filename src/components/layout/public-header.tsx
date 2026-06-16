@@ -5,13 +5,13 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 const NAV_ITEMS = [
-  { href: "/", label: "홈" },
-  { href: "/about", label: "사무소 소개" },
-  { href: "/services", label: "업무 분야" },
-  { href: "/quick-check", label: "AI 사전 진단" },
-  { href: "/cases", label: "처리 사례" },
-  { href: "/blog", label: "칼럼" },
-  { href: "/track", label: "진행상황" }
+  { href: "/", label: "홈", labelEn: "Home" },
+  { href: "/about", label: "사무소 소개", labelEn: "About" },
+  { href: "/services", label: "업무 분야", labelEn: "Practice" },
+  { href: "/quick-check", label: "AI 사전 진단", labelEn: "AI Check" },
+  { href: "/cases", label: "처리 사례", labelEn: "Cases" },
+  { href: "/blog", label: "칼럼", labelEn: "Insights" },
+  { href: "/track", label: "진행상황", labelEn: "Track" }
 ] as const;
 
 function LangToggle({ pathname }: { pathname: string }) {
@@ -20,7 +20,7 @@ function LangToggle({ pathname }: { pathname: string }) {
   return (
     <div className="hidden items-center gap-1 border-r border-gold/30 pr-3 lg:flex">
       <Link
-        href={`${pathname}?lang=ko`}
+        href={pathname}
         className={`px-2 font-serif text-xs font-bold ${
           lang === "ko" ? "text-primary" : "text-text-muted hover:text-primary"
         }`}
@@ -40,8 +40,11 @@ function LangToggle({ pathname }: { pathname: string }) {
   );
 }
 
-export function PublicHeader() {
+function HeaderInner() {
   const pathname = usePathname();
+  const sp = useSearchParams();
+  const lang = sp.get("lang") === "en" ? "en" : "ko";
+  const qs = lang === "en" ? "?lang=en" : "";
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -68,7 +71,7 @@ export function PublicHeader() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         {/* 로고 */}
-        <Link href="/" className="flex items-center gap-3">
+        <Link href={`/${qs}`} className="flex items-center gap-3">
           <MiniLogo />
           <div className="hidden sm:block">
             <p className="font-serif text-lg font-bold tracking-[0.2em] text-primary">ETHOS</p>
@@ -83,25 +86,19 @@ export function PublicHeader() {
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
-              href={item.href}
+              href={`${item.href}${qs}`}
               className={`relative px-4 py-2 font-serif text-sm font-semibold transition ${
-                isActive(item.href)
-                  ? "text-primary"
-                  : "text-text-muted hover:text-primary"
+                isActive(item.href) ? "text-primary" : "text-text-muted hover:text-primary"
               }`}
             >
-              {item.label}
-              {isActive(item.href) && (
-                <span className="absolute inset-x-4 -bottom-0.5 h-0.5 bg-gold" />
-              )}
+              {lang === "en" ? item.labelEn : item.label}
+              {isActive(item.href) && <span className="absolute inset-x-4 -bottom-0.5 h-0.5 bg-gold" />}
             </Link>
           ))}
         </nav>
 
         {/* 언어 토글 */}
-        <Suspense fallback={<div className="hidden lg:flex" />}>
-          <LangToggle pathname={pathname} />
-        </Suspense>
+        <LangToggle pathname={pathname} />
 
         {/* CTA */}
         <div className="hidden items-center gap-2 lg:flex">
@@ -109,13 +106,13 @@ export function PublicHeader() {
             href="/portal"
             className="inline-flex h-10 items-center rounded-lg border border-gold/40 bg-surface px-4 text-sm font-semibold text-primary transition hover:bg-gold-soft/30"
           >
-            의뢰인 포털
+            {lang === "en" ? "Client Portal" : "의뢰인 포털"}
           </Link>
           <Link
-            href="/intake"
+            href={`/intake${qs}`}
             className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-white transition hover:bg-text-strong"
           >
-            상담 신청
+            {lang === "en" ? "Consult" : "상담 신청"}
           </Link>
         </div>
 
@@ -127,11 +124,7 @@ export function PublicHeader() {
           aria-label="메뉴"
         >
           <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            {mobileOpen ? (
-              <path d="M6 6l12 12M18 6l-12 12" />
-            ) : (
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            )}
+            {mobileOpen ? <path d="M6 6l12 12M18 6l-12 12" /> : <path d="M4 6h16M4 12h16M4 18h16" />}
           </svg>
         </button>
       </div>
@@ -143,28 +136,43 @@ export function PublicHeader() {
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
-                href={item.href}
+                href={`${item.href}${qs}`}
                 onClick={() => setMobileOpen(false)}
                 className={`block rounded-lg px-4 py-3 font-serif text-base font-semibold transition ${
-                  isActive(item.href)
-                    ? "bg-gold-soft/40 text-primary"
-                    : "text-text hover:bg-surface-muted"
+                  isActive(item.href) ? "bg-gold-soft/40 text-primary" : "text-text hover:bg-surface-muted"
                 }`}
               >
-                {item.label}
+                {lang === "en" ? item.labelEn : item.label}
               </Link>
             ))}
-            <Link
-              href="/intake"
-              onClick={() => setMobileOpen(false)}
-              className="mt-2 block rounded-lg bg-primary px-4 py-3 text-center font-semibold text-white"
-            >
-              상담 신청
-            </Link>
+            <div className="flex gap-2 pt-2">
+              <Link
+                href={`/intake${qs}`}
+                onClick={() => setMobileOpen(false)}
+                className="flex-1 rounded-lg bg-primary px-4 py-3 text-center font-semibold text-white"
+              >
+                {lang === "en" ? "Consult" : "상담 신청"}
+              </Link>
+              <Link
+                href={lang === "en" ? pathname : `${pathname}?lang=en`}
+                onClick={() => setMobileOpen(false)}
+                className="rounded-lg border border-gold/40 px-4 py-3 text-center font-serif text-sm font-bold text-primary"
+              >
+                {lang === "en" ? "KO" : "EN"}
+              </Link>
+            </div>
           </div>
         </nav>
       )}
     </header>
+  );
+}
+
+export function PublicHeader() {
+  return (
+    <Suspense fallback={<div className="h-16" />}>
+      <HeaderInner />
+    </Suspense>
   );
 }
 
@@ -173,10 +181,7 @@ function MiniLogo() {
     <svg viewBox="0 0 48 48" width={40} height={40} xmlns="http://www.w3.org/2000/svg" aria-hidden>
       <circle cx="24" cy="24" r="21" fill="none" stroke="rgb(26 60 95)" strokeWidth="1.5" />
       <g transform="translate(24 14)">
-        <path
-          d="M0 -5 L1 -1 L5 0 L1 1 L0 5 L-1 1 L-5 0 L-1 -1 Z"
-          fill="rgb(201 169 97)"
-        />
+        <path d="M0 -5 L1 -1 L5 0 L1 1 L0 5 L-1 1 L-5 0 L-1 -1 Z" fill="rgb(201 169 97)" />
       </g>
       <g transform="translate(24 22)">
         <path d="M -6 0 Q -7 -1 -6 -2 L 6 -2 Q 7 -1 6 0 Z" fill="rgb(26 60 95)" />
