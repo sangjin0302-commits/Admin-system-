@@ -86,6 +86,10 @@ export default async function PortalDashboard() {
 
   const allCases = inquiries.flatMap((i) => i.caseMatters);
 
+  const unreadCount = userId
+    ? await prisma.portalNotification.count({ where: { clientId: userId, readAt: null } }).catch(() => 0)
+    : 0;
+
   return (
     <div className="min-h-screen bg-canvas">
       <PortalHeader clientName={client?.name} />
@@ -127,6 +131,30 @@ export default async function PortalDashboard() {
             </form>
           </div>
         </section>
+
+        {/* 알림 배너 */}
+        {unreadCount > 0 && (
+          <Link
+            href="/portal/notifications"
+            className="flex items-center justify-between gap-4 rounded-2xl border border-gold/40 bg-gold-soft/25 px-6 py-4 transition hover:bg-gold-soft/40"
+          >
+            <span className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white">
+                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.7">
+                  <path d="M18 16v-5a6 6 0 0 0-12 0v5l-2 3h16l-2-3z" />
+                  <path d="M9 19a3 3 0 0 0 6 0" />
+                </svg>
+              </span>
+              <span>
+                <span className="font-serif text-sm font-bold text-primary">
+                  읽지 않은 알림 {unreadCount}건
+                </span>
+                <span className="block text-xs text-text-muted">사건 진행 안내·자료 요청을 확인하세요.</span>
+              </span>
+            </span>
+            <span className="font-serif text-sm font-semibold text-gold-deep">확인 →</span>
+          </Link>
+        )}
 
         {/* 통계 */}
         <section className="grid gap-4 sm:grid-cols-3">
