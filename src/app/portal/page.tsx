@@ -46,6 +46,26 @@ const STATUS_PROGRESS: Record<string, number> = {
   ON_HOLD: 40
 };
 
+// 상태별 의뢰인이 할 일 안내
+const STATUS_NEXT_STEP: Record<string, string> = {
+  INTAKE_REVIEW: "사무소에서 접수 내용을 검토 중입니다. 별도 조치는 없습니다.",
+  CONSULTING: "상담이 진행 중입니다. 궁금한 점은 메시지로 남겨 주세요.",
+  QUOTED: "견적을 확인하시고 진행 의사를 알려 주세요.",
+  CONTRACT_PENDING: "계약 절차를 준비 중입니다. 안내를 기다려 주세요.",
+  OPEN: "사건이 개시되었습니다. 요청되는 자료를 준비해 주세요.",
+  DOCUMENT_COLLECTING: "필요 자료를 업로드해 주세요. (자료 업로드 버튼)",
+  DOCUMENT_REVIEWING: "제출하신 자료를 검토 중입니다.",
+  READY_TO_SUBMIT: "제출 준비가 끝났습니다. 최종 확인 후 제출 예정입니다.",
+  SUBMITTED: "기관에 제출되었습니다. 결과를 기다리는 단계입니다.",
+  SUPPLEMENT_REQUESTED: "보완 요청이 있습니다. 추가 자료를 확인·업로드해 주세요.",
+  WAITING_AGENCY: "기관 처리를 기다리는 중입니다.",
+  RESULT_RECEIVED: "결과가 통보되었습니다. 후속 안내를 확인해 주세요.",
+  CLOSING: "마무리 단계입니다.",
+  CLOSED: "종결된 사건입니다.",
+  CANCELLED: "취소된 사건입니다.",
+  ON_HOLD: "보류 중입니다. 담당자 안내를 기다려 주세요."
+};
+
 const CATEGORY_LABEL: Record<string, string> = {
   VISA_STAY: "비자/체류",
   ADMIN_APPEAL: "행정심판",
@@ -234,6 +254,13 @@ export default async function PortalDashboard() {
                               </div>
                               <span className="font-mono text-[11px] font-bold text-gold-deep">{progress}%</span>
                             </div>
+                            {/* 다음 단계 안내 */}
+                            {STATUS_NEXT_STEP[c.status] && (
+                              <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-text-muted">
+                                <span className="mt-0.5 text-gold-deep">›</span>
+                                {STATUS_NEXT_STEP[c.status]}
+                              </p>
+                            )}
                           </Link>
                         );
                       })}
