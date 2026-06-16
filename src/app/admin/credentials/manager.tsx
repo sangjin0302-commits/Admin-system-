@@ -64,6 +64,29 @@ export function CredentialsManager({ initialItems }: { initialItems: Item[] }) {
     return TYPES.find((t) => t.key === key)?.label ?? key;
   }
 
+  const [resumeBusy, setResumeBusy] = useState(false);
+  async function downloadResume() {
+    setResumeBusy(true);
+    try {
+      const res = await fetch("/api/admin/credentials/resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `resume-${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } finally {
+      setResumeBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="rounded-[16px] border border-line bg-surface-muted/40 p-5">
@@ -122,7 +145,17 @@ export function CredentialsManager({ initialItems }: { initialItems: Item[] }) {
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-text-strong">등록된 경력 ({items.length})</h3>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-text-strong">등록된 경력 ({items.length})</h3>
+          <button
+            type="button"
+            onClick={downloadResume}
+            disabled={resumeBusy}
+            className="inline-flex h-9 items-center rounded-lg border border-primary bg-surface px-4 text-xs font-semibold text-primary transition hover:bg-gold-soft/30 disabled:opacity-50"
+          >
+            {resumeBusy ? "생성 중…" : "약력(이력서) PDF 다운로드"}
+          </button>
+        </div>
         {items.length === 0 ? (
           <p className="mt-3 text-sm text-text-muted">
             아직 직접 추가한 경력이 없습니다. (기본 연혁이 About 페이지에 표시됩니다.)

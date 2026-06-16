@@ -145,6 +145,74 @@ export async function generateGenericDocPdf(input: GenericDocPdfInput): Promise<
   return generateContractPdf(input);
 }
 
+export type ResumeEntry = { typeLabel: string; year: string; title: string; detail?: string };
+
+export type ResumePdfInput = {
+  name: string;
+  subtitle?: string;
+  entries: readonly ResumeEntry[];
+};
+
+/** 대표 약력(이력서) PDF — 경력 항목 기반. */
+export async function generateResumePdf(input: ResumePdfInput): Promise<Uint8Array> {
+  const pdf = await PDFDocument.create();
+  pdf.registerFontkit(fontkit);
+  const koreanFontData = await loadKoreanFont();
+  const font = koreanFontData
+    ? await pdf.embedFont(koreanFontData)
+    : await pdf.embedFont(StandardFonts.Helvetica);
+
+  let page = pdf.addPage([595, 842]);
+  const { width } = page.getSize();
+  const margin = 60;
+  let y = 800;
+
+  page.drawText("ETHOS", { x: margin, y, size: 22, font, color: NAVY });
+  page.drawText("Administrative Attorney Office", { x: margin, y: y - 18, size: 9, font, color: MUTED });
+  page.drawLine({ start: { x: margin, y: y - 28 }, end: { x: width - margin, y: y - 28 }, thickness: 1, color: GOLD });
+  y -= 58;
+
+  page.drawText(input.name, { x: margin, y, size: 24, font, color: NAVY });
+  y -= 22;
+  if (input.subtitle) {
+    page.drawText(input.subtitle, { x: margin, y, size: 11, font, color: MUTED });
+    y -= 20;
+  }
+  y -= 14;
+
+  page.drawText("약력", { x: margin, y, size: 14, font, color: NAVY });
+  y -= 8;
+  page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 0.5, color: rgb(0.8, 0.78, 0.7) });
+  y -= 20;
+
+  for (const e of input.entries) {
+    if (y < 90) {
+      page = pdf.addPage([595, 842]);
+      y = 800;
+    }
+    page.drawText(e.year, { x: margin, y, size: 11, font, color: GOLD });
+    page.drawText(`[${e.typeLabel}]`, { x: margin + 70, y, size: 9, font, color: MUTED });
+    page.drawText(e.title, { x: margin + 130, y, size: 11, font, color: rgb(0.15, 0.2, 0.28) });
+    y -= 15;
+    if (e.detail) {
+      page.drawText(e.detail, { x: margin + 130, y, size: 9, font, color: MUTED });
+      y -= 13;
+    }
+    y -= 6;
+  }
+
+  y -= 16;
+  page.drawText("※ 본 약력은 ETHOS 행정사사무소 운영 자료로 자동 생성되었습니다.", {
+    x: margin,
+    y: Math.max(y, 50),
+    size: 8,
+    font,
+    color: MUTED
+  });
+
+  return pdf.save();
+}
+
 export type QuotePdfLine = { category: string; service: string; amount: string; note?: string };
 
 export type QuotePdfInput = {
