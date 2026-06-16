@@ -10,10 +10,17 @@ export const metadata: Metadata = {
   description: "처분 통지부터 청구·심리·재결까지 행정심판 절차를 함께 준비합니다."
 };
 
-export default async function AppealPage() {
+export default async function AppealPage({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const lang = (await searchParams).lang === "en" ? "en" : "ko";
   const descOverride = await getSiteSetting("services.appeal.desc");
   return (
     <ServicePage
+      lang={lang}
+      serviceKey="appeal"
       descriptionOverride={descOverride}
       data={{
         kicker: "Administrative Appeal",

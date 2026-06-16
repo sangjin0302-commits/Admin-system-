@@ -10,10 +10,17 @@ export const metadata: Metadata = {
   description: "체류 자격 변경·연장, 사업/투자 비자, 강제퇴거 대응까지 한 흐름으로 정리합니다."
 };
 
-export default async function VisaPage() {
+export default async function VisaPage({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const lang = (await searchParams).lang === "en" ? "en" : "ko";
   const descOverride = await getSiteSetting("services.immigration.desc");
   return (
     <ServicePage
+      lang={lang}
+      serviceKey="immigration"
       descriptionOverride={descOverride}
       data={{
         kicker: "Visa & Immigration",

@@ -10,10 +10,17 @@ export const metadata: Metadata = {
   description: "계약 검토·작성, 분쟁 사실관계 조사, 조사보고서 작성을 지원합니다."
 };
 
-export default async function ContractPage() {
+export default async function ContractPage({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const lang = (await searchParams).lang === "en" ? "en" : "ko";
   const descOverride = await getSiteSetting("services.contract.desc");
   return (
     <ServicePage
+      lang={lang}
+      serviceKey="contract"
       descriptionOverride={descOverride}
       data={{
         kicker: "Contract & Investigation",

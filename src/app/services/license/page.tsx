@@ -10,10 +10,17 @@ export const metadata: Metadata = {
   description: "사업·건축·식품·의료 등 인허가 신청, 보완 대응, 불복 절차를 함께 합니다."
 };
 
-export default async function LicensePage() {
+export default async function LicensePage({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const lang = (await searchParams).lang === "en" ? "en" : "ko";
   const descOverride = await getSiteSetting("services.license.desc");
   return (
     <ServicePage
+      lang={lang}
+      serviceKey="license"
       descriptionOverride={descOverride}
       data={{
         kicker: "License & Permit",

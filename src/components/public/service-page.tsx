@@ -3,6 +3,34 @@ import type { ReactNode } from "react";
 
 import { Reveal } from "@/components/public/reveal";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
+import { SERVICE_EN } from "@/lib/services/service-content-en";
+
+const LABELS = {
+  ko: {
+    whoFor: "이런 분께 권합니다",
+    process: "진행 절차",
+    documents: "필요 자료",
+    deadlines: "주요 기한",
+    faq: "자주 묻는 질문",
+    docsNote: "※ 사안별로 추가/축소될 수 있습니다.",
+    deadlineNote: "※ 개별 사안에 따라 다를 수 있습니다.",
+    ctaTitle: "상담을 시작하시겠습니까?",
+    ctaPrimary: "상담 신청",
+    ctaSecondary: "다른 분야 보기"
+  },
+  en: {
+    whoFor: "Who it's for",
+    process: "Process",
+    documents: "Documents",
+    deadlines: "Key deadlines",
+    faq: "Frequently asked",
+    docsNote: "※ May expand or narrow per case.",
+    deadlineNote: "※ May differ by individual case.",
+    ctaTitle: "Ready to begin?",
+    ctaPrimary: "Request consultation",
+    ctaSecondary: "Other practice areas"
+  }
+} as const;
 
 export type ServicePageData = {
   kicker: string;
@@ -19,13 +47,30 @@ export type ServicePageData = {
 
 export function ServicePage({
   data,
-  descriptionOverride
+  descriptionOverride,
+  lang = "ko",
+  serviceKey
 }: {
   data: ServicePageData;
   descriptionOverride?: string;
+  lang?: "ko" | "en";
+  serviceKey?: string;
 }) {
   const intakeHref = buildWebsiteIntakeHref();
-  const description = descriptionOverride?.trim() ? descriptionOverride : data.description;
+  const L = LABELS[lang];
+  const en = lang === "en" && serviceKey ? SERVICE_EN[serviceKey] : undefined;
+
+  // lang=en이면 영문 데이터로 치환 (없으면 한글 fallback)
+  const tagline = en?.tagline ?? data.tagline;
+  const whoFor = en?.whoFor ?? data.whoFor;
+  const process = en?.process ?? data.process;
+  const documents = en?.documents ?? data.documents;
+  const deadlines = en?.deadlines ?? data.deadlines;
+  const faq = en?.faq ?? data.faq;
+  const description = descriptionOverride?.trim()
+    ? descriptionOverride
+    : en?.description ?? data.description;
+  const qs = lang === "en" ? "?lang=en" : "";
 
   return (
     <div className="overflow-x-clip">
@@ -47,7 +92,7 @@ export function ServicePage({
             <h1 className="ethos-display mt-8 text-4xl sm:text-[3.4rem]">{data.title}</h1>
           </Reveal>
           <Reveal delay={3}>
-            <p className="ethos-quote mt-4 text-base text-gold-deep">{data.tagline}</p>
+            <p className="ethos-quote mt-4 text-base text-gold-deep">{tagline}</p>
           </Reveal>
           <Reveal delay={3}>
             <p className="mx-auto mt-8 max-w-2xl text-base leading-8 text-text">{description}</p>
@@ -62,12 +107,12 @@ export function ServicePage({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="ethos-eyebrow text-gold-soft">For Whom</p>
-                <h2 className="ethos-display mt-3 text-3xl text-white sm:text-4xl">이런 분께 권합니다</h2>
+                <h2 className="ethos-display mt-3 text-3xl text-white sm:text-4xl">{L.whoFor}</h2>
               </div>
             </div>
           </Reveal>
           <div className="mt-12 grid gap-3 sm:grid-cols-2">
-            {data.whoFor.map((item, i) => (
+            {whoFor.map((item, i) => (
               <Reveal key={item} delay={((i % 2) + 1) as 1 | 2}>
                 <div className="group flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur transition-colors duration-300 hover:border-gold/40 hover:bg-white/[0.08]">
                   <span className="mt-1 h-2 w-2 flex-shrink-0 rotate-45 bg-gold transition-transform duration-300 group-hover:scale-125" />
@@ -84,12 +129,12 @@ export function ServicePage({
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal className="text-center">
             <p className="ethos-eyebrow">Process</p>
-            <h2 className="ethos-display mt-3 text-3xl sm:text-4xl">진행 절차</h2>
+            <h2 className="ethos-display mt-3 text-3xl sm:text-4xl">{L.process}</h2>
           </Reveal>
           <div className="relative mt-14">
             <div className="absolute left-0 right-0 top-6 hidden h-px bg-gradient-to-r from-gold/0 via-gold/50 to-gold/0 md:block" aria-hidden />
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-              {data.process.map((p, idx) => (
+              {process.map((p, idx) => (
                 <Reveal key={idx} delay={((idx % 4) + 1) as 1 | 2 | 3 | 4}>
                   <div className="text-center">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-gold/50 bg-surface font-serif text-sm font-bold text-primary shadow-sm">
@@ -112,32 +157,32 @@ export function ServicePage({
             <Reveal>
               <div>
                 <p className="ethos-eyebrow">Documents</p>
-                <h3 className="ethos-display mt-3 text-2xl sm:text-3xl">필요 자료</h3>
+                <h3 className="ethos-display mt-3 text-2xl sm:text-3xl">{L.documents}</h3>
                 <ul className="mt-7 space-y-3">
-                  {data.documents.map((d) => (
+                  {documents.map((d) => (
                     <li key={d} className="flex items-start gap-3 border-l-2 border-gold/30 pl-4 text-sm leading-7 text-text">
                       <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-gold" />
                       {d}
                     </li>
                   ))}
                 </ul>
-                <p className="mt-5 text-[11px] text-text-muted">※ 사안별로 추가/축소될 수 있습니다.</p>
+                <p className="mt-5 text-[11px] text-text-muted">{L.docsNote}</p>
               </div>
             </Reveal>
 
             <Reveal delay={1}>
               <div className="ethos-card p-9">
                 <p className="ethos-eyebrow">Deadlines</p>
-                <h3 className="ethos-display mt-3 text-2xl sm:text-3xl">주요 기한</h3>
+                <h3 className="ethos-display mt-3 text-2xl sm:text-3xl">{L.deadlines}</h3>
                 <div className="mt-7 space-y-5">
-                  {data.deadlines.map((d) => (
+                  {deadlines.map((d) => (
                     <div key={d.label} className="border-l-2 border-gold pl-5">
                       <p className="font-serif text-xs uppercase tracking-wider text-gold-deep">{d.label}</p>
                       <p className="mt-1.5 font-serif text-lg font-bold text-primary">{d.value}</p>
                     </div>
                   ))}
                 </div>
-                <p className="mt-5 text-[11px] text-text-muted">※ 개별 사안에 따라 다를 수 있습니다.</p>
+                <p className="mt-5 text-[11px] text-text-muted">{L.deadlineNote}</p>
               </div>
             </Reveal>
           </div>
@@ -149,10 +194,10 @@ export function ServicePage({
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal className="text-center">
             <p className="ethos-eyebrow">FAQ</p>
-            <h2 className="ethos-display mt-3 text-3xl sm:text-4xl">자주 묻는 질문</h2>
+            <h2 className="ethos-display mt-3 text-3xl sm:text-4xl">{L.faq}</h2>
           </Reveal>
           <div className="mx-auto mt-12 grid max-w-4xl gap-4 md:grid-cols-2">
-            {data.faq.map((f, i) => (
+            {faq.map((f, i) => (
               <Reveal key={f.q} delay={((i % 2) + 1) as 1 | 2}>
                 <div className="ethos-card ethos-card-hover h-full p-6">
                   <h3 className="font-serif text-base font-bold text-primary">Q. {f.q}</h3>
@@ -173,19 +218,19 @@ export function ServicePage({
           <Reveal>
             <div className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-br from-primary via-primary to-text-strong p-12 text-center shadow-floating sm:p-16">
               <p className="ethos-eyebrow text-gold-soft">Start Here</p>
-              <h2 className="ethos-display mt-4 text-3xl text-white sm:text-4xl">상담을 시작하시겠습니까?</h2>
+              <h2 className="ethos-display mt-4 text-3xl text-white sm:text-4xl">{L.ctaTitle}</h2>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
                   href={intakeHref}
                   className="inline-flex h-12 items-center rounded-lg bg-gold px-8 text-sm font-bold text-primary shadow-md transition-all duration-300 hover:bg-gold-soft hover:shadow-lg"
                 >
-                  상담 신청
+                  {L.ctaPrimary}
                 </Link>
                 <Link
-                  href="/services"
+                  href={`/services${qs}`}
                   className="inline-flex h-12 items-center rounded-lg border border-gold/50 px-8 text-sm font-semibold text-gold-soft transition hover:bg-gold/10"
                 >
-                  다른 분야 보기
+                  {L.ctaSecondary}
                 </Link>
               </div>
             </div>
