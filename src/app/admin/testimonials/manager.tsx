@@ -59,6 +59,23 @@ export function TestimonialsManager({ initialItems }: { initialItems: Item[] }) 
     if (res.ok) setItems((prev) => prev.filter((i) => i.id !== id));
   }
 
+  async function move(index: number, dir: -1 | 1) {
+    const target = index + dir;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    setItems(next);
+    await Promise.all(
+      next.map((it, i) =>
+        fetch(`/api/admin/testimonials/${it.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sortOrder: i })
+        })
+      )
+    ).catch(() => {});
+  }
+
   function catLabel(key: string) {
     return CATEGORIES.find((c) => c.key === key)?.label ?? key;
   }
@@ -131,7 +148,7 @@ export function TestimonialsManager({ initialItems }: { initialItems: Item[] }) 
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
-            {items.map((item) => (
+            {items.map((item, index) => (
               <li key={item.id} className="rounded-[14px] border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -150,7 +167,27 @@ export function TestimonialsManager({ initialItems }: { initialItems: Item[] }) 
                       {item.author} · {item.context}
                     </p>
                   </div>
-                  <div className="flex flex-shrink-0 gap-2">
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        onClick={() => move(index, -1)}
+                        disabled={index === 0}
+                        aria-label="위로"
+                        className="flex h-5 w-7 items-center justify-center rounded-t border border-line text-text-muted transition hover:bg-surface-muted disabled:opacity-30"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 15l6-6 6 6" /></svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => move(index, 1)}
+                        disabled={index === items.length - 1}
+                        aria-label="아래로"
+                        className="flex h-5 w-7 items-center justify-center rounded-b border border-t-0 border-line text-text-muted transition hover:bg-surface-muted disabled:opacity-30"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9l6 6 6-6" /></svg>
+                      </button>
+                    </div>
                     <button
                       type="button"
                       onClick={() => togglePublish(item)}

@@ -5,8 +5,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethos.kr";
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: "*", allow: "/", disallow: ["/admin", "/api"] }
+      { userAgent: "*", allow: "/", disallow: ["/admin", "/api", "/portal"] }
     ],
-    sitemap: `${SITE_URL}/sitemap.xml`
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL
   };
 }
