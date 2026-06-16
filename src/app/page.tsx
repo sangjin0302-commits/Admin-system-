@@ -167,6 +167,25 @@ export default async function PublicMarketingHomePage({
   const noticeBanner = site["home.noticeBanner"]?.trim();
   const heroTitleOverride = lang === "ko" ? site["home.heroTitle"]?.trim() : "";
   const heroTitleLines = heroTitleOverride ? heroTitleOverride.split("\n").map((l) => l.trim()).filter(Boolean) : null;
+
+  // Brand Story 본문 override (문단 = 빈 줄 구분)
+  const brandStoryOverride = site["home.brandStory"]?.trim();
+  const brandStoryParas = brandStoryOverride
+    ? brandStoryOverride.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+    : null;
+
+  // FAQ override: "Q :: A" 줄 단위
+  const faqOverride = site["home.faq"]?.trim();
+  const faqItems = faqOverride
+    ? faqOverride
+        .split("\n")
+        .map((line) => {
+          const [q, ...rest] = line.split("::");
+          return { q: (q ?? "").trim(), a: rest.join("::").trim() };
+        })
+        .filter((x) => x.q && x.a)
+    : FAQ_ITEMS;
+
   const testimonials = await listPublicTestimonials();
 
   return (
@@ -292,6 +311,14 @@ export default async function PublicMarketingHomePage({
                   <br />
                   <span className="text-gold-soft">함께 헤아립니다.</span>
                 </h2>
+                {brandStoryParas ? (
+                  brandStoryParas.map((para, i) => (
+                    <p key={i} className={`max-w-md text-sm leading-8 text-white/75 ${i === 0 ? "mt-7" : "mt-4"}`}>
+                      {para}
+                    </p>
+                  ))
+                ) : (
+                  <>
                 <p className="mt-7 max-w-md text-sm leading-8 text-white/75">
                   행정 문제는 단순한 서류 작성이 아닙니다. 그 안에는 누군가의 생계, 체류, 권리,
                   가족, 사업, 그리고 앞으로의 삶이 함께 담겨 있습니다.
@@ -301,6 +328,8 @@ export default async function PublicMarketingHomePage({
                   <span className="ethos-quote mx-1 text-gold-soft">Logos · Pathos · Ethos</span>
                   를 바탕으로 가장 현실적인 방향을 함께 찾아갑니다.
                 </p>
+                  </>
+                )}
                 <p className="ethos-quote mt-8 border-l-2 border-gold/60 pl-5 text-lg text-gold-soft">
                   절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를.
                 </p>
@@ -477,7 +506,7 @@ export default async function PublicMarketingHomePage({
             </h2>
           </Reveal>
 
-          <FaqAccordion items={FAQ_ITEMS} />
+          <FaqAccordion items={faqItems} />
         </div>
       </section>
 

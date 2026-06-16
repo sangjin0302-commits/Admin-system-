@@ -11,6 +11,8 @@ export type SiteSettingsKey =
   | "home.heroTitle"
   | "home.heroDescription"
   | "home.noticeBanner"
+  | "home.brandStory"
+  | "home.faq"
   | "about.greeting"
   | "contact.phone"
   | "contact.email"
@@ -33,6 +35,8 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "home.heroDescription":
     "비자/외국인 체류, 행정심판, 계약서·사실조사, 인허가 — 행정 문제 뒤에 있는 사람의 마음까지 함께 헤아립니다.",
   "home.noticeBanner": "",
+  "home.brandStory": "",
+  "home.faq": "",
   "about.greeting":
     "행정 문제는 단순히 서류를 작성하고 절차를 밟는 일만은 아닙니다. 그 안에는 누군가의 생계, 체류, 권리, 가족, 사업, 그리고 앞으로의 삶이 함께 담겨 있습니다.",
   "contact.phone": "02-0000-0000",
@@ -56,6 +60,8 @@ export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint
   "home.heroTitle": { label: "홈 대표 제목", hint: "비우면 기본 제목. 줄바꿈은 Enter로 (각 줄이 한 행)", multiline: true },
   "home.heroDescription": { label: "홈 히어로 소개글", multiline: true },
   "home.noticeBanner": { label: "공지 배너 (비우면 숨김)", hint: "전 페이지 상단에 표시되는 공지", multiline: true },
+  "home.brandStory": { label: "홈 Brand Story 본문", hint: "비우면 기본 문구. 빈 줄로 문단 구분", multiline: true },
+  "home.faq": { label: "홈 자주 묻는 질문", hint: "한 줄에 'Q :: A' 형식. 한 줄 = 한 문답. 비우면 기본 FAQ", multiline: true },
   "about.greeting": { label: "사무소 소개 인사말", multiline: true },
   "contact.phone": { label: "대표 전화" },
   "contact.email": { label: "이메일" },
