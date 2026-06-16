@@ -30,23 +30,48 @@ export type ContractPdfInput = {
 
 export type GenericDocPdfInput = ContractPdfInput;
 
-async function loadKoreanFont(): Promise<Buffer | null> {
+// CDN fallback: 한글 TTF (jsDelivr — Google Fonts 미러). 로컬 폰트가 없을 때 사용.
+const KOREAN_FONT_CDN =
+  process.env.PDF_KOREAN_FONT_URL ??
+  "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanumgothic/NanumGothic-Regular.ttf";
+
+let cachedFontBytes: Uint8Array | null = null;
+
+async function loadKoreanFont(): Promise<Uint8Array | Buffer | null> {
+  if (cachedFontBytes) return cachedFontBytes;
+
+  // 1) 로컬 폰트 파일 우선
   const envPath = process.env.PDF_KOREAN_FONT_PATH;
   const candidates = [
     envPath,
     path.join(process.cwd(), "fonts/NotoSansKR-Regular.ttf"),
     path.join(process.cwd(), "fonts/NotoSansKR-Regular.otf"),
+    path.join(process.cwd(), "fonts/NanumGothic-Regular.ttf"),
     path.join(process.cwd(), "fonts/Pretendard-Regular.ttf")
   ].filter((p): p is string => Boolean(p));
 
   for (const file of candidates) {
     try {
       const data = await readFile(file);
+      cachedFontBytes = data;
       return data;
     } catch {
       continue;
     }
   }
+
+  // 2) CDN fallback (런타임 1회 fetch 후 모듈 캐시)
+  try {
+    const res = await fetch(KOREAN_FONT_CDN);
+    if (res.ok) {
+      const buf = new Uint8Array(await res.arrayBuffer());
+      cachedFontBytes = buf;
+      return buf;
+    }
+  } catch (error) {
+    console.warn("[pdf] korean font CDN fetch failed", error);
+  }
+
   return null;
 }
 
