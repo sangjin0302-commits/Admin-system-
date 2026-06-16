@@ -161,8 +161,10 @@ export default async function CaseDetailPage({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">{title}</p>
-      <div className="mt-3">{children}</div>
+      <div className="ethos-rule [&::before]:hidden">
+        <span className="whitespace-nowrap">{title}</span>
+      </div>
+      <div className="mt-4">{children}</div>
     </section>
   );
 }
