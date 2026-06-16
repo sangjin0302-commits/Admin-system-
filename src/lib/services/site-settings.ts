@@ -20,6 +20,9 @@ export type SiteSettingsKey =
   | "contact.hours"
   | "contact.kakaoUrl"
   | "naver.blogId" // 네이버 블로그 ID (RSS 연동)
+  | "analytics.gaId"
+  | "seo.googleVerification"
+  | "seo.naverVerification"
   | "home.stat1"
   | "home.stat2"
   | "home.stat3"
@@ -45,6 +48,9 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "contact.hours": "평일 09:00 - 18:00",
   "contact.kakaoUrl": "http://pf.kakao.com/_xXxXxXx",
   "naver.blogId": "",
+  "analytics.gaId": "",
+  "seo.googleVerification": "",
+  "seo.naverVerification": "",
   "home.stat1": "500+ 처리 사건 | 비자·심판·계약·인허가 분야",
   "home.stat2": "98% 고객 만족도 | 사후 안내 응답률 기준",
   "home.stat3": "4분야 전문 영역 | 4대 분야 전담 워크플로우",
@@ -72,6 +78,9 @@ export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint
     label: "네이버 블로그 ID",
     hint: "blog.naver.com/<ID> 의 ID만 입력하면 칼럼 페이지에 자동 연동됩니다"
   },
+  "analytics.gaId": { label: "Google Analytics ID", hint: "예: G-XXXXXXXXXX (방문 통계 측정)" },
+  "seo.googleVerification": { label: "Google 사이트 인증코드", hint: "Search Console 소유확인 meta content 값" },
+  "seo.naverVerification": { label: "네이버 사이트 인증코드", hint: "네이버 서치어드바이저 소유확인 content 값" },
   "home.stat1": { label: "홈 통계 ①", hint: "형식: 숫자+단위 | 제목 | 설명  (예: 500+ 처리 사건 | 비자·심판 분야)" },
   "home.stat2": { label: "홈 통계 ②", hint: "형식: 숫자+단위 | 제목 | 설명" },
   "home.stat3": { label: "홈 통계 ③", hint: "형식: 숫자+단위 | 제목 | 설명" },
