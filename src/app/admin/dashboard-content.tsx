@@ -17,6 +17,7 @@ import {
   listDocumentTemplateInventory
 } from "@/lib/document-templates";
 import { prisma } from "@/lib/prisma/client";
+import { AdvisorSummaryCard } from "@/components/admin/advisor-summary-card";
 import { buildAdminDashboardPageData } from "@/lib/services/admin-dashboard-page-data";
 import {
   buildCaseAccountingSummaryViewModel,
@@ -214,6 +215,7 @@ export default async function AdminDashboardContent() {
 
   return (
     <div className="space-y-6">
+      <AdvisorSummaryCard />
       <Card className="ui-analysis-hero p-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
