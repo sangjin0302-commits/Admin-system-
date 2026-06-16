@@ -70,7 +70,7 @@ export default async function AboutPage() {
           </Reveal>
           <div className="mt-10 space-y-6 text-base leading-8 text-white/80">
             <Reveal delay={1}>
-              <p>{greeting}</p>
+              <p className="ethos-dropcap">{greeting}</p>
             </Reveal>
             <Reveal delay={2}>
               <p>
