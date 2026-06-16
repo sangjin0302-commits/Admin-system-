@@ -23,10 +23,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: "/terms", priority: 0.3 }
   ];
 
-  return routes.map((r) => ({
-    url: `${SITE_URL}${r.url}`,
-    lastModified: now,
-    changeFrequency: "weekly",
-    priority: r.priority
-  }));
+  // 영문 버전이 있는 라우트 (hreflang 대체 표기)
+  const bilingual = new Set([
+    "/", "/about", "/services", "/services/immigration", "/services/appeal",
+    "/services/contract", "/services/license", "/cases", "/intake"
+  ]);
+
+  return routes.map((r) => {
+    const koUrl = `${SITE_URL}${r.url}`;
+    const entry: MetadataRoute.Sitemap[number] = {
+      url: koUrl,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: r.priority
+    };
+    if (bilingual.has(r.url)) {
+      entry.alternates = {
+        languages: { ko: koUrl, en: `${koUrl}?lang=en`, "x-default": koUrl }
+      };
+    }
+    return entry;
+  });
 }

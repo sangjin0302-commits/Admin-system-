@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   applicationName: SITE_TITLE,
   metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: "/",
+    languages: { ko: "/", en: "/?lang=en", "x-default": "/" }
+  },
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
