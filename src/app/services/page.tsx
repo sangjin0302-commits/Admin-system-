@@ -4,10 +4,22 @@ import type { ReactNode } from "react";
 
 import { Reveal } from "@/components/public/reveal";
 
-export const metadata: Metadata = {
-  title: "업무 분야 — ETHOS 행정사사무소",
-  description: "비자/체류, 행정심판, 계약서/사실조사, 인허가 — 네 가지 주력 분야를 안내합니다."
-};
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const en = (await searchParams).lang === "en";
+  return en
+    ? {
+        title: "Practice Areas — ETHOS Administrative Attorney Office",
+        description: "Visa/stay, administrative appeal, contracts/fact-finding, and licensing — our four core areas."
+      }
+    : {
+        title: "업무 분야 — ETHOS 행정사사무소",
+        description: "비자/체류, 행정심판, 계약서/사실조사, 인허가 — 네 가지 주력 분야를 안내합니다."
+      };
+}
 
 type Area = {
   no: string;

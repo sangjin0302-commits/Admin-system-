@@ -23,16 +23,24 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const FILTERS = [
-  { key: "ALL", label: "전체" },
-  { key: "VISA_STAY", label: "비자/체류" },
-  { key: "ADMIN_APPEAL", label: "행정심판" },
-  { key: "CONTRACT_INVESTIGATION", label: "계약서/사실조사" },
-  { key: "LICENSE_PERMIT", label: "인허가" }
+  { key: "ALL", label: "전체", labelEn: "All" },
+  { key: "VISA_STAY", label: "비자/체류", labelEn: "Visa / Stay" },
+  { key: "ADMIN_APPEAL", label: "행정심판", labelEn: "Appeal" },
+  { key: "CONTRACT_INVESTIGATION", label: "계약서/사실조사", labelEn: "Contract" },
+  { key: "LICENSE_PERMIT", label: "인허가", labelEn: "License" }
 ] as const;
 
-export function CasesGrid({ cases }: { cases: readonly CaseCard[] }) {
+const CATEGORY_LABEL_EN: Record<string, string> = {
+  VISA_STAY: "Visa / Stay",
+  ADMIN_APPEAL: "Administrative Appeal",
+  CONTRACT_INVESTIGATION: "Contract / Investigation",
+  LICENSE_PERMIT: "License / Permit"
+};
+
+export function CasesGrid({ cases, lang = "ko" }: { cases: readonly CaseCard[]; lang?: "ko" | "en" }) {
   const [active, setActive] = useState<string>("ALL");
   const [query, setQuery] = useState("");
+  const en = lang === "en";
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -63,14 +71,14 @@ export function CasesGrid({ cases }: { cases: readonly CaseCard[] }) {
                     : "border-gold/40 bg-surface text-primary hover:bg-gold-soft/30"
                 }`}
               >
-                {f.label}
+                {en ? f.labelEn : f.label}
               </button>
             ))}
           </div>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="사례 검색 (제목 / 분야)"
+            placeholder={en ? "Search cases (title / area)" : "사례 검색 (제목 / 분야)"}
             className="h-11 w-full max-w-md rounded-lg border border-gold/40 bg-surface px-4 text-sm focus:border-gold focus:outline-none"
           />
         </div>
@@ -78,16 +86,18 @@ export function CasesGrid({ cases }: { cases: readonly CaseCard[] }) {
 
       <div className="mx-auto mt-12 max-w-6xl px-4 sm:px-6">
         {filtered.length === 0 ? (
-          <p className="py-16 text-center text-sm text-text-muted">해당 조건의 사례가 없습니다.</p>
+          <p className="py-16 text-center text-sm text-text-muted">
+            {en ? "No cases match your filter." : "해당 조건의 사례가 없습니다."}
+          </p>
         ) : (
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((c, idx) => (
               <Reveal key={c.slug} delay={((idx % 3) + 1) as 1 | 2 | 3}>
-                <Link href={`/cases/${c.slug}`} className="group block h-full">
+                <Link href={`/cases/${c.slug}${en ? "?lang=en" : ""}`} className="group block h-full">
                   <div className="ethos-card ethos-card-hover ethos-card-topline ethos-cta-shine flex h-full flex-col p-7">
                     <div className="flex items-center justify-between">
                       <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${CATEGORY_COLORS[c.category]}`}>
-                        {c.categoryLabel}
+                        {en ? CATEGORY_LABEL_EN[c.category] ?? c.categoryLabel : c.categoryLabel}
                       </span>
                       <span className="ethos-quote text-xs text-text-muted">
                         CASE {String(idx + 1).padStart(3, "0")}

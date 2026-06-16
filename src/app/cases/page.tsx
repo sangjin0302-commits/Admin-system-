@@ -7,10 +7,22 @@ import { listPublicCaseStudies } from "@/lib/services/case-studies";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "처리 사례 — ETHOS 행정사사무소",
-  description: "에토스 행정사사무소의 익명화된 처리 사례 모음."
-};
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const en = (await searchParams).lang === "en";
+  return en
+    ? {
+        title: "Case Studies — ETHOS Administrative Attorney Office",
+        description: "Anonymized case studies in visa, administrative appeal, contract, and licensing."
+      }
+    : {
+        title: "처리 사례 — ETHOS 행정사사무소",
+        description: "에토스 행정사사무소의 익명화된 처리 사례 모음."
+      };
+}
 
 const CASES_COPY = {
   ko: {
@@ -56,7 +68,7 @@ export default async function CasesPage({
 
       {/* 필터 + 그리드 */}
       <section className="py-12 sm:py-16">
-        <CasesGrid cases={cases} />
+        <CasesGrid cases={cases} lang={lang} />
       </section>
 
       {/* CTA */}
