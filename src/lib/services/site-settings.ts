@@ -91,18 +91,28 @@ export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint
   "services.license.desc": { label: "서비스: 인허가 소개글", hint: "비우면 기본 문구 사용", multiline: true }
 };
 
-/** 전체 설정 조회 (DB + 기본값 병합). */
+// 짧은 인메모리 캐시 — 공개 페이지 다발 조회 시 DB 부하↓ (편집은 저장 시 무효화)
+let _cache: { at: number; data: Record<SiteSettingsKey, string> } | null = null;
+const CACHE_MS = 8000;
+
+export function invalidateSiteSettingsCache() {
+  _cache = null;
+}
+
+/** 전체 설정 조회 (DB + 기본값 병합, 캐시). */
 export async function getSiteSettings(): Promise<Record<SiteSettingsKey, string>> {
+  if (_cache && Date.now() - _cache.at < CACHE_MS) return _cache.data;
+
   const rows = await prisma.siteSetting.findMany().catch(() => []);
   const map: Record<string, string> = { ...SITE_SETTINGS_DEFAULTS };
   for (const row of rows) {
-    if (row.key in SITE_SETTINGS_DEFAULTS && row.value !== "") {
-      map[row.key] = row.value;
-    } else if (row.key in SITE_SETTINGS_DEFAULTS) {
+    if (row.key in SITE_SETTINGS_DEFAULTS) {
       map[row.key] = row.value; // 빈 문자열도 명시적 저장값 반영 (공지 숨김 등)
     }
   }
-  return map as Record<SiteSettingsKey, string>;
+  const data = map as Record<SiteSettingsKey, string>;
+  _cache = { at: Date.now(), data };
+  return data;
 }
 
 /** 단일 키 조회. */
@@ -130,4 +140,5 @@ export async function saveSiteSettings(
         })
       )
   );
+  invalidateSiteSettingsCache(); // 저장 즉시 반영
 }
