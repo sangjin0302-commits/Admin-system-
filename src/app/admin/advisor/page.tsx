@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { buildAdvisorReport, type AdvicePriority } from "@/lib/services/advisor-service";
 
+import { BriefingButton } from "./briefing-button";
+
 export const dynamic = "force-dynamic";
 
 const PRIORITY_STYLE: Record<AdvicePriority, { badge: string; ring: string; label: string }> = {
@@ -26,11 +28,16 @@ export default async function AdminAdvisorPage() {
 
   return (
     <section className="rounded-[20px] border border-line bg-surface px-5 py-6 shadow-panel sm:px-7">
-      <p className="ui-kicker">운영 참모</p>
-      <h2 className="mt-2 text-xl font-semibold text-text-strong">행정사 운영 조언</h2>
-      <p className="mt-2 text-sm text-text-muted">
-        지금 사무소 상태를 분석해 우선순위 있는 할 일을 제안합니다. 데이터 기반 자동 분석이며, 실제 판단은 담당 행정사가 합니다.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="ui-kicker">운영 참모</p>
+          <h2 className="mt-2 text-xl font-semibold text-text-strong">행정사 운영 조언</h2>
+          <p className="mt-2 max-w-2xl text-sm text-text-muted">
+            지금 사무소 상태를 분석해 우선순위 있는 할 일을 제안합니다. 데이터 기반 자동 분석이며, 실제 판단은 담당 행정사가 합니다.
+          </p>
+        </div>
+        <BriefingButton />
+      </div>
 
       {/* 지표 */}
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

@@ -145,6 +145,64 @@ export async function generateGenericDocPdf(input: GenericDocPdfInput): Promise<
   return generateContractPdf(input);
 }
 
+export type BriefingItem = { priorityLabel: string; title: string; detail: string };
+export type BriefingPdfInput = {
+  date: string;
+  metricsLine: string;
+  items: readonly BriefingItem[];
+};
+
+/** 운영 참모 일일 브리핑 PDF. */
+export async function generateBriefingPdf(input: BriefingPdfInput): Promise<Uint8Array> {
+  const pdf = await PDFDocument.create();
+  pdf.registerFontkit(fontkit);
+  const koreanFontData = await loadKoreanFont();
+  const font = koreanFontData
+    ? await pdf.embedFont(koreanFontData)
+    : await pdf.embedFont(StandardFonts.Helvetica);
+
+  let page = pdf.addPage([595, 842]);
+  const { width } = page.getSize();
+  const margin = 56;
+  let y = 800;
+
+  page.drawText("ETHOS", { x: margin, y, size: 20, font, color: NAVY });
+  page.drawText("운영 브리핑", { x: width - margin - 90, y, size: 18, font, color: NAVY });
+  page.drawLine({ start: { x: margin, y: y - 26 }, end: { x: width - margin, y: y - 26 }, thickness: 1, color: GOLD });
+  y -= 50;
+
+  page.drawText(`기준일: ${input.date}`, { x: margin, y, size: 10, font, color: MUTED });
+  y -= 18;
+  for (const line of wrapText(input.metricsLine, 70).filter(Boolean)) {
+    page.drawText(line, { x: margin, y, size: 10, font, color: rgb(0.2, 0.25, 0.32) });
+    y -= 14;
+  }
+  y -= 14;
+
+  page.drawText("오늘 챙길 일", { x: margin, y, size: 13, font, color: NAVY });
+  y -= 10;
+  page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 0.5, color: rgb(0.8, 0.78, 0.7) });
+  y -= 20;
+
+  let n = 1;
+  for (const item of input.items) {
+    if (y < 90) {
+      page = pdf.addPage([595, 842]);
+      y = 800;
+    }
+    page.drawText(`${n}. [${item.priorityLabel}] ${item.title}`, { x: margin, y, size: 11, font, color: NAVY });
+    y -= 16;
+    for (const line of wrapText(item.detail, 64).filter(Boolean)) {
+      page.drawText(line, { x: margin + 14, y, size: 9.5, font, color: rgb(0.25, 0.3, 0.35) });
+      y -= 13;
+    }
+    y -= 8;
+    n += 1;
+  }
+
+  return pdf.save();
+}
+
 export type ResumeEntry = { typeLabel: string; year: string; title: string; detail?: string };
 
 export type ResumePdfInput = {
