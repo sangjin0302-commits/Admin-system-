@@ -261,9 +261,13 @@ export default async function PublicMarketingHomePage({
               <div className="absolute -inset-8 -z-10 rounded-[40px] bg-gold/10 blur-3xl" aria-hidden />
               <div className="ethos-card ethos-grain relative flex w-full flex-col items-center overflow-hidden px-8 py-12 text-center sm:px-12 sm:py-14">
                 <div className="absolute inset-x-10 top-0 h-1 rounded-b bg-gradient-to-r from-transparent via-gold to-transparent" />
-                {/* 꽉 차는 반응형 로고 */}
-                <div className="flex w-full max-w-[280px] items-center justify-center">
-                  <EthosLogo size={240} className="h-auto w-full" />
+                {/* 로고 — 골드 링 안에 안착 */}
+                <div className="relative flex items-center justify-center">
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 -m-3 rounded-full border border-gold/25"
+                  />
+                  <EthosLogo size={150} className="h-auto w-[150px] drop-shadow-sm sm:w-[168px]" />
                 </div>
                 <h2 className="ethos-display mt-6 text-4xl tracking-[0.24em] sm:text-[2.7rem]">ETHOS</h2>
                 <p className="mt-1.5 font-serif text-[11px] tracking-[0.18em] text-text-muted">

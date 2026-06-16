@@ -4,21 +4,10 @@ type Props = {
 };
 
 /**
- * ETHOS 브랜드 엠블럼 (v2 — 고급 에디토리얼 리디자인)
- *
- * 디자인 원칙 (logo-generator-skill 의 geometric/editorial 철학 적용):
- * - 더블 링(인장형 엠블럼): 외곽 네이비 + 내부 골드 헤어라인
- * - Logos(이성): 정제된 이오니아 기둥 (볼류트 + 플루팅)
- * - Ethos(방향/신뢰): 8각 컴퍼스 별
- * - Pathos(공감): 기둥을 받치는 아치
- * - dot-matrix 악센트로 기하학적 정밀감
+ * ETHOS 브랜드 로고
+ * 기둥(Logos) + 별빛(Ethos) + 손(Pathos) + 원형 라인
  */
 export function EthosLogo({ size = 64, className }: Props) {
-  const NAVY = "rgb(26 60 95)";
-  const GOLD = "rgb(201 169 97)";
-  const GOLD_DEEP = "rgb(168 134 71)";
-  const CREAM = "rgb(250 246 239)";
-
   return (
     <svg
       viewBox="0 0 120 120"
@@ -27,57 +16,44 @@ export function EthosLogo({ size = 64, className }: Props) {
       className={className}
       xmlns="http://www.w3.org/2000/svg"
       aria-label="ETHOS 행정사사무소 로고"
-      role="img"
     >
-      {/* 더블 링 (인장형) */}
-      <circle cx="60" cy="60" r="55" fill="none" stroke={NAVY} strokeWidth="1.4" />
-      <circle cx="60" cy="60" r="50" fill="none" stroke={GOLD} strokeWidth="0.9" />
+      {/* 원형 라인 (Pathos / 보호) */}
+      <circle cx="60" cy="60" r="52" fill="none" stroke="rgb(26 60 95)" strokeWidth="2.5" />
 
-      {/* 상·하 골드 dot (12·6시 방향 — 인장 디테일) */}
-      <circle cx="60" cy="7.5" r="1.7" fill={GOLD} />
-      <circle cx="60" cy="112.5" r="1.7" fill={GOLD} />
-
-      {/* 8각 컴퍼스 별 (Ethos / 방향·신뢰) */}
-      <g transform="translate(60 31)">
+      {/* 별빛 (Ethos / 방향) */}
+      <g transform="translate(60 30)">
         <path
-          d="M0 -13 L2.6 -3.6 L13 0 L2.6 3.6 L0 13 L-2.6 3.6 L-13 0 L-2.6 -3.6 Z"
-          fill={GOLD}
+          d="M0 -12 L2 -2 L12 0 L2 2 L0 12 L-2 2 L-12 0 L-2 -2 Z"
+          fill="rgb(201 169 97)"
         />
-        <path
-          d="M0 -7 L1.4 -1.9 L7 0 L1.4 1.9 L0 7 L-1.4 1.9 L-7 0 L-1.4 -1.9 Z"
-          fill={GOLD_DEEP}
-        />
-        <circle cx="0" cy="0" r="1.6" fill={CREAM} />
+        <circle cx="0" cy="0" r="2.5" fill="rgb(201 169 97)" />
       </g>
 
-      {/* 이오니아 기둥 (Logos / 이성) */}
-      <g transform="translate(60 49)">
-        {/* 주두 (capital) */}
-        <rect x="-15" y="-5" width="30" height="4.5" rx="1.2" fill={NAVY} />
-        {/* 볼류트 (양쪽 소용돌이) */}
-        <circle cx="-12.5" cy="-2.7" r="2.6" fill="none" stroke={NAVY} strokeWidth="1.3" />
-        <circle cx="12.5" cy="-2.7" r="2.6" fill="none" stroke={NAVY} strokeWidth="1.3" />
-        {/* 기둥 몸체 + 플루팅 */}
-        <rect x="-11" y="0" width="22" height="33" fill={NAVY} />
-        <line x1="-6.6" y1="2.5" x2="-6.6" y2="30.5" stroke={CREAM} strokeWidth="0.85" />
-        <line x1="-2.2" y1="2.5" x2="-2.2" y2="30.5" stroke={CREAM} strokeWidth="0.85" />
-        <line x1="2.2" y1="2.5" x2="2.2" y2="30.5" stroke={CREAM} strokeWidth="0.85" />
-        <line x1="6.6" y1="2.5" x2="6.6" y2="30.5" stroke={CREAM} strokeWidth="0.85" />
-        {/* 주초 (base) */}
-        <rect x="-13" y="33" width="26" height="3.4" rx="0.8" fill={NAVY} />
+      {/* 기둥 (Logos / 이성) */}
+      <g transform="translate(60 50)">
+        {/* 기둥 머리 (capital) */}
+        <path
+          d="M -14 0 Q -16 -2 -14 -4 L 14 -4 Q 16 -2 14 0 Z"
+          fill="rgb(26 60 95)"
+        />
+        {/* 볼류트 (ionic scrolls) */}
+        <circle cx="-12" cy="-2" r="2.5" fill="none" stroke="rgb(26 60 95)" strokeWidth="1.5" />
+        <circle cx="12" cy="-2" r="2.5" fill="none" stroke="rgb(26 60 95)" strokeWidth="1.5" />
+        {/* 기둥 몸체 (fluted shaft) */}
+        <rect x="-10" y="0" width="20" height="30" fill="rgb(26 60 95)" />
+        <line x1="-6" y1="2" x2="-6" y2="28" stroke="rgb(250 246 239)" strokeWidth="0.8" />
+        <line x1="-2" y1="2" x2="-2" y2="28" stroke="rgb(250 246 239)" strokeWidth="0.8" />
+        <line x1="2" y1="2" x2="2" y2="28" stroke="rgb(250 246 239)" strokeWidth="0.8" />
+        <line x1="6" y1="2" x2="6" y2="28" stroke="rgb(250 246 239)" strokeWidth="0.8" />
+        {/* 기둥 받침 */}
+        <rect x="-12" y="30" width="24" height="3" fill="rgb(26 60 95)" />
       </g>
 
-      {/* 받침 아치 (Pathos / 공감) */}
+      {/* 손 (Pathos / 공감) — 기둥을 받치는 손 */}
       <path
-        d="M 33 92 Q 40 83 52 87 Q 60 89.5 68 87 Q 80 83 87 92 Q 75 98 60 98 Q 45 98 33 92 Z"
-        fill={GOLD}
+        d="M 30 88 Q 35 78 45 82 Q 55 86 60 86 Q 65 86 75 82 Q 85 78 90 88 Q 80 95 60 95 Q 40 95 30 88 Z"
+        fill="rgb(201 169 97)"
       />
-      {/* 아치 위 dot-matrix 악센트 (좌우 3점) */}
-      <g fill={GOLD_DEEP}>
-        <circle cx="44" cy="90.5" r="1" />
-        <circle cx="60" cy="91.5" r="1" />
-        <circle cx="76" cy="90.5" r="1" />
-      </g>
     </svg>
   );
 }
