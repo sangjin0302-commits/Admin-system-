@@ -6,6 +6,7 @@
  */
 
 import { prisma } from "@/lib/prisma/client";
+import { getAdminIntakeSourceAnalytics } from "@/lib/services/admin-intake-source-analytics";
 
 export type AdvicePriority = "high" | "medium" | "low" | "good";
 
@@ -107,6 +108,47 @@ export async function buildAdvisorReport(now: Date = new Date()): Promise<Adviso
       title: `견적 발송 후 대기 ${quoteSent}건`,
       detail: "견적을 보낸 뒤 응답이 없는 건은 3~5일 후 정중한 후속 연락(궁금한 점 확인)으로 전환율을 높일 수 있습니다."
     });
+  }
+
+  // 마케팅 분석 봇 — 유입 데이터 기반 조언
+  try {
+    const mk = await getAdminIntakeSourceAnalytics({});
+    const s = mk.summary;
+    if (s.totalCount === 0) {
+      cards.push({
+        priority: "low",
+        title: "마케팅: 유입 데이터가 아직 없습니다",
+        detail: "문의 폼에 출처 추적 링크(utm)를 붙여 채널별 유입을 측정하면, 어떤 홍보가 효과적인지 데이터로 판단할 수 있습니다.",
+        action: { label: "유입 분석", href: "/admin/intake-sources" }
+      });
+    } else {
+      const top = mk.channelCounts[0] ?? mk.sourceCounts[0];
+      const untrackedRatio = s.totalCount > 0 ? Math.round((s.untrackedCount / s.totalCount) * 100) : 0;
+      if (top) {
+        cards.push({
+          priority: "low",
+          title: `마케팅: 최다 유입 채널 '${top.label}'`,
+          detail: `최근 유입의 상당수가 '${top.label}'에서 발생했습니다. 효과 좋은 채널에 콘텐츠(사례·칼럼)를 더 배치하고, 그 채널 전용 상담 링크를 만들어 전환을 추적해 보세요.`,
+          action: { label: "유입 분석", href: "/admin/intake-sources" }
+        });
+      }
+      if (untrackedRatio >= 40) {
+        cards.push({
+          priority: "medium",
+          title: `마케팅: 출처 미상 유입 ${untrackedRatio}%`,
+          detail: "유입의 상당수가 어디서 왔는지 추적되지 않습니다. 블로그·네이버·명함 QR 등에 utm 파라미터가 붙은 상담 링크를 사용하면 채널 효과를 정확히 측정할 수 있습니다.",
+          action: { label: "유입 분석", href: "/admin/intake-sources" }
+        });
+      }
+      cards.push({
+        priority: "good",
+        title: `마케팅: 최근 30일 ${s.recent30DayCount}건 유입 (7일 ${s.recent7DayCount}건)`,
+        detail: "꾸준한 콘텐츠가 장기 유입을 만듭니다. 주 1회 칼럼/사례를 올리고, 처리 사례를 홈페이지에 반영하면 신뢰와 검색 노출이 함께 올라갑니다.",
+        action: { label: "사례 관리", href: "/admin/case-studies" }
+      });
+    }
+  } catch {
+    /* 분석 실패해도 운영 조언은 유지 */
   }
 
   // 루틴 조언 (항상 1개)

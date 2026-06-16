@@ -112,7 +112,9 @@
   font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
   font-style: italic;
   letter-spacing: 0;
-  color: rgb(44 62 82);            /* sensible default so it's never invisible */
+}
+:where(.ethos-quote) {
+  color: rgb(44 62 82);            /* default; overridden by text-* utilities */
 }
 
 /* Hero kinetic gradient text accent */
@@ -200,14 +202,19 @@
   font-weight: 700;
   letter-spacing: 0.22em;
   text-transform: uppercase;
+}
+/* 색은 0-specificity로 부여 → text-white 등 Tailwind 유틸이 항상 우선 */
+:where(.ethos-eyebrow) {
   color: rgb(150 118 60);          /* darker gold for AA contrast */
+}
+:where(.ethos-display) {
+  color: rgb(22 52 84);
 }
 .ethos-display {
   font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
   font-weight: 700;
   letter-spacing: -0.005em;
   line-height: 1.18;
-  color: rgb(22 52 84);
   word-break: keep-all;            /* avoid awkward Korean mid-word breaks */
 }
 
