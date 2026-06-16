@@ -12,7 +12,28 @@ export const metadata: Metadata = {
   description: "에토스 행정사사무소의 익명화된 처리 사례 모음."
 };
 
-export default async function CasesPage() {
+const CASES_COPY = {
+  ko: {
+    heading: "처리 사례",
+    intro: "익명화된 처리 사례를 분야별로 정리했습니다. 사안마다 진행 절차와 결과는 다를 수 있으며, 개별 사안의 결과를 보장하지 않습니다.",
+    ctaTitle: "비슷한 사안이 있으신가요?",
+    cta: "상담 신청하기"
+  },
+  en: {
+    heading: "Case Studies",
+    intro: "Anonymized case studies organized by practice area. Procedures and outcomes vary by case; individual results are not guaranteed.",
+    ctaTitle: "Have a similar matter?",
+    cta: "Request consultation"
+  }
+} as const;
+
+export default async function CasesPage({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const t = CASES_COPY[lang];
   const cases = await listPublicCaseStudies();
   return (
     <div className="overflow-x-clip">
@@ -25,13 +46,10 @@ export default async function CasesPage() {
             <p className="ethos-eyebrow">Case Studies</p>
           </Reveal>
           <Reveal delay={1}>
-            <h1 className="ethos-display mt-5 text-4xl sm:text-[3.6rem]">처리 사례</h1>
+            <h1 className="ethos-display mt-5 text-4xl sm:text-[3.6rem]">{t.heading}</h1>
           </Reveal>
           <Reveal delay={2}>
-            <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-text-muted">
-              익명화된 처리 사례를 분야별로 정리했습니다. 사안마다 진행 절차와 결과는 다를 수 있으며,
-              개별 사안의 결과를 보장하지 않습니다.
-            </p>
+            <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-text-muted">{t.intro}</p>
           </Reveal>
         </div>
       </section>
@@ -47,12 +65,12 @@ export default async function CasesPage() {
           <Reveal>
             <div className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-br from-primary via-primary to-text-strong p-12 text-center shadow-floating sm:p-16">
               <p className="ethos-eyebrow text-gold-soft">Your Case</p>
-              <h2 className="ethos-display mt-4 text-3xl text-white sm:text-4xl">비슷한 사안이 있으신가요?</h2>
+              <h2 className="ethos-display mt-4 text-3xl text-white sm:text-4xl">{t.ctaTitle}</h2>
               <Link
                 href="/intake"
                 className="mt-9 inline-flex h-12 items-center rounded-lg bg-gold px-8 text-sm font-bold text-primary transition hover:bg-gold-soft"
               >
-                상담 신청하기
+                {t.cta}
               </Link>
             </div>
           </Reveal>
