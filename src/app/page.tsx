@@ -165,6 +165,8 @@ export default async function PublicMarketingHomePage({
   const heroDescription =
     lang === "ko" && site["home.heroDescription"] ? site["home.heroDescription"] : t.heroDescription;
   const noticeBanner = site["home.noticeBanner"]?.trim();
+  const heroTitleOverride = lang === "ko" ? site["home.heroTitle"]?.trim() : "";
+  const heroTitleLines = heroTitleOverride ? heroTitleOverride.split("\n").map((l) => l.trim()).filter(Boolean) : null;
   const testimonials = await listPublicTestimonials();
 
   return (
@@ -192,12 +194,27 @@ export default async function PublicMarketingHomePage({
 
             <Reveal delay={1}>
               <h1 className="ethos-display mt-7 text-[2.9rem] leading-[1.08] sm:text-[4.2rem]">
-                {t.heroTitleA}
-                <br />
-                {t.heroTitleB}
-                <br />
-                <span className="ethos-underline-gold">{t.heroTitleC}</span>
-                {t.heroTitleD}
+                {heroTitleLines ? (
+                  heroTitleLines.map((line, i) => (
+                    <span key={i}>
+                      {i === heroTitleLines.length - 1 ? (
+                        <span className="ethos-underline-gold">{line}</span>
+                      ) : (
+                        line
+                      )}
+                      {i < heroTitleLines.length - 1 && <br />}
+                    </span>
+                  ))
+                ) : (
+                  <>
+                    {t.heroTitleA}
+                    <br />
+                    {t.heroTitleB}
+                    <br />
+                    <span className="ethos-underline-gold">{t.heroTitleC}</span>
+                    {t.heroTitleD}
+                  </>
+                )}
               </h1>
             </Reveal>
 
@@ -220,13 +237,17 @@ export default async function PublicMarketingHomePage({
 
           {/* 우: 로고 메달리온 */}
           <Reveal delay={2} className="flex justify-center lg:justify-end">
-            <div className="relative">
-              <div className="absolute -inset-6 -z-10 rounded-full bg-gold/8 blur-2xl" aria-hidden />
-              <div className="ethos-card ethos-grain relative flex w-full max-w-sm flex-col items-center p-12 text-center">
+            <div className="relative w-full max-w-md">
+              {/* 은은한 후광 */}
+              <div className="absolute -inset-8 -z-10 rounded-[40px] bg-gold/10 blur-3xl" aria-hidden />
+              <div className="ethos-card ethos-grain relative flex w-full flex-col items-center overflow-hidden px-8 py-12 text-center sm:px-12 sm:py-14">
                 <div className="absolute inset-x-10 top-0 h-1 rounded-b bg-gradient-to-r from-transparent via-gold to-transparent" />
-                <EthosLogo size={160} />
-                <h2 className="ethos-display mt-7 text-3xl tracking-[0.24em]">ETHOS</h2>
-                <p className="mt-1 font-serif text-[11px] tracking-[0.15em] text-text-muted">
+                {/* 꽉 차는 반응형 로고 */}
+                <div className="flex w-full max-w-[280px] items-center justify-center">
+                  <EthosLogo size={240} className="h-auto w-full" />
+                </div>
+                <h2 className="ethos-display mt-6 text-4xl tracking-[0.24em] sm:text-[2.7rem]">ETHOS</h2>
+                <p className="mt-1.5 font-serif text-[11px] tracking-[0.18em] text-text-muted">
                   ADMINISTRATIVE ATTORNEY OFFICE
                 </p>
                 <div className="ethos-divider my-6">

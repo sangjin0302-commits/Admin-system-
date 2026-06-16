@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma/client";
 
 export type SiteSettingsKey =
   | "home.heroBadge"
+  | "home.heroTitle"
   | "home.heroDescription"
   | "home.noticeBanner"
   | "about.greeting"
@@ -28,6 +29,7 @@ export type SiteSettingsKey =
 
 export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "home.heroBadge": "행정사 사무소 · Logos · Pathos · Ethos",
+  "home.heroTitle": "",
   "home.heroDescription":
     "비자/외국인 체류, 행정심판, 계약서·사실조사, 인허가 — 행정 문제 뒤에 있는 사람의 마음까지 함께 헤아립니다.",
   "home.noticeBanner": "",
@@ -51,6 +53,7 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
 
 export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint?: string; multiline?: boolean }> = {
   "home.heroBadge": { label: "홈 상단 배지 문구" },
+  "home.heroTitle": { label: "홈 대표 제목", hint: "비우면 기본 제목. 줄바꿈은 Enter로 (각 줄이 한 행)", multiline: true },
   "home.heroDescription": { label: "홈 히어로 소개글", multiline: true },
   "home.noticeBanner": { label: "공지 배너 (비우면 숨김)", hint: "전 페이지 상단에 표시되는 공지", multiline: true },
   "about.greeting": { label: "사무소 소개 인사말", multiline: true },
