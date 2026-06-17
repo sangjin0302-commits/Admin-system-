@@ -17,6 +17,7 @@ const CATEGORIES = [
   { key: "ADMIN_APPEAL", label: "행정심판" },
   { key: "CONTRACT_INVESTIGATION", label: "계약서/사실조사" },
   { key: "LICENSE_PERMIT", label: "인허가" },
+  { key: "CORP_FORMATION", label: "법인 설립" },
   { key: "ETC", label: "기타" }
 ];
 

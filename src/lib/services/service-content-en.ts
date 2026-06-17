@@ -124,6 +124,42 @@ export const SERVICE_EN: Record<string, ServiceEnContent> = {
       { q: "Is my information kept confidential?", a: "Yes. Materials are handled under confidentiality and used only for your matter." }
     ]
   },
+  corporate: {
+    tagline: "From formation to your first permit",
+    description:
+      "We guide company formation end to end — entity type, articles of incorporation, registration prep — and connect it to the licenses your business needs after launch.",
+    whoFor: [
+      "Founders deciding between a corporation and a sole proprietorship",
+      "Those preparing articles of incorporation and registration",
+      "Foreign founders setting up a company in Korea",
+      "Those who need post-formation permits/licenses",
+      "Those changing capital, directors, or business purpose"
+    ],
+    process: [
+      { step: "01", title: "Entity & structure", desc: "Type, capital, shareholders, purpose" },
+      { step: "02", title: "Draft documents", desc: "Articles, consents, registration set" },
+      { step: "03", title: "Register", desc: "Court registration & tax/biz filings" },
+      { step: "04", title: "Post-setup", desc: "Required permits and next steps" }
+    ],
+    documents: [
+      "Founder ID / corporate seal info",
+      "Capital and shareholding plan",
+      "Proposed company name & business purpose",
+      "Registered office evidence (lease, etc.)",
+      "Foreign founder docs (if applicable)"
+    ],
+    deadlines: [
+      { label: "Registration after formation", value: "Within the statutory period after resolution" },
+      { label: "Business registration", value: "Within 20 days of starting business" },
+      { label: "Post-setup permits", value: "Before commencing the regulated activity" }
+    ],
+    faq: [
+      { q: "Corporation or sole proprietorship?", a: "We compare tax, liability, and credibility for your situation before advising." },
+      { q: "Can a foreigner set up a company in Korea?", a: "Yes; we review visa/investment requirements and prepare the formation accordingly." },
+      { q: "How long does formation take?", a: "It varies by entity and documents; we share a timeline after the initial review." },
+      { q: "Do you handle permits after setup?", a: "Yes — we connect formation directly to the licenses your business needs." }
+    ]
+  },
   license: {
     tagline: "Permits, supplements, and appeals — together",
     description:

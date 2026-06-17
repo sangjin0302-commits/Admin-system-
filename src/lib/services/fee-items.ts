@@ -9,6 +9,7 @@ export const FEE_CATEGORY_LABELS: Record<string, string> = {
   ADMIN_APPEAL: "행정심판",
   CONTRACT_INVESTIGATION: "계약서/사실조사",
   LICENSE_PERMIT: "인허가",
+  CORP_FORMATION: "법인 설립",
   ETC: "기타"
 };
 

@@ -85,6 +85,19 @@ const PRACTICE_AREAS: readonly PracticeArea[] = [
         <path d="M8 3v4M16 3v4M4 11h16M9 15l2 2 4-4" />
       </svg>
     )
+  },
+  {
+    no: "05",
+    title: "법인 설립",
+    subtitle: "CORPORATE FORMATION",
+    description: "법인 형태 결정, 정관·설립 등기 준비부터 설립 후 필요한 인허가 연계까지 함께합니다.",
+    href: "/services/corporate",
+    bullets: ["법인 유형 / 자본금 설계", "정관 · 설립 등기 준비", "설립 후 인허가 연계"],
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-8 w-8" stroke="currentColor" strokeWidth="1.3">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 11h.01M15 11h.01" />
+      </svg>
+    )
   }
 ];
 

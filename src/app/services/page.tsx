@@ -104,6 +104,20 @@ const AREAS: readonly Area[] = [
         <path d="M8 3v4M16 3v4M4 11h16M9 15l2 2 4-4" />
       </svg>
     )
+  },
+  {
+    no: "05",
+    href: "/services/corporate",
+    title: "법인 설립",
+    titleEn: "Company Formation",
+    subtitle: "CORPORATE FORMATION",
+    description: "법인 설립 절차, 정관·등기 준비, 설립 후 인허가 연계까지.",
+    descriptionEn: "Company formation, articles & registration prep, linked to post-launch permits.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-8 w-8" stroke="currentColor" strokeWidth="1.3">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 11h.01M15 11h.01" />
+      </svg>
+    )
   }
 ];
 

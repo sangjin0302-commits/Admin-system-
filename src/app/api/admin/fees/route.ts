@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { listFeeItems } from "@/lib/services/fee-items";
 
-const VALID = ["VISA_STAY", "ADMIN_APPEAL", "CONTRACT_INVESTIGATION", "LICENSE_PERMIT", "ETC"];
+const VALID = ["VISA_STAY", "ADMIN_APPEAL", "CONTRACT_INVESTIGATION", "LICENSE_PERMIT", "CORP_FORMATION", "ETC"];
 
 export async function GET() {
   const items = await listFeeItems();

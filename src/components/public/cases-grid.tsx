@@ -19,7 +19,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   VISA_STAY: "bg-emerald-100 text-emerald-800",
   ADMIN_APPEAL: "bg-amber-100 text-amber-800",
   CONTRACT_INVESTIGATION: "bg-sky-100 text-sky-800",
-  LICENSE_PERMIT: "bg-violet-100 text-violet-800"
+  LICENSE_PERMIT: "bg-violet-100 text-violet-800",
+  CORP_FORMATION: "bg-rose-100 text-rose-800"
 };
 
 const FILTERS = [
@@ -27,14 +28,16 @@ const FILTERS = [
   { key: "VISA_STAY", label: "비자/체류", labelEn: "Visa / Stay" },
   { key: "ADMIN_APPEAL", label: "행정심판", labelEn: "Appeal" },
   { key: "CONTRACT_INVESTIGATION", label: "계약서/사실조사", labelEn: "Contract" },
-  { key: "LICENSE_PERMIT", label: "인허가", labelEn: "License" }
+  { key: "LICENSE_PERMIT", label: "인허가", labelEn: "License" },
+  { key: "CORP_FORMATION", label: "법인 설립", labelEn: "Formation" }
 ] as const;
 
 const CATEGORY_LABEL_EN: Record<string, string> = {
   VISA_STAY: "Visa / Stay",
   ADMIN_APPEAL: "Administrative Appeal",
   CONTRACT_INVESTIGATION: "Contract / Investigation",
-  LICENSE_PERMIT: "License / Permit"
+  LICENSE_PERMIT: "License / Permit",
+  CORP_FORMATION: "Company Formation"
 };
 
 export function CasesGrid({ cases, lang = "ko" }: { cases: readonly CaseCard[]; lang?: "ko" | "en" }) {

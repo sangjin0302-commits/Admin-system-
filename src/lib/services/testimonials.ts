@@ -16,7 +16,8 @@ export const TESTIMONIAL_CATEGORY_LABELS: Record<string, string> = {
   VISA_STAY: "비자/체류",
   ADMIN_APPEAL: "행정심판",
   CONTRACT_INVESTIGATION: "계약서/사실조사",
-  LICENSE_PERMIT: "인허가"
+  LICENSE_PERMIT: "인허가",
+  CORP_FORMATION: "법인 설립"
 };
 
 const DEFAULT_TESTIMONIALS: readonly PublicTestimonial[] = [
