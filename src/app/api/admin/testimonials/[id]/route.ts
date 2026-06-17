@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma/client";
+import { PRACTICE_AREA_KEYS } from "@/lib/practice-areas";
 
-const VALID_CATEGORIES = ["VISA_STAY", "ADMIN_APPEAL", "CONTRACT_INVESTIGATION", "LICENSE_PERMIT", "CORP_FORMATION"];
+const VALID_CATEGORIES = PRACTICE_AREA_KEYS;
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;

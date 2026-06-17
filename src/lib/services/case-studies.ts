@@ -5,14 +5,9 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { PUBLIC_CASES, type PublicCase } from "@/lib/public-cases";
+import { PRACTICE_AREA_LABELS, type PracticeAreaKey } from "@/lib/practice-areas";
 
-export const CASE_CATEGORY_LABELS: Record<string, string> = {
-  VISA_STAY: "비자/체류",
-  ADMIN_APPEAL: "행정심판",
-  CONTRACT_INVESTIGATION: "계약서/사실조사",
-  LICENSE_PERMIT: "인허가",
-  CORP_FORMATION: "법인 설립"
-};
+export const CASE_CATEGORY_LABELS: Record<string, string> = PRACTICE_AREA_LABELS;
 
 export type MergedCase = Pick<
   PublicCase,
@@ -29,7 +24,7 @@ export async function listPublicCaseStudies(): Promise<MergedCase[]> {
     });
     dbCases = rows.map((r) => ({
       slug: `db-${r.id}`,
-      category: r.category,
+      category: r.category as PracticeAreaKey,
       categoryLabel: CASE_CATEGORY_LABELS[r.category] ?? r.category,
       title: r.title,
       summary: r.summary,
@@ -64,7 +59,7 @@ export async function getDbCaseStudyBySlug(slug: string): Promise<MergedCase | n
     if (!r) return null;
     return {
       slug: `db-${r.id}`,
-      category: r.category,
+      category: r.category as PracticeAreaKey,
       categoryLabel: CASE_CATEGORY_LABELS[r.category] ?? r.category,
       title: r.title,
       summary: r.summary,

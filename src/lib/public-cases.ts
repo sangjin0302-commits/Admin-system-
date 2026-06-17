@@ -1,6 +1,8 @@
+import type { PracticeAreaKey } from "@/lib/practice-areas";
+
 export type PublicCase = {
   slug: string;
-  category: "VISA_STAY" | "ADMIN_APPEAL" | "CONTRACT_INVESTIGATION" | "LICENSE_PERMIT";
+  category: PracticeAreaKey;
   categoryLabel: string;
   title: string;
   summary: string;

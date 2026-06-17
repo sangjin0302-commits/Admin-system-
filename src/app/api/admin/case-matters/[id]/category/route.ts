@@ -2,8 +2,9 @@ import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { createAdminRequestContext, safeReadJsonBody } from "@/lib/http/admin-api";
 import { prisma } from "@/lib/prisma/client";
 import { seedCategoryRequiredDocuments } from "@/lib/services/category-required-documents";
+import { PRACTICE_AREA_KEYS } from "@/lib/practice-areas";
 
-const VALID_CATEGORIES = ["VISA_STAY", "ADMIN_APPEAL", "CONTRACT_INVESTIGATION", "LICENSE_PERMIT", "OTHER"] as const;
+const VALID_CATEGORIES = [...PRACTICE_AREA_KEYS, "OTHER"] as const;
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const api = createAdminRequestContext("admin.case-matters.category.patch");
