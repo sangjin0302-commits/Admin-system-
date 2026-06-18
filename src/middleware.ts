@@ -110,8 +110,64 @@ function adminNotConfiguredResponse(isApiRequest: boolean) {
   });
 }
 
+function detectLanguageRedirect(request: NextRequest): NextResponse | null {
+  const pathname = request.nextUrl.pathname;
+
+  // Only apply to public routes (not admin, api, portal)
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/portal")
+  ) {
+    return null;
+  }
+
+  // Skip if lang param already present
+  if (request.nextUrl.searchParams.has("lang")) {
+    return null;
+  }
+
+  const acceptLanguage = request.headers.get("accept-language");
+  if (!acceptLanguage) return null;
+
+  // Parse primary language preference
+  const preferred = acceptLanguage
+    .split(",")
+    .map((part) => {
+      const [lang, qPart] = part.trim().split(";");
+      const q = qPart ? parseFloat(qPart.replace("q=", "")) : 1;
+      return { lang: lang.trim().toLowerCase(), q };
+    })
+    .sort((a, b) => b.q - a.q);
+
+  for (const { lang } of preferred) {
+    if (lang.startsWith("en")) {
+      const url = request.nextUrl.clone();
+      url.searchParams.set("lang", "en");
+      return NextResponse.redirect(url);
+    }
+    if (lang.startsWith("ar")) {
+      const url = request.nextUrl.clone();
+      url.searchParams.set("lang", "ar");
+      return NextResponse.redirect(url);
+    }
+    // If Korean or default, no redirect needed
+    if (lang.startsWith("ko")) {
+      return null;
+    }
+  }
+
+  return null;
+}
+
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  // --- Accept-Language auto-detection for public routes ---
+  const langRedirect = detectLanguageRedirect(request);
+  if (langRedirect) return langRedirect;
+
+  // --- Admin auth (only runs for matched admin paths) ---
   const isApiRequest = pathname.startsWith("/api/admin/");
 
   if (isMarketingIngestByToken(request)) {
@@ -134,5 +190,11 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"]
+  matcher: [
+    "/admin/:path*",
+    "/api/admin/:path*",
+    // Public routes for Accept-Language detection
+    "/",
+    "/((?!_next|favicon\\.ico|icons|images|manifest).*)"
+  ]
 };

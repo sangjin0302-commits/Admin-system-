@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AppShellSafe } from "@/components/layout/app-shell-safe";
 import { Analytics } from "@/components/public/analytics";
+import { LiveChat } from "@/components/public/live-chat";
 import { LocalBusinessJsonLd } from "@/components/public/json-ld";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
@@ -74,6 +75,7 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
       <body>
         <AppShellSafe>{children}</AppShellSafe>
         <ToastProvider />
+        <LiveChat />
         <Analytics />
         <LocalBusinessJsonLd />
       </body>
