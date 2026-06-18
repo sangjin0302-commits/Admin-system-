@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AppShellSafe } from "@/components/layout/app-shell-safe";
 import { Analytics } from "@/components/public/analytics";
+import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 
 const SITE_TITLE = "ETHOS \uD589\uC815\uC0AC\uC0AC\uBB34\uC18C";
@@ -70,6 +71,7 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
     <html lang="ko">
       <body>
         <AppShellSafe>{children}</AppShellSafe>
+        <ToastProvider />
         <Analytics />
       </body>
     </html>

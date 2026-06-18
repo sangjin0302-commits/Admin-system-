@@ -34,6 +34,32 @@
   --motion-base: 220ms;
 }
 
+/* ── Dark mode ─────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-canvas: 18 24 32;
+    --color-surface: 26 34 44;
+    --color-surface-muted: 34 42 54;
+    --color-surface-raised: 38 48 60;
+    --color-line: 52 62 76;
+    --color-line-strong: 72 82 96;
+    --color-text-strong: 240 236 228;
+    --color-text: 200 196 188;
+    --color-text-muted: 148 142 130;
+    --color-primary: 120 170 220;
+    --color-primary-soft: 30 40 55;
+    --color-success: 80 180 120;
+    --color-warning: 220 170 80;
+    --color-danger: 220 100 100;
+    --color-gold: 220 188 120;
+    --color-gold-soft: 60 50 35;
+    --color-gold-deep: 200 168 100;
+    --shadow-panel: 0 10px 28px rgba(0, 0, 0, 0.3);
+    --shadow-floating: 0 18px 40px rgba(0, 0, 0, 0.4);
+  }
+}
+
 /* ETHOS — Aurora + grid pattern utilities */
 .ethos-grid-pattern {
   background-image:

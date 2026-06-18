@@ -9,6 +9,7 @@ import { PublicFooter } from "@/components/layout/public-footer";
 import { PublicHeader } from "@/components/layout/public-header";
 import { ScrollEnhancements } from "@/components/layout/scroll-enhancements";
 import { StickyCta } from "@/components/layout/sticky-cta";
+import { PageTransition } from "@/components/public/page-transition";
 
 /**
  * Routes that use the system shell (admin/portal — internal tools).
@@ -62,7 +63,7 @@ export function AppShellSafe({ children }: Readonly<{ children: React.ReactNode 
       </a>
       <PublicHeader />
       <main id="main-content" tabIndex={-1}>
-        {children}
+        <PageTransition>{children}</PageTransition>
       </main>
       <PublicFooter />
       <FloatingContact />

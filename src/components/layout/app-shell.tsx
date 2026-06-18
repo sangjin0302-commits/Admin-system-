@@ -7,6 +7,7 @@ import { PublicHeader } from "@/components/layout/public-header";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { FloatingContact } from "@/components/layout/floating-contact";
 import { LawbotChatWidget } from "@/components/public/lawbot-chat-widget";
+import { PageTransition } from "@/components/public/page-transition";
 
 const PUBLIC_PATHS = ["/", "/about", "/services", "/cases", "/blog", "/track", "/intake", "/quick-check", "/contact", "/fees", "/privacy", "/terms"];
 
@@ -29,7 +30,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
     return (
       <div className="min-h-screen bg-canvas">
         <PublicHeader />
-        <main>{children}</main>
+        <main><PageTransition>{children}</PageTransition></main>
         <PublicFooter />
         <FloatingContact />
         <LawbotChatWidget />
