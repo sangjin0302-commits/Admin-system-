@@ -5,6 +5,7 @@ import {
   DashboardMetric,
   dashboardToneClassName
 } from "@/components/admin/dashboard-shared";
+import { DashboardTodayWidget, type TodayItem } from "@/components/admin/dashboard-today-widget";
 import { CaseAccountingDashboardCard } from "@/components/admin/case-accounting-dashboard-card";
 import { CaseMatterActionSummaryCard } from "@/components/admin/case-matter-action-summary-card";
 import { DocumentLabDashboardCard } from "@/components/admin/document-lab-dashboard-card";
@@ -214,12 +215,30 @@ export default async function AdminDashboardContent() {
     publicIntakeControl
   });
 
+  const todayItems = ([
+    { label: "긴급 확인", count: urgentCount, href: "/admin/inquiries", tone: "danger" as const },
+    { label: "자료 미비", count: docsPendingCount, href: "/admin/inquiries", tone: "warning" as const },
+    { label: "회신 대기", count: responsePendingCount, href: "/admin/inquiries", tone: "info" as const },
+    { label: "견적 후속", count: quotePendingCount, href: "/admin/inquiries", tone: "success" as const },
+  ] satisfies TodayItem[]).filter((i) => i.count > 0);
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 xl:grid-cols-2">
-        <AdvisorSummaryCard />
-        <RecentActivityCard />
-      </div>
+      {todayItems.length > 0 && (
+        <div className="grid gap-6 xl:grid-cols-[1fr_2fr]">
+          <DashboardTodayWidget items={todayItems} />
+          <div className="grid gap-6 md:grid-cols-2">
+            <AdvisorSummaryCard />
+            <RecentActivityCard />
+          </div>
+        </div>
+      )}
+      {todayItems.length === 0 && (
+        <div className="grid gap-6 xl:grid-cols-2">
+          <AdvisorSummaryCard />
+          <RecentActivityCard />
+        </div>
+      )}
 
       <Card className="ui-analysis-hero p-6">
         <div className="flex flex-col gap-4">

@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import { CaseMatterActionSections } from "@/components/admin/case-matter-action-sections";
-import { CasesTable, type CaseRow } from "@/components/admin/cases-table";
+import { type CaseRow } from "@/components/admin/cases-table";
+import { CasesTableWithFilters } from "@/components/admin/cases-table-with-filters";
 import { DeadlineScanButton } from "@/components/admin/deadline-scan-button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
@@ -147,7 +148,7 @@ export default async function AdminCasesPage({
         />
       ) : (
         <Card className="overflow-hidden p-0">
-          <CasesTable
+          <CasesTableWithFilters
             rows={cases.map((item): CaseRow => ({
               id: item.id,
               title: item.title,

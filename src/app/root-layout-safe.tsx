@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AppShellSafe } from "@/components/layout/app-shell-safe";
 import { Analytics } from "@/components/public/analytics";
+import { LocalBusinessJsonLd } from "@/components/public/json-ld";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 
@@ -60,6 +61,7 @@ export const metadata: Metadata = {
     ]
   },
   other: {
+    "naver-site-verification": "NAVER_VERIFICATION_CODE",
     "theme-color": "#0f4c81",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-title": "\uC9C4\uD589\uC0C1\uD669"
@@ -73,6 +75,7 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
         <AppShellSafe>{children}</AppShellSafe>
         <ToastProvider />
         <Analytics />
+        <LocalBusinessJsonLd />
       </body>
     </html>
   );

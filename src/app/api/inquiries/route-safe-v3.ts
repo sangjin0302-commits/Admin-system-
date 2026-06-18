@@ -296,6 +296,17 @@ export async function POST(request: Request) {
     const inquiry = await createInquiry(payload);
 
     const deduplicated = inquiry.createdAt.getTime() < requestStartedAt;
+    if (!deduplicated) {
+      import("@/lib/services/email-notification-service").then((mod) =>
+        mod.sendNewInquiryNotification({
+          name: String(payload.name ?? ""),
+          email: String(payload.email ?? ""),
+          phone: String(payload.phone ?? ""),
+          inquiryType: String(payload.inquiryType ?? ""),
+          message: String(payload.message ?? ""),
+        }).catch(() => {})
+      );
+    }
     return jsonWithRequestId(
       { inquiry: toPublicInquiryResponse(inquiry), deduplicated },
       201,
