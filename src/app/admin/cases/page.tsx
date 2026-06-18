@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CaseMatterActionSections } from "@/components/admin/case-matter-action-sections";
+import { CasesTable, type CaseRow } from "@/components/admin/cases-table";
 import { DeadlineScanButton } from "@/components/admin/deadline-scan-button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
@@ -146,55 +147,20 @@ export default async function AdminCasesPage({
         />
       ) : (
         <Card className="overflow-hidden p-0">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-line text-sm">
-              <thead className="bg-surface-muted text-left text-xs uppercase tracking-wide text-text-muted">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">{t("tableCase")}</th>
-                  <th className="px-4 py-3 font-semibold">{t("tableStatus")}</th>
-                  <th className="px-4 py-3 font-semibold">{t("tableNextAction")}</th>
-                  <th className="px-4 py-3 font-semibold">{t("tableDueDate")}</th>
-                  <th className="px-4 py-3 font-semibold">{t("tablePendingDocs")}</th>
-                  <th className="px-4 py-3 font-semibold">{t("tableUpdatedAt")}</th>
-                  <th className="px-4 py-3 font-semibold" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line bg-surface">
-                {cases.map((item) => (
-                  <tr key={item.id} className="align-top">
-                    <td className="px-4 py-3">
-                      <p className="font-semibold text-text-strong">{item.title}</p>
-                      <p className="mt-1 text-xs text-text-muted">
-                        {item.caseNo ?? t("caseNoMissing")} | {formatCaseMatterTypeLabel(item.matterType)}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 text-text">
-                      {getCaseMatterStatusLabel(item.status, locale)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-text-strong">{item.nextAction.message}</p>
-                      <p className="mt-1 text-xs text-text-muted">
-                        {item.nextAction.priority} | {item.nextAction.actionType}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 text-text">{formatDate(item.dueDate)}</td>
-                    <td className="px-4 py-3 text-text">
-                      {countRequiredDocumentBacklog(item)}
-                    </td>
-                    <td className="px-4 py-3 text-text-muted">{formatDateTime(item.updatedAt)}</td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/cases/${item.id}`}
-                        className="inline-flex h-9 items-center rounded-lg border border-line bg-surface px-3 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
-                      >
-                        {t("viewDetail")}
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <CasesTable
+            rows={cases.map((item): CaseRow => ({
+              id: item.id,
+              title: item.title,
+              caseNo: item.caseNo,
+              matterTypeLabel: formatCaseMatterTypeLabel(item.matterType),
+              statusLabel: getCaseMatterStatusLabel(item.status, locale),
+              nextActionMessage: item.nextAction.message,
+              nextActionMeta: `${item.nextAction.priority} | ${item.nextAction.actionType}`,
+              dueDate: formatDate(item.dueDate),
+              pendingDocs: countRequiredDocumentBacklog(item),
+              updatedAt: formatDateTime(item.updatedAt),
+            }))}
+          />
         </Card>
       )}
     </div>
