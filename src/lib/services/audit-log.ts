@@ -13,7 +13,8 @@ export type AuditEvent =
   | "admin.pdf_download"
   | "admin.csv_export"
   | "admin.case_status_change"
-  | "admin.category_change";
+  | "admin.category_change"
+  | "admin.client_message";
 
 export async function logAudit(opts: {
   event: AuditEvent;

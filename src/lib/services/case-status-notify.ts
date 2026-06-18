@@ -50,7 +50,7 @@ export async function notifyClientCaseStatusChanged(
   });
 
   const email = caseMatter?.inquiry?.email;
-  if (!caseMatter || !email) {
+  if (!caseMatter || !caseMatter.inquiry || !email) {
     console.log("[case-status-notify] no email — skip", caseMatterId);
     return;
   }
