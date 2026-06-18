@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
+import toast from "react-hot-toast";
 
 import { adminCasesMessages } from "@/i18n/locales/admin-cases";
 import { createTranslator, type UiLocale } from "@/i18n/shared";
@@ -61,7 +62,9 @@ export function CaseMatterStatusForm({
       });
 
       if (!response.ok) {
-        setMessage(await parseClientApiError(response, t("statusUpdateFailed")));
+        const errMsg = await parseClientApiError(response, t("statusUpdateFailed"));
+        setMessage(errMsg);
+        toast.error(errMsg);
         if (response.status === 409 && response.headers.get("X-Current-Updated-At")) {
           router.refresh();
         }
@@ -69,6 +72,7 @@ export function CaseMatterStatusForm({
       }
 
       setMessage(t("statusUpdateSuccess"));
+      toast.success(t("statusUpdateSuccess"));
       router.refresh();
     });
   }

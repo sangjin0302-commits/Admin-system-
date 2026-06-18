@@ -52,10 +52,10 @@ export function PublicFooter() {
               업무 분야
             </p>
             <ul className="mt-4 space-y-2 text-sm text-white/80">
-              <li><Link href="/services/immigration" className="hover:text-gold-soft">비자/체류</Link></li>
-              <li><Link href="/services/appeal" className="hover:text-gold-soft">행정심판</Link></li>
-              <li><Link href="/services/contract" className="hover:text-gold-soft">계약서/사실조사</Link></li>
-              <li><Link href="/services/license" className="hover:text-gold-soft">인허가</Link></li>
+              <li><Link href="/services/immigration" className="transition-colors duration-200 hover:text-gold-soft">비자/체류</Link></li>
+              <li><Link href="/services/appeal" className="transition-colors duration-200 hover:text-gold-soft">행정심판</Link></li>
+              <li><Link href="/services/contract" className="transition-colors duration-200 hover:text-gold-soft">계약서/사실조사</Link></li>
+              <li><Link href="/services/license" className="transition-colors duration-200 hover:text-gold-soft">인허가</Link></li>
             </ul>
           </div>
 
@@ -65,10 +65,10 @@ export function PublicFooter() {
               사무소
             </p>
             <ul className="mt-4 space-y-2 text-sm text-white/80">
-              <li><Link href="/about" className="hover:text-gold-soft">대표 소개</Link></li>
-              <li><Link href="/cases" className="hover:text-gold-soft">처리 사례</Link></li>
-              <li><Link href="/blog" className="hover:text-gold-soft">법률 칼럼</Link></li>
-              <li><Link href="/track" className="hover:text-gold-soft">진행상황 조회</Link></li>
+              <li><Link href="/about" className="transition-colors duration-200 hover:text-gold-soft">대표 소개</Link></li>
+              <li><Link href="/cases" className="transition-colors duration-200 hover:text-gold-soft">처리 사례</Link></li>
+              <li><Link href="/blog" className="transition-colors duration-200 hover:text-gold-soft">법률 칼럼</Link></li>
+              <li><Link href="/track" className="transition-colors duration-200 hover:text-gold-soft">진행상황 조회</Link></li>
             </ul>
           </div>
 
@@ -101,8 +101,8 @@ export function PublicFooter() {
         <div className="mt-10 flex flex-col items-start justify-between gap-3 border-t border-white/15 pt-6 text-xs text-white/50 sm:flex-row sm:items-center">
           <p>© 2026 ETHOS 행정사사무소. All rights reserved.</p>
           <div className="flex gap-4">
-            <Link href="/privacy" className="hover:text-gold-soft">개인정보 처리방침</Link>
-            <Link href="/terms" className="hover:text-gold-soft">이용약관</Link>
+            <Link href="/privacy" className="transition-colors duration-200 hover:text-gold-soft">개인정보 처리방침</Link>
+            <Link href="/terms" className="transition-colors duration-200 hover:text-gold-soft">이용약관</Link>
           </div>
         </div>
       </div>
