@@ -41,10 +41,11 @@ export default function ForgotPage() {
             </Link>
           </div>
         ) : (
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4" aria-label="비밀번호 재설정 양식">
             <div>
-              <label className="font-serif text-sm font-bold text-primary">이메일</label>
+              <label htmlFor="forgot-email" className="font-serif text-sm font-bold text-primary">이메일</label>
               <input
+                id="forgot-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

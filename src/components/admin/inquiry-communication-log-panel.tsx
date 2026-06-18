@@ -220,7 +220,7 @@ export function InquiryCommunicationLogPanel({
                   {index < timeline.length - 1 ? (
                     <span className="absolute left-[7px] top-5 h-[calc(100%+8px)] w-px bg-border/70" />
                   ) : null}
-                  <span className="absolute left-0 top-1.5 h-4 w-4 rounded-full border border-border-strong bg-white" />
+                  <span className="absolute left-0 top-1.5 h-4 w-4 rounded-full border border-line-strong bg-white" />
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-semibold text-text-strong">{item.summary}</p>
                     <span className="rounded-full bg-surface px-2 py-0.5 text-xs text-text-muted">

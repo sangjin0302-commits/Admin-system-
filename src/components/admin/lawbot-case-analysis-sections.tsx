@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -36,7 +36,7 @@ export function MatchedLawCard({
           items.map((item) => (
             <div
               key={`${item.law}-${item.match_type ?? "unknown"}`}
-              className="rounded-2xl border border-border/60 bg-white/70 p-4"
+              className="rounded-2xl border border-line/60 bg-white/70 p-4"
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -99,7 +99,7 @@ export function MatchedArticleCard({
           items.map((item) => (
             <div
               key={`${item.law_name ?? item.law ?? "law"}-${item.article_label ?? item.article ?? "article"}-${item.article_key ?? item.jo ?? "jo"}`}
-              className="rounded-2xl border border-border/60 bg-white/70 p-4"
+              className="rounded-2xl border border-line/60 bg-white/70 p-4"
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -158,7 +158,7 @@ export function RefreshButton({
         type="button"
         onClick={onRefresh}
         disabled={isRefreshing || isInitialAnalysisBlocked}
-        className="inline-flex items-center rounded-full border border-border/70 px-4 py-2 text-xs font-medium text-text transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex items-center rounded-full border border-line/70 px-4 py-2 text-xs font-medium text-text transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isRefreshing ? "재분석 중..." : idleLabel}
       </button>
@@ -182,7 +182,7 @@ export function SimpleListCard({ title, items }: { title: string; items: string[
 
 export function MiniSummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-white/70 p-4">
+    <div className="rounded-2xl border border-line/60 bg-white/70 p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">{label}</p>
       <p className="mt-2 text-sm font-medium text-text">{value}</p>
     </div>
@@ -233,7 +233,7 @@ export function LawbotConnectionReadinessCard({
       ) : null}
 
       {storedSnapshot?.summary ? (
-        <div className="mt-4 rounded-2xl border border-border/60 bg-white/70 p-4">
+        <div className="mt-4 rounded-2xl border border-line/60 bg-white/70 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">마지막 분석 요약</p>
           <p className="mt-2 text-sm text-text">{storedSnapshot.summary}</p>
           {storedSnapshot.payload?.practical_use_status ? (
@@ -253,7 +253,7 @@ export function LawbotConnectionReadinessCard({
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-2xl border border-border/60 bg-white/70 p-4">
+      <div className="mt-4 rounded-2xl border border-line/60 bg-white/70 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">Lawbot 입력 미리보기</p>
         <pre className="mt-3 whitespace-pre-wrap text-xs leading-6 text-text">{snapshot.factInputPreview}</pre>
       </div>
@@ -283,7 +283,7 @@ export function LawbotExecutionFlowCard({
           <MiniSummaryCard key={`lawbot-step-${index}`} label={`Step ${index + 1}`} value={step} />
         ))}
       </div>
-      <div className="mt-4 rounded-2xl border border-border/60 bg-white/70 p-4">
+      <div className="mt-4 rounded-2xl border border-line/60 bg-white/70 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">Fallback 기준</p>
         <p className="mt-2 text-sm text-text">{executionFlow.fallbackNote}</p>
       </div>
@@ -298,7 +298,7 @@ export function SearchQueryCard({ title, items }: { title: string; items: string
       <div className="mt-3 space-y-3">
         {items.length > 0 ? (
           items.map((item) => (
-            <div key={`${title}-${item}`} className="rounded-2xl border border-border/60 bg-white/70 p-4">
+            <div key={`${title}-${item}`} className="rounded-2xl border border-line/60 bg-white/70 p-4">
               <p className="text-sm font-semibold text-text">{item}</p>
               <SearchActions query={item} label="관련 검색" className="mt-3" />
             </div>
@@ -328,7 +328,7 @@ export function ReferenceCard({
       {items.length > 0 ? (
         <div className="mt-3 space-y-3">
           {items.map((item) => (
-            <div key={`${title}-${item.title}-${item.meta}`} className="rounded-2xl border border-border/60 bg-white/70 p-4">
+            <div key={`${title}-${item.title}-${item.meta}`} className="rounded-2xl border border-line/60 bg-white/70 p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-text">{item.title}</p>
@@ -362,11 +362,11 @@ export function SupplementalSourcesCard({
       <p className="ui-kicker">보조 참고자료</p>
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         {entries.map(([category, items]) => (
-          <div key={category} className="rounded-2xl border border-border/60 bg-white/70 p-4">
+          <div key={category} className="rounded-2xl border border-line/60 bg-white/70 p-4">
             <p className="text-sm font-semibold text-text">{labelSupplementalCategory(category)}</p>
             <div className="mt-3 space-y-3">
               {items.map((item, index) => (
-                <div key={`${category}-${index}`} className="rounded-2xl border border-border/50 bg-surface/80 p-3">
+                <div key={`${category}-${index}`} className="rounded-2xl border border-line/50 bg-surface/80 p-3">
                   <p className="text-sm font-medium text-text">{String(item.title ?? item.query ?? "참고 자료")}</p>
                   <p className="mt-1 text-xs text-text-muted">
                     {[item.kind, item.source, item.number, item.date].filter(Boolean).join(" · ")}

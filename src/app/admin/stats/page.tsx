@@ -45,7 +45,7 @@ export default async function AdminStatsPage() {
               <span className="text-xs font-semibold text-text-muted">{m.month}</span>
               <div className="h-5 overflow-hidden rounded bg-surface-muted">
                 <div
-                  className="h-full bg-primary"
+                  className="h-full bg-primary transition-all duration-700 ease-out"
                   style={{ width: `${Math.round((m.revenueWon / maxRevenue) * 100)}%` }}
                 />
               </div>
@@ -104,7 +104,7 @@ export default async function AdminStatsPage() {
                   </p>
                 </div>
                 <div className="mt-1 flex h-3 overflow-hidden rounded bg-surface-muted">
-                  <div className="bg-primary" style={{ width: `${pct}%` }} />
+                  <div className="bg-primary transition-all duration-700 ease-out" style={{ width: `${pct}%` }} />
                 </div>
               </div>
             );

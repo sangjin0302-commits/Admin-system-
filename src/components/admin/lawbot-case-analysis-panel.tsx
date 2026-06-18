@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -378,7 +378,7 @@ function renderPanel(
         <p className="ui-kicker">참고 법령 요약</p>
         <div className="mt-3 space-y-3">
           {data.applicable_laws.map((item) => (
-            <div key={item.law} className="rounded-2xl border border-border/60 bg-white/70 p-4">
+            <div key={item.law} className="rounded-2xl border border-line/60 bg-white/70 p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-text">{item.law}</p>
@@ -486,7 +486,7 @@ function getPracticalStatusTone(status?: string | null) {
     return {
       label: "실전 상태 미표기",
       badgeClass: "border-line-strong bg-surface text-text-strong",
-      cardClass: "border-border/60 bg-surface/60"
+      cardClass: "border-line/60 bg-surface/60"
     };
   }
 

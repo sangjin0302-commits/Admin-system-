@@ -34,10 +34,11 @@ function SignInForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4" aria-label="로그인 양식">
       <div>
-        <label className="font-serif text-sm font-bold text-primary">이메일</label>
+        <label htmlFor="signin-email" className="font-serif text-sm font-bold text-primary">이메일</label>
         <input
+          id="signin-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -47,8 +48,9 @@ function SignInForm() {
         />
       </div>
       <div>
-        <label className="font-serif text-sm font-bold text-primary">비밀번호</label>
+        <label htmlFor="signin-password" className="font-serif text-sm font-bold text-primary">비밀번호</label>
         <input
+          id="signin-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -59,7 +61,7 @@ function SignInForm() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+        <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
       )}
 
       <button

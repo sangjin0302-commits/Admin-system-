@@ -42,7 +42,7 @@ export default function SignUpPage() {
       </div>
 
       <div className="ethos-card mt-8 p-7">
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4" aria-label="의뢰인 가입 양식">
           {(
             [
               { k: "name", label: "이름", type: "text", required: true, autoComplete: "name" },
@@ -58,8 +58,9 @@ export default function SignUpPage() {
             ] as const
           ).map((f) => (
             <div key={f.k}>
-              <label className="font-serif text-sm font-bold text-primary">{f.label}</label>
+              <label htmlFor={`signup-${f.k}`} className="font-serif text-sm font-bold text-primary">{f.label}</label>
               <input
+                id={`signup-${f.k}`}
                 type={f.type}
                 value={form[f.k]}
                 onChange={(e) => set(f.k, e.target.value)}
@@ -71,7 +72,7 @@ export default function SignUpPage() {
           ))}
 
           {error && (
-            <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+            <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
           )}
 
           <button

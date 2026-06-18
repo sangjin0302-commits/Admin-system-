@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -55,7 +55,7 @@ export function InquiryOperationsFeedPanel({
                 {index < items.length - 1 ? (
                   <span className="absolute left-[7px] top-5 h-[calc(100%+8px)] w-px bg-border/70" />
                 ) : null}
-                <span className="absolute left-0 top-1.5 h-4 w-4 rounded-full border border-border-strong bg-white" />
+                <span className="absolute left-0 top-1.5 h-4 w-4 rounded-full border border-line-strong bg-white" />
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm font-semibold text-text-strong">{item.label}</p>
                   {item.label.includes("추천") ? (

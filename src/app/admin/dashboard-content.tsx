@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import {
   DashboardListCard,
@@ -241,31 +241,31 @@ export default async function AdminDashboardContent() {
               </Link>
               <Link
                 href="/admin/intake-sources"
-                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
+                className="inline-flex items-center justify-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-line-strong hover:bg-surface-muted"
               >
                 접수 유입 분석
               </Link>
               <Link
                 href="/admin/ledger"
-                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
+                className="inline-flex items-center justify-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-line-strong hover:bg-surface-muted"
               >
                 업무처리부
               </Link>
               <Link
                 href="/admin/document-lab"
-                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
+                className="inline-flex items-center justify-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-line-strong hover:bg-surface-muted"
               >
                 문서 실험실
               </Link>
               <Link
                 href="/admin/integrations"
-                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
+                className="inline-flex items-center justify-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-line-strong hover:bg-surface-muted"
               >
                 연동 센터
               </Link>
               <Link
                 href="/admin/monitoring"
-                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-border-strong hover:bg-surface-muted"
+                className="inline-flex items-center justify-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-line-strong hover:bg-surface-muted"
               >
                 모니터링
               </Link>
@@ -441,7 +441,7 @@ export default async function AdminDashboardContent() {
               aria-valuenow={operationalHealthScore}
             >
               <div
-                className={`h-full rounded-full ${getOperationalHealthToneClass(operationalHealthScore)}`}
+                className={`h-full rounded-full transition-all duration-700 ease-out ${getOperationalHealthToneClass(operationalHealthScore)}`}
                 style={{ width: `${operationalHealthScore}%` }}
               />
             </div>

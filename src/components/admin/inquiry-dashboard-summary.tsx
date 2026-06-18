@@ -77,7 +77,7 @@ export function InquiryDashboardSummary({
           <div className="mt-4 grid gap-3 xl:grid-cols-2">
             {actionItems.map((item) => (
               <Link key={item.id} href={item.href}>
-                <Card muted className="p-4 transition hover:border-border-strong hover:bg-surface-muted">
+                <Card muted className="p-4 transition hover:border-line-strong hover:bg-surface-muted">
                   <div className="flex items-center gap-2">
                     <span className={toneClassName(item.tone)} />
                     <p className="text-sm font-semibold text-text-strong">{item.title}</p>

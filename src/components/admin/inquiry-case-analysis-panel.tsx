@@ -174,7 +174,7 @@ function ReferenceCard({
           const searchSource = kind === "law" ? `site:law.go.kr ${heading}` : `site:glaw.scourt.go.kr ${heading}`;
           const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchSource)}`;
           return (
-            <div key={`${title}-${heading}`} className="rounded-2xl border border-border/60 bg-white/70 p-4">
+            <div key={`${title}-${heading}`} className="rounded-2xl border border-line/60 bg-white/70 p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-text">{heading}</p>

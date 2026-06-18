@@ -42,12 +42,13 @@ function ResetForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4" aria-label="새 비밀번호 설정 양식">
       <div>
-        <label className="font-serif text-sm font-bold text-primary">
+        <label htmlFor="reset-password" className="font-serif text-sm font-bold text-primary">
           새 비밀번호 (영문+숫자 10자 이상)
         </label>
         <input
+          id="reset-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -56,7 +57,7 @@ function ResetForm() {
           className="mt-1 w-full rounded-lg border border-gold/40 bg-surface px-4 py-2.5 text-sm focus:border-gold focus:outline-none"
         />
       </div>
-      {error && <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
       <button
         type="submit"
         disabled={loading}
