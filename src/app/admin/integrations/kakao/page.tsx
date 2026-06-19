@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 import { KakaoTestButton } from "./kakao-test-button";
 
@@ -16,13 +17,11 @@ export default function KakaoIntegrationPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="p-6">
-        <p className="ui-kicker">Integration</p>
-        <h2 className="mt-2 ui-page-title">카카오톡 채널 연동</h2>
-        <p className="mt-2 max-w-3xl text-sm text-text-muted">
-          카카오 알림톡을 통해 고객에게 문의 접수 확인, 사건 진행 상태 등을 자동 알림합니다.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="Integration"
+        title="카카오톡 채널 연동"
+        description="카카오 알림톡을 통해 고객에게 문의 접수 확인, 사건 진행 상태 등을 자동 알림합니다."
+      />
 
       {/* Status */}
       <Card className="p-6">

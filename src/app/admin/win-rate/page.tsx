@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { getHistoricalWinRate } from "@/lib/services/win-rate-prediction-service";
 
 export const dynamic = "force-dynamic";
@@ -23,14 +24,11 @@ export default async function WinRatePage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <p className="ui-kicker">AI Analytics</p>
-        <h2 className="mt-2 ui-page-title">수임율 예측</h2>
-        <p className="mt-2 max-w-3xl text-sm text-text-muted">
-          가중치 기반 휴리스틱으로 새 문의의 수임 가능성을 예측하고, 과거 데이터 기반의 실제
-          수임율과 비교합니다.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="AI Analytics"
+        title="수임율 예측"
+        description="가중치 기반 휴리스틱으로 새 문의의 수임 가능성을 예측하고, 과거 데이터 기반의 실제 수임율과 비교합니다."
+      />
 
       <Card className="p-6">
         <h3 className="text-sm font-semibold text-text-strong">전체 수임율</h3>

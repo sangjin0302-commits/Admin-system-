@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 type DraftType = "appeal" | "complaint" | "petition" | "application" | "objection";
 
@@ -71,15 +72,11 @@ export default function DocGeneratorPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <p className="ui-kicker">AI Drafting</p>
-        <h2 className="mt-2 ui-page-title">문서 초안 생성</h2>
-        <p className="mt-2 max-w-3xl text-sm text-text-muted">
-          행정심판 청구서, 진정서, 민원, 인허가 신청서, 이의신청서 초안을 자동으로 생성합니다.
-          ANTHROPIC_API_KEY가 설정된 경우 Claude를 활용하고, 그렇지 않으면 템플릿 기반으로
-          작성됩니다.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="AI Drafting"
+        title="문서 초안 생성"
+        description="행정심판 청구서, 진정서, 민원, 인허가 신청서, 이의신청서 초안을 자동으로 생성합니다. ANTHROPIC_API_KEY가 설정된 경우 Claude를 활용하고, 그렇지 않으면 템플릿 기반으로 작성됩니다."
+      />
 
       <Card className="p-6">
         <form onSubmit={handleSubmit} className="space-y-4">

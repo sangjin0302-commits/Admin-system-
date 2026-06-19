@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 import {
   listSignatureRequests,
@@ -21,18 +22,12 @@ export default function SignaturesPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="ui-kicker">Documents</p>
-            <h2 className="mt-2 ui-page-title">전자 서명</h2>
-            <p className="mt-2 max-w-3xl text-sm text-text-muted">
-              계약서 및 동의서에 대한 전자 서명 요청을 관리합니다.
-            </p>
-          </div>
-          <NewSignatureButton />
-        </div>
-      </Card>
+      <AdminPageHeader
+        kicker="Documents"
+        title="전자 서명"
+        description="계약서 및 동의서에 대한 전자 서명 요청을 관리합니다."
+        action={<NewSignatureButton />}
+      />
 
       {requests.length === 0 ? (
         <Card className="p-6">

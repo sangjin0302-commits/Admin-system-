@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { listCampaigns } from "@/lib/services/email-campaign-service";
 
 import { NewCampaignForm } from "./new-campaign-form";
@@ -21,13 +22,11 @@ export default async function CampaignsPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <p className="ui-kicker">Marketing</p>
-        <h1 className="mt-2 ui-page-title">Email Campaigns</h1>
-        <p className="mt-2 text-sm text-text-muted">
-          Create and send targeted email campaigns to inquiry segments.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="Marketing"
+        title="Email Campaigns"
+        description="Create and send targeted email campaigns to inquiry segments."
+      />
 
       <NewCampaignForm />
 

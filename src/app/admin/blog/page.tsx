@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { prisma } from "@/lib/prisma/client";
 import Link from "next/link";
 
@@ -12,20 +13,18 @@ export default async function BlogListPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="ui-kicker">Content Management</p>
-            <h2 className="mt-2 ui-page-title">블로그 관리</h2>
-          </div>
+      <AdminPageHeader
+        kicker="Content Management"
+        title="블로그 관리"
+        action={
           <Link
             href="/admin/blog/new"
             className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-text-strong"
           >
             + 새 글 작성
           </Link>
-        </div>
-      </Card>
+        }
+      />
 
       {posts.length === 0 ? (
         <Card className="p-8 text-center">

@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { getReferralStats, listCodes } from "@/lib/services/referral-service";
 
 import { NewCodeButton } from "./new-code-button";
@@ -11,13 +12,11 @@ export default async function ReferralsPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <p className="ui-kicker">Growth</p>
-        <h1 className="mt-2 ui-page-title">Customer Referrals</h1>
-        <p className="mt-2 text-sm text-text-muted">
-          Generate referral codes and track top referrers.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="Growth"
+        title="Customer Referrals"
+        description="Generate referral codes and track top referrers."
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="p-5">

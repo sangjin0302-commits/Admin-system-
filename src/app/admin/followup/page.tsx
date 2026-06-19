@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { getOverdueInquiries, getOverdueCases } from "@/lib/services/auto-followup-service";
 import Link from "next/link";
 
@@ -12,13 +13,11 @@ export default async function FollowupPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <p className="ui-kicker">Automation</p>
-        <h2 className="mt-2 ui-page-title">후속 알림</h2>
-        <p className="mt-2 text-sm text-text-muted">
-          7일 이상 업데이트 없는 문의 및 사건을 표시합니다.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="Automation"
+        title="후속 알림"
+        description="7일 이상 업데이트 없는 문의 및 사건을 표시합니다."
+      />
 
       <Card className="p-5">
         <h3 className="text-sm font-semibold text-text-strong">

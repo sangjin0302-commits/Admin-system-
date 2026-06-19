@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -18,13 +19,11 @@ export default function PaymentsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="p-6">
-        <p className="ui-kicker">Finance</p>
-        <h2 className="mt-2 ui-page-title">결제 관리</h2>
-        <p className="mt-2 max-w-3xl text-sm text-text-muted">
-          토스페이먼츠를 통한 결제 연동 현황과 최근 결제 내역을 확인합니다.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="Finance"
+        title="결제 관리"
+        description="토스페이먼츠를 통한 결제 연동 현황과 최근 결제 내역을 확인합니다."
+      />
 
       {/* Integration status */}
       <Card className="p-6">

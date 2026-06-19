@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { getTestResults, listTests } from "@/lib/services/ab-test-service";
 
 export const dynamic = "force-dynamic";
@@ -9,13 +10,11 @@ export default async function ABTestsPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <p className="ui-kicker">Growth</p>
-        <h1 className="mt-2 ui-page-title">A/B Tests</h1>
-        <p className="mt-2 text-sm text-text-muted">
-          Manage experiments and review variant performance.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="Growth"
+        title="A/B Tests"
+        description="Manage experiments and review variant performance."
+      />
 
       {results.length === 0 ? (
         <Card className="p-5">

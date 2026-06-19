@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Table, TableContainer } from "@/components/ui/table";
 import { getJobs } from "@/lib/services/job-scheduler-service";
 import { RunNowButton } from "./run-now-button";
@@ -10,13 +11,11 @@ export default async function ScheduledJobsPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <p className="ui-kicker">Automation</p>
-        <h1 className="mt-2 ui-page-title">예약 작업</h1>
-        <p className="mt-2 text-sm text-text-muted">
-          정기 실행되는 백그라운드 작업 목록입니다. 수동으로도 실행할 수 있습니다.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="Automation"
+        title="예약 작업"
+        description="정기 실행되는 백그라운드 작업 목록입니다. 수동으로도 실행할 수 있습니다."
+      />
 
       <Card className="p-0">
         <TableContainer className="border-0">

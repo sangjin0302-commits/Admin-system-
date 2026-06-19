@@ -1,16 +1,15 @@
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ExcelUpload } from "@/components/admin/excel-upload";
 
 export default function BulkUploadPage() {
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <p className="ui-kicker">Data Import</p>
-        <h2 className="mt-2 ui-page-title">일괄 등록</h2>
-        <p className="mt-2 max-w-3xl text-sm text-text-muted">
-          CSV 파일로 문의 데이터를 일괄 등록합니다. 헤더 행에 이름, 이메일, 전화, 유형, 내용 컬럼을 포함해주세요.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="Data Import"
+        title="일괄 등록"
+        description="CSV 파일로 문의 데이터를 일괄 등록합니다. 헤더 행에 이름, 이메일, 전화, 유형, 내용 컬럼을 포함해주세요."
+      />
 
       <ExcelUpload
         endpoint="/api/admin/bulk-upload"

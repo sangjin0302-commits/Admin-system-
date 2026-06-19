@@ -1,15 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Field, FieldGroup } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { StateInline } from "@/components/ui/state-panel";
-import { Textarea } from "@/components/ui/textarea";
 import { parseClientApiError } from "@/lib/http/client-api";
 import type { IntakeSourceTrackingPayload } from "@/lib/services/intake-source-tracking";
 import type { Locale, UrgencyLevel } from "@/types/inquiry";
@@ -36,39 +28,18 @@ import {
   type IntakeCategoryDisplayLocale
 } from "@/types/intake-category";
 
-type IntakeResponse = {
-  deduplicated?: boolean;
-  inquiry?: {
-    received: boolean;
-    message: string;
-    trackingCode?: string;
-  };
-};
-
-type IntakeAvailabilityResponse = {
-  ok?: boolean;
-  available?: boolean;
-  maintenanceMode?: boolean;
-  maintenanceMessage?: string | null;
-  retryAfterSec?: number | null;
-};
-
-type FormState = {
-  category: IntakeCategory | "";
-  contactName: string;
-  phone: string;
-  email: string;
-  consultationMethod: string;
-  preferredLanguage: string;
-  declaredUrgency: UrgencyLevel;
-  description: string;
-  documentAvailability: string;
-  consentToPrivacy: boolean;
-  categoryDetails: Record<string, string>;
-  website: string;
-};
-
-type FieldGroupKey = "basic" | "deadline" | "documents" | "request";
+import { IntakeStepCategory } from "./steps/intake-step-category";
+import { IntakeStepContact } from "./steps/intake-step-contact";
+import { IntakeStepDetails } from "./steps/intake-step-details";
+import { IntakeStepReview } from "./steps/intake-step-review";
+import { IntakeStepSuccess } from "./steps/intake-step-success";
+import { IntakeStepSummary } from "./steps/intake-step-summary";
+import type {
+  FieldGroupKey,
+  FormState,
+  IntakeAvailabilityResponse,
+  IntakeResponse
+} from "./intake-types";
 
 const initialState: FormState = {
   category: "",
@@ -332,60 +303,6 @@ function getCategoryGuidance(category: IntakeCategory, locale: IntakeCategoryDis
   );
 }
 
-function StepHeader({
-  step,
-  title,
-  description
-}: {
-  step: number;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary bg-primary text-sm font-semibold text-white">
-        {step}
-      </span>
-      <div>
-        <p className="text-base font-semibold text-text-strong">{title}</p>
-        <p className="mt-1 text-sm text-text-muted">{description}</p>
-      </div>
-    </div>
-  );
-}
-
-function FieldBadge({
-  required,
-  locale
-}: {
-  required?: boolean;
-  locale: IntakeCategoryDisplayLocale;
-}) {
-  const copy = intakeFormCopy[locale];
-  return (
-    <span className={required ? "ui-status-pill intake-pill-required" : "ui-status-pill intake-pill-optional"}>
-      {required ? copy.required : copy.optional}
-    </span>
-  );
-}
-
-function FieldLabel({
-  label,
-  required,
-  locale
-}: {
-  label: string;
-  required?: boolean;
-  locale: IntakeCategoryDisplayLocale;
-}) {
-  return (
-    <span className="flex flex-wrap items-center gap-2">
-      <span>{label}</span>
-      <FieldBadge required={required} locale={locale} />
-    </span>
-  );
-}
-
 function getFieldGroupKey(field: IntakeCategoryDetailField): FieldGroupKey {
   const key = field.key.toLowerCase();
 
@@ -439,75 +356,14 @@ function isRequiredCategoryField(category: IntakeCategory, field: IntakeCategory
   return field.key === "workType";
 }
 
-function CategoryField({
-  field,
-  category,
-  value,
-  onChange,
-  required = false,
-  locale
-}: {
-  field: IntakeCategoryDetailField;
-  category: IntakeCategory | null;
-  value: string;
-  onChange: (value: string) => void;
-  required?: boolean;
-  locale: IntakeCategoryDisplayLocale;
-}) {
-  const copy = intakeFormCopy[locale];
-  const label = getLocalizedIntakeFieldLabel(field, locale);
-
-  if (field.input === "textarea") {
-    return (
-      <Field label="" hint={required ? copy.coreHint : undefined}>
-        <label className="ui-label">
-          <FieldLabel label={label} required={required} locale={locale} />
-        </label>
-        <Textarea
-          required={required}
-          rows={4}
-          maxLength={700}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={field.placeholder}
-        />
-      </Field>
-    );
-  }
-
-  if (field.input === "select") {
-    return (
-      <Field label="" hint={required ? copy.coreHint : undefined}>
-        <label className="ui-label">
-          <FieldLabel label={label} required={required} locale={locale} />
-        </label>
-        <Select required={required} value={value} onChange={(event) => onChange(event.target.value)}>
-          <option value="">{copy.selectPlaceholder}</option>
-          {(field.options ?? []).map((option) => (
-            <option key={option} value={option}>
-              {getLocalizedIntakeOptionLabel({ category, field, option, locale })}
-            </option>
-          ))}
-        </Select>
-      </Field>
-    );
-  }
-
-  return (
-    <Field label="" hint={required ? copy.coreHint : undefined}>
-      <label className="ui-label">
-        <FieldLabel label={label} required={required} locale={locale} />
-      </label>
-      <Input
-        required={required}
-        type={field.input}
-        maxLength={field.input === "date" ? undefined : 160}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={field.placeholder}
-      />
-    </Field>
-  );
+function getCommonSubtypeDisplay(value: string, locale: IntakeCategoryDisplayLocale) {
+  const field = intakeCategoryDetailFields.civil_petition[0];
+  return getLocalizedIntakeOptionLabel({
+    category: "civil_petition",
+    field,
+    option: value,
+    locale
+  });
 }
 
 export function IntakeFormSafeV3({
@@ -521,7 +377,8 @@ export function IntakeFormSafeV3({
   const copy = intakeFormCopy[locale];
   const [form, setForm] = useState<FormState>({
     ...initialState,
-    preferredLanguage: initialLocale === "en" ? preferredLanguageOptions[1] : preferredLanguageOptions[0]
+    preferredLanguage:
+      initialLocale === "en" ? preferredLanguageOptions[1] : preferredLanguageOptions[0]
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -647,8 +504,10 @@ export function IntakeFormSafeV3({
       requestedOutcome: `${categoryLabel} 업무 검토 및 진행 가능성 안내`,
       requestedInquiryType: intakeCategoryInquiryTypeMap[selectedCategory],
       declaredUrgency: form.declaredUrgency,
-      nationality: form.categoryDetails.nationality ?? form.categoryDetails.representativeNationality ?? "",
-      currentStatus: form.categoryDetails.currentVisaStatus ?? form.categoryDetails.currentStage ?? "",
+      nationality:
+        form.categoryDetails.nationality ?? form.categoryDetails.representativeNationality ?? "",
+      currentStatus:
+        form.categoryDetails.currentVisaStatus ?? form.categoryDetails.currentStage ?? "",
       documentCountry: "",
       targetAgency:
         form.categoryDetails.agency ??
@@ -691,7 +550,9 @@ export function IntakeFormSafeV3({
     }
     if (
       payload.category === "civil_petition" &&
-      !(civilPetitionSubtypeValues as readonly string[]).includes(payload.categoryDetails.civilPetitionType ?? "")
+      !(civilPetitionSubtypeValues as readonly string[]).includes(
+        payload.categoryDetails.civilPetitionType ?? ""
+      )
     ) {
       setError(copy.civilPetitionTypeRequired);
       return;
@@ -764,367 +625,71 @@ export function IntakeFormSafeV3({
           />
         </div>
 
-        <section className="space-y-4">
-          <StepHeader
-            step={1}
-            title={copy.step1Title}
-            description={copy.step1Description}
-          />
-          <div className="grid gap-3">
-            {intakeCategoryValues.map((category) => {
-              const selected = form.category === category;
-              return (
-                <button
-                  key={category}
-                  type="button"
-                  className={[
-                    "rounded-md border p-4 text-left transition",
-                    selected
-                      ? "border-primary bg-primary/10 text-text-strong"
-                      : "border-line bg-surface text-text hover:border-primary/50"
-                  ].join(" ")}
-                  onClick={() => updateCategory(category)}
-                >
-                  <span className="block text-base font-semibold">
-                    {getLocalizedIntakeCategoryLabel(category, locale)}
-                  </span>
-                  <span className="mt-1 block text-sm text-text-muted">
-                    {getCategoryHelp(category, locale)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          {selectedCategory ? (
-            <div className="rounded-md border border-primary/30 bg-primary/5 p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-text-muted">{copy.selectedCategory}</span>
-                <Badge>{getLocalizedIntakeCategoryLabel(selectedCategory, locale)}</Badge>
-              </div>
-              <p className="mt-2 text-sm text-text-muted">
-                {getCategoryGuidance(selectedCategory, locale)}
-              </p>
-            </div>
-          ) : null}
-        </section>
+        <IntakeStepCategory
+          copy={copy}
+          locale={locale}
+          selectedCategory={selectedCategory}
+          onSelectCategory={updateCategory}
+          getCategoryHelp={getCategoryHelp}
+          getCategoryGuidance={getCategoryGuidance}
+        />
 
-        <section className="space-y-4 border-t border-line pt-6">
-          <StepHeader
-            step={2}
-            title={copy.step2Title}
-            description={copy.step2Description}
-          />
-          <FieldGroup>
-            <Field label="">
-              <label className="ui-label">
-                <FieldLabel label={copy.name} required locale={locale} />
-              </label>
-              <Input
-                required
-                minLength={2}
-                maxLength={60}
-                value={form.contactName}
-                onChange={(event) => updateField("contactName", event.target.value)}
-                placeholder={locale === "en" ? "Full name" : "예: 김민수"}
-              />
-            </Field>
-
-            <Field label="">
-              <label className="ui-label">
-                <FieldLabel label={copy.phone} required locale={locale} />
-              </label>
-              <Input
-                required
-                maxLength={30}
-                value={form.phone}
-                onChange={(event) => updateField("phone", event.target.value)}
-                placeholder="010-0000-0000"
-              />
-            </Field>
-
-            <Field label="">
-              <label className="ui-label">
-                <FieldLabel label={copy.email} required locale={locale} />
-              </label>
-              <Input
-                required
-                type="email"
-                maxLength={254}
-                value={form.email}
-                onChange={(event) => updateField("email", event.target.value)}
-                placeholder="example@email.com"
-              />
-            </Field>
-
-            <Field label="">
-              <label className="ui-label">
-                <FieldLabel label={copy.consultationMethod} locale={locale} />
-              </label>
-              <Select
-                value={form.consultationMethod}
-                onChange={(event) => updateField("consultationMethod", event.target.value)}
-              >
-                {consultationMethodOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {getCommonOptionLabel({ kind: "consultationMethod", value: option, locale })}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-
-            <Field label="">
-              <label className="ui-label">
-                <FieldLabel label={copy.preferredLanguage} locale={locale} />
-              </label>
-              <Select
-                value={form.preferredLanguage}
-                onChange={(event) => updateField("preferredLanguage", event.target.value)}
-              >
-                {preferredLanguageOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {getCommonOptionLabel({ kind: "preferredLanguage", value: option, locale })}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-
-            <Field label="">
-              <label className="ui-label">
-                <FieldLabel label={copy.urgency} locale={locale} />
-              </label>
-              <Select
-                value={form.declaredUrgency}
-                onChange={(event) => updateField("declaredUrgency", event.target.value as UrgencyLevel)}
-              >
-                {Object.keys(urgencyOptionLabels).map((value) => (
-                  <option key={value} value={value}>
-                    {getUrgencyDisplayLabel(value as UrgencyLevel, locale)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </FieldGroup>
-        </section>
+        <IntakeStepContact
+          copy={copy}
+          locale={locale}
+          form={form}
+          updateField={updateField}
+          getCommonOptionLabel={getCommonOptionLabel}
+          getUrgencyDisplayLabel={getUrgencyDisplayLabel}
+        />
 
         {selectedCategory ? (
-          <section className="space-y-4 border-t border-line pt-6">
-            <StepHeader
-              step={3}
-              title={copy.step3Title}
-              description={copy.step3Description}
-            />
-            <div className="rounded-md border border-line bg-surface-muted p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge>{getLocalizedIntakeCategoryLabel(selectedCategory, locale)}</Badge>
-                <span className="text-sm text-text-muted">
-                  {getCategoryGuidance(selectedCategory, locale)}
-                </span>
-              </div>
-            </div>
-            <div className="space-y-5">
-              {categoryFieldGroups.map((group) => (
-                <div key={group.groupKey} className="space-y-3">
-                  <h4 className="text-sm font-semibold text-text-strong">
-                    {copy.fieldGroups[group.groupKey]}
-                  </h4>
-                  <FieldGroup>
-                    {group.fields.map((field) => (
-                      <CategoryField
-                        key={field.key}
-                        category={selectedCategory}
-                        field={field}
-                        required={isRequiredCategoryField(selectedCategory, field)}
-                        value={form.categoryDetails[field.key] ?? ""}
-                        onChange={(value) => updateCategoryDetail(field.key, value)}
-                        locale={locale}
-                      />
-                    ))}
-                  </FieldGroup>
-                </div>
-              ))}
-            </div>
-            {selectedCategory === "civil_petition" && selectedCivilPetitionSubtype ? (
-              <div className="space-y-4 border-t border-line pt-5">
-                <div>
-                  <p className="ui-kicker">
-                    {getCommonSubtypeDisplay(selectedCivilPetitionSubtype, locale)} {copy.extraQuestionsSuffix}
-                  </p>
-                  <p className="mt-2 text-sm text-text-muted">
-                    {copy.extraQuestionsDescription}
-                  </p>
-                </div>
-                <div className="space-y-5">
-                  {civilPetitionSubtypeFieldGroups.map((group) => (
-                    <div key={group.groupKey} className="space-y-3">
-                      <h4 className="text-sm font-semibold text-text-strong">
-                        {copy.fieldGroups[group.groupKey]}
-                      </h4>
-                      <FieldGroup>
-                        {group.fields.map((field) => (
-                          <CategoryField
-                            key={field.key}
-                            category={selectedCategory}
-                            field={field}
-                            value={form.categoryDetails[field.key] ?? ""}
-                            onChange={(value) => updateCategoryDetail(field.key, value)}
-                            locale={locale}
-                          />
-                        ))}
-                      </FieldGroup>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </section>
+          <IntakeStepDetails
+            copy={copy}
+            locale={locale}
+            selectedCategory={selectedCategory}
+            selectedCivilPetitionSubtype={selectedCivilPetitionSubtype}
+            categoryFieldGroups={categoryFieldGroups}
+            civilPetitionSubtypeFieldGroups={civilPetitionSubtypeFieldGroups}
+            categoryDetails={form.categoryDetails}
+            updateCategoryDetail={updateCategoryDetail}
+            isRequiredCategoryField={isRequiredCategoryField}
+            getCategoryGuidance={getCategoryGuidance}
+            getCommonSubtypeDisplay={getCommonSubtypeDisplay}
+          />
         ) : null}
 
-        <section className="space-y-4 border-t border-line pt-6">
-          <StepHeader
-            step={4}
-            title={copy.step4Title}
-            description={copy.step4Description}
-          />
-          <FieldGroup>
-            <Field label="" hint={locale === "en" ? "Summarize current status, desired outcome, deadline, and documents." : "현재 상황, 원하는 결과, 기한, 보유 자료를 중심으로 적어 주세요."}>
-              <label className="ui-label">
-                <FieldLabel label={copy.description} required locale={locale} />
-              </label>
-              <Textarea
-                required
-                rows={7}
-                minLength={20}
-                maxLength={2000}
-                value={form.description}
-                onChange={(event) => updateField("description", event.target.value)}
-                placeholder={
-                  locale === "en"
-                    ? "Please describe the current situation, needed service, deadline, and available documents."
-                    : "예: 현재 상황, 필요한 업무, 마감일, 보유 자료를 알려 주세요."
-                }
-              />
-            </Field>
+        <IntakeStepSummary
+          copy={copy}
+          locale={locale}
+          form={form}
+          updateField={updateField}
+          getCommonOptionLabel={getCommonOptionLabel}
+        />
 
-            <Field label="">
-              <label className="ui-label">
-                <FieldLabel label={copy.documentAvailability} locale={locale} />
-              </label>
-              <Select
-                value={form.documentAvailability}
-                onChange={(event) => updateField("documentAvailability", event.target.value)}
-              >
-                {documentAvailabilityOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {getCommonOptionLabel({ kind: "documentAvailability", value: option, locale })}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </FieldGroup>
-        </section>
-
-        <section className="space-y-4 border-t border-line pt-6">
-          <StepHeader
-            step={5}
-            title={copy.step5Title}
-            description={copy.step5Description}
-          />
-          <div className="rounded-md border border-line bg-surface-muted p-4">
-            <p className="text-sm font-semibold text-text-strong">{copy.summaryTitle}</p>
-            <dl className="mt-3 grid gap-2 text-sm">
-              <div className="flex flex-wrap gap-x-2 gap-y-1">
-                <dt className="text-text-muted">{copy.serviceCategory}</dt>
-                <dd className="font-medium text-text-strong">
-                  {selectedCategory ? getLocalizedIntakeCategoryLabel(selectedCategory, locale) : copy.selectedFallback}
-                </dd>
-              </div>
-              {selectedCategory === "civil_petition" && selectedCivilPetitionSubtype ? (
-                <div className="flex flex-wrap gap-x-2 gap-y-1">
-                  <dt className="text-text-muted">{copy.petitionSubtype}</dt>
-                  <dd className="font-medium text-text-strong">
-                    {getCommonSubtypeDisplay(selectedCivilPetitionSubtype, locale)}
-                  </dd>
-                </div>
-              ) : null}
-              <div className="flex flex-wrap gap-x-2 gap-y-1">
-                <dt className="text-text-muted">{copy.consultationMethod}</dt>
-                <dd className="font-medium text-text-strong">
-                  {getCommonOptionLabel({ kind: "consultationMethod", value: form.consultationMethod, locale })}
-                </dd>
-              </div>
-              <div className="flex flex-wrap gap-x-2 gap-y-1">
-                <dt className="text-text-muted">{copy.preferredLanguage}</dt>
-                <dd className="font-medium text-text-strong">
-                  {getCommonOptionLabel({ kind: "preferredLanguage", value: form.preferredLanguage, locale })}
-                </dd>
-              </div>
-              <div className="flex flex-wrap gap-x-2 gap-y-1">
-                <dt className="text-text-muted">{copy.urgency}</dt>
-                <dd className="font-medium text-text-strong">
-                  {getUrgencyDisplayLabel(form.declaredUrgency, locale)}
-                </dd>
-              </div>
-              <div className="flex flex-wrap gap-x-2 gap-y-1">
-                <dt className="text-text-muted">{copy.documents}</dt>
-                <dd className="font-medium text-text-strong">
-                  {getCommonOptionLabel({ kind: "documentAvailability", value: form.documentAvailability, locale })}
-                </dd>
-              </div>
-            </dl>
-          </div>
-          <label className="flex items-start gap-3 rounded-md border border-line bg-surface-muted p-4">
-            <input
-              required
-              type="checkbox"
-              checked={form.consentToPrivacy}
-              onChange={(event) => updateField("consentToPrivacy", event.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-line text-primary"
-            />
-            <span className="text-sm font-semibold text-text-strong">
-              {copy.privacyConsent}
-            </span>
-          </label>
-
-          {error ? <StateInline tone="error">{error}</StateInline> : null}
-          {!error && notice ? <StateInline tone="success">{notice}</StateInline> : null}
-
-          <Button type="submit" disabled={isSubmitting || !intakeAvailable} size="lg" fullWidth>
-            {isSubmitting ? copy.submitting : copy.submit}
-          </Button>
-        </section>
+        <IntakeStepReview
+          copy={copy}
+          locale={locale}
+          form={form}
+          selectedCategory={selectedCategory}
+          selectedCivilPetitionSubtype={selectedCivilPetitionSubtype}
+          updateField={updateField}
+          getCommonOptionLabel={getCommonOptionLabel}
+          getUrgencyDisplayLabel={getUrgencyDisplayLabel}
+          getCommonSubtypeDisplay={getCommonSubtypeDisplay}
+          error={error}
+          notice={notice}
+          isSubmitting={isSubmitting}
+          intakeAvailable={intakeAvailable}
+        />
       </form>
 
-      {completedMessage ? (
-        <section className="rounded-md border border-line bg-surface-muted p-5">
-          <p className="ui-kicker">{copy.completeKicker}</p>
-          <p className="mt-2 text-base font-semibold text-text-strong">{completedMessage}</p>
-          {completedTrackingCode ? (
-            <>
-              <p className="mt-3 text-sm text-text">
-                {copy.trackingNumber}:{" "}
-                <span className="font-semibold text-text-strong">{completedTrackingCode}</span>
-              </p>
-              <p className="mt-2 text-sm text-text-muted">{copy.trackingHelp}</p>
-              <Link
-                href="/track"
-                className="mt-4 inline-flex h-10 items-center rounded-md border border-line-strong bg-surface px-4 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
-              >
-                {locale === "en" ? "Check request status" : "접수 진행상황 확인하기"}
-              </Link>
-            </>
-          ) : null}
-        </section>
-      ) : null}
+      <IntakeStepSuccess
+        copy={copy}
+        locale={locale}
+        completedMessage={completedMessage}
+        completedTrackingCode={completedTrackingCode}
+      />
     </div>
   );
-}
-
-function getCommonSubtypeDisplay(value: string, locale: IntakeCategoryDisplayLocale) {
-  const field = intakeCategoryDetailFields.civil_petition[0];
-  return getLocalizedIntakeOptionLabel({
-    category: "civil_petition",
-    field,
-    option: value,
-    locale
-  });
 }

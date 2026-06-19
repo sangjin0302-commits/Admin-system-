@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { prisma } from "@/lib/prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -106,13 +107,11 @@ export default async function AdminCrmPage({
   return (
     <div className="space-y-6">
       {/* header */}
-      <Card className="p-6">
-        <p className="ui-kicker">Customer CRM</p>
-        <h2 className="mt-2 ui-page-title">고객 관리</h2>
-        <p className="mt-2 text-sm text-text-muted">
-          고객별 문의·사건 현황과 매출을 한눈에 확인합니다.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="Customer CRM"
+        title="고객 관리"
+        description="고객별 문의·사건 현황과 매출을 한눈에 확인합니다."
+      />
 
       {/* search */}
       <Card className="p-4">

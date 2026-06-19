@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Table, TableContainer } from "@/components/ui/table";
 import { prisma } from "@/lib/prisma/client";
 
@@ -50,13 +51,11 @@ export default async function AutoConversionPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <p className="ui-kicker">Automation</p>
-        <h1 className="mt-2 ui-page-title">문의 → 사건 자동 전환</h1>
-        <p className="mt-2 text-sm text-text-muted">
-          조건을 만족하는 문의를 자동으로 사건(CaseMatter)으로 전환합니다.
-        </p>
-      </Card>
+      <AdminPageHeader
+        kicker="Automation"
+        title="문의 → 사건 자동 전환"
+        description="조건을 만족하는 문의를 자동으로 사건(CaseMatter)으로 전환합니다."
+      />
 
       <Card className="p-5">
         <h2 className="text-sm font-semibold text-text-strong">현재 규칙</h2>
