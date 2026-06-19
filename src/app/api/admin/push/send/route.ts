@@ -1,0 +1,41 @@
+import { NextResponse } from "next/server";
+
+import {
+  sendPush,
+  sendToAllDevices,
+} from "@/lib/services/push-notification-service";
+
+export async function POST(req: Request) {
+  try {
+    const body = (await req.json()) as {
+      title?: string;
+      body?: string;
+      targetTokens?: string[];
+      data?: Record<string, string>;
+    };
+
+    if (!body.title || !body.body) {
+      return NextResponse.json(
+        { success: false, error: "title and body required" },
+        { status: 400 }
+      );
+    }
+
+    const result =
+      body.targetTokens && body.targetTokens.length > 0
+        ? await sendPush({
+            title: body.title,
+            body: body.body,
+            data: body.data,
+            targetTokens: body.targetTokens,
+          })
+        : await sendToAllDevices(body.title, body.body, body.data);
+
+    return NextResponse.json({ success: true, data: result });
+  } catch (err) {
+    return NextResponse.json(
+      { success: false, error: (err as Error).message },
+      { status: 500 }
+    );
+  }
+}
