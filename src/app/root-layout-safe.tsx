@@ -4,6 +4,7 @@ import { AppShellSafe } from "@/components/layout/app-shell-safe";
 import { Analytics } from "@/components/public/analytics";
 import { LiveChat } from "@/components/public/live-chat";
 import { LocalBusinessJsonLd } from "@/components/public/json-ld";
+import { PWARegister } from "@/components/public/pwa-register";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 
@@ -34,7 +35,8 @@ export const metadata: Metadata = {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION
   },
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest.json",
+  themeColor: "#1a3c5f",
   appleWebApp: {
     capable: true,
     title: "\uC9C4\uD589\uC0C1\uD669",
@@ -77,6 +79,7 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
         <ToastProvider />
         <LiveChat />
         <Analytics />
+        <PWARegister />
         <LocalBusinessJsonLd />
       </body>
     </html>

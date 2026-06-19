@@ -1,0 +1,21 @@
+{
+  "name": "ETHOS 행정사사무소",
+  "short_name": "ETHOS",
+  "description": "외국인 행정·체류·인허가 전문",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf6ef",
+  "theme_color": "#1a3c5f",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
