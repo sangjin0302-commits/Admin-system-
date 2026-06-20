@@ -36,6 +36,17 @@ export default async function ContactPage() {
           <Reveal delay={2}>
             <p className="ethos-quote mt-5 text-base text-gold-deep">상담은 사전 예약을 권장드립니다.</p>
           </Reveal>
+          <Reveal delay={3}>
+            <div className="mt-6 flex justify-center">
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-50 px-4 py-1.5 text-xs font-bold text-emerald-700">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                평균 1시간 내 응답 · 영업일 기준
+              </span>
+            </div>
+          </Reveal>
         </div>
       </section>
 

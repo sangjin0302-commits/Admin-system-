@@ -10,6 +10,7 @@ import { PublicHeader } from "@/components/layout/public-header";
 import { ScrollEnhancements } from "@/components/layout/scroll-enhancements";
 import { StickyCta } from "@/components/layout/sticky-cta";
 import { PageTransition } from "@/components/public/page-transition";
+import { StickyCta as PublicStickyCta } from "@/components/public/sticky-cta";
 
 /**
  * Routes that use the system shell (admin/portal — internal tools).
@@ -70,6 +71,7 @@ export function AppShellSafe({ children }: Readonly<{ children: React.ReactNode 
       <MobileBottomNav />
       <ScrollEnhancements />
       <StickyCta />
+      <PublicStickyCta />
     </>
   );
 }

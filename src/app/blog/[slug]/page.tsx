@@ -104,7 +104,8 @@ export default async function BlogDetailPage({
 
       <Card className="mt-12 bg-primary p-7 text-center text-white">
         <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-soft">관련 사안 상담</p>
-        <h2 className="mt-3 font-serif text-xl font-bold">사실관계를 함께 확인합니다</h2>
+        <h2 className="mt-3 font-serif text-xl font-bold">이 분야 상담이 필요하신가요?</h2>
+        <p className="mt-2 text-xs leading-6 text-white/75">사실관계를 함께 확인하고 다음 단계를 안내해 드립니다.</p>
         <Link
           href="/intake"
           className="mt-5 inline-flex h-11 items-center rounded-lg bg-gold px-6 font-serif text-sm font-bold text-primary hover:bg-gold-soft"
