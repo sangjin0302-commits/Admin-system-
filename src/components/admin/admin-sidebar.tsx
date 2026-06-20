@@ -47,6 +47,8 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/intake-sources", label: "유입 분석", icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" },
       { href: "/admin/monitoring", label: "모니터링", icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" },
       { href: "/admin/activity", label: "활동 로그", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
+      { href: "/admin/bot-stats/lawbot", label: "Lawbot 사용", icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
+      { href: "/admin/market-bot", label: "마켓 분석 봇", icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" },
     ]
   },
   {
