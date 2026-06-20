@@ -10,6 +10,7 @@ import {
   getSystemHealthSnapshot
 } from "@/lib/services/system-health-service";
 import { formatDateTime } from "@/lib/utils";
+import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,7 @@ async function safeGetSystemHealthSnapshot(): Promise<SystemHealthSnapshot> {
   try {
     return await getSystemHealthSnapshot();
   } catch (error) {
-    console.error("Failed to load monitoring snapshot", error);
+    logger.error("Failed to load monitoring snapshot", error);
 
     return {
       generatedAt: new Date().toISOString(),

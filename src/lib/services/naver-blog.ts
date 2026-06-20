@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 /**
  * 네이버 블로그 RSS 연동.
  *
@@ -59,7 +60,7 @@ export async function fetchNaverBlogPosts(blogId: string, limit = 12): Promise<N
       next: { revalidate: 3600 }
     });
     if (!res.ok) {
-      console.warn("[naver-blog] fetch failed", res.status, url);
+      logger.warn("[naver-blog] fetch failed", res.status, url);
       return [];
     }
     const xml = await res.text();
@@ -90,7 +91,7 @@ export async function fetchNaverBlogPosts(blogId: string, limit = 12): Promise<N
 
     return posts;
   } catch (error) {
-    console.warn("[naver-blog] exception", error);
+    logger.warn("[naver-blog] exception", error);
     return [];
   }
 }

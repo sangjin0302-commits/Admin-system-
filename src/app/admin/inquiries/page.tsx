@@ -19,6 +19,7 @@ import { buildAdminInquiryPageData } from "@/lib/services/admin-inquiry-page-dat
 import { readMarketingSnapshot } from "@/lib/services/marketing-sync-service";
 import { parseAdminInquiryQuery } from "@/lib/validation/admin-safe-v2";
 import { listInquiries } from "@/lib/services/inquiry-service";
+import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ async function safeListInquiries(filters?: Parameters<typeof listInquiries>[0]) 
   try {
     return await listInquiries(filters);
   } catch (error) {
-    console.error("Failed to load inquiries for admin list", error);
+    logger.error("Failed to load inquiries for admin list", error);
     return [] as InquiryListItem[];
   }
 }
@@ -37,7 +38,7 @@ async function safeReadMarketingSnapshot() {
   try {
     return await readMarketingSnapshot();
   } catch (error) {
-    console.error("Failed to load marketing snapshot for inquiry list", error);
+    logger.error("Failed to load marketing snapshot for inquiry list", error);
     return null;
   }
 }

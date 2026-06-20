@@ -1,21 +1,16 @@
-import { NextResponse } from "next/server";
 import { generateBlogSEO } from "@/lib/services/blog-seo-service";
+import { withJsonHandler } from "@/lib/utils/api-handler";
 
-export async function POST(request: Request) {
-  try {
-    const { title, body, category } = await request.json();
+type BlogSeoBody = { title?: string; body?: string; category?: string };
 
-    if (!title || !body) {
-      return NextResponse.json(
-        { error: "title과 body는 필수입니다" },
-        { status: 400 },
-      );
-    }
-
-    const seo = await generateBlogSEO(title, body, category ?? "general");
-    return NextResponse.json(seo);
-  } catch (err) {
-    console.error("Blog SEO generation error:", err);
-    return NextResponse.json({ error: "SEO 생성 실패" }, { status: 500 });
+export const POST = withJsonHandler<BlogSeoBody>(
+  async (body) => {
+    return generateBlogSEO(body.title!, body.body!, body.category ?? "general");
+  },
+  {
+    logScope: "admin/blog/seo",
+    errorMessage: "SEO 생성 실패",
+    validate: (body) =>
+      body && body.title && body.body ? null : "title과 body는 필수입니다"
   }
-}
+);

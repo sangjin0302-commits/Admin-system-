@@ -5,6 +5,7 @@ import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { logger } from "@/lib/utils/logger";
 
 const KO_TITLE = "\uC77C\uC2DC\uC801\uC778 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4";
 const KO_DESCRIPTION =
@@ -22,7 +23,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Global root error", error);
+    logger.error("Global root error", error);
   }, [error]);
 
   return (

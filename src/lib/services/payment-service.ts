@@ -7,6 +7,7 @@
  */
 
 import { randomUUID } from "crypto";
+import { logger } from "@/lib/utils/logger";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -36,7 +37,7 @@ export async function createPaymentSession(
   const secretKey = process.env.TOSS_SECRET_KEY;
 
   if (!secretKey) {
-    console.warn(
+    logger.warn(
       "[payment-service] TOSS_SECRET_KEY 미설정 — 개발용 mock 데이터를 반환합니다."
     );
     const mockKey = `mock_${randomUUID()}`;
@@ -66,7 +67,7 @@ export async function createPaymentSession(
 
   if (!res.ok) {
     const body = await res.text();
-    console.error("[payment-service] Toss API error", res.status, body);
+    logger.error("[payment-service] Toss API error", res.status, body);
     throw new Error(`Toss Payments API error: ${res.status}`);
   }
 
@@ -89,7 +90,7 @@ export async function confirmPayment(
   const secretKey = process.env.TOSS_SECRET_KEY;
 
   if (!secretKey) {
-    console.warn(
+    logger.warn(
       "[payment-service] TOSS_SECRET_KEY 미설정 — mock 결제 승인을 반환합니다."
     );
     return { success: true, transactionId: `mock_txn_${randomUUID()}` };

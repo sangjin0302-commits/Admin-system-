@@ -9,6 +9,7 @@ import {
 import { getPublicIntakeControlSnapshot } from "@/lib/services/public-intake-control-service-safe-v3";
 import { createInquiry } from "@/lib/services/inquiry-service";
 import type { InquiryType, UrgencyLevel } from "@/types/inquiry";
+import { logger } from "@/lib/utils/logger";
 
 const KO_INVALID_JSON =
   "요청 본문이 올바른 JSON 형식이 아닙니다. 입력 내용을 다시 확인해 주세요.";
@@ -332,7 +333,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("Failed to create inquiry", { requestId, error });
+    logger.error("Failed to create inquiry", { requestId, error });
     return jsonWithRequestId({ error: KO_INTERNAL_ERROR }, 500, requestId);
   }
 }

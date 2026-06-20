@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Table, TableContainer } from "@/components/ui/table";
 import { prisma } from "@/lib/prisma/client";
+import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,7 @@ export default async function AutoConversionPage() {
       };
     });
   } catch (error) {
-    console.error("[auto-conversion-page] failed", error);
+    logger.error("[auto-conversion-page] failed", error);
   }
 
   return (

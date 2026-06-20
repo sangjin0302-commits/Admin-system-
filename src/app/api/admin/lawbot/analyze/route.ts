@@ -5,6 +5,7 @@ import {
   LawbotBridgeError
 } from "@/lib/services/lawbot-bridge-http-client";
 import { buildCitationsFromLawbotSources, extractLawNames, buildLawDeeplink } from "@/lib/services/law-deeplink";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * 관리자 전용 lawbot 분석 콘솔.
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
       citations
     });
   } catch (error) {
-    console.error("[admin/lawbot/analyze] error", error);
+    logger.error("[admin/lawbot/analyze] error", error);
     if (error instanceof LawbotBridgeError) {
       return NextResponse.json(
         { ok: false, error: "lawbot 브릿지 오류. 환경변수(LAWBOT_BRIDGE_BASE_URL 등) 설정을 확인하세요." },

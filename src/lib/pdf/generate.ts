@@ -12,6 +12,7 @@ import path from "node:path";
 
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { logger } from "@/lib/utils/logger";
 
 const NAVY = rgb(26 / 255, 60 / 255, 95 / 255);
 const GOLD = rgb(201 / 255, 169 / 255, 97 / 255);
@@ -69,7 +70,7 @@ async function loadKoreanFont(): Promise<Uint8Array | Buffer | null> {
       return buf;
     }
   } catch (error) {
-    console.warn("[pdf] korean font CDN fetch failed", error);
+    logger.warn("[pdf] korean font CDN fetch failed", error);
   }
 
   return null;

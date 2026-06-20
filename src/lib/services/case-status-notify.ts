@@ -8,6 +8,7 @@
 import { prisma } from "@/lib/prisma/client";
 import { sendClientNotification } from "@/lib/services/client-notifications";
 import { createPortalNotification } from "@/lib/services/portal-notifications";
+import { logger } from "@/lib/utils/logger";
 
 const STATUS_LABELS: Record<string, string> = {
   INTAKE_REVIEW: "접수 검토 중",
@@ -51,7 +52,7 @@ export async function notifyClientCaseStatusChanged(
 
   const email = caseMatter?.inquiry?.email;
   if (!caseMatter || !caseMatter.inquiry || !email) {
-    console.log("[case-status-notify] no email — skip", caseMatterId);
+    logger.debug("[case-status-notify] no email — skip", caseMatterId);
     return;
   }
 
@@ -90,6 +91,6 @@ export async function notifyClientCaseStatusChanged(
       });
     }
   } catch (error) {
-    console.warn("[case-status-notify] portal notification failed", error);
+    logger.warn("[case-status-notify] portal notification failed", error);
   }
 }

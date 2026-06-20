@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 const INQUIRY_TYPE_MAP: Record<string, string> = {
   비자: "FOREIGNER_VISA",
   체류: "IMMIGRATION_STAY",
@@ -47,7 +48,7 @@ export async function classifyInquiry(
     try {
       return await classifyWithAI(apiKey, name, message, title);
     } catch (err) {
-      console.error("AI classification failed, falling back to keyword:", err);
+      logger.error("AI classification failed, falling back to keyword:", err);
     }
   }
 

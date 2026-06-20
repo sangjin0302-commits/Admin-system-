@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 const TEMPLATE_REPLIES: Record<string, string> = {
   FOREIGNER_VISA: `안녕하세요, ETHOS 행정사사무소입니다.
 
@@ -77,7 +78,7 @@ export async function generateAutoReplyDraft(inquiry: {
     try {
       return await generateWithAI(apiKey, inquiry);
     } catch (err) {
-      console.error("AI auto-reply failed, falling back to template:", err);
+      logger.error("AI auto-reply failed, falling back to template:", err);
     }
   }
 

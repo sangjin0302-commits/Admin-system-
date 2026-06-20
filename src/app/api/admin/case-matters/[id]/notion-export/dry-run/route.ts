@@ -9,6 +9,7 @@ import {
   type NotionSafeExportErrorCode
 } from "@/lib/notion";
 import { prisma } from "@/lib/prisma/client";
+import { logger } from "@/lib/utils/logger";
 
 const requestSchema = z
   .object({
@@ -145,7 +146,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       });
     }
 
-    console.error("[admin.case-matters.notion-export.dry-run] failed", error instanceof Error ? error.name : "unknown");
+    logger.error("[admin.case-matters.notion-export.dry-run] failed", error instanceof Error ? error.name : "unknown");
     return safeError(500, "INTERNAL_ERROR");
   }
 }

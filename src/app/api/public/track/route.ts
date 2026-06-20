@@ -10,6 +10,7 @@ import {
   PUBLIC_TRACKING_NOT_FOUND_MESSAGE,
   validatePublicTrackingLookupInput
 } from "@/lib/services/public-tracking-lookup-service";
+import { logger } from "@/lib/utils/logger";
 
 const KO_INVALID_JSON =
   "\uC694\uCCAD \uBCF8\uBB38\uC774 \uC62C\uBC14\uB978 JSON \uD615\uC2DD\uC774 \uC544\uB2D9\uB2C8\uB2E4.";
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
       return jsonNoStore({ error: KO_INVALID_JSON }, 400);
     }
 
-    console.error("Failed to lookup public tracking status");
+    logger.error("Failed to lookup public tracking status");
     return jsonNoStore({ error: KO_INTERNAL_ERROR }, 500);
   }
 }

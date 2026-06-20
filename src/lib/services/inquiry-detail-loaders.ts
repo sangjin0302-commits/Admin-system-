@@ -6,6 +6,7 @@ import { getInquiryReceiptCode } from "@/lib/services/inquiry-receipt-code";
 import { getQuoteWorkspaceForInquiry } from "@/lib/services/quote-service";
 import { parseJsonArray } from "@/lib/utils";
 import { type InquiryType } from "@/types/inquiry";
+import { logger } from "@/lib/utils/logger";
 
 type InquiryDetailRecord = NonNullable<Awaited<ReturnType<typeof getInquiryById>>>;
 
@@ -16,7 +17,7 @@ export async function safeGetQuoteWorkspace(inquiry: InquiryDetailRecord): Promi
   try {
     return await getQuoteWorkspaceForInquiry(inquiry.id);
   } catch (error) {
-    console.error("Failed to load quote workspace", error);
+    logger.error("Failed to load quote workspace", error);
     return {
       inquiry: {
         id: inquiry.id,
@@ -66,7 +67,7 @@ export async function safeGetLawbotAnalysis(inquiry: InquiryDetailRecord) {
   try {
     return await getLawbotCaseAnalysis(inquiry);
   } catch (error) {
-    console.error("Failed to load lawbot analysis", error);
+    logger.error("Failed to load lawbot analysis", error);
     return {
       status: "error" as const,
       message: "Failed to load Lawbot analysis. Continue with internal checklist first.",
@@ -86,7 +87,7 @@ export async function safeGetReferenceRecommendations(input: {
   try {
     return await getNotionReferenceRecommendations(input);
   } catch (error) {
-    console.error("Failed to load Notion reference recommendations", error);
+    logger.error("Failed to load Notion reference recommendations", error);
     return {
       keywords: [],
       materials: [],
@@ -102,7 +103,7 @@ export async function safeGetInquiryForDetail(id: string) {
       errorMessage: null as string | null
     };
   } catch (error) {
-    console.error("Failed to load inquiry detail", error);
+    logger.error("Failed to load inquiry detail", error);
     return {
       inquiry: null,
       errorMessage: error instanceof Error ? error.message : "Unknown error"
@@ -118,7 +119,7 @@ export async function safeGetInquiryReceiptCode(input: {
   try {
     return await getInquiryReceiptCode(input);
   } catch (error) {
-    console.error("Failed to create inquiry receipt code", error);
+    logger.error("Failed to create inquiry receipt code", error);
     const datePart = input.createdAt.toISOString().slice(2, 10).replace(/-/g, "");
     return `${datePart}-ERR-${input.id.slice(0, 6).toUpperCase()}`;
   }

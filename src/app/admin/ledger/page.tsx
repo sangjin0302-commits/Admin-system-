@@ -20,6 +20,7 @@ import {
   type CaseLedgerViewModel
 } from "@/lib/services/case-ledger-view-model";
 import { caseMatterStatusValues } from "@/types/case-matter";
+import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ async function safeListCaseLedgerRows(filters: CaseLedgerFilters): Promise<CaseL
   try {
     return await listCaseLedgerRows(filters);
   } catch (error) {
-    console.error("Failed to load case ledger rows", error);
+    logger.error("Failed to load case ledger rows", error);
     return {
       rows: [],
       summary: {

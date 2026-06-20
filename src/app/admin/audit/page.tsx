@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma/client";
 import { Table, TableContainer } from "@/components/ui/table";
+import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export default async function AuditPage() {
       payloadJson: r.payloadJson,
     }));
   } catch (error) {
-    console.error("[audit-page] failed to load events", error);
+    logger.error("[audit-page] failed to load events", error);
   }
 
   return (

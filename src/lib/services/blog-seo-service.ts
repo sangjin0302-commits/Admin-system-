@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 export type BlogSEOMeta = {
   metaTitle: string;
   metaDescription: string;
@@ -18,7 +19,7 @@ export async function generateBlogSEO(
     try {
       return await generateWithAI(apiKey, title, body, category);
     } catch (err) {
-      console.error("AI SEO generation failed, falling back:", err);
+      logger.error("AI SEO generation failed, falling back:", err);
     }
   }
 

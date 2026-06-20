@@ -11,6 +11,7 @@ import {
 import { syncInquiryConsultationSnapshot } from "@/lib/services/inquiry-consultation-sync-helpers";
 import { parseInquiryCommunicationLogs } from "@/lib/services/inquiry-guard-helpers";
 import type { InquiryStatus } from "@/types/inquiry";
+import { logger } from "@/lib/utils/logger";
 
 export async function updateInquiryAdminFields(
   id: string,
@@ -59,7 +60,7 @@ export async function updateInquiryAdminFields(
       classificationReasonOverride: updated.internalMemo ?? updated.classificationReason
     });
   } catch (error) {
-    console.error("Failed to refresh consultation Notion sync", error);
+    logger.error("Failed to refresh consultation Notion sync", error);
   }
 
   return updated;
@@ -85,7 +86,7 @@ export async function appendInquiryCommunicationLog(
       classificationReasonOverride: updated.internalMemo ?? updated.classificationReason
     });
   } catch (error) {
-    console.error("Failed to refresh consultation Notion sync after communication log append", error);
+    logger.error("Failed to refresh consultation Notion sync after communication log append", error);
   }
 
   return updated;

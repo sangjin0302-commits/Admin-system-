@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma/client";
+import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function AdminMessagesPage() {
       },
     });
   } catch (error) {
-    console.error("[admin-messages] failed to load", error);
+    logger.error("[admin-messages] failed to load", error);
   }
 
   const clientIds = Array.from(new Set(messages.map((m) => m.clientId)));

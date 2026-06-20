@@ -34,6 +34,7 @@ import { DashboardPipeline } from "./_dashboard/dashboard-pipeline";
 import { DashboardListCards } from "./_dashboard/dashboard-list-cards";
 import { DashboardIntegrations } from "./_dashboard/dashboard-integrations";
 import { DashboardRecentInquiries } from "./_dashboard/dashboard-recent-inquiries";
+import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ async function safeListInquiries() {
   try {
     return await listInquiries();
   } catch (error) {
-    console.error("Failed to load inquiries for admin dashboard", error);
+    logger.error("Failed to load inquiries for admin dashboard", error);
     return [] as InquiryListItem[];
   }
 }
@@ -53,7 +54,7 @@ async function safeListCaseMatters() {
   try {
     return await listCaseMatters();
   } catch (error) {
-    console.error("Failed to load case matters for admin dashboard", error);
+    logger.error("Failed to load case matters for admin dashboard", error);
     return [] as CaseMatterListItem[];
   }
 }
@@ -89,7 +90,7 @@ async function safeListCaseAccountingSummaryRows(): Promise<CaseAccountingSummar
       paidAtValue: row.accountingMemo?.paidAt ? row.accountingMemo.paidAt.toISOString().slice(0, 10) : null
     }));
   } catch (error) {
-    console.error("Failed to load case accounting summary for admin dashboard", error);
+    logger.error("Failed to load case accounting summary for admin dashboard", error);
     return [];
   }
 }
@@ -98,7 +99,7 @@ async function safeReadMarketingSnapshot() {
   try {
     return await readMarketingSnapshot();
   } catch (error) {
-    console.error("Failed to load marketing snapshot for admin dashboard", error);
+    logger.error("Failed to load marketing snapshot for admin dashboard", error);
     return null;
   }
 }
@@ -107,7 +108,7 @@ async function safeGetSystemHealthSnapshot() {
   try {
     return await getSystemHealthSnapshot();
   } catch (error) {
-    console.error("Failed to load system health snapshot for admin dashboard", error);
+    logger.error("Failed to load system health snapshot for admin dashboard", error);
     return null;
   }
 }
@@ -116,7 +117,7 @@ async function safeGetPublicIntakeControlSnapshot(): Promise<PublicIntakeControl
   try {
     return await getPublicIntakeControlSnapshot();
   } catch (error) {
-    console.error("Failed to load public intake control snapshot for admin dashboard", error);
+    logger.error("Failed to load public intake control snapshot for admin dashboard", error);
     return {
       maintenanceMode: false,
       maintenanceMessage: "공개 접수 상태를 읽지 못해 기본 값으로 표시합니다.",
@@ -132,7 +133,7 @@ async function safeCount<T>(label: string, task: Promise<T>, fallback: T) {
   try {
     return await task;
   } catch (error) {
-    console.error(`Failed to load ${label} for admin dashboard`, error);
+    logger.error(`Failed to load ${label} for admin dashboard`, error);
     return fallback;
   }
 }

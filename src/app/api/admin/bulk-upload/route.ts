@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createInquiry } from "@/lib/services/inquiry-service";
+import { logger } from "@/lib/utils/logger";
 
 export async function POST(request: Request) {
   try {
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
       errors,
     });
   } catch (err) {
-    console.error("Bulk upload error:", err);
+    logger.error("Bulk upload error:", err);
     return NextResponse.json({ error: "업로드 처리 실패" }, { status: 500 });
   }
 }

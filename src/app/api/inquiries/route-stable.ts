@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { NextResponse } from "next/server";
 
 import { createInquiry } from "@/lib/services/inquiry-service";
+import { logger } from "@/lib/utils/logger";
 
 async function POST_LEGACY_UNUSED(request: Request) {
   try {
@@ -19,7 +20,7 @@ async function POST_LEGACY_UNUSED(request: Request) {
       );
     }
 
-    console.error("Failed to create inquiry", error);
+    logger.error("Failed to create inquiry", error);
     return NextResponse.json(
       {
         error:
@@ -36,7 +37,7 @@ async function POST_LEGACY_UNUSED(request: Request) {
       );
     }
 
-    console.error("Failed to create inquiry", error);
+    logger.error("Failed to create inquiry", error);
     return NextResponse.json(
       { error: "문의 접수를 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." },
       { status: 500 }

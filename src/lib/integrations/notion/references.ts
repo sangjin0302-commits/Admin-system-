@@ -11,6 +11,7 @@ import type {
   NotionReferenceRecommendations,
   NotionReferenceWebsite,
 } from "./types";
+import { logger } from "@/lib/utils/logger";
 
 function readPlainTextProperty(property: any): string | null {
   if (!property) return null;
@@ -114,7 +115,7 @@ export async function getNotionReferenceRecommendations(input: {
         : Promise.resolve({ results: [] }),
     ]);
   } catch (error) {
-    console.error("Failed to load Notion reference recommendations", error);
+    logger.error("Failed to load Notion reference recommendations", error);
     return {
       keywords,
       materials: [],

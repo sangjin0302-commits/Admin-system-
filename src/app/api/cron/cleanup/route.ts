@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 
 import { runCleanup } from "@/lib/services/cleanup-service";
+import { logger } from "@/lib/utils/logger";
 
 export async function GET(request: Request) {
   const auth = request.headers.get("authorization");
@@ -15,10 +16,10 @@ export async function GET(request: Request) {
 
   try {
     const result = await runCleanup();
-    console.log("[cron:cleanup]", result);
+    logger.debug("[cron:cleanup]", result);
     return NextResponse.json({ ok: true, runAt: new Date().toISOString(), ...result });
   } catch (error) {
-    console.error("[cron:cleanup] failed", error);
+    logger.error("[cron:cleanup] failed", error);
     return NextResponse.json({ ok: false, error: "cleanup failed" }, { status: 500 });
   }
 }

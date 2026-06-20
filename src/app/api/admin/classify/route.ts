@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
 import { classifyInquiry } from "@/lib/services/ai-classification-service";
+import { withJsonHandler } from "@/lib/utils/api-handler";
 
-export async function POST(request: Request) {
-  try {
-    const { name, message, title } = await request.json();
-    if (!message) {
-      return NextResponse.json({ error: "메시지 필요" }, { status: 400 });
-    }
-    const result = await classifyInquiry(name ?? "", message, title);
-    return NextResponse.json(result);
-  } catch (err) {
-    console.error("Classification error:", err);
-    return NextResponse.json({ error: "분류 실패" }, { status: 500 });
+type ClassifyBody = { name?: string; message?: string; title?: string };
+
+export const POST = withJsonHandler<ClassifyBody>(
+  async (body) => {
+    const { name, message, title } = body;
+    return classifyInquiry(name ?? "", message ?? "", title);
+  },
+  {
+    logScope: "admin/classify",
+    errorMessage: "분류 실패",
+    validate: (body) => (body && body.message ? null : "메시지 필요")
   }
-}
+);

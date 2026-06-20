@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createLawbotBridgeHttpClientFromEnv, LawbotBridgeError } from "@/lib/services/lawbot-bridge-http-client";
 import { buildCitationsFromLawbotSources, extractLawNames, buildLawDeeplink } from "@/lib/services/law-deeplink";
 import { consumeRateLimit, getClientIpFromHeaders } from "@/lib/security/rate-limit";
+import { logger } from "@/lib/utils/logger";
 
 const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5 min
 const RATE_LIMIT_MAX = 5;                    // 5 requests / 5 min / IP
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
       citations: dedupedCitations
     });
   } catch (error) {
-    console.error("[public/quick-check] lawbot error", error);
+    logger.error("[public/quick-check] lawbot error", error);
     if (error instanceof LawbotBridgeError) {
       return NextResponse.json(
         { ok: false, error: "분석 서비스에 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." },

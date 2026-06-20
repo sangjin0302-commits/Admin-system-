@@ -1,4 +1,5 @@
 import { getActiveDevices } from "./mobile-bridge-service";
+import { logger } from "@/lib/utils/logger";
 
 export type PushNotification = {
   title: string;
@@ -38,7 +39,7 @@ export async function sendPush(
   }
 
   if (!fcmKey) {
-    console.log("[push-notification] mock send", {
+    logger.debug("[push-notification] mock send", {
       title: notification.title,
       body: notification.body,
       targets: notification.targetTokens.length,

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 /**
  * Admin Role-Based Access Control
  *
@@ -56,7 +57,7 @@ export function getAdminRole(email: string): AdminRole {
         return role as AdminRole;
       }
     } catch {
-      console.error("[admin-rbac] failed to parse ADMIN_ROLES env var");
+      logger.error("[admin-rbac] failed to parse ADMIN_ROLES env var");
     }
   }
   return AdminRole.ADMIN;

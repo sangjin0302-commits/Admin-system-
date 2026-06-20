@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 export { GET, POST } from "./route-safe-v3";
 
 
@@ -16,7 +17,7 @@ async function POST_LEGACY_UNUSED(request: Request) {
       );
     }
 
-    console.error("Failed to create inquiry", error);
+    logger.error("Failed to create inquiry", error);
     return NextResponse.json({ error: "문의 접수를 처리하지 못했습니다." }, { status: 500 });
   }
 }

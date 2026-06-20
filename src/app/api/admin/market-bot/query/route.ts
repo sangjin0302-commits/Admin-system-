@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/utils/logger";
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
         const data = await r.json();
         return NextResponse.json({ answer: data.answer ?? "응답 없음" });
       } catch (err) {
-        console.error("Market bot API error:", err);
+        logger.error("Market bot API error:", err);
       }
     }
 
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ answer: mock });
   } catch (err) {
-    console.error("Market bot query error:", err);
+    logger.error("Market bot query error:", err);
     return NextResponse.json({ error: "분석 실패" }, { status: 500 });
   }
 }

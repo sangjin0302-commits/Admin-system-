@@ -4,6 +4,7 @@ import { generateResetToken } from "@/lib/auth/reset-token";
 import { prisma } from "@/lib/prisma/client";
 import { consumeRateLimit, getClientIpFromHeaders } from "@/lib/security/rate-limit";
 import { sendClientNotification } from "@/lib/services/client-notifications";
+import { logger } from "@/lib/utils/logger";
 
 export async function POST(request: Request) {
   // 이메일 기준 rate-limit
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
       variables: { resetUrl }
     });
 
-    console.log("[password-forgot] reset link generated:", resetUrl);
+    logger.debug("[password-forgot] reset link generated:", resetUrl);
   }
 
   return NextResponse.json({ ok: true });

@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { logger } from "@/lib/utils/logger";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -63,7 +64,7 @@ export async function sendNewInquiryNotification(inquiry: {
     if (error) return { success: false, reason: error.message };
     return { success: true, id: data?.id };
   } catch (err) {
-    console.error("Failed to send email notification:", err);
+    logger.error("Failed to send email notification:", err);
     return { success: false, reason: "send-error" };
   }
 }

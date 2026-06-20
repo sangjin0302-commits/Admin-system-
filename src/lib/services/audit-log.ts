@@ -1,9 +1,10 @@
 /**
  * 감사 로그 — CaseEvent 모델을 활용해 의뢰인/관리자 활동을 기록.
- * caseId가 없는 활동 (포털 로그인 등)은 별도 console.log로만 남김.
+ * caseId가 없는 활동 (포털 로그인 등)은 별도 logger.debug로만 남김.
  */
 
 import { prisma } from "@/lib/prisma/client";
+import { logger } from "@/lib/utils/logger";
 
 export type AuditEvent =
   | "portal.login"
@@ -38,9 +39,9 @@ export async function logAudit(opts: {
       });
       return;
     } catch (error) {
-      console.error("[audit-log] failed to write CaseEvent", error);
+      logger.error("[audit-log] failed to write CaseEvent", error);
     }
   }
   // caseId 없으면 stdout 로그만
-  console.log(`[audit] ${opts.event} actor=${opts.actorName ?? opts.actorId ?? "-"} :: ${opts.message}`);
+  logger.debug(`[audit] ${opts.event} actor=${opts.actorName ?? opts.actorId ?? "-"} :: ${opts.message}`);
 }

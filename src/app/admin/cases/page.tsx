@@ -13,6 +13,7 @@ import { buildCaseMatterActionDashboard } from "@/lib/services/case-matter-actio
 import { listCaseMatters } from "@/lib/services/case-matter-service";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { getCaseMatterStatusLabel } from "@/types/case-matter";
+import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ async function safeListCaseMatters(category?: string, query?: string) {
   try {
     return await listCaseMatters(category, query);
   } catch (error) {
-    console.error("Failed to load case matters", error);
+    logger.error("Failed to load case matters", error);
     return [] as CaseMatterListItem[];
   }
 }

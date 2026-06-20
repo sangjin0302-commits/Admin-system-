@@ -9,6 +9,7 @@ import path from "node:path";
 import matter from "gray-matter";
 import { remark } from "remark";
 import remarkHtml from "remark-html";
+import { logger } from "@/lib/utils/logger";
 
 export type BlogPost = {
   slug: string;
@@ -48,7 +49,7 @@ async function readPostFromFile(file: string): Promise<BlogPost | null> {
       contentHtml: String(processed)
     };
   } catch (error) {
-    console.error("[blog] failed to read", file, error);
+    logger.error("[blog] failed to read", file, error);
     return null;
   }
 }

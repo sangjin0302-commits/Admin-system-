@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { logger } from "@/lib/utils/logger";
 
 const KO_TITLE = "\uC811\uC218 \uD654\uBA74\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.";
 const KO_DESCRIPTION =
@@ -18,7 +19,7 @@ export default function IntakeErrorSafeV2({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Intake route error", error);
+    logger.error("Intake route error", error);
   }, [error]);
 
   return (

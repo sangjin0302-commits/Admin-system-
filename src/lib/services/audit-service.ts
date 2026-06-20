@@ -6,6 +6,7 @@
  */
 
 import { prisma } from "@/lib/prisma/client";
+import { logger } from "@/lib/utils/logger";
 
 /** Sentinel caseId for admin events not tied to a specific case. */
 const ADMIN_SENTINEL_CASE_ID = "admin-system";
@@ -42,7 +43,7 @@ export async function logAuditEvent(entry: AuditEntry): Promise<void> {
       },
     });
   } catch (error) {
-    console.error("[audit-service] failed to write audit event", error);
+    logger.error("[audit-service] failed to write audit event", error);
   }
 }
 

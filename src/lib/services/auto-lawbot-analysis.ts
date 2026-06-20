@@ -8,6 +8,7 @@
 import { createLawbotBridgeHttpClientFromEnv } from "@/lib/services/lawbot-bridge-http-client";
 import { prisma } from "@/lib/prisma/client";
 import { intakeCategoryToCaseMatterCategory } from "@/types/intake-category";
+import { logger } from "@/lib/utils/logger";
 
 type RunInput = {
   inquiryId: string;
@@ -22,7 +23,7 @@ export async function autoAnalyzeInquiryWithLawbot(input: RunInput): Promise<voi
     !!process.env.LAWBOT_SERVICE_CALLER;
 
   if (!hasLawbot) {
-    console.log("[auto-lawbot] skipped — bridge env not set");
+    logger.debug("[auto-lawbot] skipped — bridge env not set");
     return;
   }
 
@@ -61,9 +62,9 @@ export async function autoAnalyzeInquiryWithLawbot(input: RunInput): Promise<voi
       }
     });
 
-    console.log("[auto-lawbot] saved analysis for inquiry", input.inquiryId);
+    logger.debug("[auto-lawbot] saved analysis for inquiry", input.inquiryId);
   } catch (error) {
-    console.warn("[auto-lawbot] best-effort failed", error);
+    logger.warn("[auto-lawbot] best-effort failed", error);
   }
 }
 

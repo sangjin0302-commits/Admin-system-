@@ -34,6 +34,7 @@ import {
   getLanguageCodeLabel,
   getUrgencyLabel
 } from "@/types/inquiry";
+import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -328,7 +329,7 @@ export default async function AdminInquiryDetailPage({
       </div>
     );
   } catch (error) {
-    console.error("Failed to render admin inquiry detail page", { inquiryId, error });
+    logger.error("Failed to render admin inquiry detail page", { inquiryId, error });
     return (
       <InquiryDetailUnavailable
         title="문의 상세 화면을 준비하지 못했습니다."

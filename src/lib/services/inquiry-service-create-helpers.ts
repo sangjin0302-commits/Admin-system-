@@ -21,6 +21,7 @@ import {
   getKoreaMonthRange,
   normalizePhoneLast4
 } from "@/lib/services/public-tracking-code-service";
+import { logger } from "@/lib/utils/logger";
 
 function isPublicTrackingCodeCollision(error: unknown) {
   return (
@@ -163,7 +164,7 @@ export async function createInquiry(payload: unknown) {
         classificationReasonOverride: updated.classificationReason
       });
     } catch (error) {
-      console.error("Failed to sync consultation to Notion", error);
+      logger.error("Failed to sync consultation to Notion", error);
     }
 
     // 자동 lawbot 분석 (best-effort, await 안 함 — 응답 지연 방지)
@@ -173,7 +174,7 @@ export async function createInquiry(payload: unknown) {
         inquiryId: updated.id,
         factInput: `${updated.title}\n${updated.description}`,
         intakeCategoryKey: updated.intakeCategory
-      }).catch((err) => console.warn("[auto-lawbot] background error", err));
+      }).catch((err) => logger.warn("[auto-lawbot] background error", err));
     }
 
     return updated;

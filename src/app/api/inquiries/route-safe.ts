@@ -9,6 +9,7 @@ import {
   getEnvInt
 } from "@/lib/security/rate-limit";
 import { createInquiry } from "@/lib/services/inquiry-service";
+import { logger } from "@/lib/utils/logger";
 
 const KO_INVALID_JSON_SAFE =
   "\uC694\uCCAD \uBCF8\uBB38\uC774 \uC62C\uBC14\uB978 JSON \uD615\uC2DD\uC774 \uC544\uB2D9\uB2C8\uB2E4. \uC785\uB825 \uB0B4\uC6A9\uC744 \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.";
@@ -225,7 +226,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("Failed to create inquiry", { requestId, error });
+    logger.error("Failed to create inquiry", { requestId, error });
     return jsonWithRequestId({ error: KO_INTERNAL_ERROR }, 500, requestId);
   }
 }

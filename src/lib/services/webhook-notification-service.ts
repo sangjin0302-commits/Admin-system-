@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 // ---------------------------------------------------------------------------
 // Webhook Notification Service — Slack & Telegram
 // ---------------------------------------------------------------------------
@@ -68,12 +69,12 @@ async function sendSlack(event: WebhookEvent): Promise<boolean> {
       body: JSON.stringify(buildSlackPayload(event)),
     });
     if (!res.ok) {
-      console.error(`[webhook] Slack responded ${res.status}: ${await res.text()}`);
+      logger.error(`[webhook] Slack responded ${res.status}: ${await res.text()}`);
       return false;
     }
     return true;
   } catch (err) {
-    console.error("[webhook] Slack send failed:", err);
+    logger.error("[webhook] Slack send failed:", err);
     return false;
   }
 }
@@ -127,12 +128,12 @@ async function sendTelegram(event: WebhookEvent): Promise<boolean> {
       },
     );
     if (!res.ok) {
-      console.error(`[webhook] Telegram responded ${res.status}: ${await res.text()}`);
+      logger.error(`[webhook] Telegram responded ${res.status}: ${await res.text()}`);
       return false;
     }
     return true;
   } catch (err) {
-    console.error("[webhook] Telegram send failed:", err);
+    logger.error("[webhook] Telegram send failed:", err);
     return false;
   }
 }

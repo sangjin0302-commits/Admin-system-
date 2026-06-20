@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma/client";
+import { logger } from "@/lib/utils/logger";
 
 export type Campaign = {
   id: string;
@@ -75,7 +76,7 @@ export async function getRecipients(
     }
     return out;
   } catch (error) {
-    console.error("[email-campaign] getRecipients failed", error);
+    logger.error("[email-campaign] getRecipients failed", error);
     return [];
   }
 }

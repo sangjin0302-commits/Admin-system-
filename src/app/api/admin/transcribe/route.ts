@@ -1,26 +1,32 @@
-import { NextResponse } from "next/server";
 import { transcribeAudio, summarizeTranscription } from "@/lib/services/stt-service";
+import { withJsonHandler } from "@/lib/utils/api-handler";
 
-export async function POST(request: Request) {
-  try {
-    const { audioBase64, mimeType, language } = await request.json();
-    if (!audioBase64) {
-      return NextResponse.json({ error: "오디오 데이터 필요" }, { status: 400 });
-    }
+type TranscribeBody = {
+  audioBase64?: string;
+  mimeType?: string;
+  language?: string;
+};
 
-    const transcription = await transcribeAudio(audioBase64, mimeType ?? "audio/webm", language);
+export const POST = withJsonHandler<TranscribeBody>(
+  async (body) => {
+    const transcription = await transcribeAudio(
+      body.audioBase64!,
+      body.mimeType ?? "audio/webm",
+      body.language
+    );
     const summary = transcription.text
       ? await summarizeTranscription(transcription.text)
       : { summary: "", actionItems: [], sentiment: "neutral" };
-
-    return NextResponse.json({
+    return {
       ...transcription,
       summary: summary.summary,
       actionItems: summary.actionItems,
-      sentiment: summary.sentiment,
-    });
-  } catch (err) {
-    console.error("Transcribe error:", err);
-    return NextResponse.json({ error: "전사 실패" }, { status: 500 });
+      sentiment: summary.sentiment
+    };
+  },
+  {
+    logScope: "admin/transcribe",
+    errorMessage: "전사 실패",
+    validate: (body) => (body && body.audioBase64 ? null : "오디오 데이터 필요")
   }
-}
+);

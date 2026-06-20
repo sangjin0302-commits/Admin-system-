@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 /**
  * KakaoTalk Alimtalk notification service.
  *
@@ -24,7 +25,7 @@ export async function sendKakaoAlimtalk(
   const senderKey = process.env.KAKAO_SENDER_KEY;
 
   if (!apiKey || !senderKey) {
-    console.warn(
+    logger.warn(
       "[kakao-notification] KAKAO_REST_API_KEY 또는 KAKAO_SENDER_KEY 미설정 — 알림톡 전송을 건너뜁니다."
     );
     return false;
@@ -54,13 +55,13 @@ export async function sendKakaoAlimtalk(
 
     if (!res.ok) {
       const body = await res.text();
-      console.error("[kakao-notification] API error", res.status, body);
+      logger.error("[kakao-notification] API error", res.status, body);
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error("[kakao-notification] network error", err);
+    logger.error("[kakao-notification] network error", err);
     return false;
   }
 }

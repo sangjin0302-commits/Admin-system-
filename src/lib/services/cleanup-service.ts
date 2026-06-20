@@ -11,6 +11,7 @@ import path from "node:path";
 
 import { prisma } from "@/lib/prisma/client";
 import { activeStorageDriver } from "@/lib/storage/file-storage";
+import { logger } from "@/lib/utils/logger";
 
 const ARCHIVE_AFTER_DAYS = 90;
 const ORPHAN_FILE_DAYS = 30;
@@ -83,7 +84,7 @@ export async function runCleanup(): Promise<{
       }
     }
   } catch (error) {
-    console.warn("[cleanup] orphan file scan failed", error);
+    logger.warn("[cleanup] orphan file scan failed", error);
   }
 
   return {

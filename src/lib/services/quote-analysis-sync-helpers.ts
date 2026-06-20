@@ -12,6 +12,7 @@ import {
   type QuoteWithRelations
 } from "@/lib/services/quote-serialization-helpers";
 import type { InquiryType, UrgencyLevel } from "@/types/inquiry";
+import { logger } from "@/lib/utils/logger";
 
 async function getQuoteByIdOrThrow(quoteId: string): Promise<QuoteWithRelations> {
   return prisma.quote.findUniqueOrThrow({
@@ -66,7 +67,7 @@ export async function syncQuoteAnalysisSnapshot(quoteId: string) {
             : "시작 전"
     });
   } catch (error) {
-    console.error("Failed to sync quote analysis to Notion", error);
+    logger.error("Failed to sync quote analysis to Notion", error);
   }
 }
 

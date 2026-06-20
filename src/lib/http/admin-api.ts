@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { logger } from "@/lib/utils/logger";
 
 type AdminErrorPayload = {
   ok: false;
@@ -38,7 +39,7 @@ export function createAdminRequestContext(label: string) {
   const requestId = makeRequestId();
 
   function logError(error: unknown) {
-    console.error(`[${label}] requestId=${requestId}`, error);
+    logger.error(`[${label}] requestId=${requestId}`, error);
   }
 
   function ok<T>(payload: T, init?: ResponseInit) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
+import { logger } from "@/lib/utils/logger";
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(post);
   } catch (err) {
-    console.error("Blog create error:", err);
+    logger.error("Blog create error:", err);
     return NextResponse.json({ error: "저장 실패" }, { status: 500 });
   }
 }
@@ -44,7 +45,7 @@ export async function PUT(request: Request) {
     });
     return NextResponse.json(post);
   } catch (err) {
-    console.error("Blog update error:", err);
+    logger.error("Blog update error:", err);
     return NextResponse.json({ error: "수정 실패" }, { status: 500 });
   }
 }

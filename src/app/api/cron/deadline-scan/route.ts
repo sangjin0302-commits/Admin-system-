@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 
 import { scanAndCreateDeadlineAlerts } from "@/lib/services/deadline-alert-generator";
+import { logger } from "@/lib/utils/logger";
 
 export async function GET(request: Request) {
   // 인증 — Vercel Cron은 Bearer <CRON_SECRET>
@@ -20,10 +21,10 @@ export async function GET(request: Request) {
 
   try {
     const result = await scanAndCreateDeadlineAlerts({ warnDays: 14 });
-    console.log("[cron:deadline-scan]", result);
+    logger.debug("[cron:deadline-scan]", result);
     return NextResponse.json({ ok: true, runAt: new Date().toISOString(), ...result });
   } catch (error) {
-    console.error("[cron:deadline-scan] failed", error);
+    logger.error("[cron:deadline-scan] failed", error);
     return NextResponse.json({ ok: false, error: "scan failed" }, { status: 500 });
   }
 }

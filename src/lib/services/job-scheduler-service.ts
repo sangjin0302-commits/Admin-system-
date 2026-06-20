@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma/client";
+import { logger } from "@/lib/utils/logger";
 
 export type ScheduledJob = {
   id: string;
@@ -57,7 +58,7 @@ async function expiredCasesCheckHandler() {
     select: { id: true, title: true, dueDate: true },
     take: 100,
   });
-  console.log(
+  logger.debug(
     `[job:expired-cases-check] Found ${expired.length} expired open cases`
   );
 }
@@ -69,7 +70,7 @@ async function weeklySummaryHandler() {
     prisma.inquiry.count({ where: { createdAt: { gte: weekAgo } } }),
     prisma.caseMatter.count({ where: { createdAt: { gte: weekAgo } } }),
   ]);
-  console.log(
+  logger.debug(
     `[job:weekly-summary] last 7d — inquiries=${newInquiries} cases=${newCases}`
   );
 }
@@ -85,7 +86,7 @@ async function staleInquiryAlertHandler() {
       updatedAt: { lt: cutoff },
     },
   });
-  console.log(`[job:stale-inquiry-alert] ${stale} stale inquiries (>7d)`);
+  logger.debug(`[job:stale-inquiry-alert] ${stale} stale inquiries (>7d)`);
 }
 
 registerJob({

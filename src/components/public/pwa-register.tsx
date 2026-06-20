@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { logger } from "@/lib/utils/logger";
 
 export function PWARegister() {
   useEffect(() => {
@@ -9,7 +10,7 @@ export function PWARegister() {
     navigator.serviceWorker
       .register("/sw.js")
       .catch((err) => {
-        console.warn("[pwa] service worker registration failed", err);
+        logger.warn("[pwa] service worker registration failed", err);
       });
   }, []);
 

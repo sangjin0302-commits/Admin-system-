@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 /**
  * 의뢰인 알림 스캐폴드
  *
@@ -93,7 +94,7 @@ export async function sendClientNotification(payload: NotificationPayload): Prom
   });
 
   if (provider === "none") {
-    console.log("[notification:dry-run]", { to: payload.toEmail, subject, body });
+    logger.debug("[notification:dry-run]", { to: payload.toEmail, subject, body });
     return { ok: true, reason: "DRY_RUN" };
   }
 
@@ -102,7 +103,7 @@ export async function sendClientNotification(payload: NotificationPayload): Prom
   }
 
   // 추가 provider 연동 시 여기에 분기
-  console.warn("[notification] Unknown provider:", provider);
+  logger.warn("[notification] Unknown provider:", provider);
   return { ok: false, reason: "UNKNOWN_PROVIDER" };
 }
 
@@ -137,13 +138,13 @@ async function sendViaResend({
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      console.error("[notification:resend] failed", res.status, text);
+      logger.error("[notification:resend] failed", res.status, text);
       return { ok: false, reason: `RESEND_${res.status}` };
     }
 
     return { ok: true };
   } catch (error) {
-    console.error("[notification:resend] exception", error);
+    logger.error("[notification:resend] exception", error);
     return { ok: false, reason: "RESEND_EXCEPTION" };
   }
 }

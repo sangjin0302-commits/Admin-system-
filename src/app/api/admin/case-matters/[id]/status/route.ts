@@ -9,6 +9,7 @@ import {
   updateCaseMatterStatus
 } from "@/lib/services/case-matter-service";
 import { updateCaseMatterStatusSchema } from "@/lib/validation/case-matter";
+import { logger } from "@/lib/utils/logger";
 
 export async function PATCH(
   request: Request,
@@ -38,7 +39,7 @@ export async function PATCH(
     {
       const { notifyClientCaseStatusChanged } = await import("@/lib/services/case-status-notify");
       notifyClientCaseStatusChanged(caseMatterId, payload.status).catch((err) =>
-        console.warn("[case-status-notify] background error", err)
+        logger.warn("[case-status-notify] background error", err)
       );
     }
 

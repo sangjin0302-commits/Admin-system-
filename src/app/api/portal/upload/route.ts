@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/client";
 import { logAudit } from "@/lib/services/audit-log";
 import { putFile } from "@/lib/storage/file-storage";
+import { logger } from "@/lib/utils/logger";
 
 const ALLOWED_MIME = new Set([
   "application/pdf",
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
     const put = await putFile(storedName, buffer, file.type);
     storedKey = put.key;
   } catch (error) {
-    console.error("[portal/upload] storage put failed", error);
+    logger.error("[portal/upload] storage put failed", error);
     return NextResponse.json(
       { ok: false, error: "파일 저장에 실패했습니다." },
       { status: 500 }

@@ -1,25 +1,26 @@
-import { NextResponse } from "next/server";
-
 import { createSignatureRequest } from "@/lib/services/e-signature-service";
+import { withJsonHandler } from "@/lib/utils/api-handler";
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { documentTitle, signerName, signerEmail } = body;
+type SignatureBody = {
+  documentTitle?: string;
+  signerName?: string;
+  signerEmail?: string;
+};
 
-    if (!documentTitle || !signerName || !signerEmail) {
-      return NextResponse.json({ error: "필수 항목 누락" }, { status: 400 });
-    }
-
-    const result = await createSignatureRequest({
-      documentTitle,
-      signerName,
-      signerEmail,
+export const POST = withJsonHandler<SignatureBody>(
+  async (body) => {
+    return createSignatureRequest({
+      documentTitle: body.documentTitle!,
+      signerName: body.signerName!,
+      signerEmail: body.signerEmail!
     });
-
-    return NextResponse.json(result);
-  } catch (err) {
-    console.error("[signatures] error", err);
-    return NextResponse.json({ error: "서버 오류" }, { status: 500 });
+  },
+  {
+    logScope: "admin/signatures",
+    errorMessage: "서버 오류",
+    validate: (body) =>
+      body && body.documentTitle && body.signerName && body.signerEmail
+        ? null
+        : "필수 항목 누락"
   }
-}
+);

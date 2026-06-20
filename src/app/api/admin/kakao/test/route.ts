@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { sendKakaoAlimtalk } from "@/lib/services/kakao-notification-service";
+import { logger } from "@/lib/utils/logger";
 
 export async function POST() {
   try {
@@ -19,7 +20,7 @@ export async function POST() {
       { status: 500 }
     );
   } catch (err) {
-    console.error("[kakao/test] error", err);
+    logger.error("[kakao/test] error", err);
     return NextResponse.json(
       { ok: false, error: "서버 오류" },
       { status: 500 }
