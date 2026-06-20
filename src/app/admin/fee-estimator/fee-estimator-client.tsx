@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import type { FeeEstimate, FEE_TABLE } from "@/lib/services/fee-estimator-service";
+import Link from "next/link";
+import type { FeeEstimate, FeeTable } from "@/lib/services/fee-estimator-service";
 
-type Benchmark = typeof FEE_TABLE;
+type Benchmark = FeeTable;
 
 const CATEGORY_LABELS: Record<string, string> = {
   VISA_STAY: "비자/체류",
@@ -272,7 +273,15 @@ function ResultPanel({ result, onApply }: { result: FeeEstimate; onApply: () => 
 function BenchmarkTable({ benchmark }: { benchmark: Benchmark }) {
   return (
     <Card className="p-6">
-      <h3 className="text-lg font-semibold text-text-strong">시장 기준 수임료 표 (2025)</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-text-strong">시장 기준 수임료 표 (2025)</h3>
+        <Link
+          href="/admin/fee-estimator/edit"
+          className="rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-text-strong hover:bg-surface-muted"
+        >
+          테이블 편집
+        </Link>
+      </div>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {Object.entries(benchmark).map(([cat, services]) => (
           <div key={cat} className="rounded-lg border border-line bg-surface p-4">

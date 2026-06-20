@@ -2,6 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
+import { getFeeTable, type FeeTable } from "@/lib/services/fee-estimator-service";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "수임료 안내 — 분야별 참고 가격 | ETHOS",
@@ -12,63 +15,36 @@ export const metadata: Metadata = {
 type FeeRow = { name: string; range: string };
 type FeeGroup = { area: string; eyebrow: string; rows: FeeRow[] };
 
-const FEE_GROUPS: readonly FeeGroup[] = [
-  {
-    area: "비자 / 체류",
-    eyebrow: "VISA & STAY",
-    rows: [
-      { name: "단기방문비자 (C-3)", range: "30 ~ 50만원" },
-      { name: "거주비자 (F-2 / F-4)", range: "100 ~ 200만원" },
-      { name: "영주권 (F-5)", range: "200 ~ 400만원" },
-      { name: "귀화", range: "300 ~ 600만원" },
-      { name: "체류기간 연장", range: "15 ~ 30만원" },
-      { name: "체류자격 변경", range: "50 ~ 150만원" }
-    ]
-  },
-  {
-    area: "행정심판",
-    eyebrow: "ADMINISTRATIVE APPEAL",
-    rows: [
-      { name: "강제퇴거 행정심판", range: "200 ~ 500만원" },
-      { name: "일반 행정심판", range: "100 ~ 300만원" },
-      { name: "이의신청", range: "50 ~ 150만원" }
-    ]
-  },
-  {
-    area: "계약 / 사실조사",
-    eyebrow: "CONTRACT & INVESTIGATION",
-    rows: [
-      { name: "계약서 검토", range: "20 ~ 50만원" },
-      { name: "사실조사 보고서", range: "100 ~ 300만원" }
-    ]
-  },
-  {
-    area: "인허가",
-    eyebrow: "LICENSE & PERMIT",
-    rows: [
-      { name: "일반 영업허가", range: "100 ~ 300만원" },
-      { name: "식품영업 허가", range: "50 ~ 150만원" },
-      { name: "외국인 고용허가", range: "100 ~ 250만원" }
-    ]
-  },
-  {
-    area: "법인",
-    eyebrow: "CORPORATE",
-    rows: [
-      { name: "주식회사 설립", range: "30 ~ 50만원" },
-      { name: "외국인 법인설립", range: "100 ~ 200만원" }
-    ]
-  },
-  {
-    area: "번역 / 공증",
-    eyebrow: "TRANSLATION & NOTARY",
-    rows: [
-      { name: "번역 (페이지당)", range: "5 ~ 15만원" },
-      { name: "아포스티유", range: "10 ~ 30만원" },
-      { name: "공증", range: "5 ~ 20만원" }
-    ]
-  }
-];
+const CATEGORY_META: Record<string, { area: string; eyebrow: string }> = {
+  VISA_STAY: { area: "비자 / 체류", eyebrow: "VISA & STAY" },
+  ADMIN_APPEAL: { area: "행정심판", eyebrow: "ADMINISTRATIVE APPEAL" },
+  CONTRACT_INVESTIGATION: { area: "계약 / 사실조사", eyebrow: "CONTRACT & INVESTIGATION" },
+  LICENSE_PERMIT: { area: "인허가", eyebrow: "LICENSE & PERMIT" },
+  CORPORATE: { area: "법인", eyebrow: "CORPORATE" },
+  TRANSLATION_NOTARY: { area: "번역 / 공증", eyebrow: "TRANSLATION & NOTARY" },
+};
+
+const manwonFormatter = new Intl.NumberFormat("ko-KR");
+
+function formatRange(min: number, max: number): string {
+  const minMan = Math.round(min / 10000);
+  const maxMan = Math.round(max / 10000);
+  return `${manwonFormatter.format(minMan)} ~ ${manwonFormatter.format(maxMan)}만원`;
+}
+
+function buildFeeGroups(table: FeeTable): FeeGroup[] {
+  return Object.entries(table).map(([cat, services]) => {
+    const meta = CATEGORY_META[cat] ?? { area: cat, eyebrow: cat };
+    return {
+      area: meta.area,
+      eyebrow: meta.eyebrow,
+      rows: Object.entries(services).map(([name, entry]) => ({
+        name,
+        range: formatRange(entry.min, entry.max),
+      })),
+    };
+  });
+}
 
 const VARIABLES: readonly { title: string; desc: string }[] = [
   {
@@ -89,7 +65,10 @@ const VARIABLES: readonly { title: string; desc: string }[] = [
   }
 ];
 
-export default function FeesPage() {
+export default async function FeesPage() {
+  const table = await getFeeTable();
+  const feeGroups = buildFeeGroups(table);
+
   return (
     <div className="overflow-x-clip">
       {/* HERO */}
@@ -120,7 +99,7 @@ export default function FeesPage() {
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-5 md:grid-cols-2">
-            {FEE_GROUPS.map((group, gi) => (
+            {feeGroups.map((group, gi) => (
               <Reveal key={group.area} delay={((gi % 2) + 1) as 1 | 2}>
                 <div className="ethos-card ethos-card-hover h-full p-8">
                   <p className="font-serif text-[11px] font-bold tracking-[0.2em] text-gold-deep">

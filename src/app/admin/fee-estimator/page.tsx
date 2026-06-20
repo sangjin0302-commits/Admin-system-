@@ -5,7 +5,7 @@ import { FeeEstimatorClient } from "./fee-estimator-client";
 export const dynamic = "force-dynamic";
 
 export default async function FeeEstimatorPage() {
-  const benchmark = getMarketBenchmark();
+  const benchmark = await getMarketBenchmark();
 
   return (
     <div className="space-y-6">
