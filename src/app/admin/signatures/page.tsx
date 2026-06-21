@@ -18,8 +18,8 @@ const STATUS_LABEL: Record<SignatureRequestSummary["status"], { text: string; cl
   not_found: { text: "없음", className: "bg-gray-100 text-gray-600" },
 };
 
-export default function SignaturesPage() {
-  const requests = listSignatureRequests();
+export default async function SignaturesPage() {
+  const requests = await listSignatureRequests();
 
   return (
     <div className="space-y-6">

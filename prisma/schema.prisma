@@ -1273,3 +1273,111 @@ model LegacyImportLog {
   importedAt    DateTime @default(now())
   createdCount  Int      @default(0)
 }
+
+// ---------------------------------------------------------------------------
+// Round W — 결제/전자서명/알림 audit trail
+// ---------------------------------------------------------------------------
+
+enum PaymentStatus {
+  REQUESTED      // 결제 세션 생성됨
+  CONFIRMED      // Toss 승인 완료
+  CANCELED       // 전체 취소
+  PARTIAL_CANCELED
+  FAILED
+  EXPIRED
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  orderId         String        @unique             // CASE-<caseId>-<suffix>
+  paymentKey      String?       @unique             // Toss paymentKey
+  caseId          String?
+  amount          Int
+  currency        String        @default("KRW")
+  orderName       String
+  customerName    String?
+  customerEmail   String?
+  status          PaymentStatus @default(REQUESTED)
+  method          String?                           // 카드, 가상계좌, 등
+  receiptUrl      String?
+  rawProviderJson String?                           // 마지막 응답 원본
+  approvedAt      DateTime?
+  canceledAt      DateTime?
+  cancelReason    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([caseId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ESignStatus {
+  PENDING
+  SIGNED
+  REJECTED
+  EXPIRED
+}
+
+enum ESignProvider {
+  IN_MEMORY
+  MODUSIGN
+}
+
+model ESignRequest {
+  id              String         @id @default(cuid())
+  externalId      String?        @unique           // Modusign document id
+  caseId          String?
+  documentTitle   String
+  signerName      String
+  signerEmail     String
+  signerPhone     String?
+  documentUrl     String?
+  templateId      String?
+  provider        ESignProvider  @default(IN_MEMORY)
+  status          ESignStatus    @default(PENDING)
+  signUrl         String?
+  internalToken   String                            // in-memory MVP 클릭검증용
+  createdAt       DateTime       @default(now())
+  signedAt        DateTime?
+  expiresAt       DateTime?
+  rawProviderJson String?
+
+  @@index([caseId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum NotificationChannel {
+  ALIMTALK
+  SMS
+  EMAIL
+  PUSH
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  FAILED
+  SKIPPED          // 환경변수 미설정 등으로 건너뜀
+}
+
+model NotificationLog {
+  id           String              @id @default(cuid())
+  channel      NotificationChannel
+  templateId   String?
+  recipient    String                                // 전화번호/이메일/디바이스토큰
+  caseId       String?
+  subject      String?
+  body         String?
+  variables    String?                               // JSON.stringify
+  status       NotificationStatus  @default(QUEUED)
+  errorMessage String?
+  providerId   String?                               // Solapi messageId 등
+  createdAt    DateTime            @default(now())
+  sentAt       DateTime?
+
+  @@index([caseId])
+  @@index([status, createdAt])
+  @@index([channel, status])
+}

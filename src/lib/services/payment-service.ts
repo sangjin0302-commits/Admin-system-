@@ -1,26 +1,19 @@
 /**
- * Payment service — Toss Payments integration.
+ * Payment service — Toss Payments integration with DB persistence.
  *
- * Reads TOSS_SECRET_KEY from env. When the key is absent the service
- * returns mock/development data so the admin UI remains functional
- * without a live payments account.
+ * 환경변수 미설정 시 mock 모드 (개발용). Payment 모델로 모든 거래 영속화.
  *
- * Endpoints used (Toss Payments v1):
+ * Toss API:
  *  - POST /v1/payments                       (create payment)
  *  - POST /v1/payments/confirm               (confirm after redirect)
  *  - POST /v1/payments/:paymentKey/cancel    (full/partial cancel)
  *  - GET  /v1/payments/orders/:orderId       (lookup by orderId)
- *
- * Webhook signature verification is provided via verifyTossWebhook().
  */
 
 import { createHmac, randomUUID, timingSafeEqual } from "crypto";
 import { logger } from "@/lib/utils/logger";
 import { captureError } from "@/lib/services/error-monitor-service";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import { prisma } from "@/lib/prisma/client";
 
 export interface PaymentRequest {
   orderId: string;
@@ -28,7 +21,7 @@ export interface PaymentRequest {
   orderName: string;
   customerName: string;
   customerEmail: string;
-  /** Optional success/fail redirect URLs (otherwise we use NEXT_PUBLIC_SITE_URL). */
+  caseId?: string;
   successUrl?: string;
   failUrl?: string;
 }
@@ -68,8 +61,12 @@ function siteUrl(): string {
   );
 }
 
+export function isTossConnected(): boolean {
+  return getSecretKey() !== null;
+}
+
 // ---------------------------------------------------------------------------
-// Create session (returns mock-friendly fields)
+// Create session — Payment row 작성
 // ---------------------------------------------------------------------------
 
 export async function createPaymentSession(
@@ -77,20 +74,36 @@ export async function createPaymentSession(
 ): Promise<{ paymentKey: string; checkoutUrl: string; isMock: boolean }> {
   const secretKey = getSecretKey();
 
+  // DB 영속화 (REQUESTED 상태)
+  await prisma.payment.create({
+    data: {
+      orderId: req.orderId,
+      amount: req.amount,
+      orderName: req.orderName,
+      customerName: req.customerName,
+      customerEmail: req.customerEmail,
+      caseId: req.caseId,
+      status: "REQUESTED",
+    },
+  }).catch((err) => {
+    captureError(err instanceof Error ? err : new Error(String(err)), {
+      orderId: req.orderId,
+    });
+  });
+
   if (!secretKey) {
-    logger.warn(
-      "[payment-service] TOSS_SECRET_KEY 미설정 — 개발용 mock 데이터를 반환합니다."
-    );
+    logger.warn("[payment-service] TOSS_SECRET_KEY 미설정 — mock 세션 반환");
     const mockKey = `mock_${randomUUID()}`;
     return {
       paymentKey: mockKey,
-      checkoutUrl: `${siteUrl()}/portal/payments/mock?orderId=${encodeURIComponent(req.orderId)}&amount=${req.amount}`,
+      checkoutUrl: `${siteUrl()}/portal/payments/mock?orderId=${encodeURIComponent(
+        req.orderId
+      )}&amount=${req.amount}`,
       isMock: true,
     };
   }
 
-  const successUrl =
-    req.successUrl ?? `${siteUrl()}/portal/payments/success`;
+  const successUrl = req.successUrl ?? `${siteUrl()}/portal/payments/success`;
   const failUrl = req.failUrl ?? `${siteUrl()}/portal/payments/fail`;
 
   const res = await fetch(`${TOSS_BASE}/v1/payments`, {
@@ -115,10 +128,22 @@ export async function createPaymentSession(
     const body = await res.text();
     logger.error("[payment-service] Toss create error", res.status, body);
     captureError(new Error(`Toss create ${res.status}`), { body });
+    await prisma.payment.updateMany({
+      where: { orderId: req.orderId },
+      data: { status: "FAILED", rawProviderJson: body },
+    }).catch(() => undefined);
     throw new Error(`Toss Payments create error: ${res.status}`);
   }
 
   const data = await res.json();
+  await prisma.payment.updateMany({
+    where: { orderId: req.orderId },
+    data: {
+      paymentKey: data.paymentKey,
+      rawProviderJson: JSON.stringify(data).slice(0, 4000),
+    },
+  }).catch(() => undefined);
+
   return {
     paymentKey: data.paymentKey,
     checkoutUrl: data.checkout?.url ?? successUrl,
@@ -127,7 +152,7 @@ export async function createPaymentSession(
 }
 
 // ---------------------------------------------------------------------------
-// Confirm payment (after Toss redirect)
+// Confirm payment (after Toss redirect) — Payment 상태 업데이트
 // ---------------------------------------------------------------------------
 
 export async function confirmPayment(
@@ -138,9 +163,15 @@ export async function confirmPayment(
   const secretKey = getSecretKey();
 
   if (!secretKey) {
-    logger.warn(
-      "[payment-service] TOSS_SECRET_KEY 미설정 — mock 결제 승인을 반환합니다."
-    );
+    logger.warn("[payment-service] mock confirm");
+    await prisma.payment.updateMany({
+      where: { orderId },
+      data: {
+        status: "CONFIRMED",
+        paymentKey: paymentKey || `mock_${randomUUID()}`,
+        approvedAt: new Date(),
+      },
+    }).catch(() => undefined);
     return { success: true, transactionId: `mock_txn_${randomUUID()}` };
   }
 
@@ -156,6 +187,13 @@ export async function confirmPayment(
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
+      await prisma.payment.updateMany({
+        where: { orderId },
+        data: {
+          status: "FAILED",
+          rawProviderJson: JSON.stringify(body).slice(0, 4000),
+        },
+      }).catch(() => undefined);
       return {
         success: false,
         error: body.message ?? `결제 승인 실패 (${res.status})`,
@@ -163,6 +201,18 @@ export async function confirmPayment(
     }
 
     const data = await res.json();
+    await prisma.payment.updateMany({
+      where: { orderId },
+      data: {
+        status: "CONFIRMED",
+        paymentKey: data.paymentKey ?? paymentKey,
+        receiptUrl: data.receipt?.url,
+        method: data.method,
+        approvedAt: data.approvedAt ? new Date(data.approvedAt) : new Date(),
+        rawProviderJson: JSON.stringify(data).slice(0, 4000),
+      },
+    }).catch(() => undefined);
+
     return {
       success: true,
       transactionId: data.transactionKey ?? data.paymentKey ?? paymentKey,
@@ -178,7 +228,7 @@ export async function confirmPayment(
 }
 
 // ---------------------------------------------------------------------------
-// Cancel payment (full or partial)
+// Cancel
 // ---------------------------------------------------------------------------
 
 export async function cancelPayment(
@@ -188,6 +238,14 @@ export async function cancelPayment(
 ): Promise<PaymentResult> {
   const secretKey = getSecretKey();
   if (!secretKey) {
+    await prisma.payment.updateMany({
+      where: { paymentKey },
+      data: {
+        status: cancelAmount ? "PARTIAL_CANCELED" : "CANCELED",
+        cancelReason: reason,
+        canceledAt: new Date(),
+      },
+    }).catch(() => undefined);
     return { success: true, transactionId: `mock_cancel_${randomUUID()}` };
   }
 
@@ -216,6 +274,16 @@ export async function cancelPayment(
     }
 
     const data = await res.json();
+    await prisma.payment.updateMany({
+      where: { paymentKey },
+      data: {
+        status: cancelAmount ? "PARTIAL_CANCELED" : "CANCELED",
+        cancelReason: reason,
+        canceledAt: new Date(),
+        rawProviderJson: JSON.stringify(data).slice(0, 4000),
+      },
+    }).catch(() => undefined);
+
     return { success: true, transactionId: data.lastTransactionKey ?? paymentKey };
   } catch (err) {
     captureError(err instanceof Error ? err : new Error(String(err)));
@@ -227,7 +295,7 @@ export async function cancelPayment(
 }
 
 // ---------------------------------------------------------------------------
-// Lookup by orderId
+// Lookup
 // ---------------------------------------------------------------------------
 
 export async function getPaymentByOrderId(
@@ -249,18 +317,60 @@ export async function getPaymentByOrderId(
 }
 
 // ---------------------------------------------------------------------------
+// DB listings (admin UI)
+// ---------------------------------------------------------------------------
+
+export async function listPayments(limit = 100) {
+  try {
+    return await prisma.payment.findMany({
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function getPaymentStats() {
+  try {
+    const [confirmed, requested, canceled, failed] = await Promise.all([
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        _count: true,
+        where: { status: "CONFIRMED" },
+      }),
+      prisma.payment.count({ where: { status: "REQUESTED" } }),
+      prisma.payment.count({
+        where: { status: { in: ["CANCELED", "PARTIAL_CANCELED"] } },
+      }),
+      prisma.payment.count({ where: { status: "FAILED" } }),
+    ]);
+    return {
+      confirmedAmount: Number(confirmed._sum.amount ?? 0),
+      confirmedCount: confirmed._count,
+      pendingCount: requested,
+      canceledCount: canceled,
+      failedCount: failed,
+    };
+  } catch {
+    return {
+      confirmedAmount: 0,
+      confirmedCount: 0,
+      pendingCount: 0,
+      canceledCount: 0,
+      failedCount: 0,
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Webhook signature verification
-//   Toss sends a `tosspayments-webhook-signature` header (sha256 HMAC of raw body)
-//   when TOSS_WEBHOOK_SECRET is registered.
 // ---------------------------------------------------------------------------
 
 export function verifyTossWebhook(rawBody: string, signature: string | null): boolean {
   const secret = process.env.TOSS_WEBHOOK_SECRET?.trim();
   if (!secret) {
-    // No secret configured — accept (but log warning). For prod set the env.
-    logger.warn(
-      "[payment-service] TOSS_WEBHOOK_SECRET 미설정 — 웹훅 시그니처 검증을 건너뜁니다."
-    );
+    logger.warn("[payment-service] TOSS_WEBHOOK_SECRET 미설정 — 시그니처 검증 건너뜀");
     return true;
   }
   if (!signature) return false;
@@ -273,8 +383,4 @@ export function verifyTossWebhook(rawBody: string, signature: string | null): bo
   } catch {
     return false;
   }
-}
-
-export function isTossConnected(): boolean {
-  return getSecretKey() !== null;
 }

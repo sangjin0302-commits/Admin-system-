@@ -1,19 +1,14 @@
 /**
- * Electronic signature workflow service.
+ * Electronic signature service — Modusign 통합 + DB 영속화.
  *
- * Default driver: in-memory (개발/MVP용).
- * Production driver: 모두싸인 (Modusign) — MODUSIGN_API_KEY + MODUSIGN_USER_EMAIL 설정 시 자동 활성.
- *
- * 모두싸인 API 문서: https://docs.modusign.co.kr
- *   - POST /documents/request-with-template  (템플릿 기반 서명 요청)
- *   - GET  /documents/:id                    (상태 조회)
- *
- * 외부 SDK 없이 fetch만 사용 — 의존성 추가 없음.
+ * 환경변수 MODUSIGN_API_KEY + MODUSIGN_USER_EMAIL + templateId 가 있으면 외부 발송,
+ * 그 외는 in-memory MVP 클릭검증 폴백.  ESignRequest 모델로 모든 요청 영속화.
  */
 
-import { randomUUID, createHmac, timingSafeEqual } from "crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "crypto";
 import { logger } from "@/lib/utils/logger";
 import { captureError } from "@/lib/services/error-monitor-service";
+import { prisma } from "@/lib/prisma/client";
 
 export interface SignatureRequest {
   documentTitle: string;
@@ -21,22 +16,10 @@ export interface SignatureRequest {
   signerEmail: string;
   signerPhone?: string;
   documentUrl?: string;
-  /** 모두싸인 템플릿 ID (사전 등록 필요). 미지정 시 in-memory 모드. */
   templateId?: string;
+  caseId?: string;
 }
 
-interface StoredRequest {
-  id: string;
-  token: string;
-  status: "pending" | "signed" | "expired" | "rejected";
-  request: SignatureRequest;
-  createdAt: Date;
-  /** 모두싸인 외부 ID (있을 경우). */
-  externalId?: string;
-  signedAt?: Date;
-}
-
-const store = new Map<string, StoredRequest>();
 const MODUSIGN_BASE = "https://api.modusign.co.kr";
 
 function getModusignConfig() {
@@ -54,6 +37,14 @@ function authHeader(cfg: { apiKey: string; userEmail: string }): string {
   return `Basic ${Buffer.from(`${cfg.userEmail}:${cfg.apiKey}`).toString("base64")}`;
 }
 
+function siteUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ??
+    process.env.NEXT_PUBLIC_BASE_URL ??
+    "http://localhost:3000"
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------
@@ -61,11 +52,11 @@ function authHeader(cfg: { apiKey: string; userEmail: string }): string {
 export async function createSignatureRequest(
   req: SignatureRequest
 ): Promise<{ requestId: string; signUrl: string; externalId?: string }> {
-  const id = randomUUID();
-  const token = randomUUID();
+  const internalToken = randomUUID();
   const cfg = getModusignConfig();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  // 모두싸인 활성 + templateId 있으면 외부 발송
+  // 1) Modusign 시도 (templateId 있고 cfg 있을 때만)
   if (cfg && req.templateId) {
     try {
       const res = await fetch(`${MODUSIGN_BASE}/documents/request-with-template`, {
@@ -81,14 +72,12 @@ export async function createSignatureRequest(
             {
               role: "서명자",
               name: req.signerName,
-              signingMethod: {
-                type: "EMAIL",
-                value: req.signerEmail,
-              },
+              signingMethod: { type: "EMAIL", value: req.signerEmail },
             },
           ],
         }),
       });
+
       if (res.ok) {
         const data = await res.json();
         const externalId = data.id ?? data.documentId;
@@ -96,41 +85,57 @@ export async function createSignatureRequest(
           data.participants?.[0]?.signingMethod?.signingUrl ??
           data.signingUrl ??
           `https://app.modusign.co.kr/documents/${externalId}`;
-        store.set(id, {
-          id,
-          token,
-          status: "pending",
-          request: req,
-          createdAt: new Date(),
-          externalId,
+
+        const row = await prisma.eSignRequest.create({
+          data: {
+            externalId,
+            caseId: req.caseId,
+            documentTitle: req.documentTitle,
+            signerName: req.signerName,
+            signerEmail: req.signerEmail,
+            signerPhone: req.signerPhone,
+            documentUrl: req.documentUrl,
+            templateId: req.templateId,
+            provider: "MODUSIGN",
+            status: "PENDING",
+            signUrl: participantUrl,
+            internalToken,
+            expiresAt,
+            rawProviderJson: JSON.stringify(data).slice(0, 4000),
+          },
         });
-        return { requestId: id, signUrl: participantUrl, externalId };
+        return { requestId: row.id, signUrl: participantUrl, externalId };
       }
       const body = await res.text();
       logger.error("[e-signature] Modusign error", res.status, body);
       captureError(new Error(`Modusign ${res.status}`), { body });
-      // fallthrough: in-memory MVP
     } catch (err) {
       captureError(err instanceof Error ? err : new Error(String(err)));
-      // fallthrough
     }
   }
 
-  store.set(id, {
-    id,
-    token,
-    status: "pending",
-    request: req,
-    createdAt: new Date(),
+  // 2) in-memory MVP 폴백 (DB 저장은 그대로)
+  const row = await prisma.eSignRequest.create({
+    data: {
+      caseId: req.caseId,
+      documentTitle: req.documentTitle,
+      signerName: req.signerName,
+      signerEmail: req.signerEmail,
+      signerPhone: req.signerPhone,
+      documentUrl: req.documentUrl,
+      templateId: req.templateId,
+      provider: "IN_MEMORY",
+      status: "PENDING",
+      internalToken,
+      expiresAt,
+    },
   });
-
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ??
-    process.env.NEXT_PUBLIC_BASE_URL ??
-    "http://localhost:3000";
-  const signUrl = `${baseUrl}/sign/${id}?token=${token}`;
-
-  return { requestId: id, signUrl };
+  const signUrl = `${siteUrl()}/sign/${row.id}?token=${internalToken}`;
+  await prisma.eSignRequest.update({
+    where: { id: row.id },
+    data: { signUrl },
+  });
+  return { requestId: row.id, signUrl };
 }
 
 // ---------------------------------------------------------------------------
@@ -141,17 +146,21 @@ export async function verifySignature(
   requestId: string,
   token: string
 ): Promise<boolean> {
-  const entry = store.get(requestId);
-  if (!entry) return false;
+  const row = await prisma.eSignRequest
+    .findUnique({ where: { id: requestId } })
+    .catch(() => null);
+  if (!row) return false;
   try {
-    const a = Buffer.from(entry.token);
+    const a = Buffer.from(row.internalToken);
     const b = Buffer.from(token);
     if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
   } catch {
     return false;
   }
-  entry.status = "signed";
-  entry.signedAt = new Date();
+  await prisma.eSignRequest.update({
+    where: { id: requestId },
+    data: { status: "SIGNED", signedAt: new Date() },
+  });
   return true;
 }
 
@@ -161,59 +170,66 @@ export async function verifySignature(
 
 export async function refreshSignatureStatusFromProvider(
   requestId: string
-): Promise<StoredRequest["status"] | null> {
-  const entry = store.get(requestId);
-  if (!entry || !entry.externalId) return null;
+): Promise<"PENDING" | "SIGNED" | "REJECTED" | "EXPIRED" | null> {
+  const row = await prisma.eSignRequest
+    .findUnique({ where: { id: requestId } })
+    .catch(() => null);
+  if (!row || !row.externalId) return null;
   const cfg = getModusignConfig();
   if (!cfg) return null;
 
   try {
-    const res = await fetch(`${MODUSIGN_BASE}/documents/${entry.externalId}`, {
+    const res = await fetch(`${MODUSIGN_BASE}/documents/${row.externalId}`, {
       headers: { Authorization: authHeader(cfg) },
     });
     if (!res.ok) return null;
     const data = await res.json();
     const status: string = data.status ?? "";
-    if (status === "COMPLETED" || status === "SIGNED") {
-      entry.status = "signed";
-      entry.signedAt = new Date();
-    } else if (status === "REJECTED" || status === "CANCELED") {
-      entry.status = "rejected";
-    } else if (status === "EXPIRED") {
-      entry.status = "expired";
-    }
-    return entry.status;
+    let nextStatus: "PENDING" | "SIGNED" | "REJECTED" | "EXPIRED" = "PENDING";
+    if (status === "COMPLETED" || status === "SIGNED") nextStatus = "SIGNED";
+    else if (status === "REJECTED" || status === "CANCELED") nextStatus = "REJECTED";
+    else if (status === "EXPIRED") nextStatus = "EXPIRED";
+
+    await prisma.eSignRequest.update({
+      where: { id: requestId },
+      data: {
+        status: nextStatus,
+        signedAt: nextStatus === "SIGNED" ? new Date() : row.signedAt,
+        rawProviderJson: JSON.stringify(data).slice(0, 4000),
+      },
+    });
+    return nextStatus;
   } catch (err) {
     captureError(err instanceof Error ? err : new Error(String(err)));
     return null;
   }
 }
 
-export function getSignatureStatus(
+export async function getSignatureStatus(
   requestId: string
-): "pending" | "signed" | "expired" | "rejected" | "not_found" {
-  const entry = store.get(requestId);
-  if (!entry) return "not_found";
-
-  if (entry.status === "pending") {
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
-    if (Date.now() - entry.createdAt.getTime() > sevenDays) {
-      entry.status = "expired";
-    }
+): Promise<"PENDING" | "SIGNED" | "REJECTED" | "EXPIRED" | "NOT_FOUND"> {
+  const row = await prisma.eSignRequest
+    .findUnique({ where: { id: requestId } })
+    .catch(() => null);
+  if (!row) return "NOT_FOUND";
+  if (row.status === "PENDING" && row.expiresAt && row.expiresAt < new Date()) {
+    await prisma.eSignRequest.update({
+      where: { id: requestId },
+      data: { status: "EXPIRED" },
+    });
+    return "EXPIRED";
   }
-  return entry.status;
+  return row.status;
 }
 
 // ---------------------------------------------------------------------------
-// Webhook signature verification (Modusign)
+// Webhook
 // ---------------------------------------------------------------------------
 
 export function verifyModusignWebhook(rawBody: string, signature: string | null): boolean {
   const secret = process.env.MODUSIGN_WEBHOOK_SECRET?.trim();
   if (!secret) {
-    logger.warn(
-      "[e-signature] MODUSIGN_WEBHOOK_SECRET 미설정 — 웹훅 시그니처 검증 건너뜁니다."
-    );
+    logger.warn("[e-signature] MODUSIGN_WEBHOOK_SECRET 미설정 — 시그니처 검증 건너뜀");
     return true;
   }
   if (!signature) return false;
@@ -228,48 +244,80 @@ export function verifyModusignWebhook(rawBody: string, signature: string | null)
   }
 }
 
-export function applyWebhookStatus(
+export async function applyWebhookStatus(
   externalId: string,
-  status: "signed" | "rejected" | "expired"
-): boolean {
-  for (const entry of store.values()) {
-    if (entry.externalId === externalId) {
-      entry.status = status;
-      if (status === "signed") entry.signedAt = new Date();
-      return true;
-    }
+  status: "SIGNED" | "REJECTED" | "EXPIRED"
+): Promise<boolean> {
+  try {
+    const result = await prisma.eSignRequest.updateMany({
+      where: { externalId },
+      data: {
+        status,
+        signedAt: status === "SIGNED" ? new Date() : undefined,
+      },
+    });
+    return result.count > 0;
+  } catch {
+    return false;
   }
-  return false;
 }
 
 // ---------------------------------------------------------------------------
-// List (for admin UI)
+// List (admin UI)
 // ---------------------------------------------------------------------------
+
+export type SignatureUIStatus =
+  | "pending"
+  | "signed"
+  | "expired"
+  | "rejected"
+  | "not_found";
 
 export interface SignatureRequestSummary {
   requestId: string;
   documentTitle: string;
   signerName: string;
   signerEmail: string;
-  status: ReturnType<typeof getSignatureStatus>;
+  status: SignatureUIStatus;
   createdAt: string;
   signedAt?: string;
   externalId?: string;
   provider: "modusign" | "in-memory";
 }
 
-export function listSignatureRequests(): SignatureRequestSummary[] {
-  return Array.from(store.values())
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .map((entry) => ({
-      requestId: entry.id,
-      documentTitle: entry.request.documentTitle,
-      signerName: entry.request.signerName,
-      signerEmail: entry.request.signerEmail,
-      status: getSignatureStatus(entry.id),
-      createdAt: entry.createdAt.toISOString(),
-      signedAt: entry.signedAt?.toISOString(),
-      externalId: entry.externalId,
-      provider: entry.externalId ? "modusign" : "in-memory",
+function toUiStatus(s: string): SignatureUIStatus {
+  switch (s) {
+    case "SIGNED":
+      return "signed";
+    case "REJECTED":
+      return "rejected";
+    case "EXPIRED":
+      return "expired";
+    case "PENDING":
+      return "pending";
+    default:
+      return "not_found";
+  }
+}
+
+export async function listSignatureRequests(): Promise<SignatureRequestSummary[]> {
+  try {
+    const rows = await prisma.eSignRequest.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    });
+    return rows.map((r) => ({
+      requestId: r.id,
+      documentTitle: r.documentTitle,
+      signerName: r.signerName,
+      signerEmail: r.signerEmail,
+      status: toUiStatus(r.status),
+      createdAt: r.createdAt.toISOString(),
+      signedAt: r.signedAt?.toISOString() ?? undefined,
+      externalId: r.externalId ?? undefined,
+      provider: r.provider === "MODUSIGN" ? "modusign" : "in-memory",
     }));
+  } catch {
+    return [];
+  }
 }

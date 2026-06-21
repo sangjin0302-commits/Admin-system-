@@ -29,7 +29,7 @@ async function createCaseMatter(status: CaseMatterStatus = "INTAKE_REVIEW") {
   });
 }
 
-async function createRequiredDocument(caseId: string, status: RequiredDocumentStatus = "NEEDED") {
+async function createRequiredDocumentRow(caseId: string, status: RequiredDocumentStatus = "NEEDED") {
   return prisma.requiredDocument.create({
     data: {
       caseId,
@@ -112,7 +112,7 @@ async function checkCaseMatterConcurrencyGuard() {
 
 async function checkRequiredDocumentValidTransition() {
   const caseMatter = await createCaseMatter("DOCUMENT_COLLECTING");
-  const document = await createRequiredDocument(caseMatter.id, "NEEDED");
+  const document = await createRequiredDocumentRow(caseMatter.id, "NEEDED");
   try {
     const result = await updateRequiredDocumentStatus({
       caseMatterId: caseMatter.id,
@@ -137,7 +137,7 @@ async function checkRequiredDocumentValidTransition() {
 
 async function checkRequiredDocumentInvalidTransition() {
   const caseMatter = await createCaseMatter("DOCUMENT_COLLECTING");
-  const document = await createRequiredDocument(caseMatter.id, "NEEDED");
+  const document = await createRequiredDocumentRow(caseMatter.id, "NEEDED");
   try {
     await assert.rejects(
       () =>
@@ -159,7 +159,7 @@ async function checkRequiredDocumentInvalidTransition() {
 
 async function checkRequiredDocumentConcurrencyGuard() {
   const caseMatter = await createCaseMatter("DOCUMENT_COLLECTING");
-  const document = await createRequiredDocument(caseMatter.id, "NEEDED");
+  const document = await createRequiredDocumentRow(caseMatter.id, "NEEDED");
   const staleExpected = new Date(document.updatedAt.getTime() - 1000).toISOString();
   try {
     await assert.rejects(

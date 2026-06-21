@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { confirmPayment } from "@/lib/services/payment-service";
+import { notifyPaymentReceived } from "@/lib/services/kakao-notification-service";
 import { prisma } from "@/lib/prisma/client";
 import { captureError } from "@/lib/services/error-monitor-service";
 
@@ -53,6 +54,19 @@ export async function POST(req: Request) {
           paymentMemo: `Toss confirm · paymentKey=${paymentKey}`,
         },
       });
+
+      // 알림톡 클로즈드 루프 — 의뢰인에게 입금 확인 자동 발송
+      const caseMatter = await prisma.caseMatter.findUnique({
+        where: { id: caseId },
+        select: {
+          title: true,
+          parties: { select: { phone: true }, take: 1 },
+        },
+      });
+      const phone = caseMatter?.parties[0]?.phone;
+      if (phone && caseMatter?.title) {
+        await notifyPaymentReceived(phone, caseMatter.title, amount, caseId);
+      }
     } catch (err) {
       captureError(err instanceof Error ? err : new Error(String(err)), {
         caseId,

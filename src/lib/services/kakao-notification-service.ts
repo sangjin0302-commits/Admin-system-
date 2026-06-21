@@ -1,6 +1,7 @@
 import { createHmac, randomBytes } from "crypto";
 import { logger } from "@/lib/utils/logger";
 import { captureError } from "@/lib/services/error-monitor-service";
+import { prisma } from "@/lib/prisma/client";
 
 /**
  * KakaoTalk Alimtalk (비즈메시지) — Solapi (CoolSMS 후신) adapter.
@@ -24,6 +25,8 @@ export interface KakaoNotification {
   variables: Record<string, string>;   // #{변수명} → 값
   /** SMS 폴백을 비활성화 (기본 활성). */
   disableSmsFallback?: boolean;
+  /** audit trail에 case 연결 */
+  caseId?: string;
 }
 
 const SOLAPI_BASE = "https://api.solapi.com";
@@ -60,6 +63,33 @@ function renderTemplate(template: string, vars: Record<string, string>): string 
 // Core send
 // ---------------------------------------------------------------------------
 
+async function logNotification(
+  notification: KakaoNotification,
+  fallbackText: string | undefined,
+  status: "SENT" | "FAILED" | "SKIPPED",
+  errorMessage?: string,
+  providerId?: string
+): Promise<void> {
+  try {
+    await prisma.notificationLog.create({
+      data: {
+        channel: "ALIMTALK",
+        templateId: notification.templateId,
+        recipient: notification.to,
+        caseId: notification.caseId,
+        body: fallbackText,
+        variables: JSON.stringify(notification.variables),
+        status,
+        errorMessage,
+        providerId,
+        sentAt: status === "SENT" ? new Date() : undefined,
+      },
+    });
+  } catch {
+    // best-effort
+  }
+}
+
 export async function sendKakaoAlimtalk(
   notification: KakaoNotification,
   fallbackText?: string
@@ -69,6 +99,7 @@ export async function sendKakaoAlimtalk(
     logger.warn(
       "[kakao-notification] SOLAPI_* 환경변수 미설정 — 알림톡 전송을 건너뜁니다."
     );
+    await logNotification(notification, fallbackText, "SKIPPED", "SOLAPI not configured");
     return false;
   }
 
@@ -104,11 +135,23 @@ export async function sendKakaoAlimtalk(
       const body = await res.text();
       logger.error("[kakao-notification] Solapi API error", res.status, body);
       captureError(new Error(`Solapi ${res.status}`), { body });
+      await logNotification(notification, fallbackText, "FAILED", `${res.status}: ${body.slice(0, 200)}`);
       return false;
     }
+    const data = await res.json().catch(() => ({} as Record<string, unknown>));
+    const providerId =
+      (data as { groupId?: string; messageId?: string }).messageId ??
+      (data as { groupId?: string }).groupId;
+    await logNotification(notification, fallbackText, "SENT", undefined, providerId);
     return true;
   } catch (err) {
     captureError(err instanceof Error ? err : new Error(String(err)));
+    await logNotification(
+      notification,
+      fallbackText,
+      "FAILED",
+      err instanceof Error ? err.message : String(err)
+    );
     return false;
   }
 }
@@ -165,13 +208,15 @@ export async function notifyCaseUpdate(
 export async function notifyDeadlineReminder(
   phone: string,
   caseTitle: string,
-  deadlineISO: string
+  deadlineISO: string,
+  caseId?: string
 ): Promise<boolean> {
   return sendKakaoAlimtalk(
     {
       to: phone,
       templateId: TEMPLATE_DEADLINE_REMINDER,
       variables: { 사건명: caseTitle, 기한: deadlineISO },
+      caseId,
     },
     renderTemplate(
       "[ETHOS] #{사건명} 기한 알림 — #{기한}",
@@ -183,7 +228,8 @@ export async function notifyDeadlineReminder(
 export async function notifyPaymentReceived(
   phone: string,
   caseTitle: string,
-  amount: number
+  amount: number,
+  caseId?: string
 ): Promise<boolean> {
   const amt = amount.toLocaleString("ko-KR") + "원";
   return sendKakaoAlimtalk(
@@ -191,6 +237,7 @@ export async function notifyPaymentReceived(
       to: phone,
       templateId: TEMPLATE_PAYMENT_RECEIVED,
       variables: { 사건명: caseTitle, 금액: amt },
+      caseId,
     },
     renderTemplate(
       "[ETHOS] #{사건명} 입금 확인 — #{금액}",

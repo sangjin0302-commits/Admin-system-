@@ -8,12 +8,12 @@ import { logger } from "@/lib/utils/logger";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const STATUS_MAP: Record<string, "signed" | "rejected" | "expired"> = {
-  document_signed: "signed",
-  document_completed: "signed",
-  document_rejected: "rejected",
-  document_canceled: "rejected",
-  document_expired: "expired",
+const STATUS_MAP: Record<string, "SIGNED" | "REJECTED" | "EXPIRED"> = {
+  document_signed: "SIGNED",
+  document_completed: "SIGNED",
+  document_rejected: "REJECTED",
+  document_canceled: "REJECTED",
+  document_expired: "EXPIRED",
 };
 
 export async function POST(req: Request) {
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  const updated = applyWebhookStatus(externalId, mapped);
+  const updated = await applyWebhookStatus(externalId, mapped);
   logger.info(`[modusign-webhook] event=${eventName} id=${externalId} updated=${updated}`);
   return NextResponse.json({ ok: true, updated });
 }
