@@ -33,25 +33,87 @@ function push(event: ErrorEvent): void {
   }
 }
 
+type ParsedDsn = {
+  storeUrl: string;
+  publicKey: string;
+};
+
+function parseSentryDsn(dsn: string): ParsedDsn | null {
+  try {
+    const u = new URL(dsn);
+    const publicKey = u.username;
+    if (!publicKey) return null;
+    const projectId = u.pathname.replace(/^\//, "").split("/").pop();
+    if (!projectId) return null;
+    const host = u.host;
+    const protocol = u.protocol;
+    return {
+      publicKey,
+      storeUrl: `${protocol}//${host}/api/${projectId}/store/`
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function sendToSentry(event: ErrorEvent): Promise<void> {
   const dsn = process.env.SENTRY_DSN;
   if (!dsn) return;
+  const parsed = parseSentryDsn(dsn);
+  if (!parsed) return;
+  const release = process.env.SENTRY_RELEASE ?? process.env.VERCEL_GIT_COMMIT_SHA;
+  const env = process.env.SENTRY_ENVIRONMENT ?? process.env.NODE_ENV ?? "development";
+  const payload: Record<string, unknown> = {
+    event_id: event.id.replace(/-/g, "").slice(0, 32),
+    timestamp: event.timestamp.toISOString(),
+    level: event.level,
+    platform: "node",
+    environment: env,
+    logger: "admin-office",
+    message: { formatted: event.message },
+    extra: event.context ?? {}
+  };
+  if (release) payload.release = release;
+  if (event.stack) {
+    payload.exception = {
+      values: [
+        {
+          type: "Error",
+          value: event.message,
+          stacktrace: { frames: parseStack(event.stack) }
+        }
+      ]
+    };
+  }
   try {
-    await fetch(dsn, {
+    await fetch(parsed.storeUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        event_id: event.id,
-        timestamp: event.timestamp.toISOString(),
-        level: event.level,
-        message: event.message,
-        stack: event.stack,
-        extra: event.context
-      })
+      headers: {
+        "Content-Type": "application/json",
+        "X-Sentry-Auth": `Sentry sentry_version=7, sentry_client=admin-office/1.0, sentry_key=${parsed.publicKey}`
+      },
+      body: JSON.stringify(payload)
     });
   } catch {
     // best-effort
   }
+}
+
+function parseStack(stack: string): Array<{ filename: string; function?: string; lineno?: number; colno?: number }> {
+  const lines = stack.split("\n").slice(1, 21);
+  const frames: Array<{ filename: string; function?: string; lineno?: number; colno?: number }> = [];
+  for (const line of lines) {
+    const m = line.match(/at\s+(?:(.+?)\s+\()?(.+?):(\d+):(\d+)\)?$/);
+    if (m) {
+      frames.push({
+        function: m[1] ?? "<anonymous>",
+        filename: m[2],
+        lineno: Number(m[3]),
+        colno: Number(m[4])
+      });
+    }
+  }
+  return frames.reverse();
 }
 
 export function captureError(

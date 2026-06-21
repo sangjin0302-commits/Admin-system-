@@ -14,6 +14,7 @@ const STATUS_LABEL: Record<SignatureRequestSummary["status"], { text: string; cl
   pending: { text: "서명 대기", className: "bg-amber-100 text-amber-800" },
   signed: { text: "서명 완료", className: "bg-emerald-100 text-emerald-800" },
   expired: { text: "만료", className: "bg-gray-100 text-gray-600" },
+  rejected: { text: "거부/취소", className: "bg-rose-100 text-rose-800" },
   not_found: { text: "없음", className: "bg-gray-100 text-gray-600" },
 };
 
