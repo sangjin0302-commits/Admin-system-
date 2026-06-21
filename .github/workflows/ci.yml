@@ -52,7 +52,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run prisma:generate:sqlite
+      - run: npm run db:push:sqlite
       - run: npm run test:case-phase1
 
   env-check:
