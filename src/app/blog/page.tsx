@@ -7,6 +7,8 @@ import { Reveal } from "@/components/public/reveal";
 import { listBlogPosts } from "@/lib/blog-posts";
 import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
 import { getSiteSetting } from "@/lib/services/site-settings";
+import { prisma } from "@/lib/prisma/client";
+import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 
 export const dynamic = "force-dynamic";
 
@@ -15,14 +17,39 @@ export const metadata: Metadata = {
   description: "비자, 행정심판, 계약서, 인허가 관련 법률 칼럼."
 };
 
-export default async function BlogPage() {
+type Lang = "ko" | "en";
+
+export default async function BlogPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const sp = (await searchParams) ?? {};
+  const lang: Lang = sp.lang === "en" ? "en" : "ko";
+
   const posts = await listBlogPosts();
   const naverBlogId = await getSiteSetting("naver.blogId");
   const naverPosts = naverBlogId ? await fetchNaverBlogPosts(naverBlogId, 9) : [];
 
+  const importedPosts = await prisma.blogPost.findMany({
+    where: { published: true, source: NAVER_BLOG_SOURCE },
+    orderBy: { publishedAt: "desc" },
+    take: 12,
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      titleEn: true,
+      excerpt: true,
+      excerptEn: true,
+      publishedAt: true,
+      source: true,
+      originalUrl: true,
+    },
+  });
+
   return (
     <div className="overflow-x-clip">
-      {/* HERO */}
       <section className="relative overflow-hidden pt-20 pb-12 sm:pt-28 sm:pb-16">
         <div className="ethos-aurora ethos-aurora-animated" aria-hidden />
         <div className="absolute inset-0 -z-10 ethos-grid-pattern" aria-hidden />
@@ -31,27 +58,41 @@ export default async function BlogPage() {
             <p className="ethos-eyebrow">Legal Column</p>
           </Reveal>
           <Reveal delay={1}>
-            <h1 className="ethos-display mt-5 text-4xl sm:text-[3.6rem]">법률 칼럼</h1>
+            <h1 className="ethos-display mt-5 text-4xl sm:text-[3.6rem]">
+              {lang === "en" ? "Legal Columns" : "법률 칼럼"}
+            </h1>
           </Reveal>
           <Reveal delay={2}>
             <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-text-muted">
-              비자, 행정심판, 계약서, 인허가 관련 실무 정보를 정리합니다.
-              <br />※ 일반적 안내이며, 개별 사안에 대한 법률 자문이 아닙니다.
+              {lang === "en"
+                ? "Practical insights on visa, administrative appeals, contracts, and licenses."
+                : "비자, 행정심판, 계약서, 인허가 관련 실무 정보를 정리합니다."}
+              <br />
+              {lang === "en"
+                ? "* General information; not legal advice for specific cases."
+                : "※ 일반적 안내이며, 개별 사안에 대한 법률 자문이 아닙니다."}
             </p>
           </Reveal>
+          <div className="mt-6 inline-flex rounded-full border border-line bg-surface p-1 text-xs">
+            <Link
+              href="/blog?lang=ko"
+              className={`px-3 py-1 rounded-full ${lang === "ko" ? "bg-primary text-white" : "text-text-muted"}`}
+            >
+              KR
+            </Link>
+            <Link
+              href="/blog?lang=en"
+              className={`px-3 py-1 rounded-full ${lang === "en" ? "bg-primary text-white" : "text-text-muted"}`}
+            >
+              EN
+            </Link>
+          </div>
         </div>
       </section>
 
-      {posts.length === 0 ? (
-        <section className="pb-24">
-          <p className="text-center text-sm text-text-muted">아직 게시된 칼럼이 없습니다.</p>
-        </section>
-      ) : (
+      {posts.length === 0 ? null : (
         <>
-          {/* Featured — DARK band */}
           <FeaturedSection post={posts[0]} />
-
-          {/* 나머지 칼럼 — 필터 + 검색 */}
           {posts.length > 1 && (
             <section className="py-16 sm:py-20">
               <BlogGrid
@@ -69,23 +110,60 @@ export default async function BlogPage() {
         </>
       )}
 
-      {/* 네이버 블로그 연동 */}
+      {importedPosts.length > 0 && (
+        <section className="py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <p className="ethos-eyebrow">{lang === "en" ? "From Naver Blog" : "네이버 블로그에서"}</p>
+            <h2 className="ethos-display mt-3 text-2xl sm:text-3xl">
+              {lang === "en" ? "Imported Posts" : "가져온 글"}
+            </h2>
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {importedPosts.map((p) => {
+                const title = lang === "en" ? (p.titleEn || p.title) : p.title;
+                const excerpt = lang === "en" ? (p.excerptEn || p.excerpt) : p.excerpt;
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/blog/${p.slug}${lang === "en" ? "?lang=en" : ""}`}
+                    className="group block rounded-xl border border-gold/20 bg-surface p-5 transition hover:border-gold/50 hover:shadow-panel"
+                  >
+                    <span className="inline-block rounded-full bg-gold-soft/50 px-2.5 py-0.5 font-serif text-[11px] font-bold text-gold-deep">
+                      from Naver Blog
+                    </span>
+                    <h3 className="mt-3 font-serif text-sm font-bold leading-snug text-primary group-hover:text-gold-deep line-clamp-2">
+                      {title}
+                    </h3>
+                    <p className="mt-2 line-clamp-3 text-xs leading-6 text-text-muted">{excerpt}</p>
+                    <p className="mt-3 text-[11px] text-text-muted">
+                      {p.publishedAt?.toLocaleDateString(lang === "en" ? "en-US" : "ko-KR") ?? ""}
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {naverPosts.length > 0 && <NaverBlogSection posts={naverPosts} blogId={naverBlogId} />}
 
-      {/* CTA */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
           <Reveal>
             <p className="ethos-eyebrow">Have a question?</p>
-            <h2 className="ethos-display mt-3 text-3xl sm:text-4xl">궁금한 사안이 있으신가요?</h2>
+            <h2 className="ethos-display mt-3 text-3xl sm:text-4xl">
+              {lang === "en" ? "Have a specific case?" : "궁금한 사안이 있으신가요?"}
+            </h2>
             <p className="mt-4 text-sm leading-7 text-text-muted">
-              칼럼은 일반 안내이며, 개별 사안은 상담 신청 후 사실관계를 확인하며 검토합니다.
+              {lang === "en"
+                ? "Columns are general guidance. Individual cases are reviewed after consultation."
+                : "칼럼은 일반 안내이며, 개별 사안은 상담 신청 후 사실관계를 확인하며 검토합니다."}
             </p>
             <Link
               href="/intake"
               className="mt-9 inline-flex h-12 items-center rounded-lg bg-primary px-8 text-sm font-bold text-white transition hover:bg-text-strong"
             >
-              상담 신청하기
+              {lang === "en" ? "Request Consultation" : "상담 신청하기"}
             </Link>
           </Reveal>
         </div>

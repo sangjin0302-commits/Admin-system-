@@ -6,54 +6,124 @@ import { Card } from "@/components/ui/card";
 import { BlogToc } from "@/components/public/blog-toc";
 import { ShareButtons } from "@/components/public/share-buttons";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/blog-posts";
+import { prisma } from "@/lib/prisma/client";
 
-export async function generateStaticParams() {
-  const posts = await listBlogPosts();
-  return posts.map((p) => ({ slug: p.slug }));
+export const dynamic = "force-dynamic";
+
+type Lang = "ko" | "en";
+
+type ResolvedPost = {
+  source: "markdown" | "db";
+  slug: string;
+  title: string;
+  excerpt: string;
+  contentHtml: string;
+  category: string;
+  date: string;
+  readMin: number;
+  originalUrl?: string | null;
+  translationMissing?: boolean;
+};
+
+async function resolvePost(slug: string, lang: Lang): Promise<ResolvedPost | null> {
+  const md = await getBlogPostBySlug(slug);
+  if (md) {
+    return {
+      source: "markdown",
+      slug: md.slug,
+      title: md.title,
+      excerpt: md.excerpt,
+      contentHtml: md.contentHtml,
+      category: md.category,
+      date: md.date,
+      readMin: md.readMin,
+    };
+  }
+  const db = await prisma.blogPost.findUnique({ where: { slug } });
+  if (!db || !db.published) return null;
+  const wantEn = lang === "en";
+  const titleEn = db.titleEn;
+  const bodyEn = db.bodyEn;
+  const excerptEn = db.excerptEn;
+  const useEn = wantEn && !!bodyEn;
+  return {
+    source: "db",
+    slug: db.slug,
+    title: useEn && titleEn ? titleEn : db.title,
+    excerpt: useEn && excerptEn ? excerptEn : db.excerpt,
+    contentHtml: useEn && bodyEn ? bodyEn : db.body,
+    category: db.category,
+    date: (db.publishedAt ?? db.createdAt).toISOString().slice(0, 10),
+    readMin: Math.max(1, Math.round(db.body.length / 800)),
+    originalUrl: db.originalUrl,
+    translationMissing: wantEn && !bodyEn,
+  };
 }
 
 export async function generateMetadata({
-  params
+  params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ lang?: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getBlogPostBySlug(slug);
+  const sp = (await searchParams) ?? {};
+  const lang: Lang = sp.lang === "en" ? "en" : "ko";
+  const post = await resolvePost(slug, lang);
   if (!post) return { title: "글을 찾을 수 없습니다" };
   return {
     title: `${post.title} — 법률 칼럼 | ETHOS`,
-    description: post.excerpt
+    description: post.excerpt,
   };
 }
 
 export default async function BlogDetailPage({
-  params
+  params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ lang?: string }>;
 }) {
   const { slug } = await params;
-  const post = await getBlogPostBySlug(slug);
+  const sp = (await searchParams) ?? {};
+  const lang: Lang = sp.lang === "en" ? "en" : "ko";
+  const post = await resolvePost(slug, lang);
   if (!post) notFound();
 
-  // 관련 글 (같은 카테고리 우선, 현재 제외, 최대 3)
   const all = await listBlogPosts();
   const related = [
     ...all.filter((p) => p.slug !== post.slug && p.category === post.category),
-    ...all.filter((p) => p.slug !== post.slug && p.category !== post.category)
+    ...all.filter((p) => p.slug !== post.slug && p.category !== post.category),
   ].slice(0, 3);
 
   return (
     <div className="relative mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
-      {/* 데스크탑 우측 목차 (xl 이상) */}
       <div className="absolute left-full top-20 hidden h-full pl-10 xl:block">
         <div className="w-56">
           <BlogToc />
         </div>
       </div>
 
-      <Link href="/blog" className="font-serif text-xs text-text-muted hover:text-primary">
-        ← 법률 칼럼 목록
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href={`/blog${lang === "en" ? "?lang=en" : ""}`} className="font-serif text-xs text-text-muted hover:text-primary">
+          ← {lang === "en" ? "Back to columns" : "법률 칼럼 목록"}
+        </Link>
+        <div className="inline-flex rounded-full border border-line bg-surface p-1 text-xs">
+          <Link
+            href={`/blog/${post.slug}?lang=ko`}
+            className={`px-2.5 py-0.5 rounded-full ${lang === "ko" ? "bg-primary text-white" : "text-text-muted"}`}
+          >
+            KR
+          </Link>
+          <Link
+            href={`/blog/${post.slug}?lang=en`}
+            className={`px-2.5 py-0.5 rounded-full ${lang === "en" ? "bg-primary text-white" : "text-text-muted"}`}
+          >
+            EN
+          </Link>
+        </div>
+      </div>
 
       <article className="mt-8">
         <span className="rounded-full bg-gold-soft/60 px-3 py-1 font-serif text-xs font-bold text-gold-deep">
@@ -65,8 +135,27 @@ export default async function BlogDetailPage({
         <div className="mt-4 flex items-center gap-3 text-xs text-text-muted">
           <span>{post.date}</span>
           <span>·</span>
-          <span>{post.readMin}분 소요</span>
+          <span>{post.readMin}{lang === "en" ? " min read" : "분 소요"}</span>
         </div>
+
+        {post.translationMissing && (
+          <p className="mt-4 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
+            번역 준비 중 / Translation in progress — showing Korean original.
+          </p>
+        )}
+
+        {post.originalUrl && (
+          <p className="mt-4 text-xs">
+            <a
+              href={post.originalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              원본 보기 (Naver Blog) ↗
+            </a>
+          </p>
+        )}
 
         <div className="ethos-rule my-8">{post.category}</div>
 
@@ -78,10 +167,11 @@ export default async function BlogDetailPage({
         <ShareButtons title={post.title} />
       </article>
 
-      {/* 관련 글 */}
       {related.length > 0 && (
         <section className="mt-14 border-t border-gold/20 pt-10">
-          <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">관련 칼럼</p>
+          <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">
+            {lang === "en" ? "Related columns" : "관련 칼럼"}
+          </p>
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             {related.map((r) => (
               <Link

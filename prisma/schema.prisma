@@ -1252,10 +1252,17 @@ model BlogPost {
   viewCount   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  titleEn      String?
+  bodyEn       String?
+  excerptEn    String?
+  source       String   @default("manual")
+  originalUrl  String?
+  importedAt   DateTime?
 
   @@index([published, publishedAt])
   @@index([slug])
   @@index([category])
+  @@index([source, importedAt])
 }
 
 model LegacyImportLog {

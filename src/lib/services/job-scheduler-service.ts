@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { importNaverBlogPosts } from "@/lib/services/naver-rss-importer";
 
 export type ScheduledJob = {
   id: string;
@@ -111,4 +112,14 @@ registerJob({
   cron: "0 10 * * *",
   enabled: true,
   handler: staleInquiryAlertHandler,
+});
+
+registerJob({
+  id: "naver-blog-import",
+  name: "네이버 블로그 자동 가져오기",
+  cron: "0 */1 * * *",
+  enabled: true,
+  handler: async () => {
+    await importNaverBlogPosts({ translate: true });
+  },
 });
