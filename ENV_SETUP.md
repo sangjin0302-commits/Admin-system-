@@ -153,13 +153,19 @@
 
 ### Market Analyze 봇 연결 방법
 
-동일한 패턴으로 작업하고 환경변수만 변경:
+Market Analyze는 시장 정보 분석 API (FastAPI). 인증: `x-admin-token` 헤더.
+
+**Vercel 환경변수**:
 ```
-MARKET_BOT_API_URL = https://your-market.up.railway.app
-MARKET_BOT_API_KEY = (별도 키)
+MARKET_BOT_API_URL = https://market-analyze-production.up.railway.app
+MARKET_BOT_ADMIN_TOKEN = <Railway의 ADMIN_API_TOKEN 값과 동일>
 ```
 
-`/api/admin/market-bot/query/route.ts`는 이미 환경변수 확인 코드가 있어 — env 설정만 하면 자동 연동.
+Railway 쪽에서는 `ADMIN_API_TOKEN`으로 설정되어 있어도 됨. 양쪽 이름은 달라도 OK — **값만 일치**하면 됨.
+
+코드 fallback: `MARKET_BOT_ADMIN_TOKEN` → 없으면 `ADMIN_API_TOKEN` → 없으면 미설정 에러.
+
+엔드포인트 29개 자동 연동 (대시보드/트렌드/경쟁사/리포트/수집/동기화). 자세한 페이지는 `/admin/market-bot/`.
 
 ### 봇 → 사이트 호출 차단 (보안)
 
