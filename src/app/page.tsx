@@ -9,6 +9,7 @@ import { Testimonials } from "@/components/public/testimonials";
 import { Reveal } from "@/components/public/reveal";
 import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
+import { OrganizationJsonLd, LegalServiceJsonLd } from "@/components/seo/json-ld";
 import { getSiteSettings } from "@/lib/services/site-settings";
 import { listPublicTestimonials } from "@/lib/services/testimonials";
 
@@ -203,6 +204,11 @@ export default async function PublicMarketingHomePage({
 
   return (
     <div className="overflow-x-clip">
+      <OrganizationJsonLd />
+      <LegalServiceJsonLd
+        serviceName="비자·체류 / 행정심판 / 계약·사실조사 / 인허가 / 법인설립"
+        description={t.heroDescription}
+      />
       {/* 공지 배너 (운영란에서 입력 시 표시) */}
       {noticeBanner && (
         <div className="border-b border-gold/30 bg-primary px-4 py-2.5 text-center text-sm text-white">
