@@ -33,6 +33,7 @@ import { DashboardExecutionQueue } from "./_dashboard/dashboard-execution-queue"
 import { DashboardPipeline } from "./_dashboard/dashboard-pipeline";
 import { DashboardListCards } from "./_dashboard/dashboard-list-cards";
 import { DashboardIntegrations } from "./_dashboard/dashboard-integrations";
+import { DashboardPlatformKpis } from "./_dashboard/dashboard-platform-kpis";
 import { DashboardRecentInquiries } from "./_dashboard/dashboard-recent-inquiries";
 import { logger } from "@/lib/utils/logger";
 
@@ -274,6 +275,8 @@ export default async function AdminDashboardContent() {
         nextContactItems={nextContactItems}
         recentIntakes={recentIntakes}
       />
+
+      <DashboardPlatformKpis />
 
       <DashboardIntegrations />
 

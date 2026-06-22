@@ -1,5 +1,6 @@
 import { InquiryActionChecklistPanel } from "@/components/admin/inquiry-action-checklist-panel";
 import { InquiryCaseConversionPanel } from "@/components/admin/inquiry-case-conversion-panel";
+import { InquiryLawbotRerunButton } from "@/components/admin/inquiry-lawbot-rerun-button";
 import {
   InquiryDetailEvidenceSection,
   InquiryDetailIntakeCategorySection,
@@ -181,6 +182,9 @@ export default async function AdminInquiryDetailPage({
                   statusGuardPreview={statusGuardPreview}
                 />
               </Card>
+              <div className="flex justify-end">
+                <InquiryLawbotRerunButton inquiryId={inquiry.id} />
+              </div>
               <InquiryCaseConversionPanel
                 inquiryId={inquiry.id}
                 inquiryTitle={inquiry.title}

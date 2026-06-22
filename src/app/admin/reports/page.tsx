@@ -70,6 +70,7 @@ export default async function ReportsPage() {
   );
 }
 
-export function logReport(period: string) {
+function logReport(period: string) {
   recentReports.push({ period, generatedAt: new Date() });
 }
+void logReport;
