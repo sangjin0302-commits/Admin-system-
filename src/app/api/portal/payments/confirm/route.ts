@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { confirmPayment } from "@/lib/services/payment-service";
 import { notifyPaymentReceived } from "@/lib/services/kakao-notification-service";
+import { issueTaxInvoice } from "@/lib/services/tax-invoice-service";
 import { prisma } from "@/lib/prisma/client";
 import { captureError } from "@/lib/services/error-monitor-service";
 
@@ -60,12 +61,32 @@ export async function POST(req: Request) {
         where: { id: caseId },
         select: {
           title: true,
-          parties: { select: { phone: true }, take: 1 },
+          parties: {
+            select: { phone: true, name: true, email: true, organization: true },
+            take: 1,
+          },
         },
       });
-      const phone = caseMatter?.parties[0]?.phone;
+      const party = caseMatter?.parties[0];
+      const phone = party?.phone;
       if (phone && caseMatter?.title) {
         await notifyPaymentReceived(phone, caseMatter.title, amount, caseId);
+      }
+
+      // 전자세금계산서 자동 발행 (바로빌 미설정 시 DRAFT만)
+      const payment = await prisma.payment.findUnique({
+        where: { orderId },
+        select: { id: true },
+      });
+      if (party?.name && caseMatter?.title) {
+        await issueTaxInvoice({
+          paymentId: payment?.id,
+          caseId,
+          totalAmount: amount,
+          customerName: party.name,
+          customerEmail: party.email ?? undefined,
+          itemName: `${caseMatter.title} 수임료`,
+        });
       }
     } catch (err) {
       captureError(err instanceof Error ? err : new Error(String(err)), {

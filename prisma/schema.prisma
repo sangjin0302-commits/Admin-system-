@@ -1394,6 +1394,77 @@ enum NotificationStatus {
   SKIPPED          // 환경변수 미설정 등으로 건너뜀
 }
 
+// ---------------------------------------------------------------------------
+// Round Y — Google Calendar OAuth + 전자세금계산서 (바로빌)
+// ---------------------------------------------------------------------------
+
+model GoogleOAuthToken {
+  id            String   @id @default(cuid())
+  orgId         String?
+  userId        String   @unique             // admin user identifier (email/sub)
+  accessToken   String
+  refreshToken  String
+  expiresAt     DateTime
+  scope         String?
+  calendarId    String?  @default("primary")
+  syncToken     String?                       // Google incremental sync token
+  lastSyncedAt  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+/** Google Calendar 이벤트 ↔ 내부 사건/작업 매핑. 중복 push 방지용. */
+model GoogleCalendarSyncMap {
+  id              String   @id @default(cuid())
+  orgId           String?
+  internalKind    String                     // "case_due" | "case_next_action" | "task"
+  internalId      String                     // CaseMatter.id / CaseTask.id
+  googleEventId   String   @unique
+  calendarId      String   @default("primary")
+  lastPushedAt    DateTime @default(now())
+
+  @@unique([internalKind, internalId])
+  @@index([orgId])
+}
+
+enum TaxInvoiceStatus {
+  DRAFT
+  ISSUED
+  SENT
+  CANCELED
+  FAILED
+}
+
+model TaxInvoice {
+  id                 String           @id @default(cuid())
+  orgId              String?
+  paymentId          String?          @unique
+  caseId             String?
+  invoiceNumber      String?          @unique
+  supplyAmount       Int                                // 공급가액
+  taxAmount          Int                                // 세액
+  totalAmount        Int                                // 합계
+  customerBusinessNo String?                            // 의뢰인 사업자번호 (B2B 시)
+  customerName       String
+  customerEmail      String?
+  itemName           String
+  status             TaxInvoiceStatus @default(DRAFT)
+  providerType       String           @default("BAROBILL")
+  providerId         String?                            // 바로빌 MgtKey 또는 NTSConfirmNum
+  ntsConfirmNum      String?                            // 국세청 승인번호
+  errorMessage       String?
+  rawProviderJson    String?
+  issuedAt           DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([caseId])
+  @@index([status])
+  @@index([createdAt])
+}
+
 model NotificationLog {
   id           String              @id @default(cuid())
   orgId        String?
