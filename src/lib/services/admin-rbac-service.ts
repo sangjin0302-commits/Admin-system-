@@ -157,6 +157,47 @@ export interface AuditLogInput {
   orgId?: string;
 }
 
+const ALERT_ACTIONS = new Set([
+  "PAYMENT_CANCEL",
+  "ROLE_CHANGE",
+  "DELETE",
+  "CONFIG_CHANGE",
+]);
+
+async function alertSupersIfNeeded(input: AuditLogInput): Promise<void> {
+  if (!ALERT_ACTIONS.has(input.action)) return;
+  try {
+    // 동적 import — 순환 의존 방지
+    const { sendKakaoAlimtalk } = await import(
+      "@/lib/services/kakao-notification-service"
+    );
+    const supers = await prisma.adminUser.findMany({
+      where: { role: "SUPER", active: true },
+      select: { email: true, name: true },
+    });
+    // SUPER 본인이 액션 수행한 경우 자기 자신 제외
+    const targets = supers.filter((s) => s.email !== input.actorEmail);
+    if (targets.length === 0) return;
+
+    const summary = `${input.action} on ${input.resource}${input.resourceId ? `(${input.resourceId.slice(0, 8)})` : ""} by ${input.actorEmail}`;
+    for (const s of targets) {
+      // 메모 채널 — SUPER가 등록한 phone이 있을 때만 (현재 AdminUser에 phone 미존재 → email로 fallback)
+      // 실제 발송은 SOLAPI 미설정 시 자동 SKIPPED → audit 영속
+      await sendKakaoAlimtalk(
+        {
+          to: s.email, // phone 컬럼 도입 시 교체
+          templateId: "admin_audit_alert",
+          variables: { 액션: input.action, 요약: summary },
+          disableSmsFallback: true,
+        },
+        `[ETHOS Audit] ${summary}`
+      );
+    }
+  } catch (err) {
+    logger.warn("[admin-rbac] alert dispatch failed", err);
+  }
+}
+
 export async function logAdminAudit(input: AuditLogInput): Promise<void> {
   try {
     await prisma.adminAuditEvent.create({
@@ -178,6 +219,8 @@ export async function logAdminAudit(input: AuditLogInput): Promise<void> {
   } catch (err) {
     logger.error("[admin-rbac] audit log failed", err);
   }
+  // best-effort 외부 알림
+  void alertSupersIfNeeded(input);
 }
 
 export function ipFromRequest(req: Request): string | undefined {

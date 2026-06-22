@@ -24,7 +24,12 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const SCORE_THRESHOLD = 70;
+const AUTO_CONVERT_SCORE = 85;
 const BATCH_LIMIT = 50;
+
+function isAutoConvertEnabled(): boolean {
+  return process.env.AUTO_CONVERT_ENABLED?.trim().toLowerCase() === "true";
+}
 
 export async function GET(request: Request) {
   const auth = request.headers.get("authorization");
@@ -57,6 +62,8 @@ export async function GET(request: Request) {
 
   let proposed = 0;
   let skipped = 0;
+  let autoConverted = 0;
+  const autoMode = isAutoConvertEnabled();
 
   for (const i of candidates) {
     // 24h dedup
@@ -98,6 +105,40 @@ export async function GET(request: Request) {
       logger.warn("[auto-conv] portal notif failed", err);
     }
 
+    // 자동 전환 (env 옵션 + 매우 높은 점수일 때만)
+    if (
+      autoMode &&
+      i.qualificationScore >= AUTO_CONVERT_SCORE
+    ) {
+      try {
+        await prisma.caseMatter.create({
+          data: {
+            title: i.title,
+            matterType: "auto_converted",
+            inquiryId: i.id,
+          },
+        });
+        await prisma.inquiry.update({
+          where: { id: i.id },
+          data: { status: "WON" },
+        });
+        await logAdminAudit({
+          actorEmail: "system@ethos.local",
+          action: "CREATE",
+          resource: "CaseMatter",
+          details: {
+            inquiryId: i.id,
+            autoConverted: true,
+            qualificationScore: i.qualificationScore,
+          },
+        });
+        autoConverted++;
+        continue;
+      } catch (err) {
+        logger.warn("[auto-conv] auto-convert failed", err);
+      }
+    }
+
     await logAdminAudit({
       actorEmail: "system@ethos.local",
       action: "UPDATE",
@@ -113,12 +154,19 @@ export async function GET(request: Request) {
     proposed++;
   }
 
-  logger.info("[cron:auto-conv-proposals]", { proposed, skipped });
+  logger.info("[cron:auto-conv-proposals]", {
+    proposed,
+    skipped,
+    autoConverted,
+    autoMode,
+  });
   return NextResponse.json({
     ok: true,
     runAt: new Date().toISOString(),
     candidates: candidates.length,
     proposed,
     skipped,
+    autoConverted,
+    autoMode,
   });
 }

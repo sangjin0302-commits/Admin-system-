@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 
 import { getBlogPostBySlug } from "@/lib/blog-posts";
+import { prisma } from "@/lib/prisma/client";
 
 export const alt = "ETHOS 법률 칼럼";
 export const size = { width: 1200, height: 630 };
@@ -8,9 +9,16 @@ export const contentType = "image/png";
 
 export default async function BlogOgImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = await getBlogPostBySlug(slug).catch(() => null);
-  const title = post?.title ?? "법률 칼럼";
-  const category = post?.category ?? "ETHOS";
+  const md = await getBlogPostBySlug(slug).catch(() => null);
+  let title = md?.title ?? "법률 칼럼";
+  let category = md?.category ?? "ETHOS";
+  if (!md) {
+    const db = await prisma.blogPost.findUnique({ where: { slug } }).catch(() => null);
+    if (db) {
+      title = db.title;
+      category = db.category || category;
+    }
+  }
 
   return new ImageResponse(
     (
