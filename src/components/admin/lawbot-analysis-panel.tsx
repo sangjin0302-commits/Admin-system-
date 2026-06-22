@@ -36,7 +36,18 @@ export async function LawbotAnalysisPanel({ caseId }: { caseId: string }) {
           <p className="text-xs text-text-muted">Lawbot 분석</p>
           <h3 className="text-sm font-semibold text-text-strong">AI 사건 진단</h3>
         </div>
-        <LawbotRerunButton caseId={caseId} />
+        <div className="flex items-center gap-2">
+          {runs.length > 0 && (
+            <a
+              href={`/api/admin/cases/${caseId}/lawbot-analyze/export?format=csv`}
+              className="rounded border border-line bg-white px-2.5 py-1 text-xs hover:bg-surface-muted"
+              title="모든 분석 기록을 CSV로 내려받기"
+            >
+              CSV
+            </a>
+          )}
+          <LawbotRerunButton caseId={caseId} />
+        </div>
       </div>
 
       {!latest ? (

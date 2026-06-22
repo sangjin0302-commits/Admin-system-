@@ -11,26 +11,61 @@ function SignInForm() {
   const callbackUrl = sp.get("callbackUrl") ?? "/portal";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [totp, setTotp] = useState("");
+  const [step, setStep] = useState<"credentials" | "totp">("credentials");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  async function tryFinalSignIn(totpCode?: string) {
+    const res = await signIn("credentials", {
+      email,
+      password,
+      totp: totpCode ?? "",
+      redirect: false,
+    });
+    if (!res?.ok) return false;
+    router.push(callbackUrl);
+    router.refresh();
+    return true;
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false
-    });
-    setLoading(false);
 
-    if (!res?.ok) {
-      setError("이메일 또는 비밀번호가 올바르지 않습니다.");
+    if (step === "totp") {
+      const ok = await tryFinalSignIn(totp);
+      setLoading(false);
+      if (!ok) setError("2FA 코드가 올바르지 않습니다.");
       return;
     }
-    router.push(callbackUrl);
-    router.refresh();
+
+    // step === "credentials" — 비번 1차 검증 + 2FA 필요 여부 판단
+    try {
+      const pre = await fetch("/api/auth/2fa-required", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await pre.json().catch(() => ({}));
+      if (!data?.ok) {
+        setLoading(false);
+        setError("이메일 또는 비밀번호가 올바르지 않습니다.");
+        return;
+      }
+      if (data.twoFactorRequired) {
+        setLoading(false);
+        setStep("totp");
+        return;
+      }
+      const ok = await tryFinalSignIn();
+      setLoading(false);
+      if (!ok) setError("로그인 실패");
+    } catch {
+      setLoading(false);
+      setError("네트워크 오류");
+    }
   }
 
   return (
@@ -44,7 +79,8 @@ function SignInForm() {
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
-          className="mt-1 w-full rounded-lg border border-gold/40 bg-surface px-4 py-2.5 text-sm focus:border-gold focus:outline-none"
+          disabled={step === "totp"}
+          className="mt-1 w-full rounded-lg border border-gold/40 bg-surface px-4 py-2.5 text-sm focus:border-gold focus:outline-none disabled:bg-surface-muted"
         />
       </div>
       <div>
@@ -56,9 +92,43 @@ function SignInForm() {
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
-          className="mt-1 w-full rounded-lg border border-gold/40 bg-surface px-4 py-2.5 text-sm focus:border-gold focus:outline-none"
+          disabled={step === "totp"}
+          className="mt-1 w-full rounded-lg border border-gold/40 bg-surface px-4 py-2.5 text-sm focus:border-gold focus:outline-none disabled:bg-surface-muted"
         />
       </div>
+
+      {step === "totp" && (
+        <div>
+          <label htmlFor="signin-totp" className="font-serif text-sm font-bold text-primary">2FA 코드</label>
+          <input
+            id="signin-totp"
+            type="text"
+            inputMode="numeric"
+            pattern="\d{6}"
+            maxLength={6}
+            value={totp}
+            onChange={(e) => setTotp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            required
+            autoFocus
+            placeholder="123456"
+            className="mt-1 w-full rounded-lg border border-gold/40 bg-surface px-4 py-2.5 text-center font-mono text-lg tracking-[0.4em] focus:border-gold focus:outline-none"
+          />
+          <p className="mt-1 text-xs text-text-muted">
+            인증앱이 표시하는 6자리 코드를 입력하세요.
+            <button
+              type="button"
+              onClick={() => {
+                setStep("credentials");
+                setTotp("");
+                setError(null);
+              }}
+              className="ml-2 text-primary underline"
+            >
+              뒤로
+            </button>
+          </p>
+        </div>
+      )}
 
       {error && (
         <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
@@ -66,10 +136,10 @@ function SignInForm() {
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || (step === "totp" && totp.length !== 6)}
         className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-primary font-serif text-sm font-bold text-white transition hover:bg-text-strong disabled:opacity-50"
       >
-        {loading ? "로그인 중..." : "로그인"}
+        {loading ? "로그인 중..." : step === "totp" ? "코드 확인" : "로그인"}
       </button>
     </form>
   );

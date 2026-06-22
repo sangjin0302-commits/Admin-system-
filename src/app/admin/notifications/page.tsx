@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { prisma } from "@/lib/prisma/client";
 import { isAlimtalkConnected } from "@/lib/services/kakao-notification-service";
+import { ResendButton } from "./resend-button";
 
 export const dynamic = "force-dynamic";
 
@@ -180,9 +181,13 @@ export default async function NotificationsPage({
                     {STATUS_LABEL[it.status] ?? it.status}
                   </span>
                 </div>
-                <p className="mt-2 text-xs text-text-muted">
-                  {new Date(it.createdAt).toLocaleString("ko-KR")}
-                </p>
+                <div className="mt-2 flex items-center justify-between text-xs text-text-muted">
+                  <span>{new Date(it.createdAt).toLocaleString("ko-KR")}</span>
+                  {(it.status === "FAILED" || it.status === "SKIPPED") &&
+                    it.channel === "ALIMTALK" && (
+                      <ResendButton id={it.id} />
+                    )}
+                </div>
               </Card>
             ))}
           </div>
@@ -199,6 +204,7 @@ export default async function NotificationsPage({
                     <th className="px-5 py-3">템플릿</th>
                     <th className="px-5 py-3">상태</th>
                     <th className="px-5 py-3">메모</th>
+                    <th className="px-5 py-3">액션</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -221,6 +227,12 @@ export default async function NotificationsPage({
                       </td>
                       <td className="px-5 py-3 max-w-md truncate text-xs text-text-muted">
                         {it.errorMessage ?? it.body ?? "—"}
+                      </td>
+                      <td className="px-5 py-3">
+                        {(it.status === "FAILED" || it.status === "SKIPPED") &&
+                          it.channel === "ALIMTALK" && (
+                            <ResendButton id={it.id} />
+                          )}
                       </td>
                     </tr>
                   ))}
