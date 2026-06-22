@@ -9,6 +9,7 @@ import {
   RequiredDocumentSummarySection
 } from "@/components/admin/case-matter-detail-sections";
 import { CaseAccountingMemoPanel } from "@/components/admin/case-accounting-memo-panel";
+import { LawbotAnalysisPanel } from "@/components/admin/lawbot-analysis-panel";
 import { CaseTaskManagementPanel } from "@/components/admin/case-task-management-panel";
 import { ImmigrationCaseDetailPanel } from "@/components/admin/immigration-case-detail-panel";
 import { ImmigrationCaseHintPanel } from "@/components/admin/immigration-case-hint-panel";
@@ -280,6 +281,7 @@ export default async function AdminCaseMatterDetailPage({
         currentCategory={caseMatter.category ?? "OTHER"}
       />
       <CaseMatterSummaryCards caseMatter={caseMatter} status={currentStatus} locale={locale} />
+      <LawbotAnalysisPanel caseId={caseMatter.id} />
       <CaseMatterPartiesSection parties={caseMatter.parties} />
       <CaseMatterInquiryLinkSection inquiry={caseMatter.inquiry} />
       {(caseMatter.category === "VISA_STAY" || caseMatter.immigrationDetail) && (

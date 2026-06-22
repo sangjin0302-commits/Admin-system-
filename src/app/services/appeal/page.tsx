@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
 import { getSiteSetting } from "@/lib/services/site-settings";
+import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,19 @@ export default async function AppealPage({
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
   const descOverride = await getSiteSetting("services.appeal.desc");
   return (
+    <>
+      <LegalServiceJsonLd
+        serviceName="행정심판"
+        description="처분 통지부터 청구·심리·재결까지 행정심판 절차"
+        url="/services/appeal"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "홈", url: "/" },
+          { name: "업무분야", url: "/services" },
+          { name: "행정심판", url: "/services/appeal" },
+        ]}
+      />
     <ServicePage
       lang={lang}
       serviceKey="appeal"
@@ -66,5 +80,6 @@ export default async function AppealPage({
         ]
       }}
     />
+    </>
   );
 }

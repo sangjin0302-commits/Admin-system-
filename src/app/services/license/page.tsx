@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
 import { getSiteSetting } from "@/lib/services/site-settings";
+import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,19 @@ export default async function LicensePage({
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
   const descOverride = await getSiteSetting("services.license.desc");
   return (
+    <>
+      <LegalServiceJsonLd
+        serviceName="인허가"
+        description="사업·건축·식품·의료 등 인허가 신청, 보완 대응, 불복 절차"
+        url="/services/license"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "홈", url: "/" },
+          { name: "업무분야", url: "/services" },
+          { name: "인허가", url: "/services/license" },
+        ]}
+      />
     <ServicePage
       lang={lang}
       serviceKey="license"
@@ -68,5 +82,6 @@ export default async function LicensePage({
         ]
       }}
     />
+    </>
   );
 }

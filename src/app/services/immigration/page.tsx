@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
 import { getSiteSetting } from "@/lib/services/site-settings";
+import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,19 @@ export default async function VisaPage({
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
   const descOverride = await getSiteSetting("services.immigration.desc");
   return (
+    <>
+      <LegalServiceJsonLd
+        serviceName="비자 / 외국인 체류"
+        description="체류 자격 변경, 기간 연장, 초청, 영주·국적 신청, 강제퇴거 처분 대응"
+        url="/services/immigration"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "홈", url: "/" },
+          { name: "업무분야", url: "/services" },
+          { name: "비자/체류", url: "/services/immigration" },
+        ]}
+      />
     <ServicePage
       lang={lang}
       serviceKey="immigration"
@@ -68,5 +82,6 @@ export default async function VisaPage({
         ]
       }}
     />
+    </>
   );
 }

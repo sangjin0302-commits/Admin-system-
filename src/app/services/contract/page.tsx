@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
 import { getSiteSetting } from "@/lib/services/site-settings";
+import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,19 @@ export default async function ContractPage({
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
   const descOverride = await getSiteSetting("services.contract.desc");
   return (
+    <>
+      <LegalServiceJsonLd
+        serviceName="계약서 / 사실조사"
+        description="계약 검토·작성, 분쟁 사실관계 조사, 조사보고서 작성"
+        url="/services/contract"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "홈", url: "/" },
+          { name: "업무분야", url: "/services" },
+          { name: "계약·사실조사", url: "/services/contract" },
+        ]}
+      />
     <ServicePage
       lang={lang}
       serviceKey="contract"
@@ -67,5 +81,6 @@ export default async function ContractPage({
         ]
       }}
     />
+    </>
   );
 }

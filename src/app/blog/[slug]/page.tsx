@@ -7,6 +7,7 @@ import { BlogToc } from "@/components/public/blog-toc";
 import { ShareButtons } from "@/components/public/share-buttons";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/blog-posts";
 import { prisma } from "@/lib/prisma/client";
+import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +100,19 @@ export default async function BlogDetailPage({
 
   return (
     <div className="relative mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
+      <ArticleJsonLd
+        title={post.title}
+        description={post.excerpt}
+        url={`/blog/${post.slug}`}
+        publishedAt={post.date}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "홈", url: "/" },
+          { name: "블로그", url: "/blog" },
+          { name: post.title, url: `/blog/${post.slug}` },
+        ]}
+      />
       <div className="absolute left-full top-20 hidden h-full pl-10 xl:block">
         <div className="w-56">
           <BlogToc />

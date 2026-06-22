@@ -37,6 +37,7 @@
     "db:push:sqlite": "node scripts/render-prisma-schema.mjs sqlite && prisma db push --schema prisma/schema.sqlite.prisma",
     "db:push:postgres": "node scripts/render-prisma-schema.mjs postgresql && prisma db push --schema prisma/schema.postgresql.prisma",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:admin": "tsx scripts/seed-admin-user.ts",
     "forecast:sync": "tsx scripts/sync-forecast-dataset.ts",
     "forecast:import": "tsx scripts/import-forecast-run.ts",
     "forecast:timesfm": "python scripts/timesfm_forecast.py"

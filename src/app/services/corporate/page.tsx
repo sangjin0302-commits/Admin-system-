@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
 import { getSiteSetting } from "@/lib/services/site-settings";
+import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,19 @@ export default async function CorporatePage({
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
   const descOverride = await getSiteSetting("services.corporate.desc");
   return (
+    <>
+      <LegalServiceJsonLd
+        serviceName="법인 설립"
+        description="법인 설립 절차, 정관·등기 준비, 설립 후 인허가 연계"
+        url="/services/corporate"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "홈", url: "/" },
+          { name: "업무분야", url: "/services" },
+          { name: "법인 설립", url: "/services/corporate" },
+        ]}
+      />
     <ServicePage
       lang={lang}
       serviceKey="corporate"
@@ -66,5 +80,6 @@ export default async function CorporatePage({
         ]
       }}
     />
+    </>
   );
 }
