@@ -18,6 +18,8 @@ export interface SignatureRequest {
   documentUrl?: string;
   templateId?: string;
   caseId?: string;
+  /** base64 PDF — Modusign 직접 업로드 흐름 (templateId 미사용 시). */
+  pdfBase64?: string;
 }
 
 const MODUSIGN_BASE = "https://api.modusign.co.kr";
@@ -55,6 +57,68 @@ export async function createSignatureRequest(
   const internalToken = randomUUID();
   const cfg = getModusignConfig();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  // 0) Modusign + PDF base64 직접 업로드 (templateId 없을 때)
+  if (cfg && req.pdfBase64 && !req.templateId) {
+    try {
+      const res = await fetch(`${MODUSIGN_BASE}/documents/upload-and-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader(cfg),
+        },
+        body: JSON.stringify({
+          document: {
+            title: req.documentTitle,
+            file: {
+              name: `${req.documentTitle}.pdf`,
+              base64: req.pdfBase64,
+              extension: "pdf",
+            },
+          },
+          participants: [
+            {
+              role: "서명자",
+              name: req.signerName,
+              signingMethod: { type: "EMAIL", value: req.signerEmail },
+              signingDuration: 7 * 24 * 60, // minutes
+            },
+          ],
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const externalId = data.id ?? data.documentId;
+        const participantUrl =
+          data.participants?.[0]?.signingMethod?.signingUrl ??
+          data.signingUrl ??
+          `https://app.modusign.co.kr/documents/${externalId}`;
+        const row = await prisma.eSignRequest.create({
+          data: {
+            externalId,
+            caseId: req.caseId,
+            documentTitle: req.documentTitle,
+            signerName: req.signerName,
+            signerEmail: req.signerEmail,
+            signerPhone: req.signerPhone,
+            documentUrl: req.documentUrl,
+            provider: "MODUSIGN",
+            status: "PENDING",
+            signUrl: participantUrl,
+            internalToken,
+            expiresAt,
+            rawProviderJson: JSON.stringify(data).slice(0, 4000),
+          },
+        });
+        return { requestId: row.id, signUrl: participantUrl, externalId };
+      }
+      const body = await res.text();
+      logger.error("[e-signature] Modusign upload-and-request error", res.status, body);
+      captureError(new Error(`Modusign upload ${res.status}`), { body });
+    } catch (err) {
+      captureError(err instanceof Error ? err : new Error(String(err)));
+    }
+  }
 
   // 1) Modusign 시도 (templateId 있고 cfg 있을 때만)
   if (cfg && req.templateId) {

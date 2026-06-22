@@ -1395,6 +1395,94 @@ enum NotificationStatus {
 }
 
 // ---------------------------------------------------------------------------
+// Round Z — RBAC (역할 기반 접근 제어)
+// ---------------------------------------------------------------------------
+
+enum AdminRole {
+  SUPER       // 소장 — 모든 권한
+  MANAGER     // 관리자 — 결제/세금계산서 제외 거의 모든 권한
+  STAFF       // 직원 — 사건 처리 + 알림 발송 (재무/RBAC 불가)
+  EXTERNAL    // 외부협력 — 지정된 사건만 read-only
+  AUDITOR     // 감사 — 전체 read-only
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  orgId        String?
+  email        String    @unique
+  name         String
+  role         AdminRole @default(STAFF)
+  active       Boolean   @default(true)
+  passwordHash String?                       // NextAuth Credentials 호환
+  totpSecret   String?                       // 2FA
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([orgId, role])
+  @@index([active])
+}
+
+enum CaseAnalysisStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+model CaseAnalysisRun {
+  id              String              @id @default(cuid())
+  orgId           String?
+  caseId          String
+  runType         String              @default("scheduled")    // scheduled | manual | on_create
+  status          CaseAnalysisStatus  @default(PENDING)
+  resultSummary   String?
+  strengthScore   Int?
+  strengthLabel   String?
+  recommendation  String?
+  rawJson         String?                                       // 전체 결과
+  errorMessage    String?
+  createdAt       DateTime            @default(now())
+  completedAt     DateTime?
+
+  @@index([caseId, createdAt])
+  @@index([status])
+}
+
+enum AdminAuditAction {
+  LOGIN
+  LOGOUT
+  CREATE
+  UPDATE
+  DELETE
+  EXPORT
+  PAYMENT_CANCEL
+  ESIGN_SEND
+  ALIMTALK_SEND
+  ROLE_CHANGE
+  CONFIG_CHANGE
+}
+
+model AdminAuditEvent {
+  id          String           @id @default(cuid())
+  orgId       String?
+  actorEmail  String
+  actorRole   AdminRole?
+  action      AdminAuditAction
+  resource    String                          // e.g. "Payment", "CaseMatter"
+  resourceId  String?
+  details     String?                         // JSON.stringify
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime         @default(now())
+
+  @@index([orgId, createdAt])
+  @@index([actorEmail])
+  @@index([action])
+  @@index([resource, resourceId])
+}
+
+// ---------------------------------------------------------------------------
 // Round Y — Google Calendar OAuth + 전자세금계산서 (바로빌)
 // ---------------------------------------------------------------------------
 

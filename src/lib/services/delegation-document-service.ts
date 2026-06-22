@@ -280,8 +280,7 @@ export async function generateAndSendForSignature(opts: BuildOptions): Promise<{
       signerName: generated.signerName,
       signerEmail: signEmail,
       signerPhone: generated.signerPhone,
-      // documentUrl을 별도 S3/R2 업로드 후 채우는 게 이상적
-      // 여기선 base64 데이터를 메타데이터로만 전달
+      pdfBase64: generated.pdfBase64, // Modusign upload-and-request 자동 활용
     });
 
     return { ok: true, requestId: result.requestId, signUrl: result.signUrl };
