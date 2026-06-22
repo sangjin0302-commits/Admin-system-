@@ -18,15 +18,33 @@ const ACTION_BADGE: Record<string, string> = {
   CONFIG_CHANGE: "bg-violet-100 text-violet-800",
 };
 
-async function loadEvents(action?: string, actor?: string) {
+async function loadEvents(
+  action?: string,
+  actor?: string,
+  since?: string,
+  until?: string
+) {
   try {
     const where: Record<string, unknown> = {};
     if (action) where.action = action;
     if (actor) where.actorEmail = actor;
+    const dateRange: Record<string, Date> = {};
+    if (since) {
+      const d = new Date(since);
+      if (!Number.isNaN(d.getTime())) dateRange.gte = d;
+    }
+    if (until) {
+      const d = new Date(until);
+      if (!Number.isNaN(d.getTime())) {
+        d.setHours(23, 59, 59, 999);
+        dateRange.lte = d;
+      }
+    }
+    if (Object.keys(dateRange).length > 0) where.createdAt = dateRange;
     return await prisma.adminAuditEvent.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 200,
+      take: 500,
     });
   } catch {
     return [];
@@ -48,11 +66,16 @@ async function loadStats() {
 export default async function AuditLogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ action?: string; actor?: string }>;
+  searchParams: Promise<{
+    action?: string;
+    actor?: string;
+    since?: string;
+    until?: string;
+  }>;
 }) {
   const params = await searchParams;
   const [items, stats] = await Promise.all([
-    loadEvents(params.action, params.actor),
+    loadEvents(params.action, params.actor, params.since, params.until),
     loadStats(),
   ]);
 
@@ -131,6 +154,20 @@ export default async function AuditLogPage({
             defaultValue={params.actor ?? ""}
             placeholder="email"
             className="rounded border border-line bg-white px-2 py-1 font-mono text-xs"
+          />
+          <label className="ml-2 text-text-muted">기간:</label>
+          <input
+            type="date"
+            name="since"
+            defaultValue={params.since ?? ""}
+            className="rounded border border-line bg-white px-2 py-1 text-xs"
+          />
+          <span className="text-text-muted">~</span>
+          <input
+            type="date"
+            name="until"
+            defaultValue={params.until ?? ""}
+            className="rounded border border-line bg-white px-2 py-1 text-xs"
           />
           <button
             type="submit"

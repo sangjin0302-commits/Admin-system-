@@ -93,10 +93,28 @@ export default async function BlogDetailPage({
   if (!post) notFound();
 
   const all = await listBlogPosts();
-  const related = [
-    ...all.filter((p) => p.slug !== post.slug && p.category === post.category),
-    ...all.filter((p) => p.slug !== post.slug && p.category !== post.category),
-  ].slice(0, 3);
+
+  // Fuse 유사도 — 제목+요약+카테고리 매칭, 폴백은 카테고리
+  const FuseMod = await import("fuse.js").then((m) => m.default).catch(() => null);
+  let related: typeof all = [];
+  if (FuseMod) {
+    const candidates = all.filter((p) => p.slug !== post.slug);
+    const fuse = new FuseMod(candidates, {
+      keys: ["title", "excerpt", "category"],
+      threshold: 0.45,
+      ignoreLocation: true,
+    });
+    const q = `${post.title} ${post.excerpt}`;
+    const hits = fuse.search(q).slice(0, 3).map((h) => h.item);
+    if (hits.length >= 3) related = hits;
+  }
+  if (related.length < 3) {
+    const fill = [
+      ...all.filter((p) => p.slug !== post.slug && p.category === post.category),
+      ...all.filter((p) => p.slug !== post.slug && p.category !== post.category),
+    ].filter((p) => !related.find((r) => r.slug === p.slug));
+    related = [...related, ...fill].slice(0, 3);
+  }
 
   return (
     <div className="relative mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">

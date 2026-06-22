@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { confirmPayment } from "@/lib/services/payment-service";
-import { notifyPaymentReceived } from "@/lib/services/kakao-notification-service";
+import { notifyClient } from "@/lib/services/notify-orchestrator";
 import { issueTaxInvoice } from "@/lib/services/tax-invoice-service";
 import { prisma } from "@/lib/prisma/client";
 import { captureError } from "@/lib/services/error-monitor-service";
@@ -68,9 +68,19 @@ export async function POST(req: Request) {
         },
       });
       const party = caseMatter?.parties[0];
-      const phone = party?.phone;
-      if (phone && caseMatter?.title) {
-        await notifyPaymentReceived(phone, caseMatter.title, amount, caseId);
+      if (caseMatter?.title) {
+        const amt = amount.toLocaleString("ko-KR") + "원";
+        await notifyClient({
+          phone: party?.phone,
+          email: party?.email,
+          templateId:
+            process.env.SOLAPI_TEMPLATE_PAYMENT?.trim() || "payment_received",
+          variables: { 사건명: caseMatter.title, 금액: amt },
+          fallbackText: `[ETHOS] ${caseMatter.title} 입금 확인 — ${amt}`,
+          emailSubject: `[ETHOS] ${caseMatter.title} 입금 확인`,
+          emailHtml: `<p>${party?.name ?? "고객"}님, <strong>${caseMatter.title}</strong> 사건의 ${amt} 입금이 확인되었습니다. 감사합니다.</p>`,
+          caseId,
+        });
       }
 
       // 전자세금계산서 자동 발행 (바로빌 미설정 시 DRAFT만)

@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 
 import { prisma } from "@/lib/prisma/client";
 import { verifyPassword } from "@/lib/auth/password";
+import { verifyTotp } from "@/lib/services/totp-service";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -13,7 +14,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       credentials: {
         email: { label: "이메일", type: "email" },
-        password: { label: "비밀번호", type: "password" }
+        password: { label: "비밀번호", type: "password" },
+        totp: { label: "2FA 코드", type: "text" }
       },
       async authorize(credentials) {
         const email = String(credentials?.email ?? "").trim().toLowerCase();
@@ -48,6 +50,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (admin && admin.active && admin.passwordHash) {
           const ok = await verifyPassword(password, admin.passwordHash);
           if (ok) {
+            // 2FA 강제 — totpSecret 등록된 사용자는 코드 검증 필수
+            if (admin.totpSecret) {
+              const totpRaw = String(credentials?.totp ?? "").trim();
+              if (!totpRaw) {
+                // signin form이 totp 필드 없이 보낸 경우 — 2단계 페이지로 유도하도록 null
+                return null;
+              }
+              if (!verifyTotp(admin.totpSecret, totpRaw)) {
+                return null;
+              }
+            }
             await prisma.adminUser
               .update({
                 where: { id: admin.id },
