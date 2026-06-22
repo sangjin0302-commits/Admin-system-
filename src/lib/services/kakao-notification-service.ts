@@ -168,6 +168,8 @@ const TEMPLATE_DEADLINE_REMINDER =
   process.env.SOLAPI_TEMPLATE_DEADLINE?.trim() || "deadline_reminder";
 const TEMPLATE_PAYMENT_RECEIVED =
   process.env.SOLAPI_TEMPLATE_PAYMENT?.trim() || "payment_received";
+const TEMPLATE_ESIGN_COMPLETED =
+  process.env.SOLAPI_TEMPLATE_ESIGN?.trim() || "esign_completed";
 
 export async function notifyInquiryReceived(
   phone: string,
@@ -242,6 +244,26 @@ export async function notifyPaymentReceived(
     renderTemplate(
       "[ETHOS] #{사건명} 입금 확인 — #{금액}",
       { 사건명: caseTitle, 금액: amt }
+    )
+  );
+}
+
+export async function notifyESignCompleted(
+  phone: string,
+  documentTitle: string,
+  signerName: string,
+  caseId?: string
+): Promise<boolean> {
+  return sendKakaoAlimtalk(
+    {
+      to: phone,
+      templateId: TEMPLATE_ESIGN_COMPLETED,
+      variables: { 문서명: documentTitle, 서명자: signerName },
+      caseId,
+    },
+    renderTemplate(
+      "[ETHOS] #{문서명} 서명 완료 — #{서명자}님",
+      { 문서명: documentTitle, 서명자: signerName }
     )
   );
 }

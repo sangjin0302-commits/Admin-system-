@@ -401,6 +401,7 @@ enum CaseTaskPriority {
 
 model Inquiry {
   id                       String        @id @default(cuid())
+  orgId                    String?
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
   status                   InquiryStatus @default(NEW)
@@ -676,6 +677,7 @@ model CaseRecord {
 
 model CaseMatter {
   id                 String             @id @default(cuid())
+  orgId               String?
   caseNo              String?            @unique
   title               String
   matterType          String
@@ -1276,6 +1278,34 @@ model LegacyImportLog {
 }
 
 // ---------------------------------------------------------------------------
+// Round X — 멀티사무소 (Organization) 기반
+// ---------------------------------------------------------------------------
+
+enum OrganizationPlan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+model Organization {
+  id          String           @id @default(cuid())
+  name        String
+  subdomain   String           @unique
+  ownerEmail  String
+  plan        OrganizationPlan @default(PRO)
+  active      Boolean          @default(true)
+  brandColor  String?
+  logoUrl     String?
+  contactPhone String?
+  addressLine String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([subdomain])
+  @@index([active])
+}
+
+// ---------------------------------------------------------------------------
 // Round W — 결제/전자서명/알림 audit trail
 // ---------------------------------------------------------------------------
 
@@ -1290,6 +1320,7 @@ enum PaymentStatus {
 
 model Payment {
   id              String        @id @default(cuid())
+  orgId           String?
   orderId         String        @unique             // CASE-<caseId>-<suffix>
   paymentKey      String?       @unique             // Toss paymentKey
   caseId          String?
@@ -1327,6 +1358,7 @@ enum ESignProvider {
 
 model ESignRequest {
   id              String         @id @default(cuid())
+  orgId           String?
   externalId      String?        @unique           // Modusign document id
   caseId          String?
   documentTitle   String
@@ -1365,6 +1397,7 @@ enum NotificationStatus {
 
 model NotificationLog {
   id           String              @id @default(cuid())
+  orgId        String?
   channel      NotificationChannel
   templateId   String?
   recipient    String                                // 전화번호/이메일/디바이스토큰

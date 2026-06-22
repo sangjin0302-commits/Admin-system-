@@ -1,79 +1,32 @@
 import { Card } from "@/components/ui/card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import {
+  isTossConnected,
+  listPayments,
+  getPaymentStats,
+} from "@/lib/services/payment-service";
 import { prisma } from "@/lib/prisma/client";
-import { isTossConnected } from "@/lib/services/payment-service";
+import { CancelPaymentButton } from "./cancel-button";
 
 export const dynamic = "force-dynamic";
 
-type PaymentRow = {
-  id: string;
-  caseId: string;
-  caseNo: string | null;
-  caseTitle: string | null;
-  feeAmount: number | null;
-  feeStatus: string;
-  paymentStatus: string;
-  paidAmount: number | null;
-  paidAt: string | null;
-  paymentMemo: string | null;
+const STATUS_BADGE: Record<string, string> = {
+  CONFIRMED: "bg-emerald-100 text-emerald-800",
+  REQUESTED: "bg-slate-100 text-slate-700",
+  CANCELED: "bg-rose-100 text-rose-800",
+  PARTIAL_CANCELED: "bg-amber-100 text-amber-800",
+  FAILED: "bg-rose-100 text-rose-800",
+  EXPIRED: "bg-gray-100 text-gray-600",
 };
 
-async function loadPayments(): Promise<PaymentRow[]> {
-  try {
-    const memos = await prisma.caseAccountingMemo.findMany({
-      orderBy: [{ paidAt: "desc" }, { updatedAt: "desc" }],
-      take: 50,
-      include: {
-        caseMatter: { select: { caseNo: true, title: true } },
-      },
-    });
-    return memos.map((m) => ({
-      id: m.id,
-      caseId: m.caseId,
-      caseNo: m.caseMatter?.caseNo ?? null,
-      caseTitle: m.caseMatter?.title ?? null,
-      feeAmount: m.feeAmount,
-      feeStatus: m.feeStatus,
-      paymentStatus: m.paymentStatus,
-      paidAmount: m.paidAmount,
-      paidAt: m.paidAt?.toISOString() ?? null,
-      paymentMemo: m.paymentMemo,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-function paymentStatusBadge(status: string): string {
-  switch (status) {
-    case "PAID":
-      return "bg-emerald-100 text-emerald-800";
-    case "PARTIAL":
-      return "bg-amber-100 text-amber-800";
-    case "REFUNDED":
-      return "bg-slate-100 text-slate-800";
-    case "UNPAID":
-      return "bg-rose-100 text-rose-800";
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
-}
-
-function statusLabel(status: string): string {
-  switch (status) {
-    case "PAID":
-      return "완납";
-    case "PARTIAL":
-      return "부분납";
-    case "REFUNDED":
-      return "환불";
-    case "UNPAID":
-      return "미납";
-    case "UNSET":
-    default:
-      return "미정";
-  }
-}
+const STATUS_LABEL: Record<string, string> = {
+  CONFIRMED: "승인",
+  REQUESTED: "요청",
+  CANCELED: "취소",
+  PARTIAL_CANCELED: "부분취소",
+  FAILED: "실패",
+  EXPIRED: "만료",
+};
 
 function formatKRW(n: number | null | undefined): string {
   if (n === null || n === undefined) return "—";
@@ -81,26 +34,30 @@ function formatKRW(n: number | null | undefined): string {
 }
 
 export default async function PaymentsPage() {
-  const connected = isTossConnected();
-  const payments = await loadPayments();
-  const totalPaid = payments
-    .filter((p) => p.paymentStatus === "PAID")
-    .reduce((acc, p) => acc + (p.paidAmount ?? 0), 0);
-  const outstanding = payments
-    .filter((p) => p.paymentStatus !== "PAID" && p.paymentStatus !== "REFUNDED")
-    .reduce((acc, p) => acc + (p.feeAmount ?? 0) - (p.paidAmount ?? 0), 0);
+  const [connected, payments, stats, memos] = await Promise.all([
+    Promise.resolve(isTossConnected()),
+    listPayments(50),
+    getPaymentStats(),
+    prisma.caseAccountingMemo
+      .findMany({
+        orderBy: [{ paidAt: "desc" }, { updatedAt: "desc" }],
+        take: 30,
+        include: { caseMatter: { select: { caseNo: true, title: true } } },
+      })
+      .catch(() => []),
+  ]);
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         kicker="Finance"
         title="결제 관리"
-        description="토스페이먼츠 연동 상태 + 사건별 수임료/입금 현황을 한눈에 확인합니다."
+        description="Toss Payments 영수증/취소 + 사건별 회계 메모. Round W부터 모든 거래가 Payment 테이블에 영속화됩니다."
       />
 
-      {/* KPI row */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="p-6">
+      {/* KPI — 모바일 2열 / 데스크탑 5열 */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4">
+        <Card className="p-4 md:p-6">
           <p className="text-xs text-text-muted">연동 상태</p>
           <div className="mt-2 flex items-center gap-2">
             <span
@@ -108,129 +65,189 @@ export default async function PaymentsPage() {
                 connected ? "bg-emerald-500" : "bg-gray-300"
               }`}
             />
-            <span className="text-sm font-medium text-text-strong">
-              {connected ? "Toss Live 연결됨" : "개발 모드 (mock)"}
+            <span className="text-sm font-medium">
+              {connected ? "Toss Live" : "Mock"}
             </span>
           </div>
         </Card>
-        <Card className="p-6">
-          <p className="text-xs text-text-muted">최근 50건 입금 합계</p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums text-text-strong">
-            {formatKRW(totalPaid)}
+        <Card className="p-4 md:p-6">
+          <p className="text-xs text-text-muted">승인 누적</p>
+          <p className="mt-1 text-base md:text-xl font-semibold tabular-nums">
+            {formatKRW(stats.confirmedAmount)}
           </p>
         </Card>
-        <Card className="p-6">
-          <p className="text-xs text-text-muted">미수금 (개략)</p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums text-rose-700">
-            {formatKRW(Math.max(0, outstanding))}
+        <Card className="p-4 md:p-6">
+          <p className="text-xs text-text-muted">승인 건수</p>
+          <p className="mt-1 text-xl md:text-2xl font-semibold tabular-nums">
+            {stats.confirmedCount}
+          </p>
+        </Card>
+        <Card className="p-4 md:p-6">
+          <p className="text-xs text-text-muted">대기/요청</p>
+          <p className="mt-1 text-xl md:text-2xl font-semibold text-slate-700 tabular-nums">
+            {stats.pendingCount}
+          </p>
+        </Card>
+        <Card className="p-4 md:p-6">
+          <p className="text-xs text-text-muted">실패/취소</p>
+          <p className="mt-1 text-xl md:text-2xl font-semibold text-rose-700 tabular-nums">
+            {stats.failedCount + stats.canceledCount}
           </p>
         </Card>
       </div>
 
-      {/* Payments table */}
-      <Card className="overflow-hidden p-0">
-        <div className="border-b border-line px-5 py-4">
-          <h3 className="text-sm font-semibold text-text-strong">
-            최근 결제/수임료 내역
-            {payments.length === 0 && (
-              <span className="ml-2 font-normal text-text-muted">
-                (데이터 없음 — 사건 회계 메모를 등록해 보세요)
-              </span>
-            )}
-          </h3>
-        </div>
-        {payments.length > 0 && (
-          <table className="min-w-full text-sm">
-            <thead className="bg-surface-muted text-left text-xs font-semibold text-text-muted">
-              <tr>
-                <th className="px-5 py-3">사건번호</th>
-                <th className="px-5 py-3">사건명</th>
-                <th className="px-5 py-3 text-right">수임료</th>
-                <th className="px-5 py-3 text-right">입금</th>
-                <th className="px-5 py-3">상태</th>
-                <th className="px-5 py-3">일자</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
+      {/* Payment 테이블 */}
+      <section>
+        <h3 className="mb-3 text-sm font-semibold text-text-strong">
+          Toss 거래 내역 (Payment)
+        </h3>
+        {payments.length === 0 ? (
+          <Card className="p-6 text-center text-sm text-text-muted">
+            거래 내역이 없습니다. /api/portal/payments/checkout 으로 세션을 만드세요.
+          </Card>
+        ) : (
+          <>
+            {/* 모바일 카드 */}
+            <div className="space-y-2 md:hidden">
               {payments.map((p) => (
-                <tr key={p.id}>
-                  <td className="px-5 py-3 font-mono text-xs text-text-muted">
-                    {p.caseNo ?? p.caseId.slice(0, 8)}
-                  </td>
-                  <td className="px-5 py-3 text-text-strong">
-                    {p.caseTitle ?? "—"}
-                    {p.paymentMemo && (
-                      <span className="ml-2 text-xs text-text-muted">
-                        {p.paymentMemo}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3 text-right tabular-nums">
-                    {formatKRW(p.feeAmount)}
-                  </td>
-                  <td className="px-5 py-3 text-right tabular-nums">
-                    {formatKRW(p.paidAmount)}
-                  </td>
-                  <td className="px-5 py-3">
+                <Card key={p.id} className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-text-strong">
+                        {p.orderName}
+                      </p>
+                      <p className="mt-1 truncate font-mono text-xs text-text-muted">
+                        {p.orderId}
+                      </p>
+                    </div>
                     <span
-                      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${paymentStatusBadge(
-                        p.paymentStatus
-                      )}`}
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                        STATUS_BADGE[p.status] ?? ""
+                      }`}
                     >
-                      {statusLabel(p.paymentStatus)}
+                      {STATUS_LABEL[p.status] ?? p.status}
                     </span>
-                  </td>
-                  <td className="px-5 py-3 text-text-muted">
-                    {p.paidAt ? new Date(p.paidAt).toLocaleDateString("ko-KR") : "—"}
-                  </td>
-                </tr>
+                  </div>
+                  <p className="mt-2 text-base font-semibold tabular-nums">
+                    {formatKRW(p.amount)}
+                  </p>
+                  <p className="mt-1 text-xs text-text-muted">
+                    {new Date(p.createdAt).toLocaleString("ko-KR")}
+                  </p>
+                  {p.status === "CONFIRMED" && p.paymentKey && (
+                    <div className="mt-2">
+                      <CancelPaymentButton
+                        paymentKey={p.paymentKey}
+                        maxAmount={p.amount}
+                      />
+                    </div>
+                  )}
+                </Card>
               ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
+            </div>
 
-      {/* Setup instructions */}
-      <Card className="p-6">
-        <h3 className="text-sm font-semibold text-text-strong">토스페이먼츠 설정</h3>
-        <ol className="mt-3 list-inside list-decimal space-y-2 text-sm text-text-muted">
-          <li>
-            <a
-              href="https://developers.tosspayments.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              토스페이먼츠 개발자 센터
-            </a>
-            에서 가맹점 등록 + 시크릿 키 발급.
-          </li>
-          <li>
-            환경변수{" "}
-            <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
-              TOSS_SECRET_KEY
-            </code>{" "}
-            +{" "}
-            <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
-              TOSS_WEBHOOK_SECRET
-            </code>{" "}
-            설정.
-          </li>
-          <li>
-            웹훅 URL:{" "}
-            <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
-              /api/webhooks/toss
-            </code>{" "}
-            를 Toss 대시보드에 등록.
-          </li>
-          <li>
-            결제 요청 API:{" "}
-            <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
-              POST /api/portal/payments/checkout
-            </code>
-          </li>
-        </ol>
-      </Card>
+            {/* 데스크탑 테이블 */}
+            <Card className="hidden overflow-hidden p-0 md:block">
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-surface-muted text-left text-xs font-semibold text-text-muted">
+                    <tr>
+                      <th className="px-5 py-3">주문번호</th>
+                      <th className="px-5 py-3">상품명</th>
+                      <th className="px-5 py-3 text-right">금액</th>
+                      <th className="px-5 py-3">상태</th>
+                      <th className="px-5 py-3">일시</th>
+                      <th className="px-5 py-3">액션</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line">
+                    {payments.map((p) => (
+                      <tr key={p.id}>
+                        <td className="px-5 py-3 font-mono text-xs">{p.orderId}</td>
+                        <td className="px-5 py-3">{p.orderName}</td>
+                        <td className="px-5 py-3 text-right tabular-nums">
+                          {formatKRW(p.amount)}
+                        </td>
+                        <td className="px-5 py-3">
+                          <span
+                            className={`inline-block rounded-full px-2 py-0.5 text-xs ${
+                              STATUS_BADGE[p.status] ?? ""
+                            }`}
+                          >
+                            {STATUS_LABEL[p.status] ?? p.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-xs text-text-muted">
+                          {new Date(p.createdAt).toLocaleString("ko-KR")}
+                        </td>
+                        <td className="px-5 py-3">
+                          {p.status === "CONFIRMED" && p.paymentKey && (
+                            <CancelPaymentButton
+                              paymentKey={p.paymentKey}
+                              maxAmount={p.amount}
+                            />
+                          )}
+                          {p.receiptUrl && (
+                            <a
+                              href={p.receiptUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-2 text-xs text-blue-600 underline"
+                            >
+                              영수증
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </>
+        )}
+      </section>
+
+      {/* Legacy CaseAccountingMemo */}
+      {memos.length > 0 && (
+        <section>
+          <h3 className="mb-3 text-sm font-semibold text-text-strong">
+            사건별 회계 메모 (legacy)
+          </h3>
+          <Card className="overflow-hidden p-0">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-surface-muted text-left text-xs font-semibold text-text-muted">
+                  <tr>
+                    <th className="px-5 py-3">사건번호</th>
+                    <th className="px-5 py-3">사건명</th>
+                    <th className="px-5 py-3 text-right">수임료</th>
+                    <th className="px-5 py-3 text-right">입금</th>
+                    <th className="px-5 py-3">상태</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {memos.map((m) => (
+                    <tr key={m.id}>
+                      <td className="px-5 py-3 font-mono text-xs">
+                        {m.caseMatter?.caseNo ?? m.caseId.slice(0, 8)}
+                      </td>
+                      <td className="px-5 py-3">{m.caseMatter?.title ?? "—"}</td>
+                      <td className="px-5 py-3 text-right tabular-nums">
+                        {formatKRW(m.feeAmount)}
+                      </td>
+                      <td className="px-5 py-3 text-right tabular-nums">
+                        {formatKRW(m.paidAmount)}
+                      </td>
+                      <td className="px-5 py-3 text-xs">{m.paymentStatus}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </section>
+      )}
     </div>
   );
 }

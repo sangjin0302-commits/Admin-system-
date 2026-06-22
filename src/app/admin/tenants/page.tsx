@@ -4,8 +4,8 @@ import { AddTenantForm } from "./add-tenant-form";
 
 export const dynamic = "force-dynamic";
 
-export default function TenantsPage() {
-  const tenants = listTenants();
+export default async function TenantsPage() {
+  const tenants = await listTenants();
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">

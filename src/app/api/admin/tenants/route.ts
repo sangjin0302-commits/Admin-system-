@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createTenant, listTenants } from "@/lib/services/tenant-service";
 
 export async function GET() {
-  return NextResponse.json({ tenants: listTenants() });
+  return NextResponse.json({ tenants: await listTenants() });
 }
 
 export async function POST(req: Request) {
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     if (!["free", "pro", "enterprise"].includes(plan)) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
-    const tenant = createTenant({ name, subdomain, ownerEmail, plan });
+    const tenant = await createTenant({ name, subdomain, ownerEmail, plan });
     return NextResponse.json({ tenant }, { status: 201 });
   } catch (err) {
     return NextResponse.json(
