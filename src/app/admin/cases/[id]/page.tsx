@@ -10,6 +10,8 @@ import {
 } from "@/components/admin/case-matter-detail-sections";
 import { CaseAccountingMemoPanel } from "@/components/admin/case-accounting-memo-panel";
 import { LawbotAnalysisPanel } from "@/components/admin/lawbot-analysis-panel";
+import { CaseESignPanel } from "@/components/admin/case-esign-panel";
+import { CaseFinancePanel } from "@/components/admin/case-finance-panel";
 import { CaseTaskManagementPanel } from "@/components/admin/case-task-management-panel";
 import { ImmigrationCaseDetailPanel } from "@/components/admin/immigration-case-detail-panel";
 import { ImmigrationCaseHintPanel } from "@/components/admin/immigration-case-hint-panel";
@@ -282,6 +284,8 @@ export default async function AdminCaseMatterDetailPage({
       />
       <CaseMatterSummaryCards caseMatter={caseMatter} status={currentStatus} locale={locale} />
       <LawbotAnalysisPanel caseId={caseMatter.id} />
+      <CaseFinancePanel caseId={caseMatter.id} />
+      <CaseESignPanel caseId={caseMatter.id} />
       <CaseMatterPartiesSection parties={caseMatter.parties} />
       <CaseMatterInquiryLinkSection inquiry={caseMatter.inquiry} />
       {(caseMatter.category === "VISA_STAY" || caseMatter.immigrationDetail) && (

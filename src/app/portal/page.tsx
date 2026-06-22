@@ -105,6 +105,38 @@ export default async function PortalDashboard() {
     : [];
 
   const allCases = inquiries.flatMap((i) => i.caseMatters);
+  const caseIds = allCases.map((c) => c.id);
+
+  const [clientPayments, clientInvoices, clientSignatures] = caseIds.length
+    ? await Promise.all([
+        prisma.payment
+          .findMany({
+            where: { caseId: { in: caseIds } },
+            orderBy: { createdAt: "desc" },
+            take: 20,
+          })
+          .catch(() => []),
+        prisma.taxInvoice
+          .findMany({
+            where: { caseId: { in: caseIds } },
+            orderBy: { createdAt: "desc" },
+            take: 20,
+          })
+          .catch(() => []),
+        prisma.eSignRequest
+          .findMany({
+            where: { caseId: { in: caseIds } },
+            orderBy: { createdAt: "desc" },
+            take: 20,
+          })
+          .catch(() => []),
+      ])
+    : [[], [], []];
+
+  const totalPaid = clientPayments
+    .filter((p) => p.status === "CONFIRMED")
+    .reduce((acc, p) => acc + p.amount, 0);
+  const pendingSignatures = clientSignatures.filter((s) => s.status === "PENDING");
 
   const unreadCount = userId
     ? await prisma.portalNotification.count({ where: { clientId: userId, readAt: null } }).catch(() => 0)
@@ -271,6 +303,104 @@ export default async function PortalDashboard() {
             </div>
           )}
         </section>
+
+        {/* 결제 / 서명 / 세금계산서 통합 */}
+        {(clientPayments.length > 0 || clientSignatures.length > 0 || clientInvoices.length > 0) && (
+          <section>
+            <div className="mb-6 ethos-divider justify-start">
+              <h2 className="ethos-display text-xl">결제 · 서명 · 세금계산서</h2>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="ethos-card p-5">
+                <p className="text-xs text-text-muted">총 입금</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-700">
+                  {totalPaid.toLocaleString("ko-KR")}원
+                </p>
+              </div>
+              <div className="ethos-card p-5">
+                <p className="text-xs text-text-muted">서명 대기</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-amber-700">
+                  {pendingSignatures.length}건
+                </p>
+              </div>
+              <div className="ethos-card p-5">
+                <p className="text-xs text-text-muted">세금계산서</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums">
+                  {clientInvoices.filter((i) => i.status === "ISSUED" || i.status === "SENT").length}건
+                </p>
+              </div>
+            </div>
+
+            {pendingSignatures.length > 0 && (
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/60 p-4">
+                <p className="text-sm font-semibold text-amber-900">서명이 필요한 문서가 있습니다</p>
+                <ul className="mt-2 space-y-1.5">
+                  {pendingSignatures.map((s) => (
+                    <li key={s.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="truncate">{s.documentTitle}</span>
+                      {s.signUrl && (
+                        <a
+                          href={s.signUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 rounded bg-primary px-3 py-1 text-xs font-semibold text-white"
+                        >
+                          서명하기 →
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {clientPayments.length > 0 && (
+              <div className="mt-4 overflow-hidden rounded-lg border border-line">
+                <table className="w-full text-sm">
+                  <thead className="bg-surface-muted text-left text-xs">
+                    <tr>
+                      <th className="px-4 py-2">결제</th>
+                      <th className="px-4 py-2 text-right">금액</th>
+                      <th className="px-4 py-2">상태</th>
+                      <th className="px-4 py-2">영수증</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line">
+                    {clientPayments.slice(0, 5).map((p) => (
+                      <tr key={p.id}>
+                        <td className="px-4 py-2">
+                          {p.orderName}
+                          <span className="ml-1 block font-mono text-xs text-text-muted">
+                            {new Date(p.createdAt).toLocaleDateString("ko-KR")}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-right tabular-nums">
+                          {p.amount.toLocaleString("ko-KR")}원
+                        </td>
+                        <td className="px-4 py-2 text-xs">{p.status}</td>
+                        <td className="px-4 py-2">
+                          {p.receiptUrl ? (
+                            <a
+                              href={p.receiptUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 underline"
+                            >
+                              보기
+                            </a>
+                          ) : (
+                            <span className="text-xs text-text-muted">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* 업로드 자료 */}
         <section>

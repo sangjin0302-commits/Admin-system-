@@ -16,6 +16,14 @@
     {
       "path": "/api/cron/lawbot-batch-analyze",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/auto-conversion-proposals",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/audit-cleanup",
+      "schedule": "0 4 * * 0"
     }
   ]
 }
