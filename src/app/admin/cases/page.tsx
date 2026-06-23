@@ -25,9 +25,23 @@ const CATEGORY_TABS = [
   ...PRACTICE_AREAS.map((a) => ({ value: a.key, label: a.label }))
 ] as const;
 
-async function safeListCaseMatters(category?: string, query?: string) {
+const DATE_PRESETS = [
+  { label: "전체", value: "" },
+  { label: "이번 주", value: "7" },
+  { label: "이번 달", value: "30" },
+  { label: "3개월", value: "90" },
+] as const;
+
+function fromDaysAgo(days: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+async function safeListCaseMatters(category?: string, query?: string, from?: Date) {
   try {
-    return await listCaseMatters(category, query);
+    return await listCaseMatters(category, query, from);
   } catch (error) {
     logger.error("Failed to load case matters", error);
     return [] as CaseMatterListItem[];
@@ -43,14 +57,16 @@ function countRequiredDocumentBacklog(caseMatter: CaseMatterListItem) {
 export default async function AdminCasesPage({
   searchParams
 }: {
-  searchParams?: Promise<{ lang?: string; category?: string; q?: string }>;
+  searchParams?: Promise<{ lang?: string; category?: string; q?: string; from?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const locale = normalizeUiLocale(params.lang);
   const t = createTranslator(adminCasesMessages, locale);
   const activeCategory = params.category ?? "";
   const query = params.q ?? "";
-  const cases = await safeListCaseMatters(activeCategory || undefined, query || undefined);
+  const activeDays = params.from ?? "";
+  const fromDate = activeDays ? fromDaysAgo(Number(activeDays)) : undefined;
+  const cases = await safeListCaseMatters(activeCategory || undefined, query || undefined, fromDate);
   const actionDashboard = buildCaseMatterActionDashboard(cases);
 
   return (
@@ -112,27 +128,56 @@ export default async function AdminCasesPage({
         )}
       </form>
 
-      {/* 카테고리 필터 탭 */}
-      <div className="flex flex-wrap gap-2">
-        {CATEGORY_TABS.map((tab) => {
-          const isActive = activeCategory === tab.value;
-          const href = tab.value
-            ? `/admin/cases?category=${tab.value}`
-            : "/admin/cases";
-          return (
-            <Link
-              key={tab.value}
-              href={href}
-              className={`inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold transition ${
-                isActive
-                  ? "bg-primary text-white"
-                  : "border border-line bg-surface text-text-strong hover:border-line-strong hover:bg-surface-muted"
-              }`}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
+      {/* 카테고리 + 기간 필터 */}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2">
+          {CATEGORY_TABS.map((tab) => {
+            const isActive = activeCategory === tab.value;
+            const params = new URLSearchParams();
+            if (tab.value) params.set("category", tab.value);
+            if (query) params.set("q", query);
+            if (activeDays) params.set("from", activeDays);
+            const href = `/admin/cases${params.toString() ? `?${params}` : ""}`;
+            return (
+              <Link
+                key={tab.value}
+                href={href}
+                className={`inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold transition ${
+                  isActive
+                    ? "bg-primary text-white"
+                    : "border border-line bg-surface text-text-strong hover:border-line-strong hover:bg-surface-muted"
+                }`}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-text-muted">기간</span>
+          {DATE_PRESETS.map((preset) => {
+            const isActive = activeDays === preset.value;
+            const params = new URLSearchParams();
+            if (activeCategory) params.set("category", activeCategory);
+            if (query) params.set("q", query);
+            if (preset.value) params.set("from", preset.value);
+            const href = `/admin/cases${params.toString() ? `?${params}` : ""}`;
+            return (
+              <Link
+                key={preset.value}
+                href={href}
+                className={`inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold transition ${
+                  isActive
+                    ? "bg-primary/10 text-primary ring-1 ring-primary/30"
+                    : "border border-line bg-surface text-text-muted hover:border-line-strong hover:text-text-strong"
+                }`}
+              >
+                {preset.label}
+              </Link>
+            );
+          })}
+          <span className="ml-1 text-xs text-text-muted">({cases.length}건)</span>
+        </div>
       </div>
 
       <CaseMatterActionSections dashboard={actionDashboard} locale={locale} />

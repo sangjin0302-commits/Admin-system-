@@ -50,9 +50,10 @@ export async function getLatestCaseMatterForInquiry(inquiryId: string) {
   return attachNextAction(caseMatter);
 }
 
-export async function listCaseMatters(category?: string, query?: string) {
+export async function listCaseMatters(category?: string, query?: string, from?: Date) {
   const where: Prisma.CaseMatterWhereInput = {};
   if (category) where.category = category as never;
+  if (from) where.updatedAt = { gte: from };
   if (query && query.trim()) {
     const q = query.trim();
     where.OR = [

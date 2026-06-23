@@ -29,12 +29,14 @@ import { getSystemHealthSnapshot } from "@/lib/services/system-health-service-sa
 import { DashboardTodayStrip } from "./_dashboard/dashboard-today-strip";
 import { DashboardHero } from "./_dashboard/dashboard-hero";
 import { DashboardStats } from "./_dashboard/dashboard-stats";
+import { DashboardCharts } from "./_dashboard/dashboard-charts";
 import { DashboardExecutionQueue } from "./_dashboard/dashboard-execution-queue";
 import { DashboardPipeline } from "./_dashboard/dashboard-pipeline";
 import { DashboardListCards } from "./_dashboard/dashboard-list-cards";
 import { DashboardIntegrations } from "./_dashboard/dashboard-integrations";
 import { DashboardPlatformKpis } from "./_dashboard/dashboard-platform-kpis";
 import { DashboardRecentInquiries } from "./_dashboard/dashboard-recent-inquiries";
+import { PRACTICE_AREA_LABELS } from "@/lib/practice-areas";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -201,6 +203,17 @@ export default async function AdminDashboardContent() {
     publicIntakeControl
   });
 
+  const casesByCategory = Object.entries(
+    caseMatters.reduce<Record<string, number>>((acc, c) => {
+      const key = (c.category as string) ?? "기타";
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    }, {})
+  ).map(([key, count]) => ({
+    label: PRACTICE_AREA_LABELS[key] ?? key,
+    count,
+  }));
+
   const todayItems = ([
     { label: "긴급 확인", count: urgentCount, href: "/admin/inquiries", tone: "danger" as const },
     { label: "자료 미비", count: docsPendingCount, href: "/admin/inquiries", tone: "warning" as const },
@@ -240,6 +253,8 @@ export default async function AdminDashboardContent() {
         operationalHealthScore={operationalHealthScore}
         operationalHealthDescription={operationalHealthDescription}
       />
+
+      <DashboardCharts pipeline={pipeline} casesByCategory={casesByCategory} />
 
       <CaseMatterActionSummaryCard summary={caseMatterActionSummary} locale="ko" />
 
