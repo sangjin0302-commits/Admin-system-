@@ -56,6 +56,7 @@ export function PublicFooter() {
               <li><Link href="/services/appeal" className="transition-colors duration-200 hover:text-gold-soft">행정심판</Link></li>
               <li><Link href="/services/contract" className="transition-colors duration-200 hover:text-gold-soft">계약서/사실조사</Link></li>
               <li><Link href="/services/license" className="transition-colors duration-200 hover:text-gold-soft">인허가</Link></li>
+              <li><Link href="/services/corporate" className="transition-colors duration-200 hover:text-gold-soft">법인 설립</Link></li>
             </ul>
           </div>
 

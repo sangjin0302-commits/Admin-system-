@@ -170,13 +170,13 @@ export default async function FeesPage() {
                   href="/intake"
                   className="inline-flex h-12 items-center rounded-lg bg-gold px-8 text-sm font-bold text-primary shadow-md transition-all duration-300 hover:bg-gold-soft hover:shadow-lg"
                 >
-                  사안별 정확한 견적 받기
+                  무료 상담 신청하기 →
                 </Link>
                 <Link
-                  href="/contact"
+                  href="/quick-check"
                   className="inline-flex h-12 items-center rounded-lg border border-gold/50 px-8 text-sm font-semibold text-gold-soft transition hover:bg-gold/10"
                 >
-                  무료 1차 상담 신청
+                  AI 사전 진단 (30초)
                 </Link>
               </div>
             </div>

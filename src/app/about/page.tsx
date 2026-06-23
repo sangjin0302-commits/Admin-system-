@@ -182,25 +182,29 @@ export default async function AboutPage() {
           <Reveal>
             <div className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-br from-primary via-primary to-text-strong p-12 text-center shadow-floating sm:p-16">
               <p className="ethos-eyebrow text-gold-soft">Start with ETHOS</p>
-              <h2 className="ethos-display mt-4 text-3xl text-white sm:text-4xl">상담을 시작하시겠습니까?</h2>
+              <h2 className="ethos-display mt-4 text-3xl text-white sm:text-4xl">
+                오늘 상황을 말씀해 주세요
+              </h2>
               <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-white/80">
-                사안에 맞는 가장 현실적인 방향을 함께 고민하겠습니다. 접수 후 사실관계와 자료를 차근차근
-                확인합니다.
+                비자·행정심판·인허가 어느 분야든 먼저 사실관계를 들어보겠습니다.
+                <br className="hidden sm:block" />
+                1차 상담은 무료이며 영업일 기준 24시간 이내 회신드립니다.
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
                   href="/intake"
                   className="inline-flex h-12 items-center rounded-lg bg-gold px-8 text-sm font-bold text-primary transition hover:bg-gold-soft"
                 >
-                  상담 신청하기
+                  무료 상담 신청하기 →
                 </Link>
                 <Link
-                  href="/services"
+                  href="/quick-check"
                   className="inline-flex h-12 items-center rounded-lg border border-gold/50 px-8 text-sm font-semibold text-gold-soft transition hover:bg-gold/10"
                 >
-                  업무 분야 보기
+                  AI 사전 진단 (30초)
                 </Link>
               </div>
+              <p className="mt-6 text-xs text-white/50">500+ 처리 사건 · 98% 만족도 · 비밀 보장</p>
             </div>
           </Reveal>
         </div>
