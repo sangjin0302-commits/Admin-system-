@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { PRACTICE_AREAS } from "@/lib/practice-areas";
+
 type Item = {
   id: string;
   category: string;
@@ -13,13 +15,7 @@ type Item = {
   sortOrder: number;
 };
 
-const CATEGORIES = [
-  { key: "VISA_STAY", label: "비자/체류" },
-  { key: "ADMIN_APPEAL", label: "행정심판" },
-  { key: "CONTRACT_INVESTIGATION", label: "계약서/사실조사" },
-  { key: "LICENSE_PERMIT", label: "인허가" },
-  { key: "CORP_FORMATION", label: "법인 설립" }
-];
+const CATEGORIES = PRACTICE_AREAS.map((a) => ({ key: a.key, label: a.label }));
 
 const EMPTY = {
   category: "VISA_STAY",

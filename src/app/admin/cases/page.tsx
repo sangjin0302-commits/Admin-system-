@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
 import { adminCasesMessages } from "@/i18n/locales/admin-cases";
 import { createTranslator, normalizeUiLocale } from "@/i18n/shared";
+import { PRACTICE_AREAS } from "@/lib/practice-areas";
 import { formatCaseMatterTypeLabel } from "@/lib/immigration";
 import { buildCaseMatterActionDashboard } from "@/lib/services/case-matter-action-view-model";
 import { listCaseMatters } from "@/lib/services/case-matter-service";
@@ -21,11 +22,7 @@ type CaseMatterListItem = Awaited<ReturnType<typeof listCaseMatters>>[number];
 
 const CATEGORY_TABS = [
   { value: "", label: "전체" },
-  { value: "VISA_STAY", label: "비자/체류" },
-  { value: "ADMIN_APPEAL", label: "행정심판" },
-  { value: "CONTRACT_INVESTIGATION", label: "계약서/사실조사" },
-  { value: "LICENSE_PERMIT", label: "인허가" },
-  { value: "OTHER", label: "기타" },
+  ...PRACTICE_AREAS.map((a) => ({ value: a.key, label: a.label }))
 ] as const;
 
 async function safeListCaseMatters(category?: string, query?: string) {
