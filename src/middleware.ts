@@ -167,8 +167,12 @@ export function middleware(request: NextRequest) {
   const langRedirect = detectLanguageRedirect(request);
   if (langRedirect) return langRedirect;
 
-  // --- Admin auth (only runs for matched admin paths) ---
+  // --- Admin auth: only /admin/* and /api/admin/* ---
+  const isAdminPage = pathname.startsWith("/admin");
   const isApiRequest = pathname.startsWith("/api/admin/");
+  if (!isAdminPage && !isApiRequest) {
+    return NextResponse.next();
+  }
 
   if (isMarketingIngestByToken(request)) {
     return NextResponse.next();

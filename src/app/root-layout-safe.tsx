@@ -11,7 +11,19 @@ import "./globals.css";
 const SITE_TITLE = "ETHOS \uD589\uC815\uC0AC\uC0AC\uBB34\uC18C";
 const SITE_DESCRIPTION =
   "\uBE44\uC790/\uCCB4\uB958, \uD589\uC815\uC2EC\uD310, \uACC4\uC57D\uC11C\u00B7\uC0AC\uC2E4\uC870\uC0AC, \uC778\uD5C8\uAC00 \uC5C5\uBB34. \uC808\uCC28\uC5D0\uB294 \uC774\uC131\uC744, \uC0AC\uB78C\uC5D0\uAC8C\uB294 \uACF5\uAC10\uC744, \uC77C\uC5D0\uB294 \uC2E0\uB8B0\uB97C.";
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethos.kr";
+function getSiteUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (raw) {
+    try {
+      new URL(raw);
+      return raw;
+    } catch {
+      // fall through to default
+    }
+  }
+  return "https://ethos.kr";
+}
+const SITE_URL = getSiteUrl();
 
 export const metadata: Metadata = {
   title: { default: SITE_TITLE, template: "%s | ETHOS" },
