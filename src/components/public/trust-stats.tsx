@@ -63,7 +63,7 @@ function StatCard({ stat, visible }: { stat: Stat; visible: boolean }) {
   const value = useCountUp(stat.value, 1500, visible);
 
   return (
-    <div className="text-center">
+    <div className="flex flex-col items-center rounded-2xl border border-gold/25 bg-surface/80 px-6 py-7 text-center shadow-panel transition-colors hover:border-gold/50 hover:bg-gold-soft/10">
       <div className="flex items-baseline justify-center font-serif text-primary">
         <span className="text-5xl font-bold sm:text-6xl">{value.toLocaleString()}</span>
         {stat.suffix && (
@@ -73,7 +73,7 @@ function StatCard({ stat, visible }: { stat: Stat; visible: boolean }) {
         )}
       </div>
       <p className="mt-3 font-serif text-base font-bold text-text-strong">{stat.label}</p>
-      <p className="mt-1 text-xs text-text-muted">{stat.description}</p>
+      <p className="mt-1.5 text-xs leading-5 text-text-muted">{stat.description}</p>
     </div>
   );
 }
@@ -104,10 +104,7 @@ export function TrustStats({ overrides }: { overrides?: (string | undefined)[] }
   }, []);
 
   return (
-    <section
-      ref={ref}
-      className="relative overflow-hidden rounded-2xl border border-gold/30 bg-gradient-to-br from-surface-muted/40 via-surface to-gold-soft/20 p-8 sm:p-12"
-    >
+    <section ref={ref}>
       <div className="text-center">
         <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">Trust in Numbers</p>
         <h2 className="mt-3 font-serif text-2xl font-bold text-primary sm:text-3xl">
@@ -118,7 +115,7 @@ export function TrustStats({ overrides }: { overrides?: (string | undefined)[] }
         </p>
       </div>
 
-      <div className="mt-10 grid gap-8 md:grid-cols-4">
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
         {STATS.map((s) => (
           <StatCard key={s.label} stat={s} visible={visible} />
         ))}

@@ -262,14 +262,32 @@ export default async function PublicMarketingHomePage({
 
             <Reveal delay={3}>
               <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap">
-                <PrimaryCta href="/quick-check">{t.ctaQuickCheck}</PrimaryCta>
-                <SecondaryCta href={intakeHref}>{t.ctaIntake}</SecondaryCta>
+                <PrimaryCta href={intakeHref}>{t.ctaIntake}</PrimaryCta>
+                <SecondaryCta href="/quick-check">{t.ctaQuickCheck}</SecondaryCta>
                 <SecondaryCta href="/track">{t.ctaTrack}</SecondaryCta>
               </div>
             </Reveal>
 
+            {/* 사회적 증거 미니 스트립 */}
             <Reveal delay={4}>
-              <p className="mt-7 text-xs leading-5 text-text-muted">{t.safetyNote}</p>
+              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-text-muted">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-gold" />
+                  500+ 처리 사건
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-gold" />
+                  98% 고객 만족도
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-gold" />
+                  영업일 기준 24h 이내 응답
+                </span>
+              </div>
+            </Reveal>
+
+            <Reveal delay={4}>
+              <p className="mt-4 text-xs leading-5 text-text-muted">{t.safetyNote}</p>
             </Reveal>
           </div>
 
@@ -425,10 +443,15 @@ export default async function PublicMarketingHomePage({
                       </li>
                     ))}
                   </ul>
-                  <span className="relative mt-auto inline-flex items-center gap-1 pt-6 font-serif text-sm font-semibold text-primary transition-colors group-hover:text-gold-deep">
-                    자세히 보기
-                    <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-                  </span>
+                  <div className="relative mt-auto flex items-center justify-between pt-6">
+                    <span className="inline-flex items-center gap-1 font-serif text-sm font-semibold text-primary transition-colors group-hover:text-gold-deep">
+                      자세히 보기
+                      <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-lg border border-gold/40 bg-gold-soft/30 px-3 py-1.5 font-serif text-xs font-bold text-gold-deep transition-colors group-hover:bg-gold-soft/60">
+                      이 분야 상담
+                    </span>
+                  </div>
                 </Link>
               </Reveal>
             ))}
@@ -466,6 +489,26 @@ export default async function PublicMarketingHomePage({
           </div>
         </div>
       </section>
+
+      {/* ═══════════════ 절차 후 CTA ═══════════════ */}
+      <div className="py-6 sm:py-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal>
+            <div className="flex flex-col items-center gap-4 rounded-2xl border border-gold/30 bg-gold-soft/20 px-8 py-7 text-center sm:flex-row sm:justify-between sm:text-left">
+              <div>
+                <p className="font-serif text-base font-bold text-primary">이 절차를 지금 시작하고 싶으신가요?</p>
+                <p className="mt-1 text-sm text-text-muted">사실관계 확인부터 시작합니다. 5분이면 충분합니다.</p>
+              </div>
+              <Link
+                href={intakeHref}
+                className="ethos-cta-shine inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-sm transition hover:bg-text-strong"
+              >
+                상담 신청하기 →
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </div>
 
       {/* ═══════════════ 진행상황 + 운영원칙 ═══════════════ */}
       <section className="py-24 sm:py-28">
@@ -530,6 +573,18 @@ export default async function PublicMarketingHomePage({
           </Reveal>
 
           <FaqAccordion items={faqItems} />
+
+          <Reveal>
+            <div className="mt-12 flex flex-col items-center gap-3 text-center">
+              <p className="text-sm text-text-muted">더 궁금한 점이 있으신가요?</p>
+              <Link
+                href={intakeHref}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-7 text-sm font-bold text-white shadow-sm transition hover:bg-text-strong"
+              >
+                지금 상담 신청하기 →
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
 

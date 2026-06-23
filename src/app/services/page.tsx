@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import { buildWebsiteIntakeHref } from "@/lib/services/public-marketing-pages";
+
 import { Reveal } from "@/components/public/reveal";
 
 export async function generateMetadata({
@@ -130,6 +132,7 @@ export default async function ServicesIndex({
   const lang = sp.lang === "en" ? "en" : "ko";
   const c = COPY[lang];
   const qs = lang === "en" ? "?lang=en" : "";
+  const intakeHref = buildWebsiteIntakeHref();
 
   return (
     <div className="overflow-x-clip">
@@ -179,6 +182,47 @@ export default async function ServicesIndex({
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* 하단 CTA */}
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal>
+            <div className="ethos-grain relative overflow-hidden rounded-[24px] border border-gold/30 bg-gradient-to-br from-primary via-primary to-text-strong p-10 shadow-floating sm:p-14">
+              <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-serif text-xs uppercase tracking-widest text-gold-soft">
+                    {lang === "en" ? "Get Started" : "지금 시작하기"}
+                  </p>
+                  <h2 className="ethos-display mt-3 text-2xl text-white sm:text-3xl">
+                    {lang === "en"
+                      ? "Which area fits your case?"
+                      : "어떤 분야인지 모르겠다면?"}
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-white/75">
+                    {lang === "en"
+                      ? "Tell us your situation and we'll guide you to the right area."
+                      : "사실관계를 남겨주시면 적합한 업무 분야와 다음 단계를 안내해드립니다."}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+                  <Link
+                    href={intakeHref}
+                    className="inline-flex h-12 items-center justify-center rounded-lg bg-gold px-7 text-sm font-bold text-primary shadow-md transition hover:bg-gold-soft"
+                  >
+                    {lang === "en" ? "Free Consultation" : "상담 신청하기"}
+                  </Link>
+                  <Link
+                    href={`/quick-check${qs}`}
+                    className="inline-flex h-12 items-center justify-center rounded-lg border border-gold/60 bg-transparent px-7 text-sm font-semibold text-gold-soft transition hover:bg-gold/10"
+                  >
+                    {lang === "en" ? "AI Pre-check" : "AI 사전 진단"}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
     </div>
