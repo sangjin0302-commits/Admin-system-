@@ -60,21 +60,21 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/icons/tracking-192.svg",
+        url: "/icons/logo-192.png",
         sizes: "192x192",
-        type: "image/svg+xml"
+        type: "image/png"
       },
       {
-        url: "/icons/tracking-512.svg",
+        url: "/icons/logo-512.png",
         sizes: "512x512",
-        type: "image/svg+xml"
+        type: "image/png"
       }
     ],
     apple: [
       {
-        url: "/icons/tracking-192.svg",
+        url: "/icons/logo-192.png",
         sizes: "192x192",
-        type: "image/svg+xml"
+        type: "image/png"
       }
     ]
   },
