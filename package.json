@@ -51,6 +51,7 @@
     "@prisma/client": "^6.0.0",
     "@react-pdf/renderer": "^4.5.1",
     "@tosspayments/tosspayments-sdk": "^2.7.1",
+    "@vercel/blob": "^2.4.1",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "docx": "^9.0.3",

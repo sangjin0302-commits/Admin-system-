@@ -1,8 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 
 import { EthosLogo } from "@/components/brand/ethos-logo";
 import { Reveal } from "@/components/public/reveal";
+import { prisma } from "@/lib/prisma/client";
 import { getSiteSetting } from "@/lib/services/site-settings";
 import { listPublicCredentials, CREDENTIAL_TYPE_LABELS } from "@/lib/services/credentials";
 
@@ -34,6 +36,8 @@ const VALUES = [
 export default async function AboutPage() {
   const greeting = await getSiteSetting("about.greeting");
   const credentials = await listPublicCredentials();
+  const photoRow = await prisma.siteSetting.findUnique({ where: { key: "image.aboutPhoto" } }).catch(() => null);
+  const aboutPhoto = photoRow?.value || null;
   return (
     <div className="overflow-x-clip">
       {/* HERO */}
@@ -125,14 +129,18 @@ export default async function AboutPage() {
           <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <Reveal>
               <div className="relative">
-                <div className="aspect-[4/5] overflow-hidden rounded-2xl border-4 border-gold/40 bg-gradient-to-br from-primary/10 via-surface to-gold/10 shadow-floating">
-                  <div className="flex h-full flex-col items-center justify-center gap-4">
-                    <svg viewBox="0 0 80 100" width="120" className="text-primary/20" fill="currentColor" aria-hidden>
-                      <circle cx="40" cy="28" r="18" />
-                      <path d="M10 95 Q10 60 40 55 Q70 60 70 95 Z" />
-                    </svg>
-                    <p className="font-serif text-xs tracking-wider text-text-muted">사진 등록 예정</p>
-                  </div>
+                <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border-4 border-gold/40 bg-gradient-to-br from-primary/10 via-surface to-gold/10 shadow-floating">
+                  {aboutPhoto ? (
+                    <Image src={aboutPhoto} alt="대표 행정사" fill className="object-cover" unoptimized sizes="(max-width: 768px) 100vw, 40vw" />
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center gap-4">
+                      <svg viewBox="0 0 80 100" width="120" className="text-primary/20" fill="currentColor" aria-hidden>
+                        <circle cx="40" cy="28" r="18" />
+                        <path d="M10 95 Q10 60 40 55 Q70 60 70 95 Z" />
+                      </svg>
+                      <p className="font-serif text-xs tracking-wider text-text-muted">사진 등록 예정</p>
+                    </div>
+                  )}
                 </div>
                 <div className="absolute -bottom-5 -right-5 rounded-xl bg-primary px-6 py-4 text-white shadow-floating">
                   <p className="ethos-quote text-xs tracking-wider text-gold-soft">Lead</p>

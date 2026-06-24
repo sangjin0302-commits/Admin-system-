@@ -185,7 +185,18 @@ export function PublicHeader() {
 }
 
 function MiniLogo() {
+  const [src, setSrc] = useState("/logo.png");
+
+  useEffect(() => {
+    fetch("/api/public/site-images")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.images?.["image.logo"]) setSrc(d.images["image.logo"]);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
-    <Image src="/logo.png" alt="" width={40} height={40} aria-hidden priority />
+    <Image src={src} alt="" width={40} height={40} aria-hidden priority unoptimized={src.startsWith("http")} />
   );
 }

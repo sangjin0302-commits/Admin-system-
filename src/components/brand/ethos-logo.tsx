@@ -1,18 +1,27 @@
 import Image from "next/image";
 
+import { prisma } from "@/lib/prisma/client";
+
 type Props = {
   size?: number;
   className?: string;
 };
 
-export function EthosLogo({ size = 64, className }: Props) {
+async function getLogoUrl(): Promise<string> {
+  const row = await prisma.siteSetting.findUnique({ where: { key: "image.logo" } }).catch(() => null);
+  return row?.value || "/logo.png";
+}
+
+export async function EthosLogo({ size = 64, className }: Props) {
+  const src = await getLogoUrl();
   return (
     <Image
-      src="/logo.png"
+      src={src}
       alt="ETHOS 행정사사무소 로고"
       width={size}
       height={size}
       className={className}
+      unoptimized={src.startsWith("http")}
       priority
     />
   );

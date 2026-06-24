@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const isVercelBuild = process.env.VERCEL === "1";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
+    ],
+  },
   // Keep production output separate from the default .next directory to avoid
   // Windows + OneDrive lock contention during repeated builds.
   distDir: process.env.NODE_ENV === "production" && !isVercelBuild ? ".next-local" : ".next",
