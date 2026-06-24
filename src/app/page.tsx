@@ -296,30 +296,41 @@ export default async function PublicMarketingHomePage({
             <div className="relative w-full max-w-md">
               {/* 은은한 후광 */}
               <div className="absolute -inset-8 -z-10 rounded-[40px] bg-gold/10 blur-3xl" aria-hidden />
-              <div className="ethos-card ethos-grain relative flex w-full flex-col items-center overflow-hidden px-8 py-12 text-center sm:px-12 sm:py-14">
-                <div className="absolute inset-x-10 top-0 h-1 rounded-b bg-gradient-to-r from-transparent via-gold to-transparent" />
-                {/* 로고 — 골드 링 안에 안착 */}
-                <div className="relative flex items-center justify-center">
-                  <span
-                    aria-hidden
-                    className="absolute inset-0 -m-3 rounded-full border border-gold/25"
-                  />
-                  <EthosLogo size={150} className="h-auto w-[150px] drop-shadow-sm sm:w-[168px]" />
+              <div className="ethos-grain relative flex w-full flex-col items-center overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-b from-surface via-surface to-gold-soft/20 px-8 py-14 text-center shadow-floating sm:px-12 sm:py-16">
+                {/* top accent line */}
+                <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
+                {/* 장식 원 배경 */}
+                <div className="absolute inset-0 flex items-center justify-center" aria-hidden>
+                  <div className="h-[280px] w-[280px] rounded-full border border-gold/8" />
                 </div>
-                <h2 className="ethos-display mt-6 text-4xl tracking-[0.24em] sm:text-[2.7rem]">ETHOS</h2>
-                <p className="mt-1.5 font-serif text-[11px] tracking-[0.18em] text-text-muted">
-                  ADMINISTRATIVE ATTORNEY OFFICE
-                </p>
-                <div className="ethos-divider my-6">
-                  <span />
+                <div className="absolute inset-0 flex items-center justify-center" aria-hidden>
+                  <div className="h-[340px] w-[340px] rounded-full border border-gold/5" />
                 </div>
-                <p className="ethos-quote text-sm leading-7 text-gold-deep">
-                  Reason in Process
-                  <br />
-                  Empathy for People
-                  <br />
-                  Trust in Every Step
+                {/* 로고 */}
+                <div className="relative z-10 flex items-center justify-center">
+                  <span aria-hidden className="absolute -inset-4 rounded-full border border-gold/30" />
+                  <span aria-hidden className="absolute -inset-8 rounded-full border border-gold/15" />
+                  <EthosLogo size={160} className="h-auto w-[160px] drop-shadow-md sm:w-[176px]" />
+                </div>
+                <h2 className="ethos-display relative z-10 mt-7 text-[2.4rem] tracking-[0.28em] sm:text-[2.8rem]">ETHOS</h2>
+                <p className="relative z-10 mt-1 font-serif text-[10px] font-bold tracking-[0.22em] text-text-muted uppercase">
+                  Administrative Attorney Office
                 </p>
+                {/* 구분선 */}
+                <div className="relative z-10 my-7 flex w-full items-center gap-4">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/40" />
+                  <span className="font-serif text-[8px] tracking-[0.3em] text-gold-deep">LOGOS · PATHOS · ETHOS</span>
+                  <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/40" />
+                </div>
+                <p className="ethos-quote relative z-10 text-sm leading-8 text-gold-deep">
+                  절차에는 이성을
+                  <br />
+                  사람에게는 공감을
+                  <br />
+                  일에는 신뢰를
+                </p>
+                {/* bottom accent */}
+                <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
               </div>
             </div>
           </Reveal>
@@ -338,7 +349,7 @@ export default async function PublicMarketingHomePage({
       </section>
 
       {/* ═══════════════ 철학 — DARK 풀블리드 밴드 ═══════════════ */}
-      <section className="ethos-band ethos-band-dark ethos-grain overflow-hidden py-24 sm:py-32">
+      <section className="ethos-band ethos-band-dark ethos-grain overflow-hidden py-24 sm:py-32" style={{ backgroundColor: "rgb(22 50 80)" }}>
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             {/* 좌: 카피 */}
@@ -388,7 +399,7 @@ export default async function PublicMarketingHomePage({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-3">
                         <h3 className="ethos-display text-2xl text-white">{p.title}</h3>
-                        <span className="font-serif text-xs text-white/40">{p.korean}</span>
+                        <span className="font-serif text-xs text-white/60">{p.korean}</span>
                       </div>
                       <p className="mt-2 text-sm leading-7 text-white/70">{p.description}</p>
                     </div>

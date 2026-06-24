@@ -40,9 +40,8 @@ export function PublicFooter() {
             <p className="mt-4 font-serif text-xs italic text-gold-soft">
               Reason in Process · Empathy for People · Trust in Every Step
             </p>
-            <p className="mt-6 text-xs leading-6 text-white/60">
-              에토스 행정사사무소는 비자, 행정심판, 계약서·사실조사, 인허가 업무를
-              로고스·파토스·에토스 철학으로 함께합니다.
+            <p className="mt-6 font-serif text-sm italic leading-7 text-gold-soft">
+              절차에는 이성을, 사람에게는 공감을,<br />일에는 신뢰를.
             </p>
           </div>
 
@@ -57,6 +56,7 @@ export function PublicFooter() {
               <li><Link href="/services/contract" className="transition-colors duration-200 hover:text-gold-soft">계약서/사실조사</Link></li>
               <li><Link href="/services/license" className="transition-colors duration-200 hover:text-gold-soft">인허가</Link></li>
               <li><Link href="/services/corporate" className="transition-colors duration-200 hover:text-gold-soft">법인 설립</Link></li>
+              <li><Link href="/portal" className="transition-colors duration-200 hover:text-gold-soft">의뢰인 포털</Link></li>
             </ul>
           </div>
 

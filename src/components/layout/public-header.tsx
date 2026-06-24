@@ -147,6 +147,13 @@ function HeaderInner() {
             ))}
             <div className="flex gap-2 pt-2">
               <Link
+                href="/portal"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-lg border border-gold/40 px-4 py-3 text-center font-semibold text-primary"
+              >
+                {lang === "en" ? "Portal" : "포털"}
+              </Link>
+              <Link
                 href={`/intake${qs}`}
                 onClick={() => setMobileOpen(false)}
                 className="flex-1 rounded-lg bg-primary px-4 py-3 text-center font-semibold text-white"
