@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
-import { EthosLogo } from "@/components/brand/ethos-logo";
 import { FaqAccordion } from "@/components/public/faq-accordion";
 import { TrustStats } from "@/components/public/trust-stats";
 import { Testimonials } from "@/components/public/testimonials";
@@ -291,45 +290,42 @@ export default async function PublicMarketingHomePage({
             </Reveal>
           </div>
 
-          {/* 우: 로고 메달리온 */}
+          {/* 우: 브랜드 카드 (타이포 중심) */}
           <Reveal delay={2} className="flex justify-center lg:justify-end">
             <div className="relative w-full max-w-md">
-              {/* 은은한 후광 */}
               <div className="absolute -inset-8 -z-10 rounded-[40px] bg-gold/10 blur-3xl" aria-hidden />
-              <div className="ethos-grain relative flex w-full flex-col items-center overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-b from-surface via-surface to-gold-soft/20 px-8 py-14 text-center shadow-floating sm:px-12 sm:py-16">
-                {/* top accent line */}
+              <div className="ethos-grain relative flex w-full flex-col items-center overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-b from-primary via-primary to-text-strong px-8 py-14 text-center shadow-floating sm:px-12 sm:py-16">
                 <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
-                {/* 장식 원 배경 */}
-                <div className="absolute inset-0 flex items-center justify-center" aria-hidden>
-                  <div className="h-[280px] w-[280px] rounded-full border border-gold/8" />
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center" aria-hidden>
-                  <div className="h-[340px] w-[340px] rounded-full border border-gold/5" />
-                </div>
-                {/* 로고 */}
-                <div className="relative z-10 flex items-center justify-center">
-                  <span aria-hidden className="absolute -inset-4 rounded-full border border-gold/30" />
-                  <span aria-hidden className="absolute -inset-8 rounded-full border border-gold/15" />
-                  <EthosLogo size={160} className="h-auto w-[160px] drop-shadow-md sm:w-[176px]" />
-                </div>
-                <h2 className="ethos-display relative z-10 mt-7 text-[2.4rem] tracking-[0.28em] sm:text-[2.8rem]">ETHOS</h2>
-                <p className="relative z-10 mt-1 font-serif text-[10px] font-bold tracking-[0.22em] text-text-muted uppercase">
-                  Administrative Attorney Office
-                </p>
-                {/* 구분선 */}
-                <div className="relative z-10 my-7 flex w-full items-center gap-4">
+                <p className="font-serif text-[10px] font-bold uppercase tracking-[0.3em] text-gold-soft">에토스 행정사사무소</p>
+                <h2 className="ethos-display mt-6 text-[2.4rem] tracking-[0.28em] text-white sm:text-[2.8rem]">ETHOS</h2>
+                <div className="my-7 flex w-full items-center gap-4">
                   <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/40" />
-                  <span className="font-serif text-[8px] tracking-[0.3em] text-gold-deep">LOGOS · PATHOS · ETHOS</span>
+                  <span className="font-serif text-[8px] tracking-[0.3em] text-gold-soft">LOGOS · PATHOS · ETHOS</span>
                   <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/40" />
                 </div>
-                <p className="ethos-quote relative z-10 text-sm leading-8 text-gold-deep">
-                  절차에는 이성을
+                <p className="ethos-quote text-base leading-9 text-gold-soft">
+                  절차에는 이성을,
                   <br />
-                  사람에게는 공감을
+                  사람에게는 공감을,
                   <br />
-                  일에는 신뢰를
+                  일에는 신뢰를.
                 </p>
-                {/* bottom accent */}
+                <div className="mt-8 flex items-center gap-6 text-white/50">
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold/60">Logos</span>
+                    <span className="text-[11px]">이성 · 절차</span>
+                  </div>
+                  <div className="h-6 w-px bg-white/20" />
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold/60">Pathos</span>
+                    <span className="text-[11px]">공감 · 이해</span>
+                  </div>
+                  <div className="h-6 w-px bg-white/20" />
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold/60">Ethos</span>
+                    <span className="text-[11px]">신뢰 · 품격</span>
+                  </div>
+                </div>
                 <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
               </div>
             </div>

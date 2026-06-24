@@ -12,9 +12,9 @@ export function normalizeLang(raw?: string): PublicLocale {
 export const HOME_COPY = {
   ko: {
     heroTagBadge: "행정사 사무소 · 사건 관리 시스템",
-    heroTitleA: "비자·행정심판·",
-    heroTitleB: "계약서·인허가 업무를",
-    heroTitleC: "한 흐름으로 관리",
+    heroTitleA: "이성으로 풀고,",
+    heroTitleB: "공감으로 듣고,",
+    heroTitleC: "신뢰로 완성",
     heroTitleD: "합니다.",
     heroDescription:
       "접수부터 기한관리, 자료요청, 문서 준비까지 놓치기 쉬운 단계를 체계적으로 정리합니다. 접수 후 받은 접수번호로 진행상황을 언제든 확인하실 수 있습니다.",
@@ -37,10 +37,10 @@ export const HOME_COPY = {
   },
   en: {
     heroTagBadge: "Administrative Attorney Office · Case Management System",
-    heroTitleA: "Visa · Admin Appeal ·",
-    heroTitleB: "Contracts · Permits,",
-    heroTitleC: "managed as one",
-    heroTitleD: "structured flow.",
+    heroTitleA: "Reason to resolve,",
+    heroTitleB: "empathy to listen,",
+    heroTitleC: "trust to complete",
+    heroTitleD: ".",
     heroDescription:
       "From intake to deadline tracking, document requests, and submission preparation — every step is organized so nothing slips through. You can check progress anytime with your tracking code.",
     ctaQuickCheck: "AI Pre-Check (Free)",
