@@ -273,15 +273,15 @@ export default async function PublicMarketingHomePage({
               <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-text-muted">
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-gold" />
-                  500+ 처리 사건
+                  1차 상담 무료
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-gold" />
-                  98% 고객 만족도
+                  24h 이내 회신
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-gold" />
-                  영업일 기준 24h 이내 응답
+                  진행상황 실시간 공유
                 </span>
               </div>
             </Reveal>

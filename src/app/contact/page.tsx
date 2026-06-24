@@ -111,10 +111,16 @@ export default async function ContactPage() {
                   <p className="text-sm text-text-muted">지하철 / 버스 정보 (등록 예정)</p>
                 </div>
 
-                <div className="mt-7 flex aspect-video items-center justify-center rounded-xl border-2 border-dashed border-gold/40 bg-surface-muted/40">
-                  <div className="text-center">
-                    <p className="font-serif text-sm font-bold text-text-muted">카카오맵 / 네이버 지도</p>
-                    <p className="mt-1 text-xs text-text-muted">사무소 등록 후 표시됩니다</p>
+                <div className="mt-7 flex aspect-video items-center justify-center rounded-xl border border-gold/30 bg-gradient-to-br from-primary/5 to-gold/5">
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <svg viewBox="0 0 48 48" width="48" height="48" className="text-primary/20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                      <path d="M24 4C15.2 4 8 10.7 8 19c0 12 16 25 16 25s16-13 16-25c0-8.3-7.2-15-16-15z" />
+                      <circle cx="24" cy="19" r="5" />
+                    </svg>
+                    <div>
+                      <p className="font-serif text-sm font-bold text-text-muted">지도 준비 중</p>
+                      <p className="mt-0.5 text-xs text-text-muted">사무소 등록 후 카카오맵 연동 예정</p>
+                    </div>
                   </div>
                 </div>
 

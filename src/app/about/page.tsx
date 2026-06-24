@@ -125,9 +125,13 @@ export default async function AboutPage() {
           <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <Reveal>
               <div className="relative">
-                <div className="aspect-[4/5] overflow-hidden rounded-2xl border-4 border-gold/40 bg-gradient-to-br from-primary/20 to-gold/20 shadow-floating">
-                  <div className="flex h-full items-center justify-center font-serif text-[8rem] font-bold leading-none text-primary/25">
-                    E
+                <div className="aspect-[4/5] overflow-hidden rounded-2xl border-4 border-gold/40 bg-gradient-to-br from-primary/10 via-surface to-gold/10 shadow-floating">
+                  <div className="flex h-full flex-col items-center justify-center gap-4">
+                    <svg viewBox="0 0 80 100" width="120" className="text-primary/20" fill="currentColor" aria-hidden>
+                      <circle cx="40" cy="28" r="18" />
+                      <path d="M10 95 Q10 60 40 55 Q70 60 70 95 Z" />
+                    </svg>
+                    <p className="font-serif text-xs tracking-wider text-text-muted">사진 등록 예정</p>
                   </div>
                 </div>
                 <div className="absolute -bottom-5 -right-5 rounded-xl bg-primary px-6 py-4 text-white shadow-floating">
@@ -204,7 +208,7 @@ export default async function AboutPage() {
                   AI 사전 진단 (30초)
                 </Link>
               </div>
-              <p className="mt-6 text-xs text-white/50">500+ 처리 사건 · 98% 만족도 · 비밀 보장</p>
+              <p className="mt-6 text-xs text-white/50">1차 상담 무료 · 24h 이내 회신 · 비밀 보장</p>
             </div>
           </Reveal>
         </div>

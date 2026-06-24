@@ -81,7 +81,7 @@ export function PublicFooter() {
             <ul className="mt-4 space-y-3 text-sm text-white/80">
               <li>
                 <p className="text-xs text-white/60">전화</p>
-                <a href={`tel:${phoneTel}`} className="font-serif text-base font-bold text-white">
+                <a href={`tel:${phoneTel}`} className="font-serif text-base font-bold text-white" aria-label={`전화 상담 ${phone}`}>
                   {phone}
                 </a>
               </li>
