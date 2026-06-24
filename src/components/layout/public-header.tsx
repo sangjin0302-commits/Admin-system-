@@ -186,18 +186,40 @@ export function PublicHeader() {
 function MiniLogo() {
   return (
     <svg viewBox="0 0 48 48" width={40} height={40} xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <circle cx="24" cy="24" r="21" fill="none" stroke="rgb(26 60 95)" strokeWidth="1.5" />
+      <defs>
+        <linearGradient id="ml-gold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#e8d48b" />
+          <stop offset="50%" stopColor="#c9a961" />
+          <stop offset="100%" stopColor="#a8882e" />
+        </linearGradient>
+        <linearGradient id="ml-navy" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0%" stopColor="#24537a" />
+          <stop offset="100%" stopColor="#122c45" />
+        </linearGradient>
+        <linearGradient id="ml-pillar" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#152f4e" />
+          <stop offset="40%" stopColor="#1e4a6e" />
+          <stop offset="60%" stopColor="#1e4a6e" />
+          <stop offset="100%" stopColor="#0f2238" />
+        </linearGradient>
+      </defs>
+      <circle cx="24" cy="24" r="22" fill="none" stroke="url(#ml-navy)" strokeWidth="0.5" opacity="0.3" />
+      <circle cx="24" cy="24" r="21" fill="none" stroke="url(#ml-navy)" strokeWidth="1.5" />
+      <circle cx="24" cy="24" r="19.5" fill="none" stroke="url(#ml-gold)" strokeWidth="0.3" opacity="0.4" />
       <g transform="translate(24 14)">
-        <path d="M0 -5 L1 -1 L5 0 L1 1 L0 5 L-1 1 L-5 0 L-1 -1 Z" fill="rgb(201 169 97)" />
+        <path d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z" fill="url(#ml-gold)" />
+        <circle cx="0" cy="0" r="1" fill="#e8d48b" />
       </g>
       <g transform="translate(24 22)">
-        <path d="M -6 0 Q -7 -1 -6 -2 L 6 -2 Q 7 -1 6 0 Z" fill="rgb(26 60 95)" />
-        <rect x="-4" y="0" width="8" height="13" fill="rgb(26 60 95)" />
-        <rect x="-5" y="13" width="10" height="1.5" fill="rgb(26 60 95)" />
+        <path d="M -6 0 Q -7 -1 -6 -2 L 6 -2 Q 7 -1 6 0 Z" fill="url(#ml-navy)" />
+        <rect x="-4" y="0" width="8" height="13" fill="url(#ml-pillar)" />
+        <line x1="-2" y1="1" x2="-2" y2="12" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+        <line x1="2" y1="1" x2="2" y2="12" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+        <rect x="-5" y="13" width="10" height="1.5" fill="url(#ml-navy)" />
       </g>
       <path
         d="M 14 38 Q 17 33 22 35 Q 24 36 24 36 Q 24 36 26 35 Q 31 33 34 38 Q 28 41 24 41 Q 20 41 14 38 Z"
-        fill="rgb(201 169 97)"
+        fill="url(#ml-gold)"
       />
     </svg>
   );

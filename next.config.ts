@@ -8,9 +8,9 @@ const nextConfig: NextConfig = {
   distDir: process.env.NODE_ENV === "production" && !isVercelBuild ? ".next-local" : ".next",
   outputFileTracingRoot: process.cwd(),
   outputFileTracingIncludes: {
-    // Ensure Prisma engines and schema are bundled for server route execution.
     "/*": ["./generated/prisma-client-next/**/*"]
   },
+  serverExternalPackages: ["@prisma/client"],
   eslint: {
     // Lint is executed separately in local verification scripts.
     ignoreDuringBuilds: true

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import { AppShellSafe } from "@/components/layout/app-shell-safe";
 import { Analytics } from "@/components/public/analytics";
@@ -25,6 +25,10 @@ function getSiteUrl(): string {
 }
 const SITE_URL = getSiteUrl();
 
+export const viewport: Viewport = {
+  themeColor: "#1a3c5f",
+};
+
 export const metadata: Metadata = {
   title: { default: SITE_TITLE, template: "%s | ETHOS" },
   description: SITE_DESCRIPTION,
@@ -48,7 +52,6 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION
   },
   manifest: "/manifest.json",
-  themeColor: "#1a3c5f",
   appleWebApp: {
     capable: true,
     title: "\uC9C4\uD589\uC0C1\uD669",

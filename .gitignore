@@ -21,3 +21,6 @@ build.out.log
 data/marketing-sync-latest.json
 
 .vercel
+
+.vercel
+.env*

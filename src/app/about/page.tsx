@@ -56,7 +56,7 @@ export default async function AboutPage() {
       </section>
 
       {/* 인사말 — DARK band */}
-      <section className="ethos-band ethos-band-dark ethos-grain py-24 sm:py-32">
+      <section className="ethos-band ethos-band-dark ethos-grain py-24 sm:py-32" style={{ backgroundColor: "rgb(22 50 80)" }}>
         <div className="mx-auto max-w-4xl px-4 sm:px-6">
           <Reveal>
             <p className="ethos-eyebrow text-gold-soft">Greeting</p>

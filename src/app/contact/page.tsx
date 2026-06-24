@@ -56,7 +56,7 @@ export default async function ContactPage() {
           <div className="grid gap-7 lg:grid-cols-[1fr_1.3fr]">
             {/* 연락처 — DARK card */}
             <Reveal>
-              <div className="ethos-band-dark ethos-grain rounded-[24px] p-9 text-white shadow-floating">
+              <div className="ethos-band-dark ethos-grain rounded-[24px] p-9 text-white shadow-floating" style={{ backgroundColor: "rgb(22 50 80)" }}>
                 <p className="ethos-eyebrow text-gold-soft">Contact</p>
                 <h2 className="ethos-display mt-3 text-2xl text-white">연락처</h2>
 

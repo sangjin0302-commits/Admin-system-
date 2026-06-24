@@ -174,7 +174,7 @@ export default async function BlogPage({
 
 function FeaturedSection({ post }: { post: Awaited<ReturnType<typeof listBlogPosts>>[number] }) {
   return (
-    <section className="ethos-band ethos-band-dark ethos-grain py-20 sm:py-24">
+    <section className="ethos-band ethos-band-dark ethos-grain py-20 sm:py-24" style={{ backgroundColor: "rgb(22 50 80)" }}>
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <Reveal>
           <Link href={`/blog/${post.slug}`} className="group block">
