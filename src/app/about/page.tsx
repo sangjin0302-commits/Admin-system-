@@ -138,7 +138,7 @@ export default async function AboutPage() {
                         <circle cx="40" cy="28" r="18" />
                         <path d="M10 95 Q10 60 40 55 Q70 60 70 95 Z" />
                       </svg>
-                      <p className="font-serif text-xs tracking-wider text-text-muted">사진 등록 예정</p>
+                      <p className="font-serif text-xs tracking-wider text-text-muted">대표 행정사</p>
                     </div>
                   )}
                 </div>

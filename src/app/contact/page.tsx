@@ -108,7 +108,7 @@ export default async function ContactPage() {
                 <div className="mt-7 space-y-2">
                   <p className="font-serif text-xs uppercase tracking-wider text-gold-deep">주소</p>
                   <p className="text-base text-text-strong">{address}</p>
-                  <p className="text-sm text-text-muted">지하철 / 버스 정보 (등록 예정)</p>
+                  <p className="text-sm text-text-muted">교통편은 상담 예약 시 안내드립니다.</p>
                 </div>
 
                 <div className="mt-7 flex aspect-video items-center justify-center rounded-xl border border-gold/30 bg-gradient-to-br from-primary/5 to-gold/5">
@@ -118,8 +118,8 @@ export default async function ContactPage() {
                       <circle cx="24" cy="19" r="5" />
                     </svg>
                     <div>
-                      <p className="font-serif text-sm font-bold text-text-muted">지도 준비 중</p>
-                      <p className="mt-0.5 text-xs text-text-muted">사무소 등록 후 카카오맵 연동 예정</p>
+                      <p className="font-serif text-sm font-bold text-text-muted">사무소 위치</p>
+                      <p className="mt-0.5 text-xs text-text-muted">상담 예약 시 상세 위치를 안내드립니다</p>
                     </div>
                   </div>
                 </div>

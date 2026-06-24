@@ -70,12 +70,14 @@ function HeaderInner() {
           : "border-b border-transparent bg-transparent"
       }`}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+      <div className={`mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 transition-all duration-300 ${scrolled ? "py-2" : "py-3"}`}>
         {/* 로고 */}
         <Link href={`/${qs}`} className="flex items-center gap-3">
-          <MiniLogo />
+          <div className={`transition-all duration-300 ${scrolled ? "scale-90" : "scale-100"}`}>
+            <MiniLogo />
+          </div>
           <div className="hidden sm:block">
-            <p className="font-serif text-lg font-bold tracking-[0.2em] text-primary">ETHOS</p>
+            <p className={`font-serif font-bold tracking-[0.2em] text-primary transition-all duration-300 ${scrolled ? "text-base" : "text-lg"}`}>ETHOS</p>
             <p className="-mt-1 font-serif text-[10px] tracking-wide text-text-muted">
               Administrative Attorney Office
             </p>
