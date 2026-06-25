@@ -309,16 +309,16 @@ export default async function PublicMarketingHomePage({
               <div className="ethos-grain relative flex w-full flex-col items-center overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-b from-primary via-primary to-text-strong px-8 py-12 text-center shadow-floating sm:px-12 sm:py-14">
                 <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
 
-                {/* 로고 prominent */}
-                <div className="relative flex h-44 w-44 items-center justify-center rounded-2xl bg-white/5 p-4 ring-1 ring-gold/20 sm:h-52 sm:w-52">
+                {/* 로고 prominent — 흰 타일로 가시성 보장 */}
+                <div className="relative flex h-52 w-52 items-center justify-center overflow-hidden rounded-3xl bg-white p-6 shadow-floating ring-4 ring-gold/40 sm:h-60 sm:w-60">
                   <Image
                     src={heroLogo}
                     alt="ETHOS 행정사사무소 로고"
                     fill
-                    className="object-contain p-6"
+                    className="object-contain p-2"
                     priority
                     unoptimized={heroLogo.startsWith("http")}
-                    sizes="(max-width: 768px) 11rem, 13rem"
+                    sizes="(max-width: 768px) 13rem, 15rem"
                   />
                 </div>
 
