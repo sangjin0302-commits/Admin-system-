@@ -307,6 +307,24 @@ export async function POST(request: Request) {
           message: String(payload.message ?? ""),
         }).catch(() => {})
       );
+      // 텔레그램 알림 (Jean 개인 봇)
+      import("@/lib/services/telegram-notify").then((mod) => {
+        const lines = [
+          `이름: ${String(payload.name ?? "—")}`,
+          `이메일: ${String(payload.email ?? "—")}`,
+          `전화: ${String(payload.phone ?? "—")}`,
+          `분야: ${String(payload.inquiryType ?? "—")}`,
+          `내용: ${String(payload.message ?? "").slice(0, 200)}`
+        ];
+        return mod.sendTelegramAlert({
+          kind: "inquiry",
+          title: "신규 문의 접수",
+          lines,
+          url: process.env.NEXT_PUBLIC_SITE_URL
+            ? `${process.env.NEXT_PUBLIC_SITE_URL}/admin/inquiries/${inquiry.id}`
+            : undefined
+        }).catch(() => undefined);
+      }).catch(() => undefined);
     }
     return jsonWithRequestId(
       { inquiry: toPublicInquiryResponse(inquiry), deduplicated },
