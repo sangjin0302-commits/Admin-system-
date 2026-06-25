@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 
+import { Analytics as VercelAnalytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
 import { AppShellSafe } from "@/components/layout/app-shell-safe";
 import { Analytics } from "@/components/public/analytics";
 import { LiveChat } from "@/components/public/live-chat";
@@ -93,6 +96,8 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
         <ToastProvider />
         <LiveChat />
         <Analytics />
+        <VercelAnalytics />
+        <SpeedInsights />
         <PWARegister />
         <LocalBusinessJsonLd />
       </body>
