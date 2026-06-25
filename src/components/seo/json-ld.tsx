@@ -7,12 +7,18 @@
  *   <LegalServiceJsonLd serviceName="비자/체류" />
  */
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethos.kr";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethosattorney.com";
 const ORG_NAME = "ETHOS 행정사사무소";
 const ORG_PHONE = process.env.NEXT_PUBLIC_OFFICE_PHONE ?? "+82-2-0000-0000";
-const ORG_EMAIL = process.env.NEXT_PUBLIC_OFFICE_EMAIL ?? "contact@ethos.kr";
+const ORG_EMAIL = process.env.NEXT_PUBLIC_OFFICE_EMAIL ?? "a.attorneyjean@gmail.com";
 const ORG_ADDRESS_LOCALITY = "Seoul";
+const ORG_ADDRESS_REGION = "Dongdaemun-gu";
 const ORG_ADDRESS_COUNTRY = "KR";
+const KNOWS_LANGUAGES = ["ko-KR", "en-US", "ar-SA"];
+const SAME_AS = [
+  "https://m.expert.naver.com/expert/profile/home?storeId=100060507",
+  "https://www.linkedin.com/in/kareem-sangjin-ji-052419212"
+];
 
 function jsonLdScript(data: unknown) {
   return (
@@ -36,15 +42,17 @@ export function OrganizationJsonLd() {
         telephone: ORG_PHONE,
         contactType: "customer support",
         email: ORG_EMAIL,
-        availableLanguage: ["Korean", "English"],
+        availableLanguage: ["Korean", "English", "Arabic"],
       },
     ],
     address: {
       "@type": "PostalAddress",
       addressLocality: ORG_ADDRESS_LOCALITY,
+      addressRegion: ORG_ADDRESS_REGION,
       addressCountry: ORG_ADDRESS_COUNTRY,
     },
-    sameAs: [],
+    knowsLanguage: KNOWS_LANGUAGES,
+    sameAs: SAME_AS,
   });
 }
 
@@ -63,16 +71,20 @@ export function LegalServiceJsonLd({
     name: `${ORG_NAME} — ${serviceName}`,
     description,
     url: url ?? SITE_URL,
-    areaServed: "KR",
-    priceRange: "₩₩",
+    areaServed: { "@type": "Country", name: "Korea" },
+    priceRange: "₩33,000~₩55,000 검토 무료 · 수임 시 차감",
+    availableLanguage: ["Korean", "English", "Arabic"],
     provider: {
-      "@type": "Organization",
+      "@type": "ProfessionalService",
       name: ORG_NAME,
       url: SITE_URL,
+      knowsLanguage: KNOWS_LANGUAGES,
+      sameAs: SAME_AS
     },
     address: {
       "@type": "PostalAddress",
       addressLocality: ORG_ADDRESS_LOCALITY,
+      addressRegion: ORG_ADDRESS_REGION,
       addressCountry: ORG_ADDRESS_COUNTRY,
     },
     telephone: ORG_PHONE,

@@ -152,36 +152,69 @@ export default async function AboutPage() {
             <Reveal delay={1}>
               <div>
                 <p className="ethos-eyebrow">Lead Attorney</p>
-                <h2 className="ethos-display mt-3 text-3xl sm:text-4xl">대표 행정사</h2>
-                <p className="ethos-quote mt-2 text-base text-text-muted">행정사 면허번호: [등록 후 표시]</p>
+                <h2 className="ethos-display mt-3 text-3xl sm:text-4xl">행정사 Jean</h2>
 
-                <div className="mt-7 space-y-4 text-sm leading-7 text-text">
+                {/* 다국어 배지 */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800">
+                    🇰🇷 한국어
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800">
+                    🇬🇧 English
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800">
+                    🇸🇦 العربية
+                  </span>
+                </div>
+
+                <div className="mt-6 space-y-4 text-sm leading-7 text-text">
                   <p>
-                    비자·외국인 체류, 행정심판, 계약서·사실조사, 인허가 등 다양한 행정 업무 분야에서 경험을
-                    쌓아왔습니다. 의뢰인의 사정에 귀 기울이고, 공식 기준과 절차를 정확히 확인하며, 끝까지
-                    책임 있게 함께하는 것을 원칙으로 합니다.
+                    비자·출입국, 행정심판, 계약서·사실조사, 인허가, 법인설립 업무를 담당합니다.
+                    주한 대사관 비자·출입국 실무를 2.5년 이상 경험하였고, 법무부 난민 판결문 공식 번역인 ·
+                    법원행정처 법정 통번역인으로 등록되어 있습니다.
                   </p>
                   <p>
-                    사무소를 시작하며 가장 중요하게 생각하는 것은 의뢰인이{" "}
-                    <span className="font-bold text-primary">자신의 상황을 이해받고 있다는 안도감</span>을 느끼는
-                    것입니다.
+                    한국어·영어·아랍어로 상담이 가능하며, 외국인 의뢰인의 사정에 맞춘
+                    <span className="font-bold text-primary"> 다국어 서류 검토와 절차 안내</span>를 함께 진행합니다.
                   </p>
                 </div>
 
-                <div className="mt-9 space-y-3 border-l-2 border-gold/50 pl-6">
-                  {credentials.map((c, i) => (
-                    <div key={i} className="flex items-baseline gap-4">
-                      <span className="ethos-quote w-16 flex-shrink-0 text-xl text-gold-deep">{c.year}</span>
-                      <span className="rounded bg-gold-soft/60 px-2 py-0.5 text-[11px] font-bold text-gold-deep">
-                        {CREDENTIAL_TYPE_LABELS[c.type] ?? c.type}
-                      </span>
-                      <span className="text-sm text-text">
-                        {c.title}
-                        {c.detail ? <span className="text-text-muted"> · {c.detail}</span> : null}
-                      </span>
+                {/* 권위 신호 카드 */}
+                <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                  {[
+                    { kicker: "Embassy", title: "주한 대사관 비자 실무", desc: "비자·출입국 실무 2.5년+" },
+                    { kicker: "MOJ", title: "법무부 난민 판결문 번역인", desc: "공식 번역인 등록" },
+                    { kicker: "Court", title: "법정 통번역인", desc: "법원행정처 등록" },
+                    { kicker: "Academic", title: "한국외대 통번역대학원", desc: "한아과 · GPA 4.41" },
+                    { kicker: "Lecture", title: "OASIS 4 강의", desc: "외국인 창업지원 프로그램" },
+                    { kicker: "AI System", title: "법률 자동화 시스템", desc: "심판청구서·법령 자동수집 운영" }
+                  ].map((c) => (
+                    <div key={c.title} className="rounded-xl border border-gold/30 bg-surface px-4 py-3 transition hover:border-gold/60 hover:bg-gold-soft/15">
+                      <p className="font-serif text-[10px] font-bold uppercase tracking-wider text-gold-deep">{c.kicker}</p>
+                      <p className="mt-1 text-sm font-bold text-text-strong">{c.title}</p>
+                      <p className="mt-0.5 text-xs text-text-muted">{c.desc}</p>
                     </div>
                   ))}
                 </div>
+
+                {/* 동적 자격증 (DB) - 있을 때만 노출 */}
+                {credentials.length > 0 && (
+                  <div className="mt-7 space-y-3 border-l-2 border-gold/50 pl-6">
+                    <p className="font-serif text-xs font-bold uppercase tracking-wider text-gold-deep">기타 자격</p>
+                    {credentials.map((c, i) => (
+                      <div key={i} className="flex items-baseline gap-4">
+                        <span className="ethos-quote w-16 flex-shrink-0 text-xl text-gold-deep">{c.year}</span>
+                        <span className="rounded bg-gold-soft/60 px-2 py-0.5 text-[11px] font-bold text-gold-deep">
+                          {CREDENTIAL_TYPE_LABELS[c.type] ?? c.type}
+                        </span>
+                        <span className="text-sm text-text">
+                          {c.title}
+                          {c.detail ? <span className="text-text-muted"> · {c.detail}</span> : null}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </Reveal>
           </div>

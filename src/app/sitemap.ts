@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma/client";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethos.kr";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethosattorney.com";
 
 export const revalidate = 3600; // 1h ISR
 

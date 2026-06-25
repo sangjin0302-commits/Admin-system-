@@ -248,6 +248,58 @@
   transform: scaleX(1);
 }
 
+/* ── 3D Tilt (CSS-only, no JS) ──────────────────────── */
+.ethos-tilt {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ethos-tilt:hover {
+  transform: perspective(1000px) rotateY(2deg) rotateX(-2deg) translateY(-4px);
+}
+
+/* ── Magnetic CTA glow ──────────────────────────────── */
+.ethos-magnetic {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ethos-magnetic::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle at center, rgb(201 169 97 / 0.4) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+.ethos-magnetic:hover::before {
+  opacity: 1;
+}
+
+/* ── Letter reveal animation ────────────────────────── */
+@keyframes ethos-letter-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ethos-letter-reveal > span {
+  display: inline-block;
+  opacity: 0;
+  animation: ethos-letter-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.ethos-letter-reveal > span:nth-child(1) { animation-delay: 0.05s; }
+.ethos-letter-reveal > span:nth-child(2) { animation-delay: 0.1s; }
+.ethos-letter-reveal > span:nth-child(3) { animation-delay: 0.15s; }
+.ethos-letter-reveal > span:nth-child(4) { animation-delay: 0.2s; }
+.ethos-letter-reveal > span:nth-child(5) { animation-delay: 0.25s; }
+.ethos-letter-reveal > span:nth-child(6) { animation-delay: 0.3s; }
+.ethos-letter-reveal > span:nth-child(7) { animation-delay: 0.35s; }
+.ethos-letter-reveal > span:nth-child(8) { animation-delay: 0.4s; }
+.ethos-letter-reveal > span:nth-child(n+9) { animation-delay: 0.45s; }
+@media (prefers-reduced-motion: reduce) {
+  .ethos-letter-reveal > span { animation: none; opacity: 1; }
+  .ethos-tilt:hover { transform: none; }
+}
+
 /* ── Typography helpers ──────────────────────────── */
 .ethos-eyebrow {
   font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
