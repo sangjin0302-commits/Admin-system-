@@ -103,6 +103,45 @@ export default async function AboutPage() {
         </div>
       </section>
 
+      {/* 행정사 권한 — 행정사법 제2조 */}
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal className="text-center">
+            <p className="ethos-eyebrow">Statutory Scope</p>
+            <h2 className="ethos-display mt-4 text-3xl sm:text-[2.4rem]">행정사 직무 범위</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm text-text-muted">
+              행정사법 제2조에 따라 정해진 업무 범위 내에서 의뢰인을 대리합니다.
+              변호사·법무사·세무사·노무사의 업무가 아닙니다.
+            </p>
+          </Reveal>
+
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { kicker: "행정사법 §2-1", title: "행정기관 제출서류", desc: "관공서·공공기관에 제출하는 신청·신고·청구·진정·이의신청 서류 작성·제출 대행" },
+              { kicker: "행정사법 §2-2", title: "권리·의무 사실증명", desc: "권리·의무 또는 사실관계에 관한 증명서류 작성" },
+              { kicker: "행정사법 §2-3", title: "인허가 신청", desc: "인가·허가·면허·등록·신고 등 신청 대행과 보완 대응" },
+              { kicker: "행정사법 §2-4", title: "행정심판 대리", desc: "행정심판 청구·재결·이의신청 대리" },
+              { kicker: "행정사법 §2-5", title: "법령 해석·자문", desc: "행정 업무 관련 법령 해석 및 절차 안내" },
+              { kicker: "행정사법 §2-6", title: "사실조사 · 확인", desc: "행정 절차에 필요한 사실관계 조사·확인·증명" }
+            ].map((s) => (
+              <div key={s.kicker} className="ethos-card ethos-card-hover p-6">
+                <p className="font-serif text-[10px] font-bold uppercase tracking-wider text-gold-deep">{s.kicker}</p>
+                <p className="mt-2 font-serif text-base font-bold text-text-strong">{s.title}</p>
+                <p className="mt-2 text-xs leading-6 text-text-muted">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-amber-300 bg-amber-50 p-5">
+            <p className="font-serif text-sm font-bold text-amber-900">행정사 업무 범위 외 사안</p>
+            <p className="mt-1.5 text-xs leading-6 text-amber-800">
+              소송 대리 (변호사), 등기 신청 (법무사), 세무 신고 (세무사), 노동 분쟁 대리 (노무사) 등은 행정사 업무가 아닙니다.
+              검토 후 해당 사안일 경우 적합한 전문가를 안내드립니다.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* 가치 */}
       <section className="py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">

@@ -11,6 +11,7 @@ import { PageTransition } from "@/components/public/page-transition";
 import { ScrollProgress } from "@/components/public/scroll-progress";
 import { ExitIntent } from "@/components/public/exit-intent";
 import { PWAInstallPrompt } from "@/components/public/pwa-install-prompt";
+import { ChannelTracker } from "@/components/public/channel-tracker";
 
 const PUBLIC_PATHS = ["/", "/about", "/services", "/cases", "/blog", "/track", "/intake", "/quick-check", "/contact", "/fees", "/privacy", "/terms", "/consult", "/en", "/ar"];
 
@@ -41,6 +42,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
         <LawbotChatWidget />
         <ExitIntent />
         <PWAInstallPrompt />
+        <ChannelTracker />
       </div>
     );
   }

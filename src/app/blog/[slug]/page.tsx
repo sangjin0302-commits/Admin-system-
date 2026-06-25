@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { BlogToc } from "@/components/public/blog-toc";
 import { ShareButtons } from "@/components/public/share-buttons";
 import { BlogCta } from "@/components/public/blog-cta";
-import { CATEGORY_LABEL, type BlogCategory } from "@/lib/services/blog-categorizer";
+import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
 import { sanitizeHtml } from "@/lib/utils/sanitize-html";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/blog-posts";
 import { prisma } from "@/lib/prisma/client";
@@ -164,7 +164,7 @@ export default async function BlogDetailPage({
 
       <article className="mt-8">
         <span className="rounded-full bg-gold-soft/60 px-3 py-1 font-serif text-xs font-bold text-gold-deep">
-          {CATEGORY_LABEL[post.category as BlogCategory] ?? post.category}
+          {PUBLIC_CATEGORY_LABEL[toPublicCategory(post.category)]}
         </span>
         <h1 className="mt-4 font-serif text-3xl font-bold leading-tight text-primary sm:text-4xl">
           {post.title}

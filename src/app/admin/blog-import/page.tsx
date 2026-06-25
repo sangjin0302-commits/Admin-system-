@@ -6,6 +6,7 @@ import {
   NAVER_BLOG_SOURCE,
 } from "@/lib/services/naver-rss-importer";
 import { ImportControls } from "./import-controls";
+import { ReviewTemplateCopy } from "@/components/admin/review-template-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,14 @@ export default async function BlogImportPage() {
         </p>
         <div className="mt-4">
           <ImportControls />
+        </div>
+      </Card>
+
+      <Card className="p-5">
+        <p className="ui-kicker">v4.8 검토 응답 템플릿 (Quick Copy)</p>
+        <p className="mt-1 text-sm text-text-muted">의뢰 문의에 회신할 때 사용. 한·영·아랍어 3개 언어.</p>
+        <div className="mt-4">
+          <ReviewTemplateCopy />
         </div>
       </Card>
 

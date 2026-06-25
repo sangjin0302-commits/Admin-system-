@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { CATEGORY_LABEL, type BlogCategory } from "@/lib/services/blog-categorizer";
+import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
 
 type Post = { slug: string; title: string; excerpt: string; category: string; date: string };
 
@@ -129,7 +129,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                   >
                     <div className="flex items-center gap-2">
                       <span className="rounded-full bg-gold-soft/50 px-2 py-0.5 text-[10px] font-bold text-gold-deep">
-                        {CATEGORY_LABEL[r.category as BlogCategory] ?? r.category}
+                        {PUBLIC_CATEGORY_LABEL[toPublicCategory(r.category)]}
                       </span>
                       <span className="text-xs text-text-muted">{r.date}</span>
                     </div>

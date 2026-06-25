@@ -1,11 +1,16 @@
 /**
  * 블로그 글 키워드 기반 자동 분류기.
- * 5대 분야 + 기타 → category 필드에 저장.
+ *
+ * 공개: 5대 분야 (의뢰인이 보는 카테고리 — 전문성 유지)
+ * 내부: 행정사 100% 커버용 세분류 (admin/통계용)
+ *
+ * 내부 카테고리는 공개 노출 시 자동으로 primary 5대로 매핑.
  */
 
-export type BlogCategory = "visa" | "appeal" | "contract" | "license" | "corporate" | "other";
+// ── 공개 5대 분야 ─────────────────────────────────────
+export type PublicCategory = "visa" | "appeal" | "contract" | "license" | "corporate" | "other";
 
-export const CATEGORY_LABEL: Record<BlogCategory, string> = {
+export const PUBLIC_CATEGORY_LABEL: Record<PublicCategory, string> = {
   visa: "비자·체류",
   appeal: "행정심판",
   contract: "계약·사실조사",
@@ -14,21 +19,74 @@ export const CATEGORY_LABEL: Record<BlogCategory, string> = {
   other: "기타"
 };
 
-export const CATEGORY_CHANNEL: Record<BlogCategory, "naverTalk" | "kakao" | "email" | "telegram"> = {
-  visa: "naverTalk",      // 외국인 → 한국인 → 톡톡
-  appeal: "email",        // 행정심판 → 공식 채널
-  contract: "email",      // 계약 → 공식 채널
-  license: "naverTalk",   // 인허가 → 빠른 회신
-  corporate: "email",     // 법인설립 → 공식 채널
+// ── 내부 세분류 (admin 전용) ─────────────────────────
+export type InternalCategory =
+  | "naturalization"     // 귀화·국적
+  | "refugee"            // 난민·인도적체류
+  | "complaint"          // 권익위·인권위·진정
+  | "petition"           // 민원·탄원·청원
+  | "deposit"            // 공탁
+  | "building_permit"    // 건축·소방
+  | "vehicle"            // 자동차 등록·이전
+  | "social_security";   // 사회보장·외국인 보험
+
+export type BlogCategory = PublicCategory | InternalCategory;
+
+// 내부 → 공개 매핑 (의뢰인 노출용)
+export const INTERNAL_TO_PUBLIC: Record<InternalCategory, PublicCategory> = {
+  naturalization: "visa",
+  refugee: "visa",
+  complaint: "appeal",
+  petition: "appeal",
+  deposit: "contract",
+  building_permit: "license",
+  vehicle: "license",
+  social_security: "visa"
+};
+
+// admin/통계용 라벨 (한글)
+export const INTERNAL_CATEGORY_LABEL: Record<InternalCategory, string> = {
+  naturalization: "귀화·국적",
+  refugee: "난민·인도적체류",
+  complaint: "권익위·인권위",
+  petition: "민원·탄원",
+  deposit: "공탁",
+  building_permit: "건축·소방",
+  vehicle: "자동차",
+  social_security: "사회보장"
+};
+
+// 통합 라벨 매핑
+export const CATEGORY_LABEL: Record<BlogCategory, string> = {
+  ...PUBLIC_CATEGORY_LABEL,
+  ...INTERNAL_CATEGORY_LABEL
+};
+
+/** 공개 페이지에 노출할 카테고리로 정규화 */
+export function toPublicCategory(c: string): PublicCategory {
+  if (c in PUBLIC_CATEGORY_LABEL) return c as PublicCategory;
+  if (c in INTERNAL_TO_PUBLIC) return INTERNAL_TO_PUBLIC[c as InternalCategory];
+  return "other";
+}
+
+// ── 카테고리 → 추천 채널 ─────────────────────────────
+export const CATEGORY_CHANNEL: Record<PublicCategory, "naverTalk" | "kakao" | "email" | "telegram"> = {
+  visa: "naverTalk",
+  appeal: "email",
+  contract: "email",
+  license: "naverTalk",
+  corporate: "email",
   other: "naverTalk"
 };
 
-const KEYWORDS: Record<BlogCategory, RegExp[]> = {
+// ── 키워드 패턴 ──────────────────────────────────────
+const KEYWORDS: Partial<Record<BlogCategory, RegExp[]>> = {
+  // 공개 5대
   visa: [
     /비자|체류|D-?\d+|E-?\d+|F-?\d+|H-?\d+/i,
-    /출입국|영주|국적|귀화/,
-    /외국인|난민|강제퇴거|출국명령|초청/,
-    /immigrat|visa|residenc|naturali/i
+    /출입국|영주|초청/,
+    /외국인|강제퇴거|출국명령/,
+    /immigrat|visa|residenc/i
   ],
   appeal: [
     /행정심판|행심|재결|청구기한|처분/,
@@ -44,16 +102,48 @@ const KEYWORDS: Record<BlogCategory, RegExp[]> = {
   ],
   corporate: [
     /법인|설립|정관|등기|개인사업|주식회사|유한회사/,
-    /corporat|incorporat|company formation|articles of incorporation/i
+    /corporat|incorporat|company formation/i
   ],
-  other: []
+
+  // 내부 세분류
+  naturalization: [
+    /귀화|국적\s*취득|국적\s*회복|외국국적\s*불행사/,
+    /naturali|citizenship|nationality/i
+  ],
+  refugee: [
+    /난민|G-?1|인도적\s*체류|박해|persecut/i,
+    /refugee|asylum/i
+  ],
+  complaint: [
+    /권익위|국민권익위|인권위|국가인권위|진정/,
+    /ombudsman|human rights commission/i
+  ],
+  petition: [
+    /민원|탄원|청원/,
+    /petition/i
+  ],
+  deposit: [
+    /공탁|변제공탁|담보공탁/,
+    /deposit\s+with\s+court/i
+  ],
+  building_permit: [
+    /건축\s*허가|소방\s*시설|사용\s*승인|착공/,
+    /building permit|fire safety/i
+  ],
+  vehicle: [
+    /자동차\s*등록|차량\s*이전|말소\s*등록/,
+    /vehicle registration|car registration/i
+  ],
+  social_security: [
+    /건강보험|국민건강|산재|고용보험|기초생활|복지/,
+    /health insurance|workers compensation|social security/i
+  ]
 };
 
 export function classifyBlogPost(text: string): BlogCategory {
   const t = text.normalize("NFC");
   const scores: Partial<Record<BlogCategory, number>> = {};
   for (const [cat, patterns] of Object.entries(KEYWORDS) as [BlogCategory, RegExp[]][]) {
-    if (cat === "other") continue;
     let s = 0;
     for (const p of patterns) {
       const matches = t.match(new RegExp(p.source, p.flags.includes("g") ? p.flags : p.flags + "g"));

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { CHANNELS, CONSULT_TAGLINE } from "@/lib/constants/channels";
-import { type BlogCategory, CATEGORY_LABEL, CATEGORY_CHANNEL } from "@/lib/services/blog-categorizer";
+import { PUBLIC_CATEGORY_LABEL, CATEGORY_CHANNEL, toPublicCategory } from "@/lib/services/blog-categorizer";
 
 const CHANNEL_META = {
   naverTalk: { label: "네이버 톡톡으로 검토 요청", bg: "bg-[#03C75A]", fg: "text-white", url: CHANNELS.naverTalk.url },
@@ -10,15 +10,11 @@ const CHANNEL_META = {
   email: { label: "이메일로 검토 요청", bg: "bg-primary", fg: "text-white", url: CHANNELS.email.url }
 } as const;
 
-function isKnownCategory(c: string): c is BlogCategory {
-  return c in CATEGORY_LABEL;
-}
-
 export function BlogCta({ category }: { category: string }) {
-  const cat: BlogCategory = isKnownCategory(category) ? category : "other";
+  const cat = toPublicCategory(category);
   const recommended = CATEGORY_CHANNEL[cat];
   const ch = CHANNEL_META[recommended];
-  const label = CATEGORY_LABEL[cat];
+  const label = PUBLIC_CATEGORY_LABEL[cat];
 
   return (
     <div className="ethos-grain relative mt-12 overflow-hidden rounded-[24px] border border-gold/30 bg-gradient-to-br from-primary via-primary to-text-strong p-7 text-center text-white shadow-floating sm:p-9">

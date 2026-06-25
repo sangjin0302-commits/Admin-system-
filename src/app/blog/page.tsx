@@ -9,7 +9,7 @@ import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
 import { getSiteSetting } from "@/lib/services/site-settings";
 import { prisma } from "@/lib/prisma/client";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
-import { CATEGORY_LABEL, type BlogCategory } from "@/lib/services/blog-categorizer";
+import { CATEGORY_LABEL, PUBLIC_CATEGORY_LABEL, toPublicCategory, type PublicCategory, type BlogCategory } from "@/lib/services/blog-categorizer";
 import { BlogTagCloud } from "@/components/public/blog-tag-cloud";
 
 export const dynamic = "force-dynamic";
@@ -28,16 +28,25 @@ export default async function BlogPage({
 }) {
   const sp = (await searchParams) ?? {};
   const lang: Lang = sp.lang === "en" ? "en" : "ko";
-  const activeCat = (sp.cat as BlogCategory | undefined) ?? null;
+  const activeCat = (sp.cat as PublicCategory | undefined) ?? null;
 
   const posts = await listBlogPosts();
   const naverBlogId = await getSiteSetting("naver.blogId");
   const naverPosts = naverBlogId ? await fetchNaverBlogPosts(naverBlogId, 9) : [];
 
+  // 공개 페이지: activeCat이 visa면 visa + naturalization + refugee + social_security 등 모두 포함
+  const internalForPublic: Record<PublicCategory, string[]> = {
+    visa: ["visa", "naturalization", "refugee", "social_security"],
+    appeal: ["appeal", "complaint", "petition"],
+    contract: ["contract", "deposit"],
+    license: ["license", "building_permit", "vehicle"],
+    corporate: ["corporate"],
+    other: ["other"]
+  };
   const importedWhere = {
     published: true,
     source: NAVER_BLOG_SOURCE,
-    ...(activeCat ? { category: activeCat } : {})
+    ...(activeCat ? { category: { in: internalForPublic[activeCat] } } : {})
   };
   const importedPosts = await prisma.blogPost.findMany({
     where: importedWhere,
@@ -132,9 +141,9 @@ export default async function BlogPage({
             <p className="ethos-eyebrow">{lang === "en" ? "From Naver Blog" : "네이버 블로그에서"}</p>
             <h2 className="ethos-display mt-3 text-2xl sm:text-3xl">
               {lang === "en" ? "Imported Posts" : "가져온 글"}
-              {activeCat && CATEGORY_LABEL[activeCat] && (
+              {activeCat && PUBLIC_CATEGORY_LABEL[activeCat] && (
                 <span className="ml-3 rounded-full bg-gold-soft/60 px-3 py-1 align-middle text-sm font-bold text-gold-deep">
-                  {CATEGORY_LABEL[activeCat]}
+                  {PUBLIC_CATEGORY_LABEL[activeCat]}
                 </span>
               )}
             </h2>
@@ -148,8 +157,12 @@ export default async function BlogPage({
                 >
                   전체
                 </Link>
-                {(Object.keys(CATEGORY_LABEL) as BlogCategory[]).map((c) => {
-                  const count = catCounts.find((x) => x.category === c)?._count._all ?? 0;
+                {(Object.keys(PUBLIC_CATEGORY_LABEL) as PublicCategory[]).map((c) => {
+                  // 공개 카테고리에 매핑되는 내부 카테고리도 합산
+                  const internals = internalForPublic[c];
+                  const count = catCounts
+                    .filter((x) => internals.includes(x.category))
+                    .reduce((sum, x) => sum + x._count._all, 0);
                   if (count === 0) return null;
                   const isActive = activeCat === c;
                   return (
@@ -158,7 +171,7 @@ export default async function BlogPage({
                       href={`/blog?cat=${c}${lang === "en" ? "&lang=en" : ""}`}
                       className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${isActive ? "bg-primary text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
                     >
-                      {CATEGORY_LABEL[c]} <span className="opacity-70">({count})</span>
+                      {PUBLIC_CATEGORY_LABEL[c]} <span className="opacity-70">({count})</span>
                     </Link>
                   );
                 })}
@@ -176,7 +189,7 @@ export default async function BlogPage({
                     className="group block rounded-xl border border-gold/20 bg-surface p-5 transition hover:border-gold/50 hover:shadow-panel"
                   >
                     <span className="inline-block rounded-full bg-gold-soft/50 px-2.5 py-0.5 font-serif text-[11px] font-bold text-gold-deep">
-                      {CATEGORY_LABEL[p.category as BlogCategory] ?? p.category}
+                      {PUBLIC_CATEGORY_LABEL[toPublicCategory(p.category)]}
                     </span>
                     <h3 className="mt-3 font-serif text-sm font-bold leading-snug text-primary group-hover:text-gold-deep line-clamp-2">
                       {title}

@@ -189,6 +189,49 @@ export function ServicePage({
         </div>
       </section>
 
+      {/* 무료 검토 체크리스트 */}
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <Reveal>
+            <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50/50 p-7 sm:p-9">
+              <div className="flex items-center gap-3">
+                <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">무료</span>
+                <p className="font-serif text-base font-bold text-emerald-900">검토 가능 여부 체크</p>
+              </div>
+              <p className="mt-3 text-sm leading-7 text-emerald-900/85">
+                아래 항목 중 1개 이상 해당하시면 무료 검토 요청 후 가능 여부와 견적 범위를 회신드립니다.
+                검토는 어느 채널(톡톡·카카오·이메일·텔레그램)로 요청하셔도 동일하게 무료입니다.
+              </p>
+              <ul className="mt-5 space-y-2.5">
+                {data.whoFor.slice(0, 4).map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-sm leading-7 text-text">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-5 rounded-lg bg-white/60 px-4 py-3 text-xs leading-6 text-emerald-900/80">
+                <strong>본격 상담</strong>은 33,000~55,000원 유료이며, 수임 확정 시 상담료 전액 차감됩니다.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link
+                  href={intakeHref}
+                  className="inline-flex h-10 items-center rounded-lg bg-emerald-700 px-4 text-sm font-bold text-white transition hover:bg-emerald-800"
+                >
+                  무료 검토 요청하기 →
+                </Link>
+                <Link
+                  href="/consult"
+                  className="inline-flex h-10 items-center rounded-lg border border-emerald-300 bg-white px-4 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                >
+                  상담 구조 자세히
+                </Link>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* FAQ — soft band */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
