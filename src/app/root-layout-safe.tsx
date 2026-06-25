@@ -21,7 +21,7 @@ function getSiteUrl(): string {
       // fall through to default
     }
   }
-  return "https://ethos.kr";
+  return "https://ethosattorney.com";
 }
 const SITE_URL = getSiteUrl();
 
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: "/",
-    languages: { ko: "/", en: "/?lang=en", "x-default": "/" }
+    languages: { ko: "/", en: "/en", "x-default": "/" }
   },
   openGraph: {
     title: SITE_TITLE,
@@ -79,10 +79,9 @@ export const metadata: Metadata = {
     ]
   },
   other: {
-    "naver-site-verification": "NAVER_VERIFICATION_CODE",
-    "theme-color": "#0f4c81",
+    "theme-color": "#1B2B6B",
     "apple-mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-title": "\uC9C4\uD589\uC0C1\uD669"
+    "apple-mobile-web-app-title": "ETHOS"
   }
 };
 

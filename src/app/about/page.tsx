@@ -249,7 +249,7 @@ export default async function AboutPage() {
                   AI 사전 진단 (30초)
                 </Link>
               </div>
-              <p className="mt-6 text-xs text-white/70">1차 상담 무료 · 24h 이내 회신 · 비밀 보장</p>
+              <p className="mt-6 text-xs text-white/70">검토 무료 · 24h 이내 회신 · 수임 시 상담료 차감</p>
             </div>
           </Reveal>
         </div>

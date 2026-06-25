@@ -9,8 +9,9 @@ import { FloatingContact } from "@/components/layout/floating-contact";
 import { LawbotChatWidget } from "@/components/public/lawbot-chat-widget";
 import { PageTransition } from "@/components/public/page-transition";
 import { ScrollProgress } from "@/components/public/scroll-progress";
+import { ExitIntent } from "@/components/public/exit-intent";
 
-const PUBLIC_PATHS = ["/", "/about", "/services", "/cases", "/blog", "/track", "/intake", "/quick-check", "/contact", "/fees", "/privacy", "/terms"];
+const PUBLIC_PATHS = ["/", "/about", "/services", "/cases", "/blog", "/track", "/intake", "/quick-check", "/contact", "/fees", "/privacy", "/terms", "/consult", "/en"];
 
 function isPublicRoute(pathname: string) {
   if (pathname === "/") return true;
@@ -37,6 +38,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
         <PublicFooter />
         <FloatingContact />
         <LawbotChatWidget />
+        <ExitIntent />
       </div>
     );
   }

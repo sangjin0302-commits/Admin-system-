@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const FALLBACK = { phone: "02-0000-0000", email: "contact@ethos.kr", hours: "평일 09:00 - 18:00" };
+const FALLBACK = { phone: "02-0000-0000", email: "a.attorneyjean@gmail.com", hours: "평일 09:00 - 18:00" };
 
 export function PublicFooter() {
   const [contact, setContact] = useState(FALLBACK);
@@ -67,9 +67,9 @@ export function PublicFooter() {
             </p>
             <ul className="mt-4 space-y-2 text-sm text-white/80">
               <li><Link href="/about" className="transition-colors duration-200 hover:text-gold-soft">대표 소개</Link></li>
-              <li><Link href="/cases" className="transition-colors duration-200 hover:text-gold-soft">처리 사례</Link></li>
+              <li><Link href="/cases" className="transition-colors duration-200 hover:text-gold-soft">강연 · 활동</Link></li>
               <li><Link href="/blog" className="transition-colors duration-200 hover:text-gold-soft">법률 칼럼</Link></li>
-              <li><Link href="/track" className="transition-colors duration-200 hover:text-gold-soft">진행상황 조회</Link></li>
+              <li><Link href="/portal" className="transition-colors duration-200 hover:text-gold-soft">포털 · 진행조회</Link></li>
             </ul>
           </div>
 

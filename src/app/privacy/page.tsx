@@ -77,8 +77,8 @@ export default function PrivacyPage() {
 
             <Section title="8. 개인정보 보호 책임자">
               <p className="text-sm leading-relaxed text-text">
-                책임자: 대표 행정사<br />
-                연락: contact@ethos.kr / 02-0000-0000
+                책임자: 행정사 Jean<br />
+                연락: a.attorneyjean@gmail.com
               </p>
             </Section>
           </div>

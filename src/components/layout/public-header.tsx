@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { href: "/services", label: "업무 분야", labelEn: "Practice" },
   { href: "/quick-check", label: "AI 사전 진단", labelEn: "AI Check" },
   { href: "/consult", label: "상담 안내", labelEn: "Consult" },
-  { href: "/cases", label: "처리 사례", labelEn: "Cases" },
+  { href: "/cases", label: "강연 · 활동", labelEn: "Lectures" },
   { href: "/blog", label: "칼럼", labelEn: "Insights" }
 ] as const;
 
