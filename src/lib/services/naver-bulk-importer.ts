@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
 import { translateBlogPost } from "@/lib/services/blog-translation-service";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
+import { classifyBlogPost } from "@/lib/services/blog-categorizer";
 
 const BASE = "https://blog.naver.com";
 const MOBILE_BASE = "https://m.blog.naver.com";
@@ -161,6 +162,7 @@ export async function bulkImportNaverBlog(options: {
         }
       }
 
+      const category = classifyBlogPost(`${title}\n${excerpt}\n${body.slice(0, 4000)}`);
       await prisma.blogPost.create({
         data: {
           slug: generateSlug(title, entry.logNo),
@@ -170,7 +172,7 @@ export async function bulkImportNaverBlog(options: {
           titleEn,
           excerptEn,
           bodyEn,
-          category: "naver",
+          category,
           source: NAVER_BLOG_SOURCE,
           originalUrl: link,
           importedAt: new Date(),

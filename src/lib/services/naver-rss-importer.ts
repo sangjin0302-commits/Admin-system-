@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
 import { translateBlogPost } from "@/lib/services/blog-translation-service";
+import { classifyBlogPost } from "@/lib/services/blog-categorizer";
 
 export const NAVER_BLOG_RSS_URL = "https://rss.blog.naver.com/attorney_jean.xml";
 export const NAVER_BLOG_SOURCE = "naver_attorney_jean";
@@ -133,7 +134,7 @@ export async function importNaverBlogPosts(options?: {
           titleEn,
           excerptEn,
           bodyEn,
-          category: "naver",
+          category: classifyBlogPost(`${title}\n${excerpt}\n${(body ?? "").slice(0, 4000)}`),
           source: NAVER_BLOG_SOURCE,
           originalUrl: p.link,
           importedAt: new Date(),

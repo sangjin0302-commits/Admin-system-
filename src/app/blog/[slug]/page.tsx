@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-import { Card } from "@/components/ui/card";
 import { BlogToc } from "@/components/public/blog-toc";
 import { ShareButtons } from "@/components/public/share-buttons";
+import { BlogCta } from "@/components/public/blog-cta";
+import { CATEGORY_LABEL, type BlogCategory } from "@/lib/services/blog-categorizer";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/blog-posts";
 import { prisma } from "@/lib/prisma/client";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
@@ -162,7 +163,7 @@ export default async function BlogDetailPage({
 
       <article className="mt-8">
         <span className="rounded-full bg-gold-soft/60 px-3 py-1 font-serif text-xs font-bold text-gold-deep">
-          {post.category}
+          {CATEGORY_LABEL[post.category as BlogCategory] ?? post.category}
         </span>
         <h1 className="mt-4 font-serif text-3xl font-bold leading-tight text-primary sm:text-4xl">
           {post.title}
@@ -227,17 +228,7 @@ export default async function BlogDetailPage({
         </section>
       )}
 
-      <Card className="mt-12 bg-primary p-7 text-center text-white">
-        <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-soft">관련 사안 상담</p>
-        <h2 className="mt-3 font-serif text-xl font-bold">이 분야 상담이 필요하신가요?</h2>
-        <p className="mt-2 text-xs leading-6 text-white/75">사실관계를 함께 확인하고 다음 단계를 안내해 드립니다.</p>
-        <Link
-          href="/intake"
-          className="mt-5 inline-flex h-11 items-center rounded-lg bg-gold px-6 font-serif text-sm font-bold text-primary hover:bg-gold-soft"
-        >
-          상담 신청
-        </Link>
-      </Card>
+      <BlogCta category={post.category} />
 
       <p className="mt-8 rounded-lg border border-gold/30 bg-surface-muted/40 px-4 py-3 text-xs italic text-text-muted">
         ※ 본 칼럼은 일반적 안내이며, 개별 사안에 대한 법률 자문이 아닙니다.
