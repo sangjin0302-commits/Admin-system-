@@ -10,6 +10,7 @@ import { getSiteSetting } from "@/lib/services/site-settings";
 import { prisma } from "@/lib/prisma/client";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 import { CATEGORY_LABEL, type BlogCategory } from "@/lib/services/blog-categorizer";
+import { BlogTagCloud } from "@/components/public/blog-tag-cloud";
 
 export const dynamic = "force-dynamic";
 
@@ -193,6 +194,9 @@ export default async function BlogPage({
       )}
 
       {naverPosts.length > 0 && <NaverBlogSection posts={naverPosts} blogId={naverBlogId} />}
+
+      {/* 태그 클라우드 */}
+      <BlogTagCloud />
 
       <section className="ethos-band ethos-band-soft py-24 sm:py-28">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">

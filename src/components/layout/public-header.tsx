@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
+import { BlogSearchTrigger } from "@/components/public/blog-search";
+
 const NAV_ITEMS = [
   { href: "/", label: "홈", labelEn: "Home" },
   { href: "/about", label: "사무소 소개", labelEn: "About" },
@@ -101,6 +103,9 @@ function HeaderInner() {
             </Link>
           ))}
         </nav>
+
+        {/* 검색 */}
+        <div className="hidden lg:block"><BlogSearchTrigger /></div>
 
         {/* 언어 토글 */}
         <LangToggle pathname={pathname} />
