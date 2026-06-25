@@ -9,11 +9,11 @@ import { BlogSearchTrigger } from "@/components/public/blog-search";
 
 const NAV_ITEMS = [
   { href: "/", label: "홈", labelEn: "Home" },
-  { href: "/about", label: "사무소 소개", labelEn: "About" },
-  { href: "/services", label: "업무 분야", labelEn: "Practice" },
-  { href: "/quick-check", label: "AI 사전 진단", labelEn: "AI Check" },
-  { href: "/consult", label: "상담 안내", labelEn: "Consult" },
-  { href: "/cases", label: "강연 · 활동", labelEn: "Lectures" },
+  { href: "/about", label: "소개", labelEn: "About" },
+  { href: "/services", label: "분야", labelEn: "Practice" },
+  { href: "/consult", label: "상담", labelEn: "Consult" },
+  { href: "/quick-check", label: "AI 진단", labelEn: "AI" },
+  { href: "/cases", label: "활동", labelEn: "Lectures" },
   { href: "/blog", label: "칼럼", labelEn: "Insights" }
 ] as const;
 
@@ -94,12 +94,12 @@ function HeaderInner() {
             <Link
               key={item.href}
               href={`${item.href}${qs}`}
-              className={`relative px-4 py-2 font-serif text-sm font-semibold transition ${
+              className={`relative whitespace-nowrap px-3 py-2 font-serif text-sm font-semibold transition ${
                 isActive(item.href) ? "text-primary" : "text-text-muted hover:text-primary"
               }`}
             >
               {lang === "en" ? item.labelEn : item.label}
-              {isActive(item.href) && <span className="absolute inset-x-4 -bottom-0.5 h-0.5 bg-gold" />}
+              {isActive(item.href) && <span className="absolute inset-x-3 -bottom-0.5 h-0.5 bg-gold" />}
             </Link>
           ))}
         </nav>

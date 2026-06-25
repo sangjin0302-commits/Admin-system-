@@ -1,6 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+
+import { prisma } from "@/lib/prisma/client";
 
 import { FaqAccordion } from "@/components/public/faq-accordion";
 import { TrustStats } from "@/components/public/trust-stats";
@@ -206,6 +209,10 @@ export default async function PublicMarketingHomePage({
   const naverBlogId = site["naver.blogId"];
   const naverPosts = naverBlogId ? await fetchNaverBlogPosts(naverBlogId, 6) : [];
 
+  // 로고 (DB → /logo.png fallback)
+  const heroLogoRow = await prisma.siteSetting.findUnique({ where: { key: "image.logo" } }).catch(() => null);
+  const heroLogo = heroLogoRow?.value || "/logo.png";
+
   return (
     <div className="overflow-x-clip">
       <OrganizationJsonLd />
@@ -295,43 +302,46 @@ export default async function PublicMarketingHomePage({
             </Reveal>
           </div>
 
-          {/* 우: 브랜드 카드 (타이포 중심) */}
+          {/* 우: 로고 + 다국어 + 권위 카드 */}
           <Reveal delay={2} className="flex justify-center lg:justify-end">
             <div className="relative w-full max-w-md">
-              <div className="absolute -inset-8 -z-10 rounded-[40px] bg-gold/10 blur-3xl" aria-hidden />
-              <div className="ethos-grain relative flex w-full flex-col items-center overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-b from-primary via-primary to-text-strong px-8 py-14 text-center shadow-floating sm:px-12 sm:py-16">
+              <div className="absolute -inset-8 -z-10 rounded-[40px] bg-gold/15 blur-3xl" aria-hidden />
+              <div className="ethos-grain relative flex w-full flex-col items-center overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-b from-primary via-primary to-text-strong px-8 py-12 text-center shadow-floating sm:px-12 sm:py-14">
                 <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
-                <p className="font-serif text-[10px] font-bold uppercase tracking-[0.3em] text-gold-soft">에토스 행정사사무소</p>
-                <h2 className="ethos-display mt-6 text-[2.4rem] tracking-[0.28em] text-white sm:text-[2.8rem]">ETHOS</h2>
-                <div className="my-7 flex w-full items-center gap-4">
-                  <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/40" />
-                  <span className="font-serif text-[10px] tracking-[0.3em] text-gold-soft">LOGOS · PATHOS · ETHOS</span>
-                  <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/40" />
+
+                {/* 로고 prominent */}
+                <div className="relative flex h-44 w-44 items-center justify-center rounded-2xl bg-white/5 p-4 ring-1 ring-gold/20 sm:h-52 sm:w-52">
+                  <Image
+                    src={heroLogo}
+                    alt="ETHOS 행정사사무소 로고"
+                    fill
+                    className="object-contain p-6"
+                    priority
+                    unoptimized={heroLogo.startsWith("http")}
+                    sizes="(max-width: 768px) 11rem, 13rem"
+                  />
                 </div>
-                <p className="ethos-quote text-base leading-9 text-gold-soft">
-                  절차에는 이성을,
-                  <br />
-                  사람에게는 공감을,
-                  <br />
-                  일에는 신뢰를.
+
+                <p className="mt-7 font-serif text-base font-bold tracking-[0.32em] text-white">ETHOS</p>
+                <p className="mt-1 font-serif text-[11px] tracking-[0.25em] text-gold-soft">에토스 행정사사무소</p>
+
+                {/* 골드 디바이더 */}
+                <div className="my-7 h-px w-full bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
+
+                {/* 다국어 stack */}
+                <div className="flex flex-wrap justify-center gap-2">
+                  <span className="rounded-full bg-white/10 px-3 py-1 font-serif text-xs font-bold text-white ring-1 ring-gold/30">🇰🇷 한국어</span>
+                  <span className="rounded-full bg-white/10 px-3 py-1 font-serif text-xs font-bold text-white ring-1 ring-gold/30">🇬🇧 English</span>
+                  <span className="rounded-full bg-white/10 px-3 py-1 font-serif text-xs font-bold text-white ring-1 ring-gold/30">🇸🇦 العربية</span>
+                </div>
+
+                {/* 권위 한 줄 */}
+                <p className="mt-6 text-xs leading-6 text-white/85">
+                  주한 대사관 비자 실무 2.5년+<br />
+                  법무부 번역인 · 법원 통번역인
                 </p>
-                <div className="mt-8 flex items-center gap-6">
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold-soft">Logos</span>
-                    <span className="text-[11px] text-white/80">이성 · 절차</span>
-                  </div>
-                  <div className="h-6 w-px bg-gold/30" />
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold-soft">Pathos</span>
-                    <span className="text-[11px] text-white/80">공감 · 이해</span>
-                  </div>
-                  <div className="h-6 w-px bg-gold/30" />
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold-soft">Ethos</span>
-                    <span className="text-[11px] text-white/80">신뢰 · 품격</span>
-                  </div>
-                </div>
-                <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
+
+                <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
               </div>
             </div>
           </Reveal>
@@ -621,18 +631,21 @@ export default async function PublicMarketingHomePage({
 
               <div className="relative grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
                 <div>
-                  <p className="ethos-eyebrow text-gold-soft">Begin Your Story</p>
-                  <h2 className="ethos-display mt-4 text-3xl text-white sm:text-[2.6rem]">
+                  <p className="font-serif text-xs font-bold uppercase tracking-[0.3em] text-gold">Begin Your Story</p>
+                  <h2 className="ethos-display mt-4 text-3xl font-bold text-white drop-shadow-sm sm:text-[2.6rem]">
                     지금 필요한 업무를
                     <br />
                     접수하고 다음 단계를 확인하세요
                   </h2>
-                  <p className="mt-5 max-w-xl text-sm leading-7 text-white/80">
-                    비자·행정심판·계약서·인허가 — 어떤 사안이든 사실관계 확인부터 신중하게 시작합니다.
+                  <p className="mt-5 max-w-xl text-base leading-8 text-white">
+                    비자·행정심판·계약서·인허가 — 어떤 사안이든 <span className="font-bold text-gold-soft">사실관계 확인</span>부터 신중하게 시작합니다.
                   </p>
-                  <p className="ethos-quote mt-4 text-sm text-gold-soft">
-                    Reason in Process · Empathy for People · Trust in Every Step.
-                  </p>
+                  <div className="mt-5 flex items-center gap-3">
+                    <span className="h-px w-10 bg-gold/60" aria-hidden />
+                    <p className="font-serif text-sm font-bold italic tracking-wide text-gold">
+                      Reason in Process · Empathy for People · Trust in Every Step.
+                    </p>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
                   <Link
