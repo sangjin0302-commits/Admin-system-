@@ -10,8 +10,9 @@ import { LawbotChatWidget } from "@/components/public/lawbot-chat-widget";
 import { PageTransition } from "@/components/public/page-transition";
 import { ScrollProgress } from "@/components/public/scroll-progress";
 import { ExitIntent } from "@/components/public/exit-intent";
+import { PWAInstallPrompt } from "@/components/public/pwa-install-prompt";
 
-const PUBLIC_PATHS = ["/", "/about", "/services", "/cases", "/blog", "/track", "/intake", "/quick-check", "/contact", "/fees", "/privacy", "/terms", "/consult", "/en"];
+const PUBLIC_PATHS = ["/", "/about", "/services", "/cases", "/blog", "/track", "/intake", "/quick-check", "/contact", "/fees", "/privacy", "/terms", "/consult", "/en", "/ar"];
 
 function isPublicRoute(pathname: string) {
   if (pathname === "/") return true;
@@ -39,6 +40,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
         <FloatingContact />
         <LawbotChatWidget />
         <ExitIntent />
+        <PWAInstallPrompt />
       </div>
     );
   }

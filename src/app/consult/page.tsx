@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Reveal } from "@/components/public/reveal";
 import { ConsultStructure } from "@/components/public/consult-structure";
 import { CHANNELS, CONSULT_TAGLINE } from "@/lib/constants/channels";
+import { FAQJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -37,9 +38,18 @@ const TEMPLATE = `안녕하세요, 행정사 Jean입니다.
 구체적인 전략·서류 설계·리스크 분석은 유료 상담에서 진행합니다.
 상담료는 문의 주시면 안내드리며, 수임 시 전액 차감됩니다.`;
 
+const FAQ_QA = [
+  { question: "검토는 정말 무료인가요?", answer: "네. 가능 여부와 견적 범위, 핵심 질문 1~2가지에 대한 답변은 무료로 제공됩니다. 모든 채널(톡톡, 카카오, 이메일, 텔레그램) 동일하게 적용됩니다." },
+  { question: "유료 상담 비용은 얼마인가요?", answer: "사안 복잡도에 따라 33,000원에서 55,000원 사이로 책정되며, 수임 확정 시 상담료는 전액 본 수임료에서 차감됩니다." },
+  { question: "검토와 상담의 차이는 무엇인가요?", answer: "검토는 가능 여부와 견적 안내 등 간단한 확인입니다. 본격적인 전략 수립, 서류 설계, 리스크 분석은 유료 상담에서 진행됩니다." },
+  { question: "변호사 선임 대비 비용 차이는?", answer: "행정사 업무 범위 내에서는 변호사 선임 대비 약 1/3 ~ 1/5 수준의 비용으로 해결 가능합니다." },
+  { question: "외국어 상담이 가능한가요?", answer: "한국어, 영어, 아랍어로 상담 가능합니다. 다국어 서류 검토와 번역도 함께 진행할 수 있습니다." }
+];
+
 export default function ConsultPage() {
   return (
     <div className="overflow-x-clip">
+      <FAQJsonLd qa={FAQ_QA} />
       {/* HERO */}
       <section className="relative overflow-hidden pt-20 pb-12 sm:pt-28 sm:pb-16">
         <div className="ethos-aurora ethos-aurora-animated" aria-hidden />

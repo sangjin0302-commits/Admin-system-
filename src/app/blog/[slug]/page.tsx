@@ -76,6 +76,9 @@ export async function generateMetadata({
   return {
     title: `${post.title} — 법률 칼럼 | ETHOS`,
     description: post.excerpt,
+    // 네이버 블로그에서 import된 글은 원본을 canonical로 → 중복 콘텐츠 SEO 패널티 방지
+    alternates: post.originalUrl ? { canonical: post.originalUrl } : undefined,
+    robots: post.originalUrl ? { index: false, follow: true } : undefined,
   };
 }
 

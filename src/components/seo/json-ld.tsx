@@ -108,6 +108,40 @@ export function BreadcrumbJsonLd({
   });
 }
 
+export function PersonJsonLd() {
+  return jsonLdScript({
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Jean",
+    alternateName: "행정사 Jean",
+    jobTitle: "행정사 (Administrative Attorney)",
+    worksFor: {
+      "@type": "Organization",
+      name: ORG_NAME,
+      url: SITE_URL
+    },
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: ORG_ADDRESS_LOCALITY,
+      addressRegion: ORG_ADDRESS_REGION,
+      addressCountry: ORG_ADDRESS_COUNTRY
+    },
+    knowsLanguage: KNOWS_LANGUAGES,
+    knowsAbout: [
+      "Visa and Immigration Law",
+      "Administrative Appeals",
+      "Contract Drafting and Review",
+      "License and Permit Procedures",
+      "Company Formation for Foreign Founders"
+    ],
+    alumniOf: {
+      "@type": "EducationalOrganization",
+      name: "Hankuk University of Foreign Studies — Graduate School of Interpretation and Translation"
+    },
+    sameAs: SAME_AS
+  });
+}
+
 export function FAQJsonLd({
   qa,
 }: {

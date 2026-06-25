@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 
 import { EthosLogo } from "@/components/brand/ethos-logo";
 import { Reveal } from "@/components/public/reveal";
+import { PersonJsonLd } from "@/components/seo/json-ld";
 import { prisma } from "@/lib/prisma/client";
 import { getSiteSetting } from "@/lib/services/site-settings";
 import { listPublicCredentials, CREDENTIAL_TYPE_LABELS } from "@/lib/services/credentials";
@@ -40,6 +41,7 @@ export default async function AboutPage() {
   const aboutPhoto = photoRow?.value || null;
   return (
     <div className="overflow-x-clip">
+      <PersonJsonLd />
       {/* HERO */}
       <section className="relative overflow-hidden pt-20 pb-12 sm:pt-28 sm:pb-16">
         <div className="ethos-aurora ethos-aurora-animated" aria-hidden />

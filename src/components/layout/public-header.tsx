@@ -16,26 +16,28 @@ const NAV_ITEMS = [
 ] as const;
 
 function LangToggle({ pathname }: { pathname: string }) {
-  const sp = useSearchParams();
-  const lang = sp.get("lang") === "en" ? "en" : "ko";
+  const current = pathname.startsWith("/en") ? "en" : pathname.startsWith("/ar") ? "ar" : "ko";
   return (
     <div className="hidden items-center gap-1 border-r border-gold/30 pr-3 lg:flex">
       <Link
-        href={pathname}
-        className={`px-2 font-serif text-xs font-bold ${
-          lang === "ko" ? "text-primary" : "text-text-muted hover:text-primary"
-        }`}
+        href="/"
+        className={`px-2 font-serif text-xs font-bold ${current === "ko" ? "text-primary" : "text-text-muted hover:text-primary"}`}
       >
         KO
       </Link>
       <span className="text-gold/40">|</span>
       <Link
-        href={`${pathname}?lang=en`}
-        className={`px-2 font-serif text-xs font-bold ${
-          lang === "en" ? "text-primary" : "text-text-muted hover:text-primary"
-        }`}
+        href="/en"
+        className={`px-2 font-serif text-xs font-bold ${current === "en" ? "text-primary" : "text-text-muted hover:text-primary"}`}
       >
         EN
+      </Link>
+      <span className="text-gold/40">|</span>
+      <Link
+        href="/ar"
+        className={`px-2 font-serif text-xs font-bold ${current === "ar" ? "text-primary" : "text-text-muted hover:text-primary"}`}
+      >
+        AR
       </Link>
     </div>
   );

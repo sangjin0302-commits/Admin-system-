@@ -1,6 +1,6 @@
 // ETHOS service worker
-const CACHE_NAME = "ethos-v1";
-const PRECACHE_URLS = ["/", "/services", "/cases", "/about"];
+const CACHE_NAME = "ethos-v2";
+const PRECACHE_URLS = ["/", "/services", "/cases", "/about", "/links", "/consult", "/offline.html"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -41,6 +41,22 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Network-first for HTML navigation → offline fallback if all fails
+  if (req.mode === "navigate") {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() =>
+          caches.match(req).then((m) => m || caches.match("/offline.html") || caches.match("/links"))
+        )
+    );
+    return;
+  }
+
   // Cache-first for static assets
   event.respondWith(
     caches.match(req).then((cached) => {
@@ -53,7 +69,7 @@ self.addEventListener("fetch", (event) => {
           }
           return res;
         })
-        .catch(() => caches.match("/"));
+        .catch(() => caches.match("/offline.html") || caches.match("/"));
     })
   );
 });
