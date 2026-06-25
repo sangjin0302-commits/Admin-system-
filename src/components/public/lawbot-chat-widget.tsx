@@ -148,7 +148,7 @@ export function LawbotChatWidget() {
               </button>
             </div>
             <div className="mt-2 flex items-center justify-between">
-              <p className="text-[10px] text-text-muted">대화 기록은 저장되지 않습니다</p>
+              <p className="text-xs text-text-muted">대화 기록은 저장되지 않습니다</p>
               <Link href="/intake" className="text-[11px] font-bold text-primary hover:underline">
                 상담 신청 →
               </Link>
@@ -177,7 +177,7 @@ function MessageBubble({ m }: { m: ChatMsg }) {
         {m.matched && m.matched.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {m.matched.slice(0, 4).map((s) => (
-              <span key={s} className="rounded-full bg-gold-soft/60 px-2 py-0.5 text-[10px] font-bold text-gold-deep">
+              <span key={s} className="rounded-full bg-gold-soft/60 px-2 py-0.5 text-[11px] font-bold text-gold-deep">
                 {s}
               </span>
             ))}
@@ -185,7 +185,7 @@ function MessageBubble({ m }: { m: ChatMsg }) {
         )}
         {m.mustVerify && m.mustVerify.length > 0 && (
           <div className="mt-2">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-gold-deep">확인 필요</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gold-deep">확인 필요</p>
             <ul className="mt-1 space-y-1 text-xs text-text-muted">
               {m.mustVerify.slice(0, 3).map((v, i) => (
                 <li key={i}>· {v}</li>

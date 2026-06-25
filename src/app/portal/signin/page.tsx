@@ -165,7 +165,7 @@ export default function SignInPage() {
         <div className="hidden lg:block">
           <div className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-b from-primary via-primary to-text-strong px-10 py-14 shadow-floating">
             <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
-            <p className="font-serif text-[10px] font-bold uppercase tracking-[0.3em] text-gold-soft">ETHOS 행정사사무소</p>
+            <p className="font-serif text-[11px] font-bold uppercase tracking-[0.3em] text-gold-soft">ETHOS 행정사사무소</p>
             <h2 className="mt-6 font-serif text-3xl font-bold leading-snug text-white">
               사건 진행 상황을
               <br />

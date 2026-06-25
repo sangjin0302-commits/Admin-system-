@@ -300,7 +300,7 @@ export default async function PublicMarketingHomePage({
                 <h2 className="ethos-display mt-6 text-[2.4rem] tracking-[0.28em] text-white sm:text-[2.8rem]">ETHOS</h2>
                 <div className="my-7 flex w-full items-center gap-4">
                   <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/40" />
-                  <span className="font-serif text-[8px] tracking-[0.3em] text-gold-soft">LOGOS · PATHOS · ETHOS</span>
+                  <span className="font-serif text-[10px] tracking-[0.3em] text-gold-soft">LOGOS · PATHOS · ETHOS</span>
                   <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/40" />
                 </div>
                 <p className="ethos-quote text-base leading-9 text-gold-soft">

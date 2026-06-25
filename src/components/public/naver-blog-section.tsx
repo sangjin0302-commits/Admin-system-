@@ -34,7 +34,7 @@ export function NaverBlogSection({ posts, blogId }: { posts: NaverBlogPost[]; bl
                 <article className="ethos-card ethos-card-hover flex h-full flex-col p-7">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-[#03C75A]/10 px-3 py-1 text-[11px] font-bold text-[#03A94C]">
-                      <span className="flex h-3.5 w-3.5 items-center justify-center rounded bg-[#03C75A] text-[8px] font-black text-white">
+                      <span className="flex h-4 w-4 items-center justify-center rounded bg-[#03C75A] text-[10px] font-black text-white">
                         N
                       </span>
                       {p.category}

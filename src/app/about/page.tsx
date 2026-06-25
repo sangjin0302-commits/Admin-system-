@@ -172,7 +172,7 @@ export default async function AboutPage() {
                   {credentials.map((c, i) => (
                     <div key={i} className="flex items-baseline gap-4">
                       <span className="ethos-quote w-16 flex-shrink-0 text-xl text-gold-deep">{c.year}</span>
-                      <span className="rounded bg-gold-soft/50 px-1.5 py-0.5 text-[10px] font-bold text-gold-deep">
+                      <span className="rounded bg-gold-soft/60 px-2 py-0.5 text-[11px] font-bold text-gold-deep">
                         {CREDENTIAL_TYPE_LABELS[c.type] ?? c.type}
                       </span>
                       <span className="text-sm text-text">
@@ -216,7 +216,7 @@ export default async function AboutPage() {
                   AI 사전 진단 (30초)
                 </Link>
               </div>
-              <p className="mt-6 text-xs text-white/50">1차 상담 무료 · 24h 이내 회신 · 비밀 보장</p>
+              <p className="mt-6 text-xs text-white/70">1차 상담 무료 · 24h 이내 회신 · 비밀 보장</p>
             </div>
           </Reveal>
         </div>

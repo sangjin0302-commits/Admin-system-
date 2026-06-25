@@ -77,7 +77,7 @@ function HeaderInner() {
           </div>
           <div className="hidden sm:block">
             <p className={`font-serif font-bold tracking-[0.2em] text-primary transition-all duration-300 ${scrolled ? "text-base" : "text-lg"}`}>ETHOS</p>
-            <p className="-mt-1 font-serif text-[10px] tracking-wide text-text-muted">
+            <p className="-mt-1 font-serif text-[11px] tracking-wide text-text-muted">
               Administrative Attorney Office
             </p>
           </div>
