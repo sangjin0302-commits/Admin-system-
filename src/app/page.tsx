@@ -263,7 +263,7 @@ export default async function PublicMarketingHomePage({
               <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap">
                 <PrimaryCta href={intakeHref}>{t.ctaIntake}</PrimaryCta>
                 <SecondaryCta href="/quick-check">{t.ctaQuickCheck}</SecondaryCta>
-                <SecondaryCta href="/track">{t.ctaTrack}</SecondaryCta>
+                <SecondaryCta href="/portal">{t.ctaTrack}</SecondaryCta>
               </div>
             </Reveal>
 
@@ -310,20 +310,20 @@ export default async function PublicMarketingHomePage({
                   <br />
                   일에는 신뢰를.
                 </p>
-                <div className="mt-8 flex items-center gap-6 text-white/50">
+                <div className="mt-8 flex items-center gap-6">
                   <div className="flex flex-col items-center gap-1">
-                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold/60">Logos</span>
-                    <span className="text-[11px]">이성 · 절차</span>
+                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold-soft">Logos</span>
+                    <span className="text-[11px] text-white/80">이성 · 절차</span>
                   </div>
-                  <div className="h-6 w-px bg-white/20" />
+                  <div className="h-6 w-px bg-gold/30" />
                   <div className="flex flex-col items-center gap-1">
-                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold/60">Pathos</span>
-                    <span className="text-[11px]">공감 · 이해</span>
+                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold-soft">Pathos</span>
+                    <span className="text-[11px] text-white/80">공감 · 이해</span>
                   </div>
-                  <div className="h-6 w-px bg-white/20" />
+                  <div className="h-6 w-px bg-gold/30" />
                   <div className="flex flex-col items-center gap-1">
-                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold/60">Ethos</span>
-                    <span className="text-[11px]">신뢰 · 품격</span>
+                    <span className="font-serif text-[10px] uppercase tracking-wider text-gold-soft">Ethos</span>
+                    <span className="text-[11px] text-white/80">신뢰 · 품격</span>
                   </div>
                 </div>
                 <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
@@ -415,11 +415,11 @@ export default async function PublicMarketingHomePage({
               <div>
                 <p className="ethos-eyebrow">Practice Areas</p>
                 <h2 id="practice-heading" className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">
-                  네 가지 주력 분야
+                  다섯 가지 주력 분야
                 </h2>
               </div>
               <p className="max-w-xs text-sm leading-7 text-text-muted">
-                각 분야별 전문 워크플로우로 사안을 체계적으로 정리합니다.
+                각 분야별 전문 워크플로우로 처음부터 끝까지 안내합니다.
               </p>
             </div>
           </Reveal>
@@ -534,7 +534,7 @@ export default async function PublicMarketingHomePage({
                   접수 후 받은 접수번호로 자료요청, 검토 중 상태, 다음 안내를 한곳에서 확인하실 수 있습니다.
                 </p>
                 <div className="relative mt-8">
-                  <PrimaryCta href="/track">접수번호로 조회하기</PrimaryCta>
+                  <PrimaryCta href="/portal">포털 · 진행조회</PrimaryCta>
                 </div>
               </div>
             </Reveal>
@@ -629,10 +629,10 @@ export default async function PublicMarketingHomePage({
                     상담 신청하기
                   </Link>
                   <Link
-                    href="/track"
+                    href="/portal"
                     className="inline-flex h-12 items-center justify-center rounded-lg border border-gold/60 bg-transparent px-7 text-sm font-semibold text-gold-soft transition hover:bg-gold/10"
                   >
-                    진행상황 조회
+                    포털 · 진행조회
                   </Link>
                 </div>
               </div>

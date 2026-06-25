@@ -15,11 +15,11 @@ export async function generateMetadata({
   return en
     ? {
         title: "Practice Areas — ETHOS Administrative Attorney Office",
-        description: "Visa/stay, administrative appeal, contracts/fact-finding, and licensing — our four core areas."
+        description: "Visa/stay, administrative appeal, contracts/fact-finding, and licensing — our five core practice areas."
       }
     : {
         title: "업무 분야 — ETHOS 행정사사무소",
-        description: "비자/체류, 행정심판, 계약서/사실조사, 인허가 — 네 가지 주력 분야를 안내합니다."
+        description: "비자/체류, 행정심판, 계약서/사실조사, 인허가 — 다섯 가지 주력 분야를 안내합니다."
       };
 }
 
@@ -37,12 +37,12 @@ type Area = {
 const COPY = {
   ko: {
     heading: "업무 분야",
-    intro: "네 가지 주력 분야 — 각 분야별 전문 워크플로우로 사안을 체계적으로 정리합니다.",
+    intro: "다섯 가지 주력 분야 — 각 분야별 전문 워크플로우로 처음부터 끝까지 안내합니다.",
     more: "자세히 보기"
   },
   en: {
     heading: "Practice Areas",
-    intro: "Four core practice areas — each handled with a dedicated, systematic workflow.",
+    intro: "Five core practice areas — each handled with a dedicated, systematic workflow.",
     more: "Learn more"
   }
 } as const;

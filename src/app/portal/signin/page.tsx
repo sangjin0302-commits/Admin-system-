@@ -157,38 +157,75 @@ function FormFallback() {
 
 export default function SignInPage() {
   return (
-    <div className="mx-auto max-w-md px-4 py-16 sm:py-20">
-      <div className="text-center">
-        <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">Client Portal</p>
-        <h1 className="mt-3 font-serif text-3xl font-bold text-primary">로그인</h1>
-        <p className="mt-2 text-sm text-text-muted">사건 진행 상황과 자료를 직접 확인하세요.</p>
-      </div>
+    <div className="relative min-h-[80vh] overflow-hidden">
+      <div className="ethos-aurora ethos-aurora-animated" aria-hidden />
 
-      <div className="ethos-card mt-8 p-7">
-        <Suspense fallback={<FormFallback />}>
-          <SignInForm />
-        </Suspense>
+      <div className="mx-auto grid max-w-5xl items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.1fr_0.9fr]">
+        {/* 좌: 브랜드 안내 */}
+        <div className="hidden lg:block">
+          <div className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-b from-primary via-primary to-text-strong px-10 py-14 shadow-floating">
+            <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
+            <p className="font-serif text-[10px] font-bold uppercase tracking-[0.3em] text-gold-soft">ETHOS 행정사사무소</p>
+            <h2 className="mt-6 font-serif text-3xl font-bold leading-snug text-white">
+              사건 진행 상황을
+              <br />
+              직접 확인하세요
+            </h2>
+            <div className="my-8 h-px bg-gradient-to-r from-gold/40 to-transparent" />
+            <ul className="space-y-4">
+              {[
+                { icon: "📋", text: "사건 진행 단계와 다음 할 일 확인" },
+                { icon: "📎", text: "필요 자료 업로드 및 서명" },
+                { icon: "💬", text: "담당자 메시지 확인" },
+              ].map((item) => (
+                <li key={item.text} className="flex items-center gap-3 text-sm text-white/80">
+                  <span className="text-lg">{item.icon}</span>
+                  {item.text}
+                </li>
+              ))}
+            </ul>
+            <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
+          </div>
+        </div>
 
-        <div className="mt-6 flex flex-col items-center gap-2 text-center text-xs text-text-muted">
-          <p>
-            아직 계정이 없으신가요?{" "}
-            <Link href="/portal/signup" className="font-bold text-primary hover:underline">
-              가입하기
+        {/* 우: 로그인 + 접수번호 조회 */}
+        <div>
+          <div className="text-center lg:text-left">
+            <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">Client Portal</p>
+            <h1 className="mt-3 font-serif text-3xl font-bold text-primary">로그인</h1>
+          </div>
+
+          <div className="ethos-card mt-6 p-7">
+            <Suspense fallback={<FormFallback />}>
+              <SignInForm />
+            </Suspense>
+
+            <div className="mt-6 flex flex-col items-center gap-2 text-center text-xs text-text-muted">
+              <p>
+                아직 계정이 없으신가요?{" "}
+                <Link href="/portal/signup" className="font-bold text-primary hover:underline">
+                  가입하기
+                </Link>
+              </p>
+              <Link href="/portal/forgot" className="hover:text-primary">
+                비밀번호를 잊으셨나요?
+              </Link>
+            </div>
+          </div>
+
+          {/* 접수번호 간편 조회 */}
+          <div className="mt-4 rounded-2xl border border-gold/30 bg-gold-soft/15 px-6 py-5">
+            <p className="font-serif text-sm font-bold text-primary">접수번호로 간편 조회</p>
+            <p className="mt-1 text-xs text-text-muted">계정 없이 접수번호만으로 진행상황을 확인할 수 있습니다.</p>
+            <Link
+              href="/track"
+              className="mt-3 inline-flex h-10 items-center rounded-lg border border-gold/40 bg-surface px-5 text-sm font-semibold text-primary transition hover:bg-gold-soft/30"
+            >
+              접수번호로 조회하기 →
             </Link>
-          </p>
-          <Link href="/portal/forgot" className="hover:text-primary">
-            비밀번호를 잊으셨나요?
-          </Link>
+          </div>
         </div>
       </div>
-
-      <p className="mt-6 text-center text-xs text-text-muted">
-        접수번호만 알고 있다면{" "}
-        <Link href="/track" className="font-bold text-primary hover:underline">
-          진행상황 조회
-        </Link>{" "}
-        를 사용하세요.
-      </p>
     </div>
   );
 }

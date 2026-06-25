@@ -11,8 +11,7 @@ const NAV_ITEMS = [
   { href: "/services", label: "업무 분야", labelEn: "Practice" },
   { href: "/quick-check", label: "AI 사전 진단", labelEn: "AI Check" },
   { href: "/cases", label: "처리 사례", labelEn: "Cases" },
-  { href: "/blog", label: "칼럼", labelEn: "Insights" },
-  { href: "/track", label: "진행상황", labelEn: "Track" }
+  { href: "/blog", label: "칼럼", labelEn: "Insights" }
 ] as const;
 
 function LangToggle({ pathname }: { pathname: string }) {
@@ -109,7 +108,7 @@ function HeaderInner() {
             href="/portal"
             className="inline-flex h-10 items-center rounded-lg border border-gold/40 bg-surface px-4 text-sm font-semibold text-primary transition hover:bg-gold-soft/30"
           >
-            {lang === "en" ? "Client Portal" : "의뢰인 포털"}
+            {lang === "en" ? "Portal / Track" : "포털 · 진행조회"}
           </Link>
           <Link
             href={`/intake${qs}`}
@@ -154,7 +153,7 @@ function HeaderInner() {
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg border border-gold/40 px-4 py-3 text-center font-semibold text-primary"
               >
-                {lang === "en" ? "Portal" : "포털"}
+                {lang === "en" ? "Portal" : "포털 · 조회"}
               </Link>
               <Link
                 href={`/intake${qs}`}
