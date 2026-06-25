@@ -8,6 +8,15 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: 80px;
 }
+/* iOS Safari 100vh 버그 — dvh 적용 (지원 안 하면 100vh fallback) */
+.min-h-screen-d {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.h-screen-d {
+  height: 100vh;
+  height: 100dvh;
+}
 ::selection {
   background: rgb(201 169 97 / 0.3);
   color: rgb(22 52 84);
@@ -263,6 +272,19 @@ html {
 }
 .ethos-card-topline:hover::before {
   transform: scaleX(1);
+}
+
+/* ── Mobile menu fade-up stagger ────────────────────── */
+@keyframes ethos-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ethos-fadeUp {
+  opacity: 0;
+  animation: ethos-fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ethos-fadeUp { opacity: 1; animation: none; }
 }
 
 /* ── Dark navy gradient card (Tailwind primary purge-proof) ── */

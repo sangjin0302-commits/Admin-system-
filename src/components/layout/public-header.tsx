@@ -126,6 +126,11 @@ function HeaderInner() {
           </Link>
         </div>
 
+        {/* 모바일 검색 */}
+        <div className="lg:hidden">
+          <BlogSearchTrigger />
+        </div>
+
         {/* 모바일 햄버거 */}
         <button
           type="button"
@@ -139,47 +144,106 @@ function HeaderInner() {
         </button>
       </div>
 
-      {/* 모바일 드롭다운 */}
+      {/* 모바일 풀스크린 overlay */}
       {mobileOpen && (
-        <nav className="border-t border-gold/30 bg-surface/98 backdrop-blur lg:hidden">
-          <div className="mx-auto max-w-6xl space-y-1 px-4 py-3">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={`${item.href}${qs}`}
-                onClick={() => setMobileOpen(false)}
-                className={`block rounded-lg px-4 py-3 font-serif text-base font-semibold transition ${
-                  isActive(item.href) ? "bg-gold-soft/40 text-primary" : "text-text hover:bg-surface-muted"
-                }`}
-              >
-                {lang === "en" ? item.labelEn : item.label}
-              </Link>
-            ))}
-            <div className="flex gap-2 pt-2">
+        <div
+          className="fixed inset-0 z-50 flex flex-col bg-surface/98 backdrop-blur-md lg:hidden"
+          style={{ minHeight: "100dvh" }}
+        >
+          {/* 헤더 (닫기 버튼) */}
+          <div className="flex items-center justify-between border-b border-gold/30 px-4 py-3">
+            <Link
+              href={`/${qs}`}
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2"
+            >
+              <p className="font-serif text-lg font-bold tracking-[0.2em] text-primary">ETHOS</p>
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-lg p-2 text-primary"
+              aria-label="닫기"
+            >
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 6l12 12M18 6l-12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* 메뉴 항목 */}
+          <nav className="flex-1 overflow-y-auto px-6 py-6">
+            <ul className="space-y-1">
+              {NAV_ITEMS.map((item, i) => (
+                <li
+                  key={item.href}
+                  className="ethos-fadeUp"
+                  style={{ animationDelay: `${i * 50}ms` }}
+                >
+                  <Link
+                    href={`${item.href}${qs}`}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center justify-between rounded-2xl px-5 py-4 font-serif text-lg font-bold transition ${
+                      isActive(item.href)
+                        ? "bg-primary text-white shadow-panel"
+                        : "text-text-strong hover:bg-gold-soft/40"
+                    }`}
+                  >
+                    <span>{lang === "en" ? item.labelEn : item.label}</span>
+                    <span className="text-text-muted">→</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            {/* 언어 토글 */}
+            <div className="mt-8 flex items-center gap-2">
+              <p className="font-serif text-xs font-bold uppercase tracking-[0.2em] text-gold-deep">
+                Language
+              </p>
+              <span className="h-px flex-1 bg-gold/20" />
+            </div>
+            <div className="mt-3 flex gap-2">
+              {[
+                { code: "ko", label: "한국어", href: "/" },
+                { code: "en", label: "English", href: "/en" },
+                { code: "ar", label: "العربية", href: "/ar" }
+              ].map((l) => (
+                <Link
+                  key={l.code}
+                  href={l.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex-1 rounded-xl border border-gold/40 bg-surface px-3 py-2 text-center font-serif text-sm font-bold text-primary"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+          </nav>
+
+          {/* 하단 CTA */}
+          <div
+            className="border-t border-gold/30 bg-surface px-4 py-4"
+            style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+          >
+            <div className="flex gap-2">
               <Link
                 href="/portal"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg border border-gold/40 px-4 py-3 text-center font-semibold text-primary"
+                className="rounded-xl border border-gold/40 px-4 py-3 text-center text-sm font-semibold text-primary"
               >
-                {lang === "en" ? "Portal" : "포털 · 조회"}
+                {lang === "en" ? "Portal" : "포털"}
               </Link>
               <Link
                 href={`/intake${qs}`}
                 onClick={() => setMobileOpen(false)}
-                className="flex-1 rounded-lg bg-primary px-4 py-3 text-center font-semibold text-white"
+                className="flex-1 rounded-xl bg-primary px-4 py-3 text-center text-sm font-bold text-white shadow-panel"
               >
-                {lang === "en" ? "Consult" : "상담 신청"}
-              </Link>
-              <Link
-                href={lang === "en" ? pathname : `${pathname}?lang=en`}
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg border border-gold/40 px-4 py-3 text-center font-serif text-sm font-bold text-primary"
-              >
-                {lang === "en" ? "KO" : "EN"}
+                {lang === "en" ? "Free Review" : "무료 검토 요청"}
               </Link>
             </div>
           </div>
-        </nav>
+        </div>
       )}
     </header>
   );
