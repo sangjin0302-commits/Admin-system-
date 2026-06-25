@@ -397,9 +397,19 @@ html {
 }
 
 /* Subtle paper grain for hero/footer */
+/* 그레인 텍스처 — pseudo overlay (인라인 backgroundImage 충돌 X) */
 .ethos-grain {
+  position: relative;
+}
+.ethos-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   background-image: radial-gradient(rgb(201 169 97 / 0.05) 1px, transparent 1px);
   background-size: 18px 18px;
+  opacity: 0.5;
+  border-radius: inherit;
 }
 
 /* Link underline reveal */
