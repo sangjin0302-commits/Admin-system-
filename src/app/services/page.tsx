@@ -189,7 +189,7 @@ export default async function ServicesIndex({
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal>
-            <div className="ethos-grain relative overflow-hidden rounded-[24px] border border-gold/30 bg-gradient-to-br from-primary via-primary to-text-strong p-10 shadow-floating sm:p-14">
+            <div className="ethos-grain relative overflow-hidden rounded-[24px] border border-gold/30 ethos-dark-card p-10 shadow-floating sm:p-14">
               <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-serif text-xs uppercase tracking-widest text-gold-soft">

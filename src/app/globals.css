@@ -248,6 +248,16 @@
   transform: scaleX(1);
 }
 
+/* ── Dark navy gradient card (Tailwind primary purge-proof) ── */
+.ethos-dark-card {
+  background-color: rgb(22 50 80);
+  background-image: linear-gradient(135deg, rgb(22 50 80) 0%, rgb(18 40 65) 50%, rgb(12 28 48) 100%);
+}
+.ethos-dark-card-v {
+  background-color: rgb(22 50 80);
+  background-image: linear-gradient(180deg, rgb(22 50 80) 0%, rgb(18 40 65) 60%, rgb(12 28 48) 100%);
+}
+
 /* ── 3D Tilt (CSS-only, no JS) ──────────────────────── */
 .ethos-tilt {
   transform-style: preserve-3d;

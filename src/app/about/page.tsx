@@ -266,7 +266,7 @@ export default async function AboutPage() {
       <section className="py-20 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal>
-            <div className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-br from-primary via-primary to-text-strong p-12 text-center shadow-floating sm:p-16">
+            <div className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 ethos-dark-card p-12 text-center shadow-floating sm:p-16">
               <p className="ethos-eyebrow text-gold-soft">Start with ETHOS</p>
               <h2 className="ethos-display mt-4 text-3xl text-white sm:text-4xl">
                 오늘 상황을 말씀해 주세요

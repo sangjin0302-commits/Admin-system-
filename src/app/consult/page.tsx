@@ -144,7 +144,7 @@ export default function ConsultPage() {
           </Reveal>
 
           <Reveal delay={1}>
-            <div className="ethos-grain mt-12 overflow-hidden rounded-[24px] border border-gold/30 bg-gradient-to-b from-primary via-primary to-text-strong p-8 shadow-floating sm:p-10">
+            <div className="ethos-grain mt-12 overflow-hidden rounded-[24px] border border-gold/30 ethos-dark-card-v p-8 shadow-floating sm:p-10">
               <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
               <p className="font-serif text-[11px] font-bold tracking-[0.2em] text-gold-soft">SAMPLE RESPONSE</p>
               <pre className="mt-5 whitespace-pre-wrap font-mono text-sm leading-7 text-white/90">{TEMPLATE}</pre>

@@ -115,7 +115,7 @@ export default function EnglishLanding() {
             <Reveal delay={2} className="flex justify-center lg:justify-end">
               <div className="relative w-full max-w-sm">
                 <div className="absolute -inset-6 -z-10 rounded-[36px] bg-gold/10 blur-3xl" aria-hidden />
-                <div className="ethos-grain relative flex flex-col items-center rounded-[24px] border border-gold/30 bg-gradient-to-b from-primary via-primary to-text-strong px-8 py-12 text-center shadow-floating">
+                <div className="ethos-grain relative flex flex-col items-center rounded-[24px] border border-gold/30 ethos-dark-card-v px-8 py-12 text-center shadow-floating">
                   <p className="font-serif text-[10px] font-bold uppercase tracking-[0.3em] text-gold-soft">ETHOS</p>
                   <h2 className="ethos-display mt-5 text-3xl tracking-[0.28em] text-white">JEAN</h2>
                   <div className="my-6 h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
@@ -201,7 +201,7 @@ export default function EnglishLanding() {
       <section className="py-20 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal>
-            <div className="ethos-grain relative overflow-hidden rounded-[24px] border border-gold/30 bg-gradient-to-br from-primary via-primary to-text-strong p-10 text-center shadow-floating sm:p-14">
+            <div className="ethos-grain relative overflow-hidden rounded-[24px] border border-gold/30 ethos-dark-card p-10 text-center shadow-floating sm:p-14">
               <p className="ethos-eyebrow text-gold-soft">Get started</p>
               <h2 className="ethos-display mt-4 text-3xl text-white sm:text-4xl">Send your situation in one line.</h2>
               <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-white/80">

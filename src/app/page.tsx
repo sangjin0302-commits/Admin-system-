@@ -306,7 +306,12 @@ export default async function PublicMarketingHomePage({
           <Reveal delay={2} className="flex justify-center lg:justify-end">
             <div className="relative w-full max-w-md">
               <div className="absolute -inset-8 -z-10 rounded-[40px] bg-gold/15 blur-3xl" aria-hidden />
-              <div className="ethos-grain relative flex w-full flex-col items-center overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-b from-primary via-primary to-text-strong px-8 py-12 text-center shadow-floating sm:px-12 sm:py-14">
+              <div
+                className="ethos-grain relative flex w-full flex-col items-center overflow-hidden rounded-[28px] border border-gold/30 px-8 py-12 text-center shadow-floating sm:px-12 sm:py-14"
+                style={{
+                  backgroundColor: "rgb(22 50 80)",
+                  backgroundImage: "linear-gradient(180deg, rgb(22 50 80) 0%, rgb(18 40 65) 60%, rgb(12 28 48) 100%)"
+                }}>
                 <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
 
                 {/* 로고 prominent — 흰 타일로 가시성 보장 */}
@@ -622,7 +627,12 @@ export default async function PublicMarketingHomePage({
       <section className="py-20 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal>
-            <div className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-br from-primary via-primary to-text-strong p-12 shadow-floating sm:p-16">
+            <div
+              className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 p-12 shadow-floating sm:p-16"
+              style={{
+                backgroundColor: "rgb(22 50 80)",
+                backgroundImage: "linear-gradient(135deg, rgb(22 50 80) 0%, rgb(18 40 65) 50%, rgb(12 28 48) 100%)"
+              }}>
               <svg className="absolute -right-20 -top-20 h-80 w-80 text-gold/15" viewBox="0 0 200 200" fill="none" aria-hidden>
                 <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="1" />
                 <circle cx="100" cy="100" r="60" stroke="currentColor" strokeWidth="0.7" />

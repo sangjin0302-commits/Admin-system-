@@ -17,7 +17,7 @@ export function BlogCta({ category }: { category: string }) {
   const label = PUBLIC_CATEGORY_LABEL[cat];
 
   return (
-    <div className="ethos-grain relative mt-12 overflow-hidden rounded-[24px] border border-gold/30 bg-gradient-to-br from-primary via-primary to-text-strong p-7 text-center text-white shadow-floating sm:p-9">
+    <div className="ethos-grain relative mt-12 overflow-hidden rounded-[24px] border border-gold/30 ethos-dark-card p-7 text-center text-white shadow-floating sm:p-9">
       <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
       <p className="font-serif text-[11px] font-bold uppercase tracking-[0.3em] text-gold-soft">
         {label} 사안 검토

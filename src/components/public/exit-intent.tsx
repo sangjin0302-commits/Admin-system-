@@ -54,7 +54,7 @@ export function ExitIntent() {
         onClick={(e) => e.stopPropagation()}
         className="ethos-grain relative w-full max-w-md overflow-hidden rounded-[24px] border border-gold/30 bg-surface shadow-floating"
       >
-        <div className="bg-gradient-to-b from-primary via-primary to-text-strong px-7 py-7 text-center text-white">
+        <div className="ethos-dark-card-v px-7 py-7 text-center text-white">
           <p className="font-serif text-[11px] font-bold uppercase tracking-[0.3em] text-gold-soft">
             Before you go
           </p>
