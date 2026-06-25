@@ -6,6 +6,7 @@ import { FaqAccordion } from "@/components/public/faq-accordion";
 import { TrustStats } from "@/components/public/trust-stats";
 import { Testimonials } from "@/components/public/testimonials";
 import { Reveal } from "@/components/public/reveal";
+import { ConsultStructure } from "@/components/public/consult-structure";
 import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
 import { OrganizationJsonLd, LegalServiceJsonLd } from "@/components/seo/json-ld";
@@ -272,7 +273,7 @@ export default async function PublicMarketingHomePage({
               <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-text-muted">
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-gold" />
-                  1차 상담 무료
+                  검토 무료
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-gold" />
@@ -280,7 +281,7 @@ export default async function PublicMarketingHomePage({
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-gold" />
-                  진행상황 실시간 공유
+                  수임 시 상담료 전액 차감
                 </span>
               </div>
             </Reveal>
@@ -565,6 +566,9 @@ export default async function PublicMarketingHomePage({
           </div>
         </div>
       </section>
+
+      {/* ═══════════════ 상담 구조 ═══════════════ */}
+      <ConsultStructure />
 
       {/* ═══════════════ 의뢰인 후기 ═══════════════ */}
       <Testimonials items={testimonials} />

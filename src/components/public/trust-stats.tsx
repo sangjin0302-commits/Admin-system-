@@ -10,10 +10,10 @@ type Stat = {
 };
 
 const DEFAULT_STATS: readonly Stat[] = [
-  { value: 500, suffix: "+", label: "처리 사건", description: "비자·심판·계약·인허가 분야" },
-  { value: 98, suffix: "%", label: "고객 만족도", description: "사후 안내 응답률 기준" },
-  { value: 4, suffix: "분야", label: "전문 영역", description: "4대 분야 전담 워크플로우" },
-  { value: 24, suffix: "h", label: "회신 평균", description: "영업일 기준 평균 회신" }
+  { value: 2, suffix: "년+", label: "대사관 비자 실무", description: "주한 대사관 비자·출입국 실무" },
+  { value: 3, suffix: "개 언어", label: "한·영·아랍어", description: "다국어 상담·서류 검토 가능" },
+  { value: 5, suffix: "분야", label: "전문 영역", description: "비자·심판·계약·인허가·법인설립" },
+  { value: 24, suffix: "h", label: "검토 회신", description: "영업일 기준 무료 검토 회신" }
 ];
 
 /**
@@ -108,10 +108,10 @@ export function TrustStats({ overrides }: { overrides?: (string | undefined)[] }
       <div className="text-center">
         <p className="font-serif text-xs uppercase tracking-[0.3em] text-gold-deep">Trust in Numbers</p>
         <h2 className="mt-3 font-serif text-2xl font-bold text-primary sm:text-3xl">
-          숫자로 보는 신뢰
+          신뢰의 근거
         </h2>
         <p className="mt-2 text-xs text-text-muted">
-          ※ 표시 수치는 사무소 운영 기준이며, 사안별 결과를 보장하지 않습니다.
+          ※ 행정사 Jean의 실무·언어·전문 영역 기준이며, 사안별 결과를 보장하지 않습니다.
         </p>
       </div>
 

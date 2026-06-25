@@ -170,7 +170,7 @@ export default async function FeesPage() {
                   href="/intake"
                   className="inline-flex h-12 items-center rounded-lg bg-gold px-8 text-sm font-bold text-primary shadow-md transition-all duration-300 hover:bg-gold-soft hover:shadow-lg"
                 >
-                  무료 상담 신청하기 →
+                  무료 검토 요청하기 →
                 </Link>
                 <Link
                   href="/quick-check"

@@ -34,8 +34,8 @@ const ITEMS = [
     )
   },
   {
-    href: "/track",
-    label: "조회",
+    href: "/portal",
+    label: "포털",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.7">
         <circle cx="11" cy="11" r="7" />
@@ -45,7 +45,7 @@ const ITEMS = [
   },
   {
     href: "/intake",
-    label: "상담",
+    label: "검토",
     primary: true,
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8">
@@ -88,7 +88,7 @@ export function MobileBottomNav() {
                     className="-mt-5 flex h-14 w-14 flex-col items-center justify-center rounded-full bg-primary text-white shadow-floating transition hover:bg-text-strong"
                   >
                     {item.icon}
-                    <span className="mt-0.5 text-[10px] font-bold tracking-tight">{item.label}</span>
+                    <span className="mt-0.5 text-[11px] font-bold tracking-tight">{item.label}</span>
                   </Link>
                 </li>
               );
@@ -104,7 +104,7 @@ export function MobileBottomNav() {
                   }`}
                 >
                   {item.icon}
-                  <span className="font-serif text-[10px] font-bold tracking-tight">{item.label}</span>
+                  <span className="font-serif text-[11px] font-bold tracking-tight">{item.label}</span>
                   {active ? (
                     <span aria-hidden className="absolute top-0 h-0.5 w-8 rounded-full bg-gold" />
                   ) : null}

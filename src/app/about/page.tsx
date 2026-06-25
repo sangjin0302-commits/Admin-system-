@@ -207,7 +207,7 @@ export default async function AboutPage() {
                   href="/intake"
                   className="inline-flex h-12 items-center rounded-lg bg-gold px-8 text-sm font-bold text-primary transition hover:bg-gold-soft"
                 >
-                  무료 상담 신청하기 →
+                  무료 검토 요청하기 →
                 </Link>
                 <Link
                   href="/quick-check"

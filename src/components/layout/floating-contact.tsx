@@ -2,58 +2,34 @@
 
 import { useEffect, useState } from "react";
 
-const FALLBACK = { phone: "02-0000-0000", kakaoUrl: "http://pf.kakao.com/_xXxXxXx" };
+import { CHANNELS, CONSULT_TAGLINE } from "@/lib/constants/channels";
 
 export function FloatingContact() {
   const [expanded, setExpanded] = useState(false);
-  const [contact, setContact] = useState(FALLBACK);
 
   useEffect(() => {
-    let cancelled = false;
-    fetch("/api/public/site-contact")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!cancelled && d?.ok) {
-          setContact({ phone: d.phone ?? FALLBACK.phone, kakaoUrl: d.kakaoUrl ?? FALLBACK.kakaoUrl });
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setExpanded(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
-
-  const tel = `tel:${contact.phone.replace(/[^0-9]/g, "")}`;
 
   return (
     <>
-      {/* 우하단 floating - 데스크탑 */}
+      {/* 데스크탑 우하단 */}
       <div className="fixed bottom-6 right-6 z-50 hidden flex-col items-end gap-3 lg:flex">
         {expanded && (
-          <div className="flex flex-col gap-2 rounded-2xl border border-gold/40 bg-surface p-3 shadow-floating">
-            <a
-              href={contact.kakaoUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-3 rounded-xl bg-[#FEE500] px-4 py-3 text-sm font-bold text-[#3C1E1E] transition hover:brightness-95"
-            >
-              <KakaoIcon />
-              카카오톡 상담
-            </a>
-            <a
-              href={tel}
-              className="flex items-center gap-3 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:bg-text-strong"
-            >
-              <PhoneIcon />
-              {contact.phone}
-            </a>
-            <a
-              href="/intake"
-              className="flex items-center gap-3 rounded-xl border-2 border-gold/50 bg-surface px-4 py-3 text-sm font-bold text-primary transition hover:bg-gold-soft/40"
-            >
-              <FormIcon />
-              상담 신청서
-            </a>
+          <div className="flex w-72 flex-col gap-2 rounded-2xl border border-gold/40 bg-surface p-4 shadow-floating">
+            <div className="mb-1 border-b border-gold/20 pb-2">
+              <p className="font-serif text-sm font-bold text-primary">검토 · 상담 연결</p>
+              <p className="mt-0.5 text-[11px] text-text-muted">{CONSULT_TAGLINE}</p>
+            </div>
+            <ChannelButton url={CHANNELS.naverTalk.url} bg="bg-[#03C75A]" fg="text-white" label="네이버 톡톡" sub="가장 빠른 무료 검토" icon={<NaverIcon />} />
+            <ChannelButton url={CHANNELS.kakao.url} bg="bg-[#FEE500]" fg="text-[#3C1E1E]" label="카카오 채팅" sub="카카오로 검토 요청" icon={<KakaoIcon />} />
+            <ChannelButton url={CHANNELS.telegram.url} bg="bg-[#0088CC]" fg="text-white" label="텔레그램" sub={CHANNELS.telegram.value} icon={<TelegramIcon />} />
+            <ChannelButton url={CHANNELS.email.url} bg="bg-primary" fg="text-white" label="이메일" sub={CHANNELS.email.value} icon={<MailIcon />} />
+            <ChannelButton url={CHANNELS.naverExpert.url} bg="bg-surface border border-gold/40" fg="text-primary" label="네이버 엑스퍼트" sub="유료 상담 · 33,000~55,000원" icon={<ExpertIcon />} />
           </div>
         )}
 
@@ -61,7 +37,7 @@ export function FloatingContact() {
           type="button"
           onClick={() => setExpanded((v) => !v)}
           className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-floating transition hover:bg-text-strong"
-          aria-label="상담 연결"
+          aria-label="검토·상담 연결"
         >
           {expanded ? (
             <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -75,36 +51,54 @@ export function FloatingContact() {
         </button>
       </div>
 
-      {/* 모바일 sticky bar (하단) */}
+      {/* 모바일 sticky bar */}
       <div className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-3 border-t border-gold/30 bg-surface/95 backdrop-blur lg:hidden">
         <a
-          href={tel}
-          className="flex flex-col items-center justify-center gap-1 border-r border-gold/20 py-3 text-primary"
+          href={CHANNELS.naverTalk.url}
+          target="_blank"
+          rel="noreferrer"
+          className="flex flex-col items-center justify-center gap-1 border-r border-gold/20 bg-[#03C75A]/90 py-3 text-white"
         >
-          <PhoneIcon className="h-5 w-5" />
-          <span className="text-[11px] font-bold">전화</span>
+          <NaverIcon className="h-5 w-5" />
+          <span className="text-[11px] font-bold">톡톡</span>
         </a>
         <a
-          href={contact.kakaoUrl}
+          href={CHANNELS.kakao.url}
           target="_blank"
           rel="noreferrer"
           className="flex flex-col items-center justify-center gap-1 border-r border-gold/20 bg-[#FEE500]/90 py-3 text-[#3C1E1E]"
         >
           <KakaoIcon className="h-5 w-5" />
-          <span className="text-[11px] font-bold">카카오톡</span>
+          <span className="text-[11px] font-bold">카카오</span>
         </a>
         <a
           href="/intake"
           className="flex flex-col items-center justify-center gap-1 bg-primary py-3 text-white"
         >
           <FormIcon className="h-5 w-5" />
-          <span className="text-[11px] font-bold">상담 신청</span>
+          <span className="text-[11px] font-bold">검토 요청</span>
         </a>
       </div>
 
-      {/* 모바일 하단 패딩 보장 */}
       <div className="h-16 lg:hidden" aria-hidden />
     </>
+  );
+}
+
+function ChannelButton({ url, bg, fg, label, sub, icon }: { url: string; bg: string; fg: string; label: string; sub: string; icon: React.ReactNode }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className={`flex items-center gap-3 rounded-xl ${bg} px-3 py-2.5 ${fg} transition hover:brightness-95`}
+    >
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/15">{icon}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-serif text-sm font-bold">{label}</span>
+        <span className="block truncate text-[11px] opacity-80">{sub}</span>
+      </span>
+    </a>
   );
 }
 
@@ -115,15 +109,35 @@ function KakaoIcon({ className = "h-5 w-5" }: { className?: string }) {
     </svg>
   );
 }
-
-function PhoneIcon({ className = "h-5 w-5" }: { className?: string }) {
+function NaverIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M16.273 12.845 7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727z" />
     </svg>
   );
 }
-
+function TelegramIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M21.5 4.5 2.3 12c-1.3.5-1.3 1.3-.2 1.6l5 1.5 1.9 6.1c.2.6.4.8.8.8.3 0 .5-.1.8-.4L13 19l5.2 3.8c.9.5 1.6.3 1.9-.9L23 6c.3-1.4-.4-2-1.5-1.5z" />
+    </svg>
+  );
+}
+function MailIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 7l9 7 9-7" />
+    </svg>
+  );
+}
+function ExpertIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 2l2.5 6.5L21 9l-5 4.5L17.5 21 12 17l-5.5 4L8 13.5 3 9l6.5-.5z" />
+    </svg>
+  );
+}
 function FormIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">

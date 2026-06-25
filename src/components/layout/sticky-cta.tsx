@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 /**
  * 데스크탑 전용 스크롤 후 등장 CTA 바.
- * - 일정 스크롤(500px) 후 우하단에 "무료 상담 신청" 표시
+ * - 일정 스크롤(500px) 후 우하단에 "무료 검토 요청" 표시
  * - intake/portal/admin 페이지에서는 숨김 (이미 그 맥락)
  * - 모바일은 MobileBottomNav가 담당 → lg 이상에서만
  */
@@ -37,8 +37,8 @@ export function StickyCta() {
         className="ethos-cta-shine ethos-cta-pulse group flex items-center gap-3 rounded-full bg-primary py-3 pl-5 pr-4 text-white shadow-floating transition hover:bg-text-strong"
       >
         <span className="flex flex-col leading-tight">
-          <span className="font-serif text-[11px] tracking-wide text-gold-soft">무료 상담</span>
-          <span className="text-sm font-bold">상담 신청하기</span>
+          <span className="font-serif text-[11px] tracking-wide text-gold-soft">무료 검토 · 수임 시 차감</span>
+          <span className="text-sm font-bold">검토 요청하기</span>
         </span>
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gold text-primary transition-transform group-hover:translate-x-0.5">
           <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="2.2">
