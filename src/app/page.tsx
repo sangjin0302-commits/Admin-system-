@@ -7,6 +7,8 @@ import { TrustStats } from "@/components/public/trust-stats";
 import { Testimonials } from "@/components/public/testimonials";
 import { Reveal } from "@/components/public/reveal";
 import { ConsultStructure } from "@/components/public/consult-structure";
+import { NaverBlogSection } from "@/components/public/naver-blog-section";
+import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
 import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
 import { OrganizationJsonLd, LegalServiceJsonLd } from "@/components/seo/json-ld";
@@ -201,6 +203,8 @@ export default async function PublicMarketingHomePage({
     : FAQ_ITEMS;
 
   const testimonials = await listPublicTestimonials();
+  const naverBlogId = site["naver.blogId"];
+  const naverPosts = naverBlogId ? await fetchNaverBlogPosts(naverBlogId, 6) : [];
 
   return (
     <div className="overflow-x-clip">
@@ -569,6 +573,11 @@ export default async function PublicMarketingHomePage({
 
       {/* ═══════════════ 상담 구조 ═══════════════ */}
       <ConsultStructure />
+
+      {/* ═══════════════ 네이버 블로그 최신글 ═══════════════ */}
+      {naverPosts.length > 0 && naverBlogId && (
+        <NaverBlogSection posts={naverPosts} blogId={naverBlogId} />
+      )}
 
       {/* ═══════════════ 의뢰인 후기 ═══════════════ */}
       <Testimonials items={testimonials} />
