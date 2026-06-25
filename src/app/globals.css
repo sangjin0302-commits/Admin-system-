@@ -4,6 +4,23 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+::selection {
+  background: rgb(201 169 97 / 0.3);
+  color: rgb(22 52 84);
+}
+*:focus-visible {
+  outline: 2px solid rgb(201 169 97);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
 :root {
   color-scheme: light;
   /* ETHOS Brand: Deep Navy + Gold + Ivory */

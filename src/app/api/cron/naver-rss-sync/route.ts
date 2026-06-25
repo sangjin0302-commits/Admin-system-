@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { importNaverBlogPosts } from "@/lib/services/naver-rss-importer";
+import { sendTelegramAlert } from "@/lib/services/telegram-notify";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -18,5 +19,19 @@ export async function GET(request: Request) {
 
   const result = await importNaverBlogPosts({ translate: false });
   logger.info("[cron/naver-rss-sync] done", result);
+
+  // 신규 글 있을 때만 텔레그램 알림
+  if (result.imported > 0) {
+    await sendTelegramAlert({
+      kind: "system",
+      title: `네이버 블로그 신규 ${result.imported}편 import`,
+      lines: [
+        `건너뜀: ${result.skipped}건`,
+        result.translated > 0 ? `번역됨: ${result.translated}건` : "번역: off"
+      ],
+      url: process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/blog` : undefined
+    }).catch(() => undefined);
+  }
+
   return NextResponse.json({ ok: true, ...result });
 }

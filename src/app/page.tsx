@@ -449,7 +449,7 @@ export default async function PublicMarketingHomePage({
               <Reveal key={area.title} delay={((i % 2) + 1) as 1 | 2}>
                 <Link
                   href={area.href}
-                  className="ethos-card ethos-card-hover ethos-card-topline ethos-cta-shine group relative flex h-full flex-col overflow-hidden p-8"
+                  className="ethos-card ethos-card-hover ethos-card-topline ethos-cta-shine ethos-tilt group relative flex h-full flex-col overflow-hidden p-8"
                 >
                   <span className="ethos-index pointer-events-none absolute -right-2 -top-4 select-none">
                     {area.no}
