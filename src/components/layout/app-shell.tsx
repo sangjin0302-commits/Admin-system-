@@ -21,9 +21,10 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
   const isPortal = pathname.startsWith("/portal");
-  const isPublic = !isAdmin && !isPortal && isPublicRoute(pathname);
+  const isLinks = pathname.startsWith("/links");
+  const isPublic = !isAdmin && !isPortal && !isLinks && isPublicRoute(pathname);
 
-  if (isPortal) {
+  if (isPortal || isLinks) {
     return <>{children}</>;
   }
 
