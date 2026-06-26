@@ -127,6 +127,15 @@ export function QuickCheckClient() {
 }
 
 function ResultDisplay({ result }: { result: AnalyzeResult }) {
+  // 매칭 분야 → intake prefill 파라미터
+  const topCat = result.matchedSubtypes[0] ?? "";
+  const summary = [
+    result.matchedSubtypes.length > 0 ? `추정 분야: ${result.matchedSubtypes.join(", ")}` : "",
+    result.mustVerify.length > 0 ? `확인 필요: ${result.mustVerify.slice(0, 2).join(" · ")}` : "",
+    result.riskFlags.length > 0 ? `주의: ${result.riskFlags.slice(0, 2).join(" · ")}` : ""
+  ].filter(Boolean).join("\n");
+  const prefillUrl = `/intake?from=quick-check&cat=${encodeURIComponent(topCat)}&summary=${encodeURIComponent(summary.slice(0, 300))}`;
+
   return (
     <div className="space-y-5">
       <Card className="p-6">
@@ -215,16 +224,19 @@ function ResultDisplay({ result }: { result: AnalyzeResult }) {
         </p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
-            href="/intake"
+            href={prefillUrl}
+            data-funnel="quick_check_to_intake"
+            data-funnel-cat={topCat}
             className="inline-flex h-11 items-center rounded-lg bg-gold px-6 font-serif text-sm font-bold text-primary transition hover:bg-gold-soft"
           >
-            상담 신청
+            진단 결과로 상담 신청 →
           </Link>
           <Link
-            href="/services"
+            href="/links"
+            data-funnel="quick_check_to_channels"
             className="inline-flex h-11 items-center rounded-lg border-2 border-gold/50 px-6 font-serif text-sm font-semibold text-gold-soft transition hover:bg-gold/10"
           >
-            업무 분야 보기
+            5채널 보기
           </Link>
         </div>
       </Card>

@@ -18,8 +18,19 @@ export function ChannelTracker() {
   useEffect(() => {
     function onClick(e: MouseEvent) {
       const target = e.target as HTMLElement | null;
-      const a = target?.closest("a[data-channel], a[href]") as HTMLAnchorElement | null;
+      const a = target?.closest("a[data-channel], a[data-funnel], a[href]") as HTMLAnchorElement | null;
       if (!a) return;
+
+      // 퍼널 이벤트 (블로그 CTA, intake 진입 등)
+      const funnel = a.getAttribute("data-funnel");
+      if (funnel) {
+        const cat = a.getAttribute("data-funnel-cat") ?? "";
+        if (typeof window.gtag === "function") {
+          window.gtag("event", "funnel_click", { step: funnel, category: cat, path: window.location.pathname });
+        }
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ event: "funnel_click", step: funnel, category: cat, path: window.location.pathname });
+      }
 
       let channel = a.getAttribute("data-channel");
       const href = a.getAttribute("href") ?? "";

@@ -36,18 +36,23 @@ export function BlogCta({ category }: { category: string }) {
           href={ch.url}
           target="_blank"
           rel="noreferrer"
+          data-funnel="blog_cta_primary"
+          data-funnel-cat={cat}
           className={`ethos-cta-shine inline-flex h-11 items-center rounded-lg ${ch.bg} px-6 text-sm font-bold ${ch.fg} transition hover:brightness-95`}
         >
           {ch.label} →
         </a>
         <Link
-          href="/links"
+          href={`/intake?cat=${cat}&from=blog`}
+          data-funnel="blog_cta_intake"
+          data-funnel-cat={cat}
           className="inline-flex h-11 items-center rounded-lg border border-gold/60 px-6 text-sm font-semibold text-gold-soft transition hover:bg-gold/10"
         >
-          모든 채널
+          상담 신청서
         </Link>
         <Link
           href="/consult"
+          data-funnel="blog_cta_consult"
           className="inline-flex h-11 items-center rounded-lg border border-gold/40 px-6 text-sm font-semibold text-white/80 transition hover:bg-white/10"
         >
           상담 안내
