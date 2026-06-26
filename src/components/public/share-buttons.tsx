@@ -70,6 +70,7 @@ export function ShareButtons({ title }: { title: string }) {
         href={`https://twitter.com/intent/tweet?text=${enc(title)}&url=${enc(url)}`}
         target="_blank"
         rel="noreferrer"
+        data-funnel="share_x"
         className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-gold/40 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-gold-soft/30"
       >
         X
@@ -79,6 +80,7 @@ export function ShareButtons({ title }: { title: string }) {
         href={`https://share.naver.com/web/shareView?url=${enc(url)}&title=${enc(title)}`}
         target="_blank"
         rel="noreferrer"
+        data-funnel="share_naver"
         className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#03C75A]/40 bg-[#03C75A]/10 px-3 text-xs font-bold text-[#03A94C] transition hover:bg-[#03C75A]/20"
       >
         <span className="flex h-4 w-4 items-center justify-center rounded bg-[#03C75A] text-[9px] font-black text-white">
@@ -91,6 +93,7 @@ export function ShareButtons({ title }: { title: string }) {
         href={`https://t.me/share/url?url=${enc(url)}&text=${enc(title)}`}
         target="_blank"
         rel="noreferrer"
+        data-funnel="share_telegram"
         className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#0088CC]/40 bg-[#0088CC]/10 px-3 text-xs font-bold text-[#0088CC] transition hover:bg-[#0088CC]/20"
       >
         Telegram
@@ -100,6 +103,7 @@ export function ShareButtons({ title }: { title: string }) {
         href={`https://www.linkedin.com/sharing/share-offsite/?url=${enc(url)}`}
         target="_blank"
         rel="noreferrer"
+        data-funnel="share_linkedin"
         className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#0A66C2]/40 bg-[#0A66C2]/10 px-3 text-xs font-bold text-[#0A66C2] transition hover:bg-[#0A66C2]/20"
       >
         LinkedIn

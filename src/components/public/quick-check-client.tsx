@@ -126,6 +126,26 @@ export function QuickCheckClient() {
   );
 }
 
+// 매칭 텍스트 → 키워드 추천 (블로그 keyword-linker와 동일 룰)
+function suggestKeywords(text: string): Array<{ term: string; label: string }> {
+  const RULES: Array<{ re: RegExp; term: string; label: string }> = [
+    { re: /(D-?8|D8|기업투자)/i, term: "d-8-비자", label: "D-8 비자" },
+    { re: /(D-?10|D10|구직비자)/i, term: "d-10-비자", label: "D-10 비자" },
+    { re: /(F-?2-?7|F27|점수제)/i, term: "f-2-7-비자", label: "F-2-7 비자" },
+    { re: /행정\s*심판|재결|청구기한/, term: "행정심판", label: "행정심판" },
+    { re: /귀화|국적/, term: "귀화", label: "귀화 · 국적" },
+    { re: /법인\s*설립|주식회사|정관/, term: "법인설립", label: "법인 설립" },
+    { re: /강제\s*퇴거|출국명령/, term: "강제퇴거", label: "강제퇴거 대응" }
+  ];
+  const out: Array<{ term: string; label: string }> = [];
+  for (const r of RULES) {
+    if (r.re.test(text) && !out.find((o) => o.term === r.term)) {
+      out.push({ term: r.term, label: r.label });
+    }
+  }
+  return out.slice(0, 3);
+}
+
 function ResultDisplay({ result }: { result: AnalyzeResult }) {
   // 매칭 분야 → intake prefill 파라미터
   const topCat = result.matchedSubtypes[0] ?? "";
@@ -135,6 +155,7 @@ function ResultDisplay({ result }: { result: AnalyzeResult }) {
     result.riskFlags.length > 0 ? `주의: ${result.riskFlags.slice(0, 2).join(" · ")}` : ""
   ].filter(Boolean).join("\n");
   const prefillUrl = `/intake?from=quick-check&cat=${encodeURIComponent(topCat)}&summary=${encodeURIComponent(summary.slice(0, 300))}`;
+  const keywords = suggestKeywords(`${result.matchedSubtypes.join(" ")} ${result.mustVerify.join(" ")} ${result.riskFlags.join(" ")}`);
 
   return (
     <div className="space-y-5">
@@ -212,6 +233,27 @@ function ResultDisplay({ result }: { result: AnalyzeResult }) {
           <p className="mt-2 text-sm leading-6 text-text-muted">
             AI 사전 진단은 일반적 안내이며 개별 사안의 최종 판단이 아닙니다. 자료와 사실관계를 확인하기 위해 상담 신청을 부탁드립니다.
           </p>
+        </Card>
+      )}
+
+      {/* 키워드 가이드 추천 */}
+      {keywords.length > 0 && (
+        <Card className="border-gold/30 bg-gold-soft/15 p-5">
+          <p className="font-serif text-[11px] font-bold uppercase tracking-[0.3em] text-gold-deep">Recommended Guides</p>
+          <h3 className="ethos-display mt-2 text-base">관련 키워드 가이드</h3>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {keywords.map((k) => (
+              <Link
+                key={k.term}
+                href={`/keyword/${encodeURIComponent(k.term)}`}
+                data-funnel="quickcheck_to_keyword"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-surface px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-gold-soft/40"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+                {k.label} →
+              </Link>
+            ))}
+          </div>
         </Card>
       )}
 
