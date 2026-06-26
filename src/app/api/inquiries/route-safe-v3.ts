@@ -264,6 +264,25 @@ export async function POST(request: Request) {
   }
 
   const clientIp = getClientIpFromHeaders(request.headers);
+
+  // Upstash 분산 rate limit 우선, 없으면 in-memory fallback
+  try {
+    const { checkIntakeLimit, isUpstashConfigured } = await import("@/lib/security/upstash-ratelimit");
+    if (isUpstashConfigured()) {
+      const r = await checkIntakeLimit(clientIp);
+      if (!r.ok) {
+        return jsonWithRequestId(
+          { error: KO_TOO_MANY_REQUESTS_SAFE },
+          429,
+          requestId,
+          { "X-RateLimit-Remaining": "0", "X-RateLimit-Provider": "upstash" }
+        );
+      }
+    }
+  } catch {
+    // Upstash 실패 → in-memory로 계속
+  }
+
   const rateLimit = consumeRateLimit({
     namespace: "public-intake",
     key: clientIp,
