@@ -87,6 +87,32 @@ export function ImportControls() {
         </div>
       </div>
 
+      {/* 블로그 메타 description batch (Anthropic) */}
+      <div className="rounded-lg border border-line bg-surface p-4">
+        <p className="font-serif text-sm font-bold text-primary">메타 description batch (Anthropic Haiku)</p>
+        <p className="mt-1 text-xs text-text-muted">
+          짧거나 빈 excerpt 글의 SEO/SNS description 자동 생성. ANTHROPIC_API_KEY 필요. 50편 ~$0.5.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => run("/api/admin/blog-meta-batch?max=30&onlyMissing=1", "bulk")}
+            disabled={loading !== null}
+            className="rounded-lg bg-gold-deep px-4 py-2 text-xs font-bold text-white transition hover:brightness-95 disabled:opacity-60"
+          >
+            {loading === "bulk" ? "생성 중..." : "30편 메타 생성 (누락만)"}
+          </button>
+          <button
+            type="button"
+            onClick={() => run("/api/admin/blog-meta-batch?max=50&onlyMissing=0", "bulk")}
+            disabled={loading !== null}
+            className="rounded-lg border border-gold/40 bg-surface px-4 py-2 text-xs font-semibold text-primary transition hover:bg-gold-soft/30 disabled:opacity-60"
+          >
+            50편 전체 재생성
+          </button>
+        </div>
+      </div>
+
       {/* 카테고리 자동 분류 backfill */}
       <div className="rounded-lg border border-line bg-surface p-4">
         <p className="font-serif text-sm font-bold text-primary">카테고리 자동 분류 (backfill)</p>

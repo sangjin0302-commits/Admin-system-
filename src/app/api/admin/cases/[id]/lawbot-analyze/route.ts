@@ -50,6 +50,10 @@ export async function POST(
 
   try {
     const baseUrl = process.env.LAWBOT_BRIDGE_BASE_URL!.replace(/\/+$/, "");
+    // SSRF 방어: https 스킴 강제 (localhost dev 예외)
+    if (!baseUrl.startsWith("https://") && !baseUrl.startsWith("http://localhost") && !baseUrl.startsWith("http://127.")) {
+      return NextResponse.json({ ok: false, error: "Invalid LAWBOT_BRIDGE_BASE_URL scheme" }, { status: 500 });
+    }
     const res = await fetch(`${baseUrl}/analyze/case`, {
       method: "POST",
       headers: {
