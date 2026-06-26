@@ -40,6 +40,10 @@ function getBarobillConfig() {
   const baseUrl =
     process.env.BAROBILL_BASE_URL?.trim() || "https://ws.baroservice.com";
   if (!apiKey || !corpNum || !userId) return null;
+  // SSRF 방어: https 또는 localhost만 허용
+  if (!baseUrl.startsWith("https://") && !baseUrl.startsWith("http://localhost") && !baseUrl.startsWith("http://127.")) {
+    return null;
+  }
   return { apiKey, corpNum, userId, baseUrl };
 }
 

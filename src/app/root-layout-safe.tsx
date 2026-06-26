@@ -3,6 +3,8 @@ import type { Metadata, Viewport } from "next";
 import { Analytics as VercelAnalytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
+import { Toaster as SonnerToaster } from "sonner";
+
 import { AppShellSafe } from "@/components/layout/app-shell-safe";
 import { Analytics } from "@/components/public/analytics";
 import { LiveChat } from "@/components/public/live-chat";
@@ -94,6 +96,18 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
       <body>
         <AppShellSafe>{children}</AppShellSafe>
         <ToastProvider />
+        <SonnerToaster
+          position="top-center"
+          richColors
+          closeButton
+          toastOptions={{
+            classNames: {
+              toast: "font-serif text-sm",
+              title: "font-bold",
+              description: "text-text-muted"
+            }
+          }}
+        />
         <LiveChat />
         <Analytics />
         <VercelAnalytics />
