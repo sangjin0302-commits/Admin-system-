@@ -20,7 +20,7 @@ export async function buildDatabaseItem(): Promise<HealthCheckItem> {
   }
 
   try {
-    await prisma.$queryRawUnsafe("SELECT 1");
+    await prisma.$queryRaw`SELECT 1`;
     return {
       key: "database",
       title: "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC5F0\uACB0",

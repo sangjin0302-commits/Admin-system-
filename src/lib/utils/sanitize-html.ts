@@ -3,7 +3,9 @@
  * - script/style/iframe/object/embed/form 제거
  * - on* 이벤트 핸들러 제거
  * - href/src의 javascript: data: 스킴 차단
- * - 외부 의존성 없음
+ * - 외부 의존성 없음 (server-side 안전)
+ *
+ * 더 강한 보안 필요 시 DOMPurify 사용 (isomorphic-dompurify).
  */
 
 const BLOCKED_TAGS = /<(script|style|iframe|object|embed|form|noscript|meta|link|svg|math)\b[^>]*>[\s\S]*?<\/\1>/gi;

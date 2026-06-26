@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import DOMPurify from "isomorphic-dompurify";
 
 type Props = {
   templateKey: string;
@@ -88,7 +89,7 @@ export function TemplateEditor({
           <p className="text-sm font-semibold text-text-strong">{subject}</p>
           <div
             className="mt-3 border-t border-line pt-3 text-sm"
-            dangerouslySetInnerHTML={{ __html: bodyHtml }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(bodyHtml) }}
           />
         </div>
       </div>

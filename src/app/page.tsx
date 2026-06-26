@@ -287,15 +287,19 @@ export default async function PublicMarketingHomePage({
               <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-text-muted">
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-gold" />
-                  검토 무료
+                  <strong className="text-text">검토 무료</strong>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-gold" />
-                  24h 이내 회신
+                  <strong className="text-text">24h 회신</strong>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-gold" />
-                  수임 시 상담료 전액 차감
+                  변호사 대비 <strong className="text-text">1/3~1/5 비용</strong>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-gold" />
+                  한·영·아 응대
                 </span>
               </div>
             </Reveal>

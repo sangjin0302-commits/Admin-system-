@@ -39,7 +39,7 @@ const nextConfig: NextConfig = {
   async headers() {
     // 전역 보안 헤더 (클릭재킹/MIME 스니핑/HTTPS 강제/정보 누출 방어)
     const securityHeaders = [
-      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+      // X-Frame-Options는 middleware.ts에서 DENY로 통일 (중복 방지)
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
       {
