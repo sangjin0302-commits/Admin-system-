@@ -1,5 +1,15 @@
+import { formatDistanceToNow } from "date-fns";
+import { ko } from "date-fns/locale";
+
 import { Reveal } from "@/components/public/reveal";
 import type { NaverBlogPost } from "@/lib/services/naver-blog";
+
+function relativeKo(dateStr: string): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return formatDistanceToNow(d, { addSuffix: true, locale: ko });
+}
 
 export function NaverBlogSection({ posts, blogId }: { posts: NaverBlogPost[]; blogId: string }) {
   return (
@@ -39,7 +49,7 @@ export function NaverBlogSection({ posts, blogId }: { posts: NaverBlogPost[]; bl
                       </span>
                       {p.category}
                     </span>
-                    {p.date && <span className="text-xs text-text-muted">{p.date}</span>}
+                    {p.date && <span className="text-xs text-text-muted" title={p.date}>{relativeKo(p.date)}</span>}
                   </div>
                   <h3 className="ethos-display ethos-blog-title mt-5 text-lg leading-snug">{p.title}</h3>
                   {p.excerpt && <p className="mt-3 flex-1 text-sm leading-7 text-text-muted">{p.excerpt}…</p>}

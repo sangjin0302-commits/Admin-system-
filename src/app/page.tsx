@@ -11,6 +11,7 @@ import { Testimonials } from "@/components/public/testimonials";
 import { Reveal } from "@/components/public/reveal";
 import { ConsultStructure } from "@/components/public/consult-structure";
 import { HeroScrollIndicator } from "@/components/public/hero-scroll-indicator";
+import { NewsletterBanner } from "@/components/public/newsletter-banner";
 import { NaverBlogSection } from "@/components/public/naver-blog-section";
 import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
 import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
@@ -598,6 +599,9 @@ export default async function PublicMarketingHomePage({
 
       {/* ═══════════════ 의뢰인 후기 ═══════════════ */}
       <Testimonials items={testimonials} />
+
+      {/* ═══════════════ Newsletter ═══════════════ */}
+      <NewsletterBanner />
 
       {/* ═══════════════ FAQ — soft band ═══════════════ */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28" aria-labelledby="home-faq-heading">

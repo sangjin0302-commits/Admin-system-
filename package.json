@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1030.0",
+    "@formkit/auto-animate": "^0.9.0",
     "@hello-pangea/dnd": "^18.0.1",
     "@pdf-lib/fontkit": "^1.1.1",
     "@prisma/adapter-better-sqlite3": "^6.19.3",
@@ -56,6 +57,7 @@
     "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
     "docx": "^9.0.3",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.40.0",
@@ -69,6 +71,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.6.0",
+    "react-medium-image-zoom": "^5.4.8",
     "recharts": "^3.8.1",
     "remark": "^15.0.1",
     "remark-html": "^16.0.1",

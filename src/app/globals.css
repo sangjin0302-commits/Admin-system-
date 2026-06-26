@@ -274,6 +274,57 @@ html {
   transform: scaleX(1);
 }
 
+/* ── Skeleton shimmer ───────────────────────────────── */
+.ethos-skeleton {
+  background: linear-gradient(90deg, rgb(224 215 195 / 0.3) 0%, rgb(224 215 195 / 0.6) 50%, rgb(224 215 195 / 0.3) 100%);
+  background-size: 200% 100%;
+  animation: ethos-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes ethos-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ethos-skeleton { animation: none; background: rgb(224 215 195 / 0.5); }
+}
+
+/* ── Blog 본문 hierarchy 강화 ────────────────────────── */
+.prose blockquote {
+  position: relative;
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.5rem 1.25rem 2rem;
+  border-left: 3px solid rgb(201 169 97);
+  border-radius: 0 14px 14px 0;
+  background: rgb(245 237 224 / 0.4);
+  font-style: italic;
+  color: rgb(44 62 82);
+}
+.prose blockquote::before {
+  content: "\201C";
+  position: absolute;
+  left: 0.5rem;
+  top: 0.25rem;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 2.5rem;
+  color: rgb(201 169 97 / 0.5);
+  line-height: 1;
+}
+.prose ul li::marker {
+  color: rgb(201 169 97);
+}
+.prose ol li::marker {
+  color: rgb(168 134 71);
+  font-weight: 700;
+}
+.prose img {
+  border-radius: 12px;
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+}
+.prose img:hover {
+  transform: translateY(-2px);
+}
+
 /* ── Typewriter blinking caret ──────────────────────── */
 .ethos-caret::after {
   content: "▍";

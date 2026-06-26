@@ -86,6 +86,24 @@ export function ShareButtons({ title }: { title: string }) {
         </span>
         네이버
       </a>
+
+      <a
+        href={`https://t.me/share/url?url=${enc(url)}&text=${enc(title)}`}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#0088CC]/40 bg-[#0088CC]/10 px-3 text-xs font-bold text-[#0088CC] transition hover:bg-[#0088CC]/20"
+      >
+        Telegram
+      </a>
+
+      <a
+        href={`https://www.linkedin.com/sharing/share-offsite/?url=${enc(url)}`}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#0A66C2]/40 bg-[#0A66C2]/10 px-3 text-xs font-bold text-[#0A66C2] transition hover:bg-[#0A66C2]/20"
+      >
+        LinkedIn
+      </a>
     </div>
   );
 }
