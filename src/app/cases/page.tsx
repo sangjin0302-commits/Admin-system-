@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
 import { CHANNELS } from "@/lib/constants/channels";
+import { EventJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -135,6 +136,10 @@ export default async function LecturesPage({
 
   return (
     <div className="overflow-x-clip">
+      <EventJsonLd
+        name="OASIS 4 — 외국인 창업지원 프로그램 강의"
+        description="외국인 창업가를 위한 비자·법인설립·인허가 절차 실무 가이드. 행정사 Jean 진행."
+      />
       {/* HERO */}
       <section className="relative overflow-hidden pt-20 pb-12 sm:pt-28 sm:pb-16">
         <div className="ethos-aurora ethos-aurora-animated" aria-hidden />

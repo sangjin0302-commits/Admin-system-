@@ -161,6 +161,42 @@ export function FAQJsonLd({
   });
 }
 
+export function EventJsonLd({
+  name,
+  description,
+  performerName = "Jean",
+  organizerName = "KISED — Korea Institute of Startup & Entrepreneurship Development",
+  eventStatus = "EventScheduled",
+  attendanceMode = "MixedEventAttendanceMode"
+}: {
+  name: string;
+  description?: string;
+  performerName?: string;
+  organizerName?: string;
+  eventStatus?: "EventScheduled" | "EventCancelled" | "EventPostponed" | "EventRescheduled";
+  attendanceMode?: "OfflineEventAttendanceMode" | "OnlineEventAttendanceMode" | "MixedEventAttendanceMode";
+}) {
+  return jsonLdScript({
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name,
+    description,
+    eventStatus: `https://schema.org/${eventStatus}`,
+    eventAttendanceMode: `https://schema.org/${attendanceMode}`,
+    location: {
+      "@type": "Place",
+      name: "Seoul, Korea",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: ORG_ADDRESS_LOCALITY,
+        addressCountry: ORG_ADDRESS_COUNTRY
+      }
+    },
+    performer: { "@type": "Person", name: performerName },
+    organizer: { "@type": "Organization", name: organizerName }
+  });
+}
+
 export function ArticleJsonLd({
   title,
   description,
