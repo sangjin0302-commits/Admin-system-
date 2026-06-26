@@ -92,7 +92,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/services/corporate",
     "/cases",
     "/intake",
+    "/consult",
+    "/blog",
+    "/keyword",
   ]);
+
+  // 영/아 별도 랜딩 추가
+  staticRoutes.push(
+    { url: "/en", priority: 0.95 },
+    { url: "/ar", priority: 0.9 }
+  );
 
   const all = [
     ...staticRoutes.map((r) => ({ ...r, lastModified: now })),
@@ -109,7 +118,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
     if (bilingual.has(r.url)) {
       entry.alternates = {
-        languages: { ko: koUrl, en: `${koUrl}?lang=en`, "x-default": koUrl },
+        languages: {
+          ko: koUrl,
+          en: r.url === "/" ? `${SITE_URL}/en` : `${koUrl}?lang=en`,
+          ar: r.url === "/" ? `${SITE_URL}/ar` : undefined,
+          "x-default": koUrl
+        } as Record<string, string | undefined> as Record<string, string>,
       };
     }
     return entry;
