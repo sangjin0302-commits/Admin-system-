@@ -31,7 +31,7 @@ export function NaverBlogSection({ posts, blogId }: { posts: NaverBlogPost[]; bl
           {posts.map((p, i) => (
             <Reveal key={p.link} delay={((i % 3) + 1) as 1 | 2 | 3}>
               <a href={p.link} target="_blank" rel="noreferrer" className="group block h-full">
-                <article className="ethos-card ethos-card-hover flex h-full flex-col p-7">
+                <article className="ethos-card ethos-blog-card flex h-full flex-col p-7">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-[#03C75A]/10 px-3 py-1 text-[11px] font-bold text-[#03A94C]">
                       <span className="flex h-4 w-4 items-center justify-center rounded bg-[#03C75A] text-[10px] font-black text-white">
@@ -41,7 +41,7 @@ export function NaverBlogSection({ posts, blogId }: { posts: NaverBlogPost[]; bl
                     </span>
                     {p.date && <span className="text-xs text-text-muted">{p.date}</span>}
                   </div>
-                  <h3 className="ethos-display mt-5 text-lg leading-snug group-hover:text-gold-deep">{p.title}</h3>
+                  <h3 className="ethos-display ethos-blog-title mt-5 text-lg leading-snug">{p.title}</h3>
                   {p.excerpt && <p className="mt-3 flex-1 text-sm leading-7 text-text-muted">{p.excerpt}…</p>}
                   <span className="mt-5 inline-flex items-center gap-1 font-serif text-sm font-semibold text-primary group-hover:text-gold-deep">
                     네이버에서 읽기

@@ -3,6 +3,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { prisma } from "@/lib/prisma/client";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 import { CATEGORY_LABEL, type BlogCategory } from "@/lib/services/blog-categorizer";
+import { WeeklyInquiriesChart, CategoryPieChart, StatusBarChart } from "@/components/admin/insights-charts";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,9 @@ export default async function InsightsPage() {
     latestImport,
     byCategory,
     inquiriesTotal,
-    inquiries7d
+    inquiries7d,
+    inquiries30d,
+    inquiriesByStatus
   ] = await Promise.all([
     prisma.blogPost.count({ where: { published: true } }).catch(() => 0),
     prisma.blogPost.count({ where: { published: true, source: NAVER_BLOG_SOURCE } }).catch(() => 0),
@@ -30,8 +33,41 @@ export default async function InsightsPage() {
     prisma.inquiry.count().catch(() => 0),
     prisma.inquiry.count({
       where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }
-    }).catch(() => 0)
+    }).catch(() => 0),
+    prisma.inquiry.findMany({
+      where: { createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+      select: { createdAt: true }
+    }).catch(() => [] as Array<{ createdAt: Date }>),
+    prisma.inquiry.groupBy({
+      by: ["status"],
+      _count: { _all: true }
+    }).catch(() => [] as Array<{ status: string; _count: { _all: number } }>)
   ]);
+
+  // 30일 일별 의뢰 시리즈
+  const dayCounts = new Map<string, number>();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+    dayCounts.set(d.toISOString().slice(5, 10), 0);
+  }
+  for (const inq of inquiries30d) {
+    const key = inq.createdAt.toISOString().slice(5, 10);
+    if (dayCounts.has(key)) dayCounts.set(key, (dayCounts.get(key) ?? 0) + 1);
+  }
+  const weeklyData = Array.from(dayCounts.entries()).map(([day, count]) => ({ day, count }));
+
+  const pieData = byCategory
+    .sort((a, b) => b._count._all - a._count._all)
+    .slice(0, 6)
+    .map((c) => ({
+      name: CATEGORY_LABEL[c.category as BlogCategory] ?? c.category,
+      value: c._count._all
+    }));
+
+  const statusData = inquiriesByStatus
+    .sort((a, b) => b._count._all - a._count._all)
+    .slice(0, 8)
+    .map((s) => ({ status: s.status, count: s._count._all }));
 
   return (
     <div className="space-y-6">
@@ -80,6 +116,33 @@ export default async function InsightsPage() {
           )}
         </div>
       </Card>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="p-5">
+          <p className="ui-kicker">최근 30일 의뢰 추이</p>
+          {weeklyData.some((d) => d.count > 0) ? (
+            <div className="mt-4"><WeeklyInquiriesChart data={weeklyData} /></div>
+          ) : (
+            <p className="mt-3 text-sm text-text-muted">아직 30일 이내 의뢰 데이터가 없습니다.</p>
+          )}
+        </Card>
+
+        <Card className="p-5">
+          <p className="ui-kicker">분야별 콘텐츠 (Pie)</p>
+          {pieData.length > 0 ? (
+            <div className="mt-4"><CategoryPieChart data={pieData} /></div>
+          ) : (
+            <p className="mt-3 text-sm text-text-muted">분류 데이터 없음</p>
+          )}
+        </Card>
+      </div>
+
+      {statusData.length > 0 && (
+        <Card className="p-5">
+          <p className="ui-kicker">의뢰 상태별 분포</p>
+          <div className="mt-4"><StatusBarChart data={statusData} /></div>
+        </Card>
+      )}
 
       <Card className="p-5">
         <p className="ui-kicker">운영 가이드</p>

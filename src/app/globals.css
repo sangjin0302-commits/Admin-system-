@@ -274,6 +274,48 @@ html {
   transform: scaleX(1);
 }
 
+/* ── Typewriter blinking caret ──────────────────────── */
+.ethos-caret::after {
+  content: "▍";
+  display: inline-block;
+  margin-left: 2px;
+  color: rgb(201 169 97);
+  animation: ethos-blink 1s steps(2) infinite;
+}
+@keyframes ethos-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ethos-caret::after { animation: none; }
+}
+
+/* ── Blog card hover polish ─────────────────────────── */
+.ethos-blog-card {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.4s ease;
+}
+.ethos-blog-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 60px rgb(26 60 95 / 0.15);
+  border-color: rgb(201 169 97 / 0.6);
+}
+.ethos-blog-card .ethos-blog-title {
+  position: relative;
+  transition: color 0.3s ease;
+}
+.ethos-blog-card:hover .ethos-blog-title {
+  color: rgb(168 134 71);
+}
+.ethos-blog-card .ethos-blog-arrow {
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ethos-blog-card:hover .ethos-blog-arrow {
+  transform: translateX(4px);
+}
+
 /* ── Mobile menu fade-up stagger ────────────────────── */
 @keyframes ethos-fade-up {
   from { opacity: 0; transform: translateY(12px); }
