@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
@@ -47,7 +48,10 @@ function SearchModal({ onClose }: { onClose: () => void }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [results, setResults] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selIdx, setSelIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -63,6 +67,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (!q.trim()) {
       setResults(posts.slice(0, 20));
+      setSelIdx(0);
       return;
     }
     let cancelled = false;
@@ -74,11 +79,34 @@ function SearchModal({ onClose }: { onClose: () => void }) {
         ignoreLocation: true
       });
       setResults(fuse.search(q).slice(0, 30).map((h) => h.item));
+      setSelIdx(0);
     });
     return () => {
       cancelled = true;
     };
   }, [q, posts]);
+
+  function onKey(e: React.KeyboardEvent) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelIdx((i) => Math.min(i + 1, results.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelIdx((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const hit = results[selIdx];
+      if (hit) {
+        router.push(`/blog/${hit.slug}`);
+        onClose();
+      }
+    }
+  }
+
+  useEffect(() => {
+    const el = listRef.current?.querySelector(`[data-idx="${selIdx}"]`) as HTMLElement | null;
+    el?.scrollIntoView({ block: "nearest" });
+  }, [selIdx]);
 
   return (
     <div
@@ -101,9 +129,15 @@ function SearchModal({ onClose }: { onClose: () => void }) {
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            onKeyDown={onKey}
             placeholder="비자, 행정심판, 계약, 인허가, 법인설립…"
             className="flex-1 bg-transparent text-sm focus:outline-none"
           />
+          {!loading && results.length > 0 && (
+            <span className="rounded bg-gold-soft/50 px-2 py-0.5 text-[10px] font-bold text-gold-deep">
+              {results.length}건
+            </span>
+          )}
           <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-surface-muted" aria-label="닫기">
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M6 6l12 12M18 6l-12 12" />
@@ -119,13 +153,14 @@ function SearchModal({ onClose }: { onClose: () => void }) {
               {q ? `"${q}" 검색 결과 없음` : "글이 없습니다"}
             </p>
           ) : (
-            <ul className="divide-y divide-line">
-              {results.map((r) => (
-                <li key={r.slug}>
+            <ul ref={listRef} className="divide-y divide-line">
+              {results.map((r, idx) => (
+                <li key={r.slug} data-idx={idx}>
                   <Link
                     href={`/blog/${r.slug}`}
                     onClick={onClose}
-                    className="block px-4 py-3 transition hover:bg-gold-soft/15"
+                    onMouseEnter={() => setSelIdx(idx)}
+                    className={`block px-4 py-3 transition ${idx === selIdx ? "bg-gold-soft/30" : "hover:bg-gold-soft/15"}`}
                   >
                     <div className="flex items-center gap-2">
                       <span className="rounded-full bg-gold-soft/50 px-2 py-0.5 text-[10px] font-bold text-gold-deep">

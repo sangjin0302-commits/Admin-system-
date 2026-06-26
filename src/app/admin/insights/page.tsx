@@ -7,7 +7,22 @@ import { WeeklyInquiriesChart, CategoryPieChart, StatusBarChart } from "@/compon
 
 export const dynamic = "force-dynamic";
 
-export default async function InsightsPage() {
+import Link from "next/link";
+
+const PERIOD_OPTIONS = [
+  { key: "7", label: "7일" },
+  { key: "30", label: "30일" },
+  { key: "90", label: "90일" }
+] as const;
+
+export default async function InsightsPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ period?: string }>;
+}) {
+  const sp = (await searchParams) ?? {};
+  const periodDays = Math.max(7, Math.min(90, Number(sp.period) || 30));
+  const periodMs = periodDays * 24 * 60 * 60 * 1000;
   const [
     totalPosts,
     naverPosts,
@@ -35,7 +50,7 @@ export default async function InsightsPage() {
       where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }
     }).catch(() => 0),
     prisma.inquiry.findMany({
-      where: { createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+      where: { createdAt: { gte: new Date(Date.now() - periodMs) } },
       select: { createdAt: true }
     }).catch(() => [] as Array<{ createdAt: Date }>),
     prisma.inquiry.groupBy({
@@ -44,9 +59,9 @@ export default async function InsightsPage() {
     }).catch(() => [] as Array<{ status: string; _count: { _all: number } }>)
   ]);
 
-  // 30일 일별 의뢰 시리즈
+  // 기간 일별 의뢰 시리즈 (7/30/90)
   const dayCounts = new Map<string, number>();
-  for (let i = 29; i >= 0; i--) {
+  for (let i = periodDays - 1; i >= 0; i--) {
     const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
     dayCounts.set(d.toISOString().slice(5, 10), 0);
   }
@@ -76,6 +91,26 @@ export default async function InsightsPage() {
         title="운영 인사이트"
         description="콘텐츠 누적 · 분야별 분포 · 의뢰 현황 한눈 보기."
       />
+
+      {/* 기간 필터 */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-serif text-xs font-bold uppercase tracking-[0.2em] text-gold-deep">
+          기간
+        </span>
+        {PERIOD_OPTIONS.map((p) => (
+          <Link
+            key={p.key}
+            href={`/admin/insights?period=${p.key}`}
+            className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+              String(periodDays) === p.key
+                ? "bg-primary text-white"
+                : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"
+            }`}
+          >
+            {p.label}
+          </Link>
+        ))}
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="총 블로그 글" value={totalPosts} hint="published" />
@@ -119,7 +154,7 @@ export default async function InsightsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
-          <p className="ui-kicker">최근 30일 의뢰 추이</p>
+          <p className="ui-kicker">최근 {periodDays}일 의뢰 추이</p>
           {weeklyData.some((d) => d.count > 0) ? (
             <div className="mt-4"><WeeklyInquiriesChart data={weeklyData} /></div>
           ) : (
