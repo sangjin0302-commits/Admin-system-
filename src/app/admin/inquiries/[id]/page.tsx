@@ -20,6 +20,7 @@ import { InquiryOperationalSummary } from "@/components/admin/inquiry-operationa
 import { QuoteWorkspacePanel } from "@/components/admin/quote-workspace";
 import { WorkflowProgressPanelSafeV3 } from "@/components/admin/workflow-progress-panel";
 import { Card } from "@/components/ui/card";
+import { ReviewTemplateCopy } from "@/components/admin/review-template-copy";
 import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { buildInquiryDetailPageData } from "@/lib/services/inquiry-detail-page-data";
 import { safeGetInquiryForDetail } from "@/lib/services/inquiry-detail-loaders";
@@ -330,6 +331,14 @@ export default async function AdminInquiryDetailPage({
         <div id="detail-quote">
           <QuoteWorkspacePanel inquiryId={inquiry.id} workspace={quoteWorkspace} />
         </div>
+
+        <Card className="p-5">
+          <p className="ui-kicker">v4.8 검토 응답 템플릿 (Quick Copy)</p>
+          <p className="mt-1 text-sm text-text-muted">한·영·아랍어 — 모든 채널(톡톡·카카오·이메일·텔레그램) 동일 사용.</p>
+          <div className="mt-4">
+            <ReviewTemplateCopy />
+          </div>
+        </Card>
       </div>
     );
   } catch (error) {

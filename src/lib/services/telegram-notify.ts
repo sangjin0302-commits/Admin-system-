@@ -21,12 +21,15 @@ export interface TelegramAlertInput {
   url?: string;
 }
 
-export async function sendTelegramAlert(input: TelegramAlertInput): Promise<{ ok: boolean; reason?: string }> {
+export async function sendTelegramAlert(input: TelegramAlertInput & { channel?: "admin" | "public" }): Promise<{ ok: boolean; reason?: string }> {
   const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
-  const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID?.trim();
-  if (!token || !chatId) {
+  const target = input.channel === "public"
+    ? process.env.TELEGRAM_CHANNEL_ID?.trim()
+    : process.env.TELEGRAM_ADMIN_CHAT_ID?.trim();
+  if (!token || !target) {
     return { ok: false, reason: "not_configured" };
   }
+  const chatId = target;
 
   const prefix =
     input.kind === "inquiry" ? "📩"

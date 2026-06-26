@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { importNaverBlogPosts } from "@/lib/services/naver-rss-importer";
+import { importNaverBlogPosts, NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 import { sendTelegramAlert } from "@/lib/services/telegram-notify";
 import { logger } from "@/lib/utils/logger";
+import { prisma } from "@/lib/prisma/client";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
   const result = await importNaverBlogPosts({ translate: false });
   logger.info("[cron/naver-rss-sync] done", result);
 
-  // 신규 글 있을 때만 텔레그램 알림
+  // 신규 글 있을 때만 텔레그램 알림 (admin)
   if (result.imported > 0) {
     await sendTelegramAlert({
       kind: "system",
@@ -31,6 +32,27 @@ export async function GET(request: Request) {
       ],
       url: process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/blog` : undefined
     }).catch(() => undefined);
+
+    // Public Telegram 채널에도 자동 share (env 설정 시)
+    if (process.env.TELEGRAM_CHANNEL_ID) {
+      const recent = await prisma.blogPost.findMany({
+        where: { source: NAVER_BLOG_SOURCE, published: true },
+        orderBy: { importedAt: "desc" },
+        take: result.imported,
+        select: { slug: true, title: true, excerpt: true }
+      }).catch(() => []);
+
+      for (const p of recent) {
+        await sendTelegramAlert({
+          channel: "public",
+          kind: "system",
+          title: p.title,
+          lines: [p.excerpt?.slice(0, 200) ?? ""].filter(Boolean),
+          url: process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/blog/${p.slug}` : undefined
+        }).catch(() => undefined);
+        await new Promise((r) => setTimeout(r, 1000)); // Telegram rate limit
+      }
+    }
   }
 
   return NextResponse.json({ ok: true, ...result });
