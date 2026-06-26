@@ -78,12 +78,28 @@ export async function generateMetadata({
   const lang: Lang = sp.lang === "en" ? "en" : "ko";
   const post = await resolvePost(slug, lang);
   if (!post) return { title: "글을 찾을 수 없습니다" };
+  const slugPath = `/blog/${slug}`;
   return {
     title: `${post.title} — 법률 칼럼 | ETHOS`,
     description: post.excerpt,
-    // 네이버 블로그에서 import된 글은 원본을 canonical로 → 중복 콘텐츠 SEO 패널티 방지
-    alternates: post.originalUrl ? { canonical: post.originalUrl } : undefined,
+    alternates: post.originalUrl
+      ? { canonical: post.originalUrl }
+      : {
+          canonical: slugPath,
+          languages: {
+            ko: slugPath,
+            en: `${slugPath}?lang=en`,
+            "x-default": slugPath
+          }
+        },
     robots: post.originalUrl ? { index: false, follow: true } : undefined,
+    openGraph: post.originalUrl ? undefined : {
+      title: post.title,
+      description: post.excerpt,
+      type: "article",
+      locale: lang === "en" ? "en_US" : "ko_KR",
+      alternateLocale: lang === "en" ? ["ko_KR"] : ["en_US"]
+    }
   };
 }
 
