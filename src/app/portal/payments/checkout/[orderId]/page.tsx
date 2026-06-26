@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma/client";
 import { CheckoutWidget } from "./checkout-widget";
+import { BankTransferGuide } from "@/components/portal/bank-transfer-guide";
+import { getSiteSettings } from "@/lib/services/site-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +21,13 @@ export default async function CheckoutPage({
     notFound();
   }
 
+  // Toss 결제 활성 여부 (env flag) — 기본 OFF
+  const tossEnabled = process.env.NEXT_PUBLIC_TOSS_ENABLED === "1";
   const clientKey =
     process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY?.trim() ||
     "test_ck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+
+  const site = await getSiteSettings();
 
   return (
     <div className="mx-auto max-w-xl px-4 py-10 sm:py-16">
@@ -50,7 +56,7 @@ export default async function CheckoutPage({
         <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
           취소되거나 실패한 주문입니다. 새 주문을 만들어주세요.
         </div>
-      ) : (
+      ) : tossEnabled ? (
         <CheckoutWidget
           clientKey={clientKey}
           orderId={payment.orderId}
@@ -58,6 +64,16 @@ export default async function CheckoutPage({
           amount={payment.amount}
           customerName={payment.customerName ?? "고객"}
           customerEmail={payment.customerEmail ?? "customer@example.com"}
+        />
+      ) : (
+        <BankTransferGuide
+          orderId={payment.orderId}
+          orderName={payment.orderName}
+          amount={payment.amount}
+          customerName={payment.customerName ?? "고객"}
+          bankName={site["payment.bankName"] ?? ""}
+          accountNumber={site["payment.accountNumber"] ?? ""}
+          accountHolder={site["payment.accountHolder"] ?? ""}
         />
       )}
     </div>

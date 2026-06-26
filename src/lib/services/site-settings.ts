@@ -31,7 +31,10 @@ export type SiteSettingsKey =
   | "services.appeal.desc"
   | "services.contract.desc"
   | "services.license.desc"
-  | "services.corporate.desc";
+  | "services.corporate.desc"
+  | "payment.bankName"        // 계좌이체용 은행명
+  | "payment.accountNumber"   // 계좌번호
+  | "payment.accountHolder";  // 예금주
 
 export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "home.heroBadge": "행정사 사무소 · Logos · Pathos · Ethos",
@@ -60,7 +63,10 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "services.appeal.desc": "",
   "services.contract.desc": "",
   "services.license.desc": "",
-  "services.corporate.desc": ""
+  "services.corporate.desc": "",
+  "payment.bankName": "",
+  "payment.accountNumber": "",
+  "payment.accountHolder": "행정사 Jean"
 };
 
 export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint?: string; multiline?: boolean }> = {
@@ -91,7 +97,10 @@ export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint
   "services.appeal.desc": { label: "서비스: 행정심판 소개글", hint: "비우면 기본 문구 사용", multiline: true },
   "services.contract.desc": { label: "서비스: 계약서/사실조사 소개글", hint: "비우면 기본 문구 사용", multiline: true },
   "services.license.desc": { label: "서비스: 인허가 소개글", hint: "비우면 기본 문구 사용", multiline: true },
-  "services.corporate.desc": { label: "서비스: 법인 설립 소개글", hint: "비우면 기본 문구 사용", multiline: true }
+  "services.corporate.desc": { label: "서비스: 법인 설립 소개글", hint: "비우면 기본 문구 사용", multiline: true },
+  "payment.bankName": { label: "결제: 은행명", hint: "예: 국민은행, 우리은행 (계좌이체 안내용)" },
+  "payment.accountNumber": { label: "결제: 계좌번호", hint: "예: 123-456-789012" },
+  "payment.accountHolder": { label: "결제: 예금주", hint: "예: 행정사 Jean / 김OO" }
 };
 
 // 짧은 인메모리 캐시 — 공개 페이지 다발 조회 시 DB 부하↓ (편집은 저장 시 무효화)
