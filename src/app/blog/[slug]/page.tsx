@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { BlogToc } from "@/components/public/blog-toc";
 import { ShareButtons } from "@/components/public/share-buttons";
 import { BlogCta } from "@/components/public/blog-cta";
+import { ScrollProgress } from "@/components/public/scroll-progress";
 import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
 import { sanitizeHtml } from "@/lib/utils/sanitize-html";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/blog-posts";
@@ -123,6 +124,7 @@ export default async function BlogDetailPage({
 
   return (
     <div className="relative mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
+      <ScrollProgress />
       <ArticleJsonLd
         title={post.title}
         description={post.excerpt}

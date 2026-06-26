@@ -115,7 +115,7 @@ export function QuickCheckClient() {
             disabled={loading}
             className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-primary px-6 font-serif text-sm font-bold text-white shadow-sm transition hover:bg-text-strong disabled:opacity-50"
           >
-            {loading ? "분석 중…" : "AI 사전 진단 시작"}
+            {loading ? <span className="ethos-caret">분석 중</span> : "AI 사전 진단 시작"}
           </button>
         </form>
       </Card>

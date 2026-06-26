@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { CHANNELS } from "@/lib/constants/channels";
+
 const FALLBACK = { phone: "02-0000-0000", email: "a.attorneyjean@gmail.com", hours: "평일 09:00 - 18:00" };
 
 export function PublicFooter() {
@@ -99,11 +101,44 @@ export function PublicFooter() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-start justify-between gap-3 border-t border-white/15 pt-6 text-xs text-white/50 sm:flex-row sm:items-center">
+        {/* 5채널 connect strip */}
+        <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-white/15 pt-6">
+          <p className="font-serif text-xs font-bold uppercase tracking-[0.3em] text-gold-soft">Connect</p>
+          <div className="flex flex-wrap gap-2">
+            <a href={CHANNELS.naverTalk.url} target="_blank" rel="noreferrer"
+               className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#03C75A] px-3 text-xs font-bold text-white transition hover:brightness-95">
+              N · 톡톡
+            </a>
+            <a href={CHANNELS.kakao.url} target="_blank" rel="noreferrer"
+               className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#FEE500] px-3 text-xs font-bold text-[#3C1E1E] transition hover:brightness-95">
+              카카오
+            </a>
+            <a href={CHANNELS.telegram.url} target="_blank" rel="noreferrer"
+               className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#0088CC] px-3 text-xs font-bold text-white transition hover:brightness-95">
+              Telegram
+            </a>
+            <a href={CHANNELS.email.url}
+               className="inline-flex h-9 items-center gap-1.5 rounded-full border border-gold/40 bg-white/5 px-3 text-xs font-bold text-white transition hover:bg-white/10">
+              Email
+            </a>
+            <a href={CHANNELS.naverExpert.url} target="_blank" rel="noreferrer"
+               className="inline-flex h-9 items-center gap-1.5 rounded-full border border-gold/40 bg-white/5 px-3 text-xs font-bold text-gold-soft transition hover:bg-white/10">
+              ★ 엑스퍼트
+            </a>
+            <Link href="/links"
+               className="inline-flex h-9 items-center gap-1.5 rounded-full border border-gold/40 bg-white/5 px-3 text-xs font-bold text-white/80 transition hover:bg-white/10">
+              모든 채널 →
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col items-start justify-between gap-3 border-t border-white/15 pt-6 text-xs text-white/50 sm:flex-row sm:items-center">
           <p>© 2026 ETHOS 행정사사무소. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="/privacy" className="transition-colors duration-200 hover:text-gold-soft">개인정보 처리방침</Link>
             <Link href="/terms" className="transition-colors duration-200 hover:text-gold-soft">이용약관</Link>
+            <Link href="/sitemap.xml" className="transition-colors duration-200 hover:text-gold-soft">Sitemap</Link>
+            <Link href="/feed.xml" className="transition-colors duration-200 hover:text-gold-soft">RSS</Link>
           </div>
         </div>
       </div>
