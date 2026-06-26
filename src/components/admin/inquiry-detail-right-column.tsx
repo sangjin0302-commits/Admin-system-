@@ -2,11 +2,11 @@ import type { ComponentProps } from "react";
 import Link from "next/link";
 
 import { InquiryCaseAnalysisPanel } from "@/components/admin/inquiry-case-analysis-panel";
-import { InquiryCaseTimelineV2 } from "@/components/admin/inquiry-case-timeline-v2";
-import { InquiryCommunicationCenterV2 } from "@/components/admin/inquiry-communication-center-v2";
+import { InquiryCaseTimelineV2 } from "@/components/admin/inquiry-case-timeline";
+import { InquiryCommunicationCenterV2 } from "@/components/admin/inquiry-communication-center";
 import { InquiryDetailPrecheckSection } from "@/components/admin/inquiry-detail-content-sections";
 import { InquiryDecisionBoard } from "@/components/admin/inquiry-decision-board";
-import { InquiryExecutionPlaybookSafeV3 } from "@/components/admin/inquiry-execution-playbook-safe-v3";
+import { InquiryExecutionPlaybookSafeV3 } from "@/components/admin/inquiry-execution-playbook";
 import { InquiryCommunicationLogPanel } from "@/components/admin/inquiry-communication-log-panel";
 import { InquiryMessagePreview } from "@/components/admin/inquiry-message-preview";
 import { InquiryOperationsFeedPanel } from "@/components/admin/inquiry-operations-feed-panel-clean";

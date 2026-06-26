@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 const root = process.cwd();
 const centerSource = readFileSync(
-  join(root, "src/components/admin/inquiry-communication-center-v2.tsx"),
+  join(root, "src/components/admin/inquiry-communication-center.tsx"),
   "utf8"
 );
 const logSource = readFileSync(

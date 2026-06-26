@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { IntakeFormSafeV3 } from "@/components/intake/intake-form-safe-v3";
+import { IntakeFormSafeV3 } from "@/components/intake/intake-form";
 import { Reveal } from "@/components/public/reveal";
 import { intakePageMessages } from "@/i18n/locales/intake-page";
 import { buildIntakeSourceTrackingFromSearchParams } from "@/lib/services/intake-source-tracking";

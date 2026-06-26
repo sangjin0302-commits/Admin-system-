@@ -115,7 +115,7 @@ assert.equal(viewModel.rows.some((row) => row.label === "Landing URL" && row.isU
 assert.equal(JSON.stringify(viewModel).includes("dangerouslySetInnerHTML"), false);
 
 const intakePageSource = readFileSync(join(root, "src/app/intake/page-safe.tsx"), "utf8");
-const intakeFormSource = readFileSync(join(root, "src/components/intake/intake-form-safe-v3.tsx"), "utf8");
+const intakeFormSource = readFileSync(join(root, "src/components/intake/intake-form.tsx"), "utf8");
 const validationSource = readFileSync(join(root, "src/lib/validation/inquiry-safe.ts"), "utf8");
 const createDataSource = readFileSync(join(root, "src/lib/services/inquiry-create-data-helpers.ts"), "utf8");
 const adminDetailSource = readFileSync(join(root, "src/components/admin/inquiry-detail-content-sections.tsx"), "utf8");

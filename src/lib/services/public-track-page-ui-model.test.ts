@@ -125,7 +125,7 @@ assert.match(appShellSource, /isHeaderlessPublicRoute/);
 assert.match(appShellSource, /pathname === "\/track"/);
 assert.match(appShellSource, /pathname\.startsWith\("\/track\/"\)/);
 
-const intakeSource = readFileSync(join(root, "src/components/intake/intake-form-safe-v3.tsx"), "utf8");
+const intakeSource = readFileSync(join(root, "src/components/intake/intake-form.tsx"), "utf8");
 assert.match(intakeSource, /href="\/track"/);
 assert.match(intakeSource, /trackingCode/);
 

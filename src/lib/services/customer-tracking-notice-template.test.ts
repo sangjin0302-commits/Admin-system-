@@ -63,7 +63,7 @@ const componentSource = readFileSync(
   "utf8"
 );
 const communicationCenterSource = readFileSync(
-  join(root, "src/components/admin/inquiry-communication-center-v2.tsx"),
+  join(root, "src/components/admin/inquiry-communication-center.tsx"),
   "utf8"
 );
 const categorySectionSource = readFileSync(

@@ -18,7 +18,7 @@ import { InquiryDetailRightColumn } from "@/components/admin/inquiry-detail-righ
 import { InquiryManagementForm } from "@/components/admin/inquiry-management-form";
 import { InquiryOperationalSummary } from "@/components/admin/inquiry-operational-summary";
 import { QuoteWorkspacePanel } from "@/components/admin/quote-workspace";
-import { WorkflowProgressPanelSafeV3 } from "@/components/admin/workflow-progress-panel-safe-v3";
+import { WorkflowProgressPanelSafeV3 } from "@/components/admin/workflow-progress-panel";
 import { Card } from "@/components/ui/card";
 import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { buildInquiryDetailPageData } from "@/lib/services/inquiry-detail-page-data";

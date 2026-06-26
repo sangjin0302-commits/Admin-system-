@@ -1,4 +1,4 @@
-import type { InquiryCommunicationDraft } from "@/components/admin/inquiry-communication-center-v2";
+import type { InquiryCommunicationDraft } from "@/components/admin/inquiry-communication-center";
 import { buildAutomationActions, buildOperationsDraft } from "@/lib/services/inquiry-detail-action-helpers";
 import { stripStructuredOperationsMemo } from "@/lib/services/operations-memo";
 import {

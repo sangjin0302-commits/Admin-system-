@@ -7,7 +7,7 @@ import { InquiryDashboardSummary } from "@/components/admin/inquiry-dashboard-su
 import { InquiryFilters } from "@/components/admin/inquiry-filters";
 import { InquiryQuickPresets } from "@/components/admin/inquiry-quick-presets";
 import { InquiryTable } from "@/components/admin/inquiry-table";
-import { InquiryWorkQueuesSafeV2 } from "@/components/admin/inquiry-work-queues-safe-v2";
+import { InquiryWorkQueuesSafeV2 } from "@/components/admin/inquiry-work-queues";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
 import {

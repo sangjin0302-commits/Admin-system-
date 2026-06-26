@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { toPublicInquiryResponse } from "@/app/api/inquiries/route-safe-v3";
-import { getIntakeFormDisplaySnapshot } from "@/components/intake/intake-form-safe-v3";
+import { getIntakeFormDisplaySnapshot } from "@/components/intake/intake-form";
 import { parseCreateInquiryInput } from "@/lib/validation/inquiry-safe";
 import {
   civilPetitionSubtypeValues,
@@ -232,7 +232,7 @@ assert.match(middlewareSource, /"\/track\/:path\*"/);
 assert.match(middlewareSource, /"\/api\/public\/track"/);
 
 const intakeFormSource = readFileSync(
-  join(root, "src/components/intake/intake-form-safe-v3.tsx"),
+  join(root, "src/components/intake/intake-form.tsx"),
   "utf8"
 );
 const intakeCategorySource = readFileSync(join(root, "src/types/intake-category.ts"), "utf8");
