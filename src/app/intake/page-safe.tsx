@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { IntakeFormSafeV3 } from "@/components/intake/intake-form";
+import { IntakePrefillBanner } from "@/components/public/intake-prefill-banner";
 import { Reveal } from "@/components/public/reveal";
 import { intakePageMessages } from "@/i18n/locales/intake-page";
 import { buildIntakeSourceTrackingFromSearchParams } from "@/lib/services/intake-source-tracking";
@@ -134,7 +135,8 @@ export default async function IntakePageSafe({
           </Reveal>
 
           <Reveal delay={1}>
-            <div className="ethos-card ethos-card-topline mt-12 p-8 sm:p-10">
+            <IntakePrefillBanner />
+            <div className="ethos-card ethos-card-topline mt-2 p-8 sm:p-10">
               <IntakeFormSafeV3 initialLocale={locale} initialTracking={intakeTracking} />
             </div>
           </Reveal>

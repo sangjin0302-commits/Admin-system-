@@ -14,7 +14,7 @@ import { PWAInstallPrompt } from "@/components/public/pwa-install-prompt";
 import { ChannelTracker } from "@/components/public/channel-tracker";
 import { ScrollDepthTracker } from "@/components/public/scroll-depth-tracker";
 
-const PUBLIC_PATHS = ["/", "/about", "/services", "/cases", "/blog", "/track", "/intake", "/quick-check", "/contact", "/fees", "/privacy", "/terms", "/consult", "/en", "/ar"];
+const PUBLIC_PATHS = ["/", "/about", "/services", "/cases", "/blog", "/track", "/intake", "/quick-check", "/contact", "/fees", "/privacy", "/terms", "/consult", "/en", "/ar", "/keyword"];
 
 function isPublicRoute(pathname: string) {
   if (pathname === "/") return true;
