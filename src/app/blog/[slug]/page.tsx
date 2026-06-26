@@ -9,7 +9,7 @@ import { RelatedKeywords } from "@/components/public/related-keywords";
 import { ScrollProgress } from "@/components/public/scroll-progress";
 import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
 import { sanitizeHtml } from "@/lib/utils/sanitize-html";
-import { autoLinkKeywords } from "@/lib/utils/keyword-linker";
+import { autoLinkKeywords, extractKeywords } from "@/lib/utils/keyword-linker";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/blog-posts";
 import { prisma } from "@/lib/prisma/client";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
@@ -178,6 +178,27 @@ export default async function BlogDetailPage({
           <span>·</span>
           <span>{post.readMin}{lang === "en" ? " min read" : "분 소요"}</span>
         </div>
+
+        {/* 글 키워드 badges */}
+        {(() => {
+          const kw = extractKeywords(`${post.title} ${post.contentHtml}`);
+          if (kw.length === 0) return null;
+          return (
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <span className="font-serif text-[10px] font-bold uppercase tracking-wider text-gold-deep">키워드</span>
+              {kw.map((k) => (
+                <Link
+                  key={k.term}
+                  href={`/keyword/${encodeURIComponent(k.term)}`}
+                  data-funnel="blog_top_keyword"
+                  className="inline-flex items-center rounded-full border border-gold/40 bg-gold-soft/30 px-2.5 py-0.5 text-[11px] font-bold text-gold-deep transition hover:bg-gold-soft/60"
+                >
+                  #{k.label}
+                </Link>
+              ))}
+            </div>
+          );
+        })()}
 
         {post.translationMissing && (
           <p className="mt-4 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
