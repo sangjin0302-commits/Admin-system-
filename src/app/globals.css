@@ -274,6 +274,18 @@ html {
   transform: scaleX(1);
 }
 
+/* ── Keyword auto-link in blog body ────────────────── */
+.ethos-keyword-link {
+  color: rgb(168 134 71);
+  font-weight: 700;
+  border-bottom: 1px dotted rgb(201 169 97 / 0.6);
+  transition: color 0.2s, border-color 0.2s;
+}
+.ethos-keyword-link:hover {
+  color: rgb(22 60 95);
+  border-bottom-color: rgb(201 169 97);
+}
+
 /* ── Skeleton shimmer ───────────────────────────────── */
 .ethos-skeleton {
   background: linear-gradient(90deg, rgb(224 215 195 / 0.3) 0%, rgb(224 215 195 / 0.6) 50%, rgb(224 215 195 / 0.3) 100%);

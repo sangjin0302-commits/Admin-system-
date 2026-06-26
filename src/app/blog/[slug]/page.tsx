@@ -5,9 +5,11 @@ import type { Metadata } from "next";
 import { BlogToc } from "@/components/public/blog-toc";
 import { ShareButtons } from "@/components/public/share-buttons";
 import { BlogCta } from "@/components/public/blog-cta";
+import { RelatedKeywords } from "@/components/public/related-keywords";
 import { ScrollProgress } from "@/components/public/scroll-progress";
 import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
 import { sanitizeHtml } from "@/lib/utils/sanitize-html";
+import { autoLinkKeywords } from "@/lib/utils/keyword-linker";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/blog-posts";
 import { prisma } from "@/lib/prisma/client";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
@@ -200,7 +202,7 @@ export default async function BlogDetailPage({
 
         <div
           className="prose prose-sm max-w-none font-serif text-base leading-8 text-text [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-2 [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-5xl [&>p:first-of-type]:first-letter:font-extrabold [&>p:first-of-type]:first-letter:leading-[0.8] [&>p:first-of-type]:first-letter:text-gold-deep [&_h2]:font-serif [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-primary [&_h2]:mt-8 [&_h2]:mb-3 [&_p]:my-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_strong]:text-primary"
-          dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.contentHtml) }}
+          dangerouslySetInnerHTML={{ __html: autoLinkKeywords(sanitizeHtml(post.contentHtml)) }}
         />
 
         <ShareButtons title={post.title} />
@@ -231,6 +233,7 @@ export default async function BlogDetailPage({
         </section>
       )}
 
+      <RelatedKeywords category={post.category} />
       <BlogCta category={post.category} />
 
       <p className="mt-8 rounded-lg border border-gold/30 bg-surface-muted/40 px-4 py-3 text-xs italic text-text-muted">
