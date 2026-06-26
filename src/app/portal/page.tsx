@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { PortalHeader } from "@/components/layout/portal-header";
+import { CaseTimeline } from "@/components/portal/case-timeline";
 import { auth, signOut } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/client";
 
@@ -276,23 +277,8 @@ export default async function PortalDashboard() {
                                 {STATUS_LABEL[c.status] ?? c.status}
                               </span>
                             </div>
-                            {/* 진행률 바 */}
-                            <div className="mt-3 flex items-center gap-3">
-                              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-muted">
-                                <div
-                                  className="h-full rounded-full bg-gradient-to-r from-gold to-gold-deep transition-all"
-                                  style={{ width: `${progress}%` }}
-                                />
-                              </div>
-                              <span className="font-mono text-[11px] font-bold text-gold-deep">{progress}%</span>
-                            </div>
-                            {/* 다음 단계 안내 */}
-                            {STATUS_NEXT_STEP[c.status] && (
-                              <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-text-muted">
-                                <span className="mt-0.5 text-gold-deep">›</span>
-                                {STATUS_NEXT_STEP[c.status]}
-                              </p>
-                            )}
+                            {/* 5스텝 타임라인 + 다음 할 일 */}
+                            <CaseTimeline progress={progress} nextStep={STATUS_NEXT_STEP[c.status]} />
                           </Link>
                         );
                       })}

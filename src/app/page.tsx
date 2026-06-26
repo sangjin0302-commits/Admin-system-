@@ -10,6 +10,7 @@ import { TrustStats } from "@/components/public/trust-stats";
 import { Testimonials } from "@/components/public/testimonials";
 import { Reveal } from "@/components/public/reveal";
 import { ConsultStructure } from "@/components/public/consult-structure";
+import { HeroScrollIndicator } from "@/components/public/hero-scroll-indicator";
 import { NaverBlogSection } from "@/components/public/naver-blog-section";
 import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
 import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
@@ -215,6 +216,7 @@ export default async function PublicMarketingHomePage({
 
   return (
     <div className="overflow-x-clip">
+      <HeroScrollIndicator />
       <OrganizationJsonLd />
       <LegalServiceJsonLd
         serviceName="비자·체류 / 행정심판 / 계약·사실조사 / 인허가 / 법인설립"
