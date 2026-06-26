@@ -71,16 +71,37 @@ function SearchModal({ onClose }: { onClose: () => void }) {
       return;
     }
     let cancelled = false;
-    import("fuse.js").then(({ default: Fuse }) => {
-      if (cancelled) return;
+
+    // server-side body 검색 (정확한 매칭) + 클라 Fuse fuzzy 병행
+    const serverPromise = fetch(`/api/public/blog-search?q=${encodeURIComponent(q)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => (d?.posts ?? []) as Post[])
+      .catch(() => [] as Post[]);
+
+    const fusePromise = import("fuse.js").then(({ default: Fuse }) => {
       const fuse = new Fuse(posts, {
         keys: ["title", "excerpt", "category"],
         threshold: 0.4,
         ignoreLocation: true
       });
-      setResults(fuse.search(q).slice(0, 30).map((h) => h.item));
+      return fuse.search(q).slice(0, 30).map((h) => h.item);
+    });
+
+    Promise.all([serverPromise, fusePromise]).then(([server, fuse]) => {
+      if (cancelled) return;
+      // dedup by slug, server 우선
+      const seen = new Set<string>();
+      const merged: Post[] = [];
+      for (const p of [...server, ...fuse]) {
+        if (!seen.has(p.slug)) {
+          seen.add(p.slug);
+          merged.push(p);
+        }
+      }
+      setResults(merged.slice(0, 40));
       setSelIdx(0);
     });
+
     return () => {
       cancelled = true;
     };
