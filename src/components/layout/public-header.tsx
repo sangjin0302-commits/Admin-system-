@@ -98,7 +98,10 @@ function HeaderInner() {
                 isActive(item.href) ? "text-primary" : "text-text-muted hover:text-primary"
               }`}
             >
-              {lang === "en" ? item.labelEn : item.label}
+              <span className="relative inline-flex items-center gap-1.5">
+                {isActive(item.href) && <span className="h-1.5 w-1.5 rounded-full bg-gold" aria-hidden />}
+                {lang === "en" ? item.labelEn : item.label}
+              </span>
               {isActive(item.href) && <span className="absolute inset-x-3 -bottom-0.5 h-0.5 bg-gold" />}
             </Link>
           ))}
