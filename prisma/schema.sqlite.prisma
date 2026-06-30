@@ -1575,3 +1575,38 @@ model NotificationLog {
   @@index([status, createdAt])
   @@index([channel, status])
 }
+
+model IntakeAbandonment {
+  id             String    @id @default(cuid())
+  email          String
+  phone          String?
+  name           String?
+  category       String?
+  step           Int       @default(1)
+  reminded       Int       @default(0)
+  lastRemindedAt DateTime?
+  convertedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model SatisfactionSurvey {
+  id          String    @id @default(cuid())
+  orgId       String    @default("default")
+  caseId      String?
+  inquiryId   String?
+  clientName  String?
+  clientEmail String?
+  score       Int       // 0-10 NPS score
+  feedback    String?   // Free text
+  category    String?   // "speed" | "quality" | "communication" | "cost" | "overall"
+  status      String    @default("PENDING") // PENDING, COMPLETED, EXPIRED
+  token       String    @unique // unique survey link token
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([token])
+  @@index([status])
+  @@index([inquiryId])
+}

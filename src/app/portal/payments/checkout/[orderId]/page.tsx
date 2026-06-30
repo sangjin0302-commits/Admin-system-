@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma/client";
 import { CheckoutWidget } from "./checkout-widget";
 import { BankTransferGuide } from "@/components/portal/bank-transfer-guide";
+import { ConsultationFeePay } from "@/components/portal/consultation-fee-pay";
 import { getSiteSettings } from "@/lib/services/site-settings";
 
 export const dynamic = "force-dynamic";
@@ -56,25 +57,38 @@ export default async function CheckoutPage({
         <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
           취소되거나 실패한 주문입니다. 새 주문을 만들어주세요.
         </div>
-      ) : tossEnabled ? (
-        <CheckoutWidget
-          clientKey={clientKey}
-          orderId={payment.orderId}
-          orderName={payment.orderName}
-          amount={payment.amount}
-          customerName={payment.customerName ?? "고객"}
-          customerEmail={payment.customerEmail ?? "customer@example.com"}
-        />
       ) : (
-        <BankTransferGuide
-          orderId={payment.orderId}
-          orderName={payment.orderName}
-          amount={payment.amount}
-          customerName={payment.customerName ?? "고객"}
-          bankName={site["payment.bankName"] ?? ""}
-          accountNumber={site["payment.accountNumber"] ?? ""}
-          accountHolder={site["payment.accountHolder"] ?? ""}
-        />
+        <>
+          {/* Toss 온라인 결제 위젯 */}
+          {tossEnabled && (
+            <CheckoutWidget
+              clientKey={clientKey}
+              orderId={payment.orderId}
+              orderName={payment.orderName}
+              amount={payment.amount}
+              customerName={payment.customerName ?? "고객"}
+              customerEmail={payment.customerEmail ?? "customer@example.com"}
+            />
+          )}
+
+          {/* 무통장 입금 안내 (Toss 비활성 시 기본, 활성 시 폴백) */}
+          <div className={tossEnabled ? "mt-6" : ""}>
+            <BankTransferGuide
+              orderId={payment.orderId}
+              orderName={payment.orderName}
+              amount={payment.amount}
+              customerName={payment.customerName ?? "고객"}
+              bankName={site["payment.bankName"] ?? ""}
+              accountNumber={site["payment.accountNumber"] ?? ""}
+              accountHolder={site["payment.accountHolder"] ?? ""}
+            />
+          </div>
+
+          {/* 상담료 간편 결제 */}
+          <div className="ethos-card mt-6 p-5">
+            <ConsultationFeePay caseId={payment.caseId ?? undefined} />
+          </div>
+        </>
       )}
     </div>
   );

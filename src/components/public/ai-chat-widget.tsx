@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { extractIntakeFromChat } from "@/lib/utils/chat-to-intake";
 
 type Message = {
   role: "user" | "assistant";
@@ -179,6 +180,22 @@ export function AiChatWidget() {
         ))}
         <div ref={bottomRef} />
       </div>
+
+      {/* Chat-to-Intake CTA */}
+      {messages.filter(m => m.role === "user").length >= 2 && (
+        <button
+          onClick={() => {
+            const { summary, category } = extractIntakeFromChat(messages);
+            const params = new URLSearchParams({ from: "ai-chat", summary });
+            if (category) params.set("cat", category);
+            window.location.href = `/intake?${params.toString()}`;
+          }}
+          className="mx-3 mb-2 rounded-lg bg-gold-soft/50 px-3 py-2 text-xs font-bold text-gold-deep transition hover:bg-gold-soft"
+          data-funnel="chat_to_intake"
+        >
+          이 내용으로 검토 요청하기 →
+        </button>
+      )}
 
       {/* Input */}
       <div className="border-t border-gold/20 p-3">

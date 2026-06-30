@@ -410,6 +410,32 @@ export function IntakeFormSafeV3({
     [selectedCivilPetitionSubtypeFields]
   );
 
+  // Track intake progress for abandoned intake recovery
+  useEffect(() => {
+    if (!form.email || !form.category) return;
+
+    // Determine approximate step based on filled fields
+    let step = 2; // email + category filled = at least step 2
+    if (Object.keys(form.categoryDetails).length > 0) step = 3;
+    if (form.description) step = 4;
+
+    const controller = new AbortController();
+    fetch("/api/public/intake-progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        email: form.email,
+        phone: form.phone,
+        name: form.contactName,
+        category: form.category,
+        step,
+      }),
+    }).catch(() => {});
+
+    return () => controller.abort();
+  }, [form.email, form.category, form.description, form.categoryDetails, form.phone, form.contactName]);
+
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();

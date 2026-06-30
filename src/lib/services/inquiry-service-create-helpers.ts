@@ -179,6 +179,18 @@ export async function createInquiry(payload: unknown) {
       // SSE broadcast is best-effort
     }
 
+    // Webhook dispatch (fire-and-forget)
+    try {
+      const { dispatchWebhook } = await import("@/lib/services/webhook-dispatch-service");
+      dispatchWebhook("inquiry.created", {
+        id: updated.id,
+        name: updated.contactName,
+        category: updated.intakePracticeArea ?? updated.intakeCategory,
+      }).catch((err) => logger.warn("[webhook] inquiry.created dispatch error", err));
+    } catch {
+      // webhook dispatch is best-effort
+    }
+
     // 자동 lawbot 분석 (best-effort, await 안 함 — 응답 지연 방지)
     if (process.env.LAWBOT_BRIDGE_BASE_URL) {
       const { autoAnalyzeInquiryWithLawbot } = await import("@/lib/services/auto-lawbot-analysis");

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +24,29 @@ type InquiryBoardItem = {
   responsePending?: boolean;
   hasPreparedDocuments?: boolean;
   updatedAt: Date;
+  publicTrackingCode?: string | null;
+  email?: string | null;
 };
+
+function isDueSoon(date: Date | null | undefined): boolean {
+  if (!date) return false;
+  const now = new Date();
+  const diff = new Date(date).getTime() - now.getTime();
+  const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+  return diff >= 0 && diff <= threeDaysMs;
+}
+
+function getUrgencyBorderClass(urgency: string): string {
+  switch (urgency) {
+    case "HIGH":
+    case "URGENT":
+      return "border-l-4 border-l-red-500";
+    case "MEDIUM":
+      return "border-l-4 border-l-yellow-400";
+    default:
+      return "";
+  }
+}
 
 type LaneConfig = {
   key: string;
@@ -106,7 +130,7 @@ export function InquiryKanbanBoard({ inquiries }: { inquiries: InquiryBoardItem[
                       <Link
                         key={item.id}
                         href={`/admin/inquiries/${item.id}`}
-                        className="block rounded-xl border border-line bg-white px-3 py-3 transition hover:border-line-strong hover:bg-surface"
+                        className={`group block rounded-xl border border-line bg-white px-3 py-3 transition hover:border-line-strong hover:bg-surface ${getUrgencyBorderClass(urgency)}`}
                       >
                         <div className="flex flex-wrap items-center gap-1.5">
                           <Badge tone="urgency" urgency={urgency}>
@@ -119,12 +143,44 @@ export function InquiryKanbanBoard({ inquiries }: { inquiries: InquiryBoardItem[
                         <p className="mt-2 truncate text-sm font-semibold text-text-strong">{item.title}</p>
                         <p className="mt-1 truncate text-xs text-text-muted">{item.contactName}</p>
                         <p className="mt-2 text-xs text-text">
-                          기한 {formatDateTime(item.dueDate)} · 다음 연락 {formatDateTime(item.nextContactAt)}
+                          기한 {formatDateTime(item.dueDate)}{isDueSoon(item.dueDate) && <span className="ml-1 text-red-500" title="마감 임박">🕐</span>} · 다음 연락 {formatDateTime(item.nextContactAt)}
                         </p>
                         <p className="mt-1 text-xs text-text-muted">
                           {item.responsePending ? "응답 대기" : "응답 흐름 안정"} ·{" "}
                           {item.hasPreparedDocuments ? "기본 서류 확인됨" : "자료 확인 필요"}
                         </p>
+                        {(item.publicTrackingCode || item.email) && (
+                          <div className="mt-2 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                            {item.publicTrackingCode && (
+                              <button
+                                type="button"
+                                title="트래킹 코드 복사"
+                                className="rounded px-1.5 py-0.5 text-xs hover:bg-surface-strong"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  navigator.clipboard.writeText(item.publicTrackingCode!);
+                                }}
+                              >
+                                📋
+                              </button>
+                            )}
+                            {item.email && (
+                              <button
+                                type="button"
+                                title="이메일 보내기"
+                                className="rounded px-1.5 py-0.5 text-xs hover:bg-surface-strong"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  window.open(`mailto:${item.email}`, "_blank");
+                                }}
+                              >
+                                📧
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </Link>
                     );
                   })

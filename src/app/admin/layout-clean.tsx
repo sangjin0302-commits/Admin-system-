@@ -2,6 +2,7 @@ import { AdminLiveIndicator } from "@/components/admin/live-indicator";
 import { AdminOpsBanner } from "@/components/admin/admin-ops-banner";
 import { AdminSearchBar } from "@/components/admin/admin-search-bar";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AdminMobileNav } from "@/components/admin/mobile-nav";
 import { listInquiries } from "@/lib/services/inquiry-service";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +15,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="flex gap-6">
       <AdminSidebar newInquiryCount={newCount} />
-      <div className="min-w-0 flex-1 space-y-6">
+      <div className="min-w-0 flex-1 space-y-6 pb-16 lg:pb-0">
         <section className="rounded-[20px] border border-line bg-surface px-5 py-5 shadow-panel">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -39,6 +40,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
         {children}
       </div>
+      <AdminMobileNav />
     </div>
   );
 }
