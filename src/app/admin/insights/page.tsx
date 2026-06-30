@@ -32,7 +32,8 @@ export default async function InsightsPage({
     inquiriesTotal,
     inquiries7d,
     inquiries30d,
-    inquiriesByStatus
+    inquiriesByStatus,
+    slaInquiries
   ] = await Promise.all([
     prisma.blogPost.count({ where: { published: true } }).catch(() => 0),
     prisma.blogPost.count({ where: { published: true, source: NAVER_BLOG_SOURCE } }).catch(() => 0),
@@ -57,7 +58,17 @@ export default async function InsightsPage({
     prisma.inquiry.groupBy({
       by: ["status"],
       _count: { _all: true }
-    }).catch(() => [] as Array<{ status: string; _count: { _all: number } }>)
+    }).catch(() => [] as Array<{ status: string; _count: { _all: number } }>),
+    // SLA data: inquiries with firstResponseAt
+    prisma.inquiry.findMany({
+      where: {
+        firstResponseAt: { not: null },
+        createdAt: { gte: new Date(Date.now() - periodMs) }
+      },
+      select: { createdAt: true, firstResponseAt: true },
+      orderBy: { createdAt: "desc" },
+      take: 100
+    }).catch(() => [] as Array<{ createdAt: Date; firstResponseAt: Date }>)
   ]);
 
   const gscQueries = await getTopSearchQueries().catch(() => []);
@@ -86,6 +97,14 @@ export default async function InsightsPage({
     .sort((a, b) => b._count._all - a._count._all)
     .slice(0, 8)
     .map((s) => ({ status: s.status, count: s._count._all }));
+
+  const slaData = slaInquiries.map(inq => {
+    const hours = (inq.firstResponseAt!.getTime() - inq.createdAt.getTime()) / (1000 * 60 * 60);
+    return { date: inq.createdAt.toISOString().slice(5, 10), hours };
+  });
+  const avgHours = slaData.length > 0 ? slaData.reduce((s, d) => s + d.hours, 0) / slaData.length : 0;
+  const slaViolations = slaData.filter(d => d.hours > 24).length;
+  const slaCompliance = slaData.length > 0 ? ((slaData.length - slaViolations) / slaData.length * 100).toFixed(1) : "—";
 
   return (
     <div className="space-y-6">
@@ -181,6 +200,47 @@ export default async function InsightsPage({
           <div className="mt-4"><StatusBarChart data={statusData} /></div>
         </Card>
       )}
+
+      <Card className="p-5">
+        <p className="ui-kicker">SLA 모니터링</p>
+        <div className="mt-4 grid grid-cols-3 gap-4">
+          <div>
+            <p className="text-xs text-text-muted">평균 응답시간</p>
+            <p className="text-2xl font-bold text-primary">{avgHours > 0 ? `${avgHours.toFixed(1)}h` : "—"}</p>
+          </div>
+          <div>
+            <p className="text-xs text-text-muted">SLA 준수율</p>
+            <p className={`text-2xl font-bold ${Number(slaCompliance) >= 90 ? "text-emerald-600" : "text-red-600"}`}>
+              {slaCompliance}%
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-text-muted">24h 초과</p>
+            <p className={`text-2xl font-bold ${slaViolations === 0 ? "text-emerald-600" : "text-red-600"}`}>
+              {slaViolations}건
+            </p>
+          </div>
+        </div>
+        {slaData.length > 0 && (
+          <div className="mt-4 space-y-1">
+            <p className="text-xs font-bold text-text-muted">최근 응답시간 분포</p>
+            {slaData.slice(0, 10).map((d, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs">
+                <span className="w-12 text-text-muted">{d.date}</span>
+                <div className="relative h-4 flex-1 overflow-hidden rounded bg-surface-muted">
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded ${d.hours <= 24 ? "bg-emerald-400" : "bg-red-400"}`}
+                    style={{ width: `${Math.min(100, (d.hours / 48) * 100)}%` }}
+                  />
+                </div>
+                <span className={`w-12 text-right font-mono ${d.hours <= 24 ? "text-emerald-600" : "text-red-600"}`}>
+                  {d.hours.toFixed(1)}h
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
       {gscQueries.length > 0 && (
         <Card className="p-5">

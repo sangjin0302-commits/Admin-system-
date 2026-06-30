@@ -326,6 +326,16 @@ export async function POST(request: Request) {
           message: String(payload.message ?? ""),
         }).catch(() => {})
       );
+      // 카카오 알림톡 (고객 접수 확인)
+      import("@/lib/services/kakao-notification-service").then((mod) => {
+        if (mod.isAlimtalkConnected() && inquiry.phone) {
+          mod.notifyInquiryReceived(
+            inquiry.phone,
+            inquiry.contactName || "고객님",
+            inquiry.publicTrackingCode || inquiry.id.slice(0, 8)
+          ).catch((err) => logger.warn("[intake] kakao notify failed", err));
+        }
+      }).catch(() => undefined);
       // 텔레그램 알림 (Jean 개인 봇)
       import("@/lib/services/telegram-notify").then((mod) => {
         const lines = [

@@ -21,6 +21,7 @@ import {
   getKoreaMonthRange,
   normalizePhoneLast4
 } from "@/lib/services/public-tracking-code-service";
+import { broadcastAdminEvent } from "@/app/api/admin/events/route";
 import { logger } from "@/lib/utils/logger";
 
 function isPublicTrackingCodeCollision(error: unknown) {
@@ -165,6 +166,17 @@ export async function createInquiry(payload: unknown) {
       });
     } catch (error) {
       logger.error("Failed to sync consultation to Notion", error);
+    }
+
+    // Broadcast real-time SSE event to admin clients
+    try {
+      broadcastAdminEvent({
+        type: "inquiry_new",
+        data: { name: updated.contactName, category: updated.intakeCategory },
+        timestamp: new Date().toISOString(),
+      });
+    } catch {
+      // SSE broadcast is best-effort
     }
 
     // 자동 lawbot 분석 (best-effort, await 안 함 — 응답 지연 방지)

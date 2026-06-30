@@ -1,3 +1,4 @@
+import { AdminLiveIndicator } from "@/components/admin/live-indicator";
 import { AdminOpsBanner } from "@/components/admin/admin-ops-banner";
 import { AdminSearchBar } from "@/components/admin/admin-search-bar";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
@@ -17,7 +18,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <section className="rounded-[20px] border border-line bg-surface px-5 py-5 shadow-panel">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="ui-kicker">관리자 업무 공간</p>
+              <div className="flex items-center gap-3">
+                <p className="ui-kicker">관리자 업무 공간</p>
+                <AdminLiveIndicator />
+              </div>
               <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-text-strong">
                 행정사 업무 관리 허브
               </h2>

@@ -1,8 +1,9 @@
-import type { LocaleMessages } from "@/i18n/shared";
+import type { Locale } from "@/types/inquiry";
 
 type IntakePageKey =
   | "switchToEnglish"
   | "switchToKorean"
+  | "switchToArabic"
   | "heroKicker"
   | "heroTitle"
   | "heroDescription"
@@ -15,10 +16,13 @@ type IntakePageKey =
   | "formTitle"
   | "formDescription";
 
-export const intakePageMessages: LocaleMessages<IntakePageKey> = {
+export type IntakeLocaleMessages = Record<Locale, Record<IntakePageKey, string>>;
+
+export const intakePageMessages: IntakeLocaleMessages = {
   ko: {
     switchToEnglish: "English",
     switchToKorean: "한국어",
+    switchToArabic: "العربية",
     heroKicker: "온라인 접수",
     heroTitle: "행정업무 상담을 빠르게 접수하세요",
     heroDescription:
@@ -35,6 +39,7 @@ export const intakePageMessages: LocaleMessages<IntakePageKey> = {
   en: {
     switchToEnglish: "English",
     switchToKorean: "Korean",
+    switchToArabic: "العربية",
     heroKicker: "Online intake",
     heroTitle: "Submit your administrative inquiry quickly",
     heroDescription:
@@ -47,5 +52,22 @@ export const intakePageMessages: LocaleMessages<IntakePageKey> = {
     prepItemTargetAgency: "Target authority or destination",
     formTitle: "Intake Input Info",
     formDescription: "Complete required fields first, then add optional details if helpful."
+  },
+  ar: {
+    switchToEnglish: "English",
+    switchToKorean: "한국어",
+    switchToArabic: "العربية",
+    heroKicker: "التقديم عبر الإنترنت",
+    heroTitle: "قدّم استفسارك الإداري بسرعة",
+    heroDescription:
+      "ابدأ بالمعلومات المطلوبة واحصل على إرشادات واضحة للخطوات التالية بعد التقديم.",
+    prepTitle: "معلومات التحضير",
+    prepDescription: "تضمين العناصر أدناه يساعدنا في فرز حالتك بشكل أسرع وأكثر دقة.",
+    prepItemCurrentStatus: "الوضع الحالي: ملخص التأشيرة أو القرار أو التقدم",
+    prepItemGoalAndDeadline: "النتيجة المرجوة والتاريخ المستهدف أو الموعد النهائي",
+    prepItemAvailableDocuments: "المستندات المتوفرة واحتياجات الترجمة",
+    prepItemTargetAgency: "الجهة المستهدفة أو الوجهة",
+    formTitle: "معلومات نموذج التقديم",
+    formDescription: "أكمل الحقول المطلوبة أولاً، ثم أضف التفاصيل الاختيارية إن لزم الأمر."
   }
 };

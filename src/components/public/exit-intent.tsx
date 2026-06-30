@@ -67,7 +67,15 @@ export function ExitIntent() {
           </p>
         </div>
 
-        <div className="space-y-2 p-6">
+        <div className="space-y-3 p-6" data-funnel="exit_intent_booking">
+          <Link
+            href="/consult#booking"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-between rounded-xl border border-gold/40 bg-surface px-4 py-3 font-serif text-sm font-bold text-primary transition hover:bg-gold-soft/30"
+          >
+            <span>📅 상담 예약하기</span>
+            <span>→</span>
+          </Link>
           <a
             href={CHANNELS.naverTalk.url}
             target="_blank"
@@ -75,24 +83,14 @@ export function ExitIntent() {
             className="flex items-center justify-between rounded-xl bg-[#03C75A] px-4 py-3 font-serif text-sm font-bold text-white transition hover:brightness-95"
           >
             <span>네이버 톡톡으로 검토 요청</span>
-            <span>→</span>
-          </a>
-          <a
-            href={CHANNELS.kakao.url}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-between rounded-xl bg-[#FEE500] px-4 py-3 font-serif text-sm font-bold text-[#3C1E1E] transition hover:brightness-95"
-          >
-            <span>카카오로 검토 요청</span>
-            <span>→</span>
+            <span className="text-xs font-normal opacity-80">가장 빠른 검토</span>
           </a>
           <Link
-            href="/intake"
+            href="/consult"
             onClick={() => setOpen(false)}
-            className="flex items-center justify-between rounded-xl border border-gold/40 bg-surface px-4 py-3 font-serif text-sm font-bold text-primary transition hover:bg-gold-soft/30"
+            className="block text-center text-xs text-white/60 transition hover:text-white/90"
           >
-            <span>웹폼으로 상황 남기기 (1분)</span>
-            <span>→</span>
+            또는 상담 페이지에서 예약 →
           </Link>
         </div>
 
