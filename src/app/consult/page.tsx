@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
 import { ConsultStructure } from "@/components/public/consult-structure";
+import { BookingWidget } from "@/components/public/booking-widget";
 import { CHANNELS, CONSULT_TAGLINE } from "@/lib/constants/channels";
 import { FAQJsonLd } from "@/components/seo/json-ld";
 
@@ -195,6 +196,44 @@ export default function ConsultPage() {
               </Link>
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      {/* 상담 예약 */}
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <Reveal className="text-center">
+            <p className="ethos-eyebrow">Booking</p>
+            <h2 className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">상담 예약</h2>
+            <p className="mt-3 text-sm text-text-muted">원하시는 날짜와 시간을 선택하면 접수 폼에 자동 연결됩니다.</p>
+          </Reveal>
+          <Reveal delay={1}>
+            <div className="mt-10">
+              <BookingWidget />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="ethos-band ethos-band-soft py-20 sm:py-24">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <Reveal className="text-center">
+            <p className="ethos-eyebrow">FAQ</p>
+            <h2 className="ethos-display mt-4 text-3xl">자주 묻는 질문</h2>
+          </Reveal>
+          <div className="mt-10 space-y-4">
+            {FAQ_QA.map((item) => (
+              <Reveal key={item.question}>
+                <details className="group rounded-2xl border border-gold/30 bg-surface">
+                  <summary className="cursor-pointer px-6 py-4 font-serif text-sm font-bold text-primary transition group-open:text-gold-deep">
+                    {item.question}
+                  </summary>
+                  <p className="px-6 pb-5 text-sm leading-7 text-text-muted">{item.answer}</p>
+                </details>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
     </div>

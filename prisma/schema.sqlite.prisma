@@ -404,6 +404,7 @@ model Inquiry {
   orgId                    String?
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
+  firstResponseAt          DateTime?
   status                   InquiryStatus @default(NEW)
   inquiryType              InquiryType   @default(UNKNOWN)
   urgencyLevel             UrgencyLevel  @default(MEDIUM)

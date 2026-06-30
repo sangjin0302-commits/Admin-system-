@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma/client";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 import { CATEGORY_LABEL, type BlogCategory } from "@/lib/services/blog-categorizer";
 import { WeeklyInquiriesChart, CategoryPieChart, StatusBarChart } from "@/components/admin/insights-charts";
+import { getTopSearchQueries } from "@/lib/services/gsc-service";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,8 @@ export default async function InsightsPage({
       _count: { _all: true }
     }).catch(() => [] as Array<{ status: string; _count: { _all: number } }>)
   ]);
+
+  const gscQueries = await getTopSearchQueries().catch(() => []);
 
   // 기간 일별 의뢰 시리즈 (7/30/90)
   const dayCounts = new Map<string, number>();
@@ -176,6 +179,37 @@ export default async function InsightsPage({
         <Card className="p-5">
           <p className="ui-kicker">의뢰 상태별 분포</p>
           <div className="mt-4"><StatusBarChart data={statusData} /></div>
+        </Card>
+      )}
+
+      {gscQueries.length > 0 && (
+        <Card className="p-5">
+          <p className="ui-kicker">검색 유입 키워드 (GSC)</p>
+          <p className="mt-1 text-xs text-text-muted">최근 28일 Google Search Console 데이터</p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-gold/20 text-left">
+                  <th className="pb-2 font-bold text-text-strong">키워드</th>
+                  <th className="pb-2 text-right font-bold text-text-strong">클릭</th>
+                  <th className="pb-2 text-right font-bold text-text-strong">노출</th>
+                  <th className="pb-2 text-right font-bold text-text-strong">CTR</th>
+                  <th className="pb-2 text-right font-bold text-text-strong">순위</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gscQueries.map((q) => (
+                  <tr key={q.query} className="border-b border-gold/10">
+                    <td className="py-2 font-medium text-text">{q.query}</td>
+                    <td className="py-2 text-right text-text-muted">{q.clicks}</td>
+                    <td className="py-2 text-right text-text-muted">{q.impressions.toLocaleString()}</td>
+                    <td className="py-2 text-right text-text-muted">{q.ctr}%</td>
+                    <td className="py-2 text-right text-text-muted">{q.position}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 

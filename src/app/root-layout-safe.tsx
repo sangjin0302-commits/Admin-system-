@@ -7,6 +7,7 @@ import { Toaster as SonnerToaster } from "sonner";
 
 import { AppShellSafe } from "@/components/layout/app-shell-safe";
 import { Analytics } from "@/components/public/analytics";
+import { AiChatWidget } from "@/components/public/ai-chat-widget";
 import { LiveChat } from "@/components/public/live-chat";
 import { LocalBusinessJsonLd } from "@/components/public/json-ld";
 import { PWARegister } from "@/components/public/pwa-register";
@@ -108,6 +109,7 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
             }
           }}
         />
+        <AiChatWidget />
         <LiveChat />
         <Analytics />
         <VercelAnalytics />

@@ -215,14 +215,19 @@ function getCredentials() {
   return { username, password } satisfies Credentials;
 }
 
-function buildCsp() {
+function buildCsp(nonce: string) {
   const isDev = process.env.NODE_ENV !== "production";
-  const scriptPolicy = isDev ? "'self' 'unsafe-inline' 'unsafe-eval'" : "'self' 'unsafe-inline'";
+  const scriptPolicy = isDev
+    ? "'self' 'unsafe-inline' 'unsafe-eval'"
+    : `'self' 'nonce-${nonce}' 'strict-dynamic'`;
+  const stylePolicy = isDev
+    ? "'self' 'unsafe-inline'"
+    : "'self' 'unsafe-inline'"; // inline styles still needed for Tailwind
 
   return [
     "default-src 'self'",
     `script-src ${scriptPolicy}`,
-    "style-src 'self' 'unsafe-inline'",
+    `style-src ${stylePolicy}`,
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     "connect-src 'self' https: wss:",
@@ -234,13 +239,15 @@ function buildCsp() {
 }
 
 function applySecurityHeaders(request: NextRequest, response: NextResponse) {
+  const nonce = crypto.randomUUID().replace(/-/g, "");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()");
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
-  response.headers.set("Content-Security-Policy", buildCsp());
+  response.headers.set("Content-Security-Policy", buildCsp(nonce));
+  response.headers.set("x-nonce", nonce);
 
   const pathname = request.nextUrl.pathname;
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {

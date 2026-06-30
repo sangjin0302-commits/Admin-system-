@@ -21,6 +21,7 @@ export async function updateInquiryAdminFields(
     where: { id },
     select: {
       updatedAt: true,
+      firstResponseAt: true,
       status: true,
       email: true,
       phone: true,
@@ -52,7 +53,12 @@ export async function updateInquiryAdminFields(
 
   const updated = await prisma.inquiry.update({
     where: { id },
-    data: buildInquiryAdminUpdateData(payload, currentLogs, statusChangeEntry)
+    data: {
+      ...buildInquiryAdminUpdateData(payload, currentLogs, statusChangeEntry),
+      ...(statusChangeEntry && !current.firstResponseAt
+        ? { firstResponseAt: new Date() }
+        : {})
+    }
   });
 
   try {

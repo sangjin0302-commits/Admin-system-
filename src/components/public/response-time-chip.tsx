@@ -1,7 +1,5 @@
 /**
- * 검토 응답 시간 chip.
- * Heuristic: status 변화한 의뢰의 updatedAt - createdAt 평균.
- * 의뢰 < 3건 → 정적 fallback "영업일 24시간 내".
+ * 검토 응답 시간 chip — firstResponseAt 기반 실 데이터.
  */
 import { prisma } from "@/lib/prisma/client";
 
@@ -9,22 +7,21 @@ async function getAvgResponseLabel(): Promise<string> {
   try {
     const responded = await prisma.inquiry.findMany({
       where: {
-        status: { notIn: ["NEW"] }
+        firstResponseAt: { not: null }
       },
-      select: { createdAt: true, updatedAt: true },
+      select: { createdAt: true, firstResponseAt: true },
       take: 50,
       orderBy: { createdAt: "desc" }
     });
     if (responded.length < 3) return "영업일 24시간 내";
 
     const totalMs = responded.reduce(
-      (s, i) => s + (i.updatedAt.getTime() - i.createdAt.getTime()),
+      (s, i) => s + ((i.firstResponseAt as Date).getTime() - i.createdAt.getTime()),
       0
     );
     const avgH = Math.round(totalMs / responded.length / (1000 * 60 * 60));
     if (avgH < 1) return "평균 1시간 내";
-    if (avgH < 6) return `평균 ${avgH}시간 내`;
-    if (avgH < 24) return `평균 ${avgH}시간 내`;
+    if (avgH <= 24) return `평균 ${avgH}시간 내`;
     return "영업일 24시간 내";
   } catch {
     return "영업일 24시간 내";
