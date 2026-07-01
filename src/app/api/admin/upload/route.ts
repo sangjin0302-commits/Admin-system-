@@ -4,7 +4,7 @@ import { put, del } from "@vercel/blob";
 import { prisma } from "@/lib/prisma/client";
 import { invalidateSiteSettingsCache } from "@/lib/services/site-settings";
 
-const ALLOWED_KEYS = ["image.logo", "image.aboutPhoto", "image.ogImage"] as const;
+const ALLOWED_KEYS = ["image.logo", "image.aboutPhoto", "image.ogImage", "image.assocBadge"] as const;
 type ImageKey = (typeof ALLOWED_KEYS)[number];
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB

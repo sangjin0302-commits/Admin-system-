@@ -277,13 +277,13 @@ export function ServicePage({
               <div className="mt-5 flex flex-wrap gap-2">
                 <Link
                   href={intakeHref}
-                  className="inline-flex h-10 items-center rounded-lg bg-emerald-700 px-4 text-sm font-bold text-white transition hover:bg-emerald-800"
+                  className="inline-flex h-11 items-center rounded-lg bg-emerald-700 px-4 text-sm font-bold text-white transition hover:bg-emerald-800"
                 >
                   무료 검토 요청하기 →
                 </Link>
                 <Link
                   href="/consult"
-                  className="inline-flex h-10 items-center rounded-lg border border-emerald-300 bg-white px-4 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                  className="inline-flex h-11 items-center rounded-lg border border-emerald-300 bg-white px-4 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
                 >
                   상담 구조 자세히
                 </Link>

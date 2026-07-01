@@ -187,7 +187,7 @@ export function BotChatPanel({
                       <p className="font-serif text-sm font-bold text-primary">업그레이드 안내</p>
                       <a
                         href={m.upgradeCta.href}
-                        className="mt-3 inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-bold text-white hover:bg-text-strong"
+                        className="mt-3 inline-flex h-11 items-center rounded-lg bg-primary px-4 text-sm font-bold text-white hover:bg-text-strong"
                       >
                         {m.upgradeCta.text}
                       </a>
@@ -198,7 +198,12 @@ export function BotChatPanel({
             </div>
           ))
         )}
-        {loading && <p className="text-xs text-text-muted">답변 생성 중…</p>}
+        {loading && (
+          <div className="flex items-center gap-2" role="status">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gold/30 border-t-gold-deep" aria-hidden />
+            <p className="text-xs text-text-muted">답변 생성 중…</p>
+          </div>
+        )}
       </div>
 
       {/* Input */}
@@ -215,7 +220,7 @@ export function BotChatPanel({
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="inline-flex h-10 items-center rounded-lg bg-primary px-5 text-sm font-bold text-white hover:bg-text-strong disabled:opacity-40"
+          className="inline-flex h-11 items-center rounded-lg bg-primary px-5 text-sm font-bold text-white hover:bg-text-strong disabled:opacity-40"
         >
           전송
         </button>

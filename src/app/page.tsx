@@ -11,6 +11,7 @@ import { Testimonials } from "@/components/public/testimonials";
 import { Reveal } from "@/components/public/reveal";
 import { ConsultStructure } from "@/components/public/consult-structure";
 import { HeroScrollIndicator } from "@/components/public/hero-scroll-indicator";
+import { ParallaxAurora } from "@/components/public/parallax-aurora";
 import { NewsletterBanner } from "@/components/public/newsletter-banner";
 import { NaverBlogSection } from "@/components/public/naver-blog-section";
 import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
@@ -214,9 +215,13 @@ export default async function PublicMarketingHomePage({
   const naverBlogId = site["naver.blogId"];
   const naverPosts = naverBlogId ? await fetchNaverBlogPosts(naverBlogId, 6) : [];
 
-  // 로고 (DB → /logo.png fallback)
+  // 로고 (DB → /logo.webp fallback)
   const heroLogoRow = await prisma.siteSetting.findUnique({ where: { key: "image.logo" } }).catch(() => null);
-  const heroLogo = heroLogoRow?.value || "/logo.png";
+  const heroLogo = heroLogoRow?.value || "/logo.webp";
+
+  // 대표 프로필 사진 — about 페이지와 동일한 site-setting 사용
+  const aboutPhotoRow = await prisma.siteSetting.findUnique({ where: { key: "image.aboutPhoto" } }).catch(() => null);
+  const aboutPhoto = aboutPhotoRow?.value || null;
 
   return (
     <div className="overflow-x-clip">
@@ -250,7 +255,7 @@ export default async function PublicMarketingHomePage({
 
       {/* ═══════════════ HERO ═══════════════ */}
       <section className="relative overflow-hidden">
-        <div className="ethos-aurora ethos-aurora-animated" aria-hidden />
+        <ParallaxAurora className="ethos-aurora ethos-aurora-animated" />
         <div className="absolute inset-0 -z-10 ethos-grid-pattern" aria-hidden />
 
         <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-20 sm:px-6 sm:pb-28 sm:pt-28 lg:grid-cols-[1.15fr_0.85fr]">
@@ -428,6 +433,93 @@ export default async function PublicMarketingHomePage({
                 </div>
               </Reveal>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ 대표 행정사 프로필 ═══════════════ */}
+      <section className="ethos-band ethos-band-soft py-24 sm:py-28" aria-labelledby="lead-attorney-heading">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+            {/* 좌: 사진 슬롯 (about 페이지와 동일한 image.aboutPhoto 설정 사용) */}
+            <Reveal>
+              <div className="relative mx-auto w-full max-w-sm lg:mx-0">
+                <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border-4 border-gold/40 bg-gradient-to-br from-primary/10 via-surface to-gold/10 shadow-floating">
+                  {aboutPhoto ? (
+                    <Image
+                      src={aboutPhoto}
+                      alt="대표 행정사 Jean"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                      sizes="(max-width: 768px) 100vw, 35vw"
+                    />
+                  ) : (
+                    <div
+                      className="flex h-full flex-col items-center justify-center gap-6 px-8"
+                      style={{
+                        backgroundColor: "rgb(22 50 80)",
+                        backgroundImage: "linear-gradient(180deg, rgb(22 50 80) 0%, rgb(18 40 65) 60%, rgb(12 28 48) 100%)"
+                      }}
+                    >
+                      <div className="relative flex h-36 w-36 items-center justify-center overflow-hidden rounded-2xl bg-white p-4 shadow-floating ring-4 ring-gold/40">
+                        <Image
+                          src={heroLogo}
+                          alt="ETHOS 행정사사무소"
+                          fill
+                          className="object-contain p-2"
+                          unoptimized={heroLogo.startsWith("http")}
+                          sizes="9rem"
+                        />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-serif text-sm font-bold tracking-[0.3em] text-white">ETHOS</p>
+                        <p className="mt-1 font-serif text-[11px] tracking-[0.2em] text-gold-soft">에토스 행정사사무소</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="absolute -bottom-5 -right-5 rounded-xl bg-primary px-6 py-4 text-white shadow-floating">
+                  <p className="ethos-quote text-xs tracking-wider text-gold-soft">Lead</p>
+                  <p className="mt-1 font-serif text-lg font-bold">대표 행정사</p>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* 우: 이름 · 자격 요약 · CTA */}
+            <Reveal delay={1}>
+              <div>
+                <p className="ethos-eyebrow">Lead Attorney</p>
+                <h2 id="lead-attorney-heading" className="ethos-display mt-3 text-3xl sm:text-4xl">
+                  행정사 Jean
+                </h2>
+                <p className="mt-4 max-w-lg text-sm leading-7 text-text-muted">
+                  비자·출입국, 행정심판, 계약서·사실조사, 인허가 업무를 직접 담당합니다.
+                  외국인 의뢰인도 모국어로 안심하고 상담할 수 있습니다.
+                </p>
+                <ul className="mt-7 space-y-3">
+                  {[
+                    "주한 대사관 비자·출입국 실무 2.5년+",
+                    "법무부 난민 판결문 공식 번역인",
+                    "법원행정처 법정 통번역인 등록",
+                    "한국어 · 영어 · 아랍어 상담 가능"
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-3 text-sm text-text">
+                      <span className="h-1.5 w-1.5 shrink-0 rotate-45 bg-gold" aria-hidden />
+                      <span className="font-semibold">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-9">
+                  <Link
+                    href="/about"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-gold/50 bg-surface px-7 text-sm font-bold text-primary shadow-sm transition-all duration-300 hover:border-gold hover:bg-gold-soft/40"
+                  >
+                    프로필 자세히 보기 →
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>

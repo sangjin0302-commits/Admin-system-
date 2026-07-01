@@ -27,7 +27,7 @@ export function NaverBlogSection({ posts, blogId }: { posts: NaverBlogPost[]; bl
               href={`https://blog.naver.com/${blogId}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#03C75A]/40 bg-[#03C75A]/10 px-4 font-serif text-sm font-semibold text-[#03A94C] transition hover:bg-[#03C75A]/20"
+              className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#03C75A]/40 bg-[#03C75A]/10 px-4 font-serif text-sm font-semibold text-[#03A94C] transition hover:bg-[#03C75A]/20"
             >
               <span className="flex h-5 w-5 items-center justify-center rounded bg-[#03C75A] text-[11px] font-black text-white">
                 N

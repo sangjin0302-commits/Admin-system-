@@ -47,7 +47,7 @@ export function ShareButtons({ title }: { title: string }) {
       <button
         type="button"
         onClick={nativeShare}
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-gold/40 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-gold-soft/30 sm:hidden"
+        className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-gold/40 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-gold-soft/30 sm:hidden"
       >
         <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.7">
           <path d="M4 12v8h16v-8M12 16V4M8 8l4-4 4 4" />
@@ -58,7 +58,7 @@ export function ShareButtons({ title }: { title: string }) {
       <button
         type="button"
         onClick={copyLink}
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-gold/40 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-gold-soft/30"
+        className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-gold/40 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-gold-soft/30"
       >
         <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.7">
           <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />
@@ -71,7 +71,7 @@ export function ShareButtons({ title }: { title: string }) {
         target="_blank"
         rel="noreferrer"
         data-funnel="share_x"
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-gold/40 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-gold-soft/30"
+        className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-gold/40 bg-surface px-3 text-xs font-semibold text-primary transition hover:bg-gold-soft/30"
       >
         X
       </a>
@@ -81,7 +81,7 @@ export function ShareButtons({ title }: { title: string }) {
         target="_blank"
         rel="noreferrer"
         data-funnel="share_naver"
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#03C75A]/40 bg-[#03C75A]/10 px-3 text-xs font-bold text-[#03A94C] transition hover:bg-[#03C75A]/20"
+        className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-[#03C75A]/40 bg-[#03C75A]/10 px-3 text-xs font-bold text-[#03A94C] transition hover:bg-[#03C75A]/20"
       >
         <span className="flex h-4 w-4 items-center justify-center rounded bg-[#03C75A] text-[9px] font-black text-white">
           N
@@ -94,7 +94,7 @@ export function ShareButtons({ title }: { title: string }) {
         target="_blank"
         rel="noreferrer"
         data-funnel="share_telegram"
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#0088CC]/40 bg-[#0088CC]/10 px-3 text-xs font-bold text-[#0088CC] transition hover:bg-[#0088CC]/20"
+        className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-[#0088CC]/40 bg-[#0088CC]/10 px-3 text-xs font-bold text-[#0088CC] transition hover:bg-[#0088CC]/20"
       >
         Telegram
       </a>
@@ -104,7 +104,7 @@ export function ShareButtons({ title }: { title: string }) {
         target="_blank"
         rel="noreferrer"
         data-funnel="share_linkedin"
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#0A66C2]/40 bg-[#0A66C2]/10 px-3 text-xs font-bold text-[#0A66C2] transition hover:bg-[#0A66C2]/20"
+        className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-[#0A66C2]/40 bg-[#0A66C2]/10 px-3 text-xs font-bold text-[#0A66C2] transition hover:bg-[#0A66C2]/20"
       >
         LinkedIn
       </a>

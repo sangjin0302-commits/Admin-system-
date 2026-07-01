@@ -5,6 +5,7 @@ import { Reveal } from "@/components/public/reveal";
 import { ConsultStructure } from "@/components/public/consult-structure";
 import { BookingWidget } from "@/components/public/booking-widget";
 import { DeadlineReminderBand } from "@/components/public/deadline-reminder-band";
+import { QuickConsultForm } from "@/components/public/quick-consult-form";
 import { ConsultSlotAvailability } from "@/components/public/consult-slot-availability";
 import { CHANNELS, CONSULT_TAGLINE } from "@/lib/constants/channels";
 import { FAQJsonLd } from "@/components/seo/json-ld";
@@ -72,6 +73,15 @@ export default function ConsultPage() {
             <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-gold-deep">
               변호사 선임 대비 1/3~1/5 비용 수준으로 해결합니다.
             </p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* 퀵 상담폼 — 4필드 */}
+      <section className="pb-10">
+        <div className="mx-auto max-w-xl px-4 sm:px-6">
+          <Reveal>
+            <QuickConsultForm />
           </Reveal>
         </div>
       </section>

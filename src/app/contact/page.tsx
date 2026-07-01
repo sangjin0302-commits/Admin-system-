@@ -16,9 +16,10 @@ export default async function ContactPage() {
   const phone = site["contact.phone"];
   const phoneTel = phone.replace(/[^0-9]/g, "");
   const email = site["contact.email"];
-  const address = site["contact.address"];
+  const address = site["trust.officeAddress"] || site["contact.address"];
   const hours = site["contact.hours"];
   const kakaoUrl = site["contact.kakaoUrl"];
+  const kakaoMapUrl = site["trust.kakaoMapUrl"];
 
   return (
     <div className="overflow-x-clip">
@@ -124,9 +125,24 @@ export default async function ContactPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-3">
+                {kakaoMapUrl && (
                   <a
-                    href="https://map.kakao.com"
+                    href={kakaoMapUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-white transition hover:bg-[#143d5d]"
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M12 2C7.6 2 4 5.4 4 9.5 4 15.5 12 22 12 22s8-6.5 8-12.5C20 5.4 16.4 2 12 2z" />
+                      <circle cx="12" cy="9.5" r="2.5" />
+                    </svg>
+                    오시는 길 (카카오맵) →
+                  </a>
+                )}
+
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <a
+                    href={kakaoMapUrl || "https://map.kakao.com"}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex h-11 items-center justify-center rounded-lg border border-gold/40 bg-surface text-xs font-bold text-primary transition hover:bg-gold-soft/30"

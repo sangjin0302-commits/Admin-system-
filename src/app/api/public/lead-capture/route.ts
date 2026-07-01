@@ -67,6 +67,9 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => ({}));
     const email = typeof body?.email === "string" ? body.email.trim() : "";
+    const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
+    const phoneDigits = phone.replace(/\D/g, "");
+    const hasValidPhone = phoneDigits.length >= 9 && phoneDigits.length <= 15;
     const name =
       typeof body?.name === "string" && body.name.trim()
         ? body.name.trim()
@@ -80,9 +83,11 @@ export async function POST(req: Request) {
         ? body.source.trim()
         : "lead_capture";
 
-    if (!email || !EMAIL_RE.test(email)) {
+    // Email is required unless a valid phone number is provided (phone-only quick form leads).
+    const hasValidEmail = Boolean(email) && EMAIL_RE.test(email);
+    if (!hasValidEmail && !hasValidPhone) {
       return NextResponse.json(
-        { ok: false, error: "invalid_email" },
+        { ok: false, error: email ? "invalid_email" : "contact_required" },
         { status: 400 }
       );
     }
@@ -90,17 +95,25 @@ export async function POST(req: Request) {
     // Store the lead as an un-converted intake abandonment (step 0 = lead only).
     try {
       const existing = await prisma.intakeAbandonment.findFirst({
-        where: { email, convertedAt: null },
+        where: hasValidEmail
+          ? { email, convertedAt: null }
+          : { phone, convertedAt: null },
         orderBy: { createdAt: "desc" },
       });
       if (existing) {
         await prisma.intakeAbandonment.update({
           where: { id: existing.id },
-          data: { name, category, step: 0 },
+          data: { name, category, phone: phone || undefined, step: 0 },
         });
       } else {
         await prisma.intakeAbandonment.create({
-          data: { email, name, category, step: 0 },
+          data: {
+            email: hasValidEmail ? email : "",
+            phone: phone || undefined,
+            name,
+            category,
+            step: 0,
+          },
         });
       }
     } catch {
@@ -108,18 +121,21 @@ export async function POST(req: Request) {
     }
 
     // Fire-and-forget autoresponder (do not await failures blocking response).
-    void sendEmail({
-      to: email,
-      subject: "[ETHOS] 무료 검토 요청이 접수되었습니다",
-      html: autoresponderHtml(name),
-    }).catch(() => {});
+    if (hasValidEmail) {
+      void sendEmail({
+        to: email,
+        subject: "[ETHOS] 무료 검토 요청이 접수되었습니다",
+        html: autoresponderHtml(name),
+      }).catch(() => {});
+    }
 
     // Best-effort internal Telegram alert.
     void sendTelegramAlert({
       kind: "inquiry",
-      title: `새 무료 검토 리드: ${email}`,
+      title: `새 무료 검토 리드: ${hasValidEmail ? email : phone}`,
       lines: [
         name ? `이름: ${name}` : "이름: (미입력)",
+        phone ? `연락처: ${phone}` : "연락처: (미입력)",
         category ? `관심 분야: ${category}` : "관심 분야: (미입력)",
         `유입: ${source}`,
       ],

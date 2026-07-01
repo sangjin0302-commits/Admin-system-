@@ -93,7 +93,7 @@ export function Testimonials({ items }: { items: PublicTestimonial[] }) {
                 type="button"
                 onClick={() => setActive(null)}
                 aria-pressed={active === null}
-                className={`inline-flex h-9 items-center rounded-full border px-4 text-xs font-bold transition ${
+                className={`inline-flex h-11 items-center rounded-full border px-4 text-xs font-bold transition ${
                   active === null
                     ? "border-gold bg-gold text-primary"
                     : "border-gold/40 bg-surface text-text-muted hover:bg-gold-soft/30"
@@ -107,7 +107,7 @@ export function Testimonials({ items }: { items: PublicTestimonial[] }) {
                   type="button"
                   onClick={() => setActive(f.key)}
                   aria-pressed={active === f.key}
-                  className={`inline-flex h-9 items-center rounded-full border px-4 text-xs font-bold transition ${
+                  className={`inline-flex h-11 items-center rounded-full border px-4 text-xs font-bold transition ${
                     active === f.key
                       ? "border-gold bg-gold text-primary"
                       : "border-gold/40 bg-surface text-text-muted hover:bg-gold-soft/30"
@@ -156,7 +156,7 @@ export function Testimonials({ items }: { items: PublicTestimonial[] }) {
                 </div>
 
                 {typeof t.rating === "number" && (
-                  <div className="relative mt-4 text-gold">
+                  <div className="relative mt-4 text-gold-deep">
                     <Stars rating={t.rating} />
                   </div>
                 )}

@@ -14,6 +14,7 @@ const SLOTS: Omit<ImageSlot, "currentUrl">[] = [
   { key: "image.logo", label: "사이트 로고", hint: "헤더·홈페이지에 표시되는 로고 (권장: 정사각형 PNG, 512×512 이상)" },
   { key: "image.aboutPhoto", label: "대표 행정사 사진", hint: "소개 페이지에 표시 (권장: 세로형 4:5 비율)" },
   { key: "image.ogImage", label: "OG / 공유 이미지", hint: "SNS 공유 시 표시되는 대표 이미지 (권장: 1200×630)" },
+  { key: "image.assocBadge", label: "행정사회 뱃지", hint: "대한행정사회 회원 뱃지 — 업로드 시 푸터에 자동 표시됩니다 (권장: 투명 PNG)" },
 ];
 
 function UploadCard({ slot }: { slot: ImageSlot }) {

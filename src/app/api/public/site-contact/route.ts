@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { prisma } from "@/lib/prisma/client";
 import { getSiteSettings } from "@/lib/services/site-settings";
 
 /**
@@ -7,11 +8,22 @@ import { getSiteSettings } from "@/lib/services/site-settings";
  */
 export async function GET() {
   const site = await getSiteSettings();
+  const badgeRow = await prisma.siteSetting
+    .findUnique({ where: { key: "image.assocBadge" } })
+    .catch(() => null);
   return NextResponse.json({
     ok: true,
     phone: site["contact.phone"],
     email: site["contact.email"],
     hours: site["contact.hours"],
-    kakaoUrl: site["contact.kakaoUrl"]
+    kakaoUrl: site["contact.kakaoUrl"],
+    trust: {
+      bizRegNo: site["trust.bizRegNo"],
+      adminLicenseNo: site["trust.adminLicenseNo"],
+      representative: site["trust.representative"],
+      officeAddress: site["trust.officeAddress"],
+      kakaoMapUrl: site["trust.kakaoMapUrl"],
+      assocBadge: badgeRow?.value || ""
+    }
   });
 }

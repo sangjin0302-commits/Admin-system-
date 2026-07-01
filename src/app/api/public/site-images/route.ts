@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma/client";
 
-const IMAGE_KEYS = ["image.logo", "image.aboutPhoto", "image.ogImage"];
+const IMAGE_KEYS = ["image.logo", "image.aboutPhoto", "image.ogImage", "image.assocBadge"];
 
 export async function GET() {
   const rows = await prisma.siteSetting.findMany({ where: { key: { in: IMAGE_KEYS } } }).catch(() => []);

@@ -71,7 +71,7 @@ export function BookingWidget() {
         {selectedDate && selectedTime && (
           <a
             href={`/intake?from=booking&consultation_date=${selectedDate}&consultation_time=${selectedTime}`}
-            className="mt-4 inline-flex h-10 items-center gap-2 rounded-full bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary/90"
+            className="mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary/90"
           >
             {selectedDate} {selectedTime} 상담 접수하기
           </a>

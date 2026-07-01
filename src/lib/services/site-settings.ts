@@ -34,7 +34,12 @@ export type SiteSettingsKey =
   | "services.corporate.desc"
   | "payment.bankName"        // 계좌이체용 은행명
   | "payment.accountNumber"   // 계좌번호
-  | "payment.accountHolder";  // 예금주
+  | "payment.accountHolder"   // 예금주
+  | "trust.bizRegNo"          // 사업자등록번호 (푸터 표시)
+  | "trust.adminLicenseNo"    // 행정사 등록번호 (푸터 표시)
+  | "trust.representative"    // 대표자명 (푸터 표시)
+  | "trust.officeAddress"     // 사무소 주소 (푸터 표시)
+  | "trust.kakaoMapUrl";      // 카카오맵 장소 URL
 
 export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "home.heroBadge": "행정사 사무소 · Logos · Pathos · Ethos",
@@ -66,10 +71,18 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "services.corporate.desc": "",
   "payment.bankName": "",
   "payment.accountNumber": "",
-  "payment.accountHolder": "행정사 Jean"
+  "payment.accountHolder": "행정사 Jean",
+  "trust.bizRegNo": "",
+  "trust.adminLicenseNo": "",
+  "trust.representative": "",
+  "trust.officeAddress": "",
+  "trust.kakaoMapUrl": ""
 };
 
-export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint?: string; multiline?: boolean }> = {
+export const SITE_SETTINGS_LABELS: Record<
+  SiteSettingsKey,
+  { label: string; hint?: string; multiline?: boolean; section?: string }
+> = {
   "home.heroBadge": { label: "홈 상단 배지 문구" },
   "home.heroTitle": { label: "홈 대표 제목", hint: "비우면 기본 제목. 줄바꿈은 Enter로 (각 줄이 한 행)", multiline: true },
   "home.heroDescription": { label: "홈 히어로 소개글", multiline: true },
@@ -100,7 +113,32 @@ export const SITE_SETTINGS_LABELS: Record<SiteSettingsKey, { label: string; hint
   "services.corporate.desc": { label: "서비스: 법인 설립 소개글", hint: "비우면 기본 문구 사용", multiline: true },
   "payment.bankName": { label: "결제: 은행명", hint: "예: 국민은행, 우리은행 (계좌이체 안내용)" },
   "payment.accountNumber": { label: "결제: 계좌번호", hint: "예: 123-456-789012" },
-  "payment.accountHolder": { label: "결제: 예금주", hint: "예: 행정사 Jean / 김OO" }
+  "payment.accountHolder": { label: "결제: 예금주", hint: "예: 행정사 Jean / 김OO" },
+  "trust.bizRegNo": {
+    label: "사업자등록번호",
+    hint: "예: 123-45-67890 — 입력 시 푸터에 자동 표시됩니다",
+    section: "신뢰 정보 (푸터 표시)"
+  },
+  "trust.adminLicenseNo": {
+    label: "행정사 등록번호",
+    hint: "예: 제2026-000000호 — 입력 시 푸터에 자동 표시됩니다",
+    section: "신뢰 정보 (푸터 표시)"
+  },
+  "trust.representative": {
+    label: "대표자명",
+    hint: "예: 홍길동 — 입력 시 푸터에 '대표 홍길동'으로 표시됩니다",
+    section: "신뢰 정보 (푸터 표시)"
+  },
+  "trust.officeAddress": {
+    label: "사무소 주소 (푸터·오시는 길)",
+    hint: "예: 서울 동대문구 ○○로 123, 4층 — 입력 시 푸터 하단에 표시됩니다",
+    section: "신뢰 정보 (푸터 표시)"
+  },
+  "trust.kakaoMapUrl": {
+    label: "카카오맵 장소 URL",
+    hint: "예: https://place.map.kakao.com/12345678 — 입력 시 푸터·오시는 길에 지도 링크가 표시됩니다",
+    section: "신뢰 정보 (푸터 표시)"
+  }
 };
 
 // 짧은 인메모리 캐시 — 공개 페이지 다발 조회 시 DB 부하↓ (편집은 저장 시 무효화)

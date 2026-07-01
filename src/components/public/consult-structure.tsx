@@ -100,23 +100,23 @@ export function ConsultStructure() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <a href={CHANNELS.naverTalk.url} target="_blank" rel="noreferrer"
-                   className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#03C75A] px-4 text-sm font-bold text-white transition hover:brightness-95">
+                   className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#03C75A] px-4 text-sm font-bold text-white transition hover:brightness-95">
                   네이버 톡톡
                 </a>
                 <a href={CHANNELS.kakao.url} target="_blank" rel="noreferrer"
-                   className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#FEE500] px-4 text-sm font-bold text-[#3C1E1E] transition hover:brightness-95">
+                   className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#FEE500] px-4 text-sm font-bold text-[#3C1E1E] transition hover:brightness-95">
                   카카오
                 </a>
                 <a href={CHANNELS.telegram.url} target="_blank" rel="noreferrer"
-                   className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#0088CC] px-4 text-sm font-bold text-white transition hover:brightness-95">
+                   className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#0088CC] px-4 text-sm font-bold text-white transition hover:brightness-95">
                   텔레그램
                 </a>
                 <a href={CHANNELS.email.url}
-                   className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition hover:bg-text-strong">
+                   className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition hover:bg-text-strong">
                   이메일
                 </a>
                 <Link href="/intake"
-                   className="inline-flex h-10 items-center gap-2 rounded-lg border border-gold/40 bg-surface px-4 text-sm font-bold text-primary transition hover:bg-gold-soft/30">
+                   className="inline-flex h-11 items-center gap-2 rounded-lg border border-gold/40 bg-surface px-4 text-sm font-bold text-primary transition hover:bg-gold-soft/30">
                   상담 신청서
                 </Link>
               </div>

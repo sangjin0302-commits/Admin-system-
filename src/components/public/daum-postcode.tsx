@@ -53,7 +53,7 @@ export function DaumPostcodeButton({ onSelect }: Props) {
         type="button"
         onClick={openSearch}
         disabled={!scriptReady}
-        className="inline-flex h-10 items-center rounded-lg border border-gold/40 bg-surface px-4 text-sm font-semibold text-primary hover:bg-gold-soft/30 disabled:opacity-50"
+        className="inline-flex h-11 items-center rounded-lg border border-gold/40 bg-surface px-4 text-sm font-semibold text-primary hover:bg-gold-soft/30 disabled:opacity-50"
       >
         주소 검색
       </button>

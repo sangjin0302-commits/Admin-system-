@@ -173,7 +173,14 @@ export function AiChatWidget() {
             >
               {msg.content}
               {streaming && i === messages.length - 1 && msg.role === "assistant" && (
-                <span className="ethos-caret ml-0.5 inline-block" />
+                msg.content ? (
+                  <span className="ethos-caret ml-0.5 inline-block" />
+                ) : (
+                  <span className="inline-flex items-center gap-2" role="status">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-gold/30 border-t-gold-deep" aria-hidden />
+                    <span className="text-xs text-text-muted">답변 생성 중…</span>
+                  </span>
+                )
               )}
             </div>
           </div>
@@ -224,7 +231,7 @@ export function AiChatWidget() {
           <button
             type="submit"
             disabled={streaming || !input.trim()}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white transition hover:bg-primary/90 disabled:opacity-50"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white transition hover:bg-primary/90 disabled:opacity-50"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="m22 2-7 20-4-9-9-4z" />

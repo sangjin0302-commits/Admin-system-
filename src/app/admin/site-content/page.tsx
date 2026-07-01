@@ -6,7 +6,7 @@ import { SiteImageUpload } from "./image-upload";
 
 export const dynamic = "force-dynamic";
 
-const IMAGE_KEYS = ["image.logo", "image.aboutPhoto", "image.ogImage"];
+const IMAGE_KEYS = ["image.logo", "image.aboutPhoto", "image.ogImage", "image.assocBadge"];
 
 export default async function AdminSiteContentPage() {
   const settings = await getSiteSettings();
@@ -16,7 +16,8 @@ export default async function AdminSiteContentPage() {
     value: settings[key] ?? "",
     label: SITE_SETTINGS_LABELS[key].label,
     hint: SITE_SETTINGS_LABELS[key].hint,
-    multiline: SITE_SETTINGS_LABELS[key].multiline ?? false
+    multiline: SITE_SETTINGS_LABELS[key].multiline ?? false,
+    section: SITE_SETTINGS_LABELS[key].section
   }));
 
   const imageRows = await prisma.siteSetting.findMany({ where: { key: { in: IMAGE_KEYS } } }).catch(() => []);

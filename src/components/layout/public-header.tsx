@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { BlogSearchTrigger } from "@/components/public/blog-search";
 
@@ -52,6 +53,7 @@ function HeaderInner() {
   const qs = lang === "en" ? "?lang=en" : "";
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     function onScroll() {
@@ -94,6 +96,7 @@ function HeaderInner() {
             <Link
               key={item.href}
               href={`${item.href}${qs}`}
+              aria-current={isActive(item.href) ? "page" : undefined}
               className={`relative whitespace-nowrap px-3 py-2 font-serif text-sm font-semibold transition ${
                 isActive(item.href) ? "text-primary" : "text-text-muted hover:text-primary"
               }`}
@@ -140,6 +143,8 @@ function HeaderInner() {
           onClick={() => setMobileOpen((v) => !v)}
           className="rounded-lg p-2 text-primary lg:hidden"
           aria-label="메뉴"
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-menu"
         >
           <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             {mobileOpen ? <path d="M6 6l12 12M18 6l-12 12" /> : <path d="M4 6h16M4 12h16M4 18h16" />}
@@ -148,11 +153,29 @@ function HeaderInner() {
       </div>
 
       {/* 모바일 풀스크린 overlay */}
-      {mobileOpen && (
+      <AnimatePresence>
+        {mobileOpen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col bg-surface/98 backdrop-blur-md lg:hidden"
+          id="mobile-menu"
+          className="fixed inset-0 z-50 lg:hidden"
           style={{ minHeight: "100dvh" }}
         >
+          {/* 배경 (fade) */}
+          <motion.div
+            className="absolute inset-0 bg-surface/98 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            aria-hidden
+          />
+          <motion.div
+            className="relative flex h-full flex-col"
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -16 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
           {/* 헤더 (닫기 버튼) */}
           <div className="flex items-center justify-between border-b border-gold/30 px-4 py-3">
             <Link
@@ -186,6 +209,7 @@ function HeaderInner() {
                   <Link
                     href={`${item.href}${qs}`}
                     onClick={() => setMobileOpen(false)}
+                    aria-current={isActive(item.href) ? "page" : undefined}
                     className={`flex items-center justify-between rounded-2xl px-5 py-4 font-serif text-lg font-bold transition ${
                       isActive(item.href)
                         ? "bg-primary text-white shadow-panel"
@@ -246,8 +270,10 @@ function HeaderInner() {
               </Link>
             </div>
           </div>
+          </motion.div>
         </div>
-      )}
+        )}
+      </AnimatePresence>
     </header>
   );
 }

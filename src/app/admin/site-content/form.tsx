@@ -8,6 +8,7 @@ type Field = {
   label: string;
   hint?: string;
   multiline: boolean;
+  section?: string;
 };
 
 export function SiteContentForm({ initialFields }: { initialFields: Field[] }) {
@@ -36,34 +37,55 @@ export function SiteContentForm({ initialFields }: { initialFields: Field[] }) {
     }
   }
 
+  // 섹션별 그룹 (section 없는 필드는 기본 그룹, 원래 순서 유지)
+  const groups: { section: string | null; items: Field[] }[] = [];
+  for (const f of fields) {
+    const section = f.section ?? null;
+    const last = groups[groups.length - 1];
+    if (last && last.section === section) last.items.push(f);
+    else groups.push({ section, items: [f] });
+  }
+
+  function renderField(f: Field) {
+    return (
+      <div key={f.key} className={f.multiline ? "lg:col-span-2" : ""}>
+        <label htmlFor={f.key} className="block text-sm font-semibold text-text-strong">
+          {f.label}
+        </label>
+        {f.hint && <p className="mt-1 text-xs text-text-muted">{f.hint}</p>}
+        {f.multiline ? (
+          <textarea
+            id={f.key}
+            value={f.value}
+            onChange={(e) => update(f.key, e.target.value)}
+            rows={3}
+            className="mt-2 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          />
+        ) : (
+          <input
+            id={f.key}
+            value={f.value}
+            onChange={(e) => update(f.key, e.target.value)}
+            className="mt-2 h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm focus:border-primary focus:outline-none"
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
-      <div className="grid gap-5 lg:grid-cols-2">
-        {fields.map((f) => (
-          <div key={f.key} className={f.multiline ? "lg:col-span-2" : ""}>
-            <label htmlFor={f.key} className="block text-sm font-semibold text-text-strong">
-              {f.label}
-            </label>
-            {f.hint && <p className="mt-1 text-xs text-text-muted">{f.hint}</p>}
-            {f.multiline ? (
-              <textarea
-                id={f.key}
-                value={f.value}
-                onChange={(e) => update(f.key, e.target.value)}
-                rows={3}
-                className="mt-2 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              />
-            ) : (
-              <input
-                id={f.key}
-                value={f.value}
-                onChange={(e) => update(f.key, e.target.value)}
-                className="mt-2 h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm focus:border-primary focus:outline-none"
-              />
-            )}
-          </div>
-        ))}
-      </div>
+      {groups.map((g, i) => (
+        <div key={g.section ?? `group-${i}`}>
+          {g.section && (
+            <div className="mb-4 mt-2 border-t border-line pt-5">
+              <h3 className="text-base font-semibold text-text-strong">{g.section}</h3>
+              <p className="mt-1 text-xs text-text-muted">입력한 항목만 홈페이지 푸터에 표시됩니다. 비워두면 노출되지 않습니다.</p>
+            </div>
+          )}
+          <div className="grid gap-5 lg:grid-cols-2">{g.items.map(renderField)}</div>
+        </div>
+      ))}
 
       <div className="flex items-center gap-4 border-t border-line pt-5">
         <button

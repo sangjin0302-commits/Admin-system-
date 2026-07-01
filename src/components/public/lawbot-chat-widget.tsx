@@ -137,12 +137,12 @@ export function LawbotChatWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="사안을 입력하세요 (5자 이상)"
                 maxLength={500}
-                className="h-10 flex-1 rounded-lg border border-gold/30 px-3 text-sm focus:border-gold focus:outline-none"
+                className="h-11 flex-1 rounded-lg border border-gold/30 px-3 text-sm focus:border-gold focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={loading || input.trim().length < 5}
-                className="h-10 rounded-lg bg-primary px-4 text-xs font-bold text-white hover:bg-text-strong disabled:opacity-50"
+                className="h-11 rounded-lg bg-primary px-4 text-xs font-bold text-white hover:bg-text-strong disabled:opacity-50"
               >
                 전송
               </button>

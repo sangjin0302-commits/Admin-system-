@@ -102,7 +102,7 @@ export function SurveyForm({ token, clientName }: SurveyFormProps) {
                 key={i}
                 type="button"
                 onClick={() => setScore(i)}
-                className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${
+                className={`h-11 w-7 rounded-lg font-bold text-sm transition-all sm:h-11 sm:w-11 ${
                   score === i ? scoreColorSelected(i) : scoreColor(i)
                 }`}
               >
