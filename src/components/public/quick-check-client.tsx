@@ -1,9 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { Card } from "@/components/ui/card";
+
+// 분석은 20~40초 소요 — 사용자가 멈춘 것으로 오해하지 않도록 진행 메시지를 순환 표시
+const PROGRESS_STEPS = [
+  "사안을 이해하는 중입니다…",
+  "관련 법령을 검색하는 중입니다…",
+  "유사 판례·유권해석을 대조하는 중입니다…",
+  "위험 신호와 확인 사항을 정리하는 중입니다…",
+  "분석 결과를 종합하는 중입니다… (최대 40초 소요)"
+];
 
 type AnalyzeResult = {
   ok: true;
@@ -33,6 +42,19 @@ export function QuickCheckClient() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalyzeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [progressStep, setProgressStep] = useState(0);
+
+  // 로딩 중 진행 메시지를 6초 간격으로 다음 단계로 넘김 (마지막 단계에서 정지)
+  useEffect(() => {
+    if (!loading) {
+      setProgressStep(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setProgressStep((prev) => Math.min(prev + 1, PROGRESS_STEPS.length - 1));
+    }, 6000);
+    return () => clearInterval(id);
+  }, [loading]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -117,6 +139,21 @@ export function QuickCheckClient() {
           >
             {loading ? <span className="ethos-caret">분석 중</span> : "AI 사전 진단 시작"}
           </button>
+
+          {loading && (
+            <div className="rounded-lg border border-gold/30 bg-gold-soft/20 px-4 py-4" aria-live="polite">
+              <div className="flex items-center gap-3">
+                <span className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-gold/40 border-t-gold-deep" aria-hidden />
+                <p className="text-sm font-medium text-primary">{PROGRESS_STEPS[progressStep]}</p>
+              </div>
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-gold/15">
+                <div
+                  className="h-full rounded-full bg-gold-deep transition-all duration-1000 ease-out"
+                  style={{ width: `${((progressStep + 1) / PROGRESS_STEPS.length) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
         </form>
       </Card>
 

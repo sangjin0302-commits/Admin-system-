@@ -57,7 +57,7 @@ export async function getLawbotCaseAnalysis(
     };
   }
 
-  const timeoutMs = Number(process.env.LAWBOT_ANALYZE_TIMEOUT_MS ?? "25000");
+  const timeoutMs = Number(process.env.LAWBOT_ANALYZE_TIMEOUT_MS ?? "50000");
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 

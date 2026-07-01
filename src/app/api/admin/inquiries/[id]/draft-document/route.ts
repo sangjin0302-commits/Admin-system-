@@ -8,7 +8,7 @@ import {
   LawbotBridgeError
 } from "@/lib/services/lawbot-bridge-http-client";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 type DraftKind = "opinion" | "appeal" | "objection" | "petition";
 const ALLOWED_DRAFT_KINDS: DraftKind[] = ["opinion", "appeal", "objection", "petition"];

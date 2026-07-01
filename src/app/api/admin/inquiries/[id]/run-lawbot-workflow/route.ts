@@ -1,6 +1,6 @@
 import { handleRunLawbotWorkflowRequest } from "@/lib/services/lawbot-bridge-case-workflow-action";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(
   request: Request,
