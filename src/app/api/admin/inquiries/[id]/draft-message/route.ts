@@ -8,6 +8,8 @@ import {
   LawbotBridgeError
 } from "@/lib/services/lawbot-bridge-http-client";
 
+export const maxDuration = 30;
+
 type MessageKind =
   | "status_update"
   | "quote_followup"

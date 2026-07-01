@@ -12,6 +12,8 @@ import { logger } from "@/lib/utils/logger";
  * /api/admin/* 이므로 미들웨어 Basic Auth로 보호됨.
  * 공개 quick-check와 달리 실무자용 전체 필드를 반환한다.
  */
+export const maxDuration = 30;
+
 export async function POST(request: Request) {
   let body: { fact?: string } = {};
   try {

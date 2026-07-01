@@ -292,7 +292,7 @@ export function createLawbotBridgeHttpClientFromEnv(
       baseUrl: env.LAWBOT_BRIDGE_BASE_URL ?? "",
       serviceKey: env.LAWBOT_SERVICE_KEY ?? "",
       serviceCaller: env.LAWBOT_SERVICE_CALLER ?? "",
-      timeoutMs: Number(env.LAWBOT_BRIDGE_TIMEOUT_MS ?? "8000"),
+      timeoutMs: Number(env.LAWBOT_BRIDGE_TIMEOUT_MS ?? "25000"),
       maxRetries: Number(env.LAWBOT_BRIDGE_MAX_RETRIES ?? "1"),
       retryBackoffMs: Number(env.LAWBOT_BRIDGE_RETRY_BACKOFF_MS ?? "250")
     },

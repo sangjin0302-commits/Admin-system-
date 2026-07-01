@@ -21,7 +21,7 @@ import {
   getKoreaMonthRange,
   normalizePhoneLast4
 } from "@/lib/services/public-tracking-code-service";
-import { broadcastAdminEvent } from "@/app/api/admin/events/route";
+import { broadcastAdminEvent } from "@/lib/services/admin-event-bus";
 import { logger } from "@/lib/utils/logger";
 
 function isPublicTrackingCodeCollision(error: unknown) {

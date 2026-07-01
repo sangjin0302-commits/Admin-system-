@@ -5,6 +5,8 @@ import { buildCitationsFromLawbotSources, extractLawNames, buildLawDeeplink } fr
 import { consumeRateLimit, getClientIpFromHeaders } from "@/lib/security/rate-limit";
 import { logger } from "@/lib/utils/logger";
 
+export const maxDuration = 30;
+
 const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5 min
 const RATE_LIMIT_MAX = 5;                    // 5 requests / 5 min / IP
 const MAX_BODY_BYTES = 8 * 1024;

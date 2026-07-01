@@ -27,8 +27,3 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 }
-
-// Export for use by other server-side code
-export function getSubscriptions() {
-  return Array.from(subscriptions.values());
-}
