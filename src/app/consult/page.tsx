@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { Reveal } from "@/components/public/reveal";
 import { ConsultStructure } from "@/components/public/consult-structure";
 import { BookingWidget } from "@/components/public/booking-widget";
+import { DeadlineReminderBand } from "@/components/public/deadline-reminder-band";
+import { ConsultSlotAvailability } from "@/components/public/consult-slot-availability";
 import { CHANNELS, CONSULT_TAGLINE } from "@/lib/constants/channels";
 import { FAQJsonLd } from "@/components/seo/json-ld";
 
@@ -70,6 +72,15 @@ export default function ConsultPage() {
             <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-gold-deep">
               변호사 선임 대비 1/3~1/5 비용 수준으로 해결합니다.
             </p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* 기한 안내 밴드 */}
+      <section className="pb-6">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <Reveal>
+            <DeadlineReminderBand />
           </Reveal>
         </div>
       </section>
@@ -208,7 +219,12 @@ export default function ConsultPage() {
             <p className="mt-3 text-sm text-text-muted">원하시는 날짜와 시간을 선택하면 접수 폼에 자동 연결됩니다.</p>
           </Reveal>
           <Reveal delay={1}>
-            <div className="mt-10">
+            <div className="mt-8">
+              <ConsultSlotAvailability />
+            </div>
+          </Reveal>
+          <Reveal delay={2}>
+            <div className="mt-6">
               <BookingWidget />
             </div>
           </Reveal>

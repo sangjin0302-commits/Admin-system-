@@ -114,19 +114,22 @@ const PHILOSOPHY = [
     greek: "Logos",
     korean: "로고스 · 기둥",
     title: "이성",
-    description: "이성, 질서, 절차. 행정 문제를 정확하고 논리적으로 풀어가는 태도를 담았습니다."
+    description: "이성, 질서, 절차. 행정 문제를 정확하고 논리적으로 풀어가는 태도를 담았습니다.",
+    benefit: "→ 기한·서식·근거를 정확히 짚어 흔들리지 않는 서면을 만듭니다."
   },
   {
     greek: "Ethos",
     korean: "에토스 · 빛",
     title: "신뢰",
-    description: "신뢰, 품격, 책임. 의뢰인에게 믿을 수 있는 기준과 방향을 제시하는 마음을 담았습니다."
+    description: "신뢰, 품격, 책임. 의뢰인에게 믿을 수 있는 기준과 방향을 제시하는 마음을 담았습니다.",
+    benefit: "→ 결과를 부풀리지 않고, 가능성과 한계를 솔직하게 안내합니다."
   },
   {
     greek: "Pathos",
     korean: "파토스 · 손",
     title: "공감",
-    description: "공감, 이해, 위로. 행정의 문제 뒤에 있는 사람의 사정과 마음을 함께 헤아립니다."
+    description: "공감, 이해, 위로. 행정의 문제 뒤에 있는 사람의 사정과 마음을 함께 헤아립니다.",
+    benefit: "→ 처음 겪는 절차도 이해하기 쉽게, 끝까지 곁에서 안내합니다."
   }
 ] as const;
 
@@ -223,6 +226,21 @@ export default async function PublicMarketingHomePage({
         serviceName="비자·체류 / 행정심판 / 계약·사실조사 / 인허가 / 법인설립"
         description={t.heroDescription}
       />
+      {/* 긴급 상단 스트립 — 행정 기한 안내 */}
+      <div className="border-b border-gold/30 bg-gold-soft/60 px-4 py-2 text-center text-[13px] leading-5 text-primary">
+        <span aria-hidden className="mr-1">⚠️</span>
+        <span className="font-serif font-bold">행정심판 청구기한 90일 · 이의신청 60일</span>
+        <span className="mx-1.5 text-gold-deep">—</span>
+        <span className="text-text-muted">기한이 지나면 구제가 어렵습니다.</span>{" "}
+        <Link
+          href="/quick-check"
+          className="ml-1 inline-flex items-center gap-1 font-semibold text-primary underline decoration-gold/60 underline-offset-2 transition-colors hover:text-gold-deep"
+        >
+          무료로 남은 기한 확인
+          <span aria-hidden>→</span>
+        </Link>
+      </div>
+
       {/* 공지 배너 (운영란에서 입력 시 표시) */}
       {noticeBanner && (
         <div className="border-b border-gold/30 bg-primary px-4 py-2.5 text-center text-sm text-white">
@@ -238,14 +256,14 @@ export default async function PublicMarketingHomePage({
         <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-20 sm:px-6 sm:pb-28 sm:pt-28 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
             <Reveal>
-              <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold-soft/20 px-4 py-1.5 text-xs font-semibold text-gold-deep backdrop-blur">
+              <span className="ethos-eyebrow inline-flex items-center gap-2 text-gold-deep">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-                {heroBadge}
+                행정사 사무소 · 비자 · 행정심판 · 인허가
               </span>
             </Reveal>
 
             <Reveal delay={1}>
-              <h1 className="ethos-display mt-7 text-[2.9rem] leading-[1.08] sm:text-[4.2rem]">
+              <h1 className="ethos-display mt-6 text-[2.7rem] leading-[1.1] sm:text-[3.8rem]">
                 {heroTitleLines ? (
                   heroTitleLines.map((line, i) => (
                     <span key={i}>
@@ -259,53 +277,67 @@ export default async function PublicMarketingHomePage({
                   ))
                 ) : (
                   <>
-                    {t.heroTitleA}
+                    비자 거절, 행정처분, 인허가 —
                     <br />
-                    {t.heroTitleB}
-                    <br />
-                    <span className="ethos-underline-gold">{t.heroTitleC}</span>
-                    {t.heroTitleD}
+                    <span className="ethos-underline-gold">2주 안에 해결 방향</span>을 드립니다
                   </>
                 )}
               </h1>
             </Reveal>
 
             <Reveal delay={2}>
-              <p className="mt-8 max-w-xl text-base leading-8 text-text">{heroDescription}</p>
+              <p className="mt-7 max-w-xl text-base leading-8 text-text">
+                혼자 고민하지 마세요. 무료 검토로 가능성과 예상 비용, 다음 절차를 먼저 확인하세요.
+              </p>
             </Reveal>
 
+            {/* 혜택 배지 행 — 24h·비용·다국어 전면 노출 */}
+            <Reveal delay={2}>
+              <div className="mt-7 flex flex-wrap gap-2.5">
+                {[
+                  "변호사 대비 1/3~1/5 비용",
+                  "영업일 24시간 내 회신",
+                  "한국어 · 영어 · 아랍어 상담"
+                ].map((benefit) => (
+                  <span
+                    key={benefit}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold-soft/40 px-3.5 py-1.5 text-[13px] font-semibold text-primary"
+                  >
+                    <span className="text-gold-deep">✓</span>
+                    {benefit}
+                  </span>
+                ))}
+              </div>
+            </Reveal>
+
+            {/* CTA 위계 — 지배적 primary 하나 + 보조 하나 */}
             <Reveal delay={3}>
-              <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap">
-                <PrimaryCta href={intakeHref}>{t.ctaIntake}</PrimaryCta>
-                <SecondaryCta href="/quick-check">{t.ctaQuickCheck}</SecondaryCta>
-                <SecondaryCta href="/portal">{t.ctaTrack}</SecondaryCta>
+              <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+                <Link
+                  href={intakeHref}
+                  className="ethos-cta-shine group inline-flex h-14 items-center justify-center gap-2 rounded-lg bg-primary px-8 text-base font-bold text-white shadow-md transition-all duration-300 hover:bg-text-strong hover:shadow-lg hover:shadow-primary/25"
+                >
+                  무료 검토 신청
+                  <span className="transition-transform duration-300 group-hover:translate-x-0.5">→</span>
+                </Link>
+                <Link
+                  href="/quick-check"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-lg border border-gold/50 bg-surface/60 px-7 text-sm font-semibold text-primary backdrop-blur transition-all duration-300 hover:border-gold hover:bg-gold-soft/30"
+                >
+                  30초 AI 사전 진단
+                </Link>
               </div>
             </Reveal>
 
-            {/* 사회적 증거 미니 스트립 */}
+            {/* 사회적 증거 에코 */}
             <Reveal delay={4}>
-              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-text-muted">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-1 w-1 rounded-full bg-gold" />
-                  <strong className="text-text">검토 무료</strong>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-1 w-1 rounded-full bg-gold" />
-                  <strong className="text-text">24h 회신</strong>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-1 w-1 rounded-full bg-gold" />
-                  변호사 대비 <strong className="text-text">1/3~1/5 비용</strong>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-1 w-1 rounded-full bg-gold" />
-                  한·영·아 응대
-                </span>
-              </div>
+              <p className="mt-5 text-xs leading-5 text-text-muted">
+                이미 서울 · 경기 · 인천 등에서 검토를 신청했습니다.
+              </p>
             </Reveal>
 
             <Reveal delay={4}>
-              <p className="mt-4 text-xs leading-5 text-text-muted">{t.safetyNote}</p>
+              <p className="mt-3 text-xs leading-5 text-text-muted">{t.safetyNote}</p>
             </Reveal>
           </div>
 
@@ -371,6 +403,35 @@ export default async function PublicMarketingHomePage({
         </div>
       </section>
 
+      {/* ═══════════════ 왜 ETHOS인가 — 차별화 스트립 ═══════════════ */}
+      <section className="py-24 sm:py-28" aria-labelledby="why-ethos-heading">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal className="text-center">
+            <p className="ethos-eyebrow">Why ETHOS</p>
+            <h2 id="why-ethos-heading" className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">
+              왜 ETHOS인가
+            </h2>
+            <p className="mt-4 text-sm text-text-muted">변호사도, 혼자도 아닌 — 행정 전문가와 함께하는 가장 합리적인 길.</p>
+          </Reveal>
+
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { title: "변호사보다 합리적", desc: "행정 전문 영역은 행정사가 더 빠르고 경제적입니다." },
+              { title: "직접 하기엔 위험", desc: "기한 한 번 놓치면 절차 전체가 무너집니다." },
+              { title: "끝까지 함께", desc: "검토 → 서면 → 제출 → 결과까지 한 창구로 관리합니다." },
+              { title: "다국어 가능", desc: "외국인 의뢰인도 모국어로 안심하고 상담할 수 있습니다." }
+            ].map((card, i) => (
+              <Reveal key={card.title} delay={((i % 4) + 1) as 1 | 2 | 3 | 4}>
+                <div className="ethos-card ethos-card-hover ethos-card-topline flex h-full flex-col p-7">
+                  <h3 className="ethos-display text-xl leading-snug">{card.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-text-muted">{card.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════════ 철학 — DARK 풀블리드 밴드 ═══════════════ */}
       <section className="ethos-band ethos-band-dark ethos-grain overflow-hidden py-24 sm:py-32" style={{ backgroundColor: "rgb(22 50 80)" }}>
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -425,6 +486,7 @@ export default async function PublicMarketingHomePage({
                         <span className="font-serif text-xs text-white/60">{p.korean}</span>
                       </div>
                       <p className="mt-2 text-sm leading-7 text-white/70">{p.description}</p>
+                      <p className="mt-2.5 font-serif text-xs leading-6 text-gold-soft">{p.benefit}</p>
                     </div>
                   </div>
                 </Reveal>
@@ -492,6 +554,26 @@ export default async function PublicMarketingHomePage({
           </div>
         </div>
       </section>
+
+      {/* ═══════════════ 비용 안내 미니 밴드 — 수임료 계산기 ═══════════════ */}
+      <div className="pb-4">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal>
+            <div className="flex flex-col items-center gap-4 rounded-2xl border border-gold/30 bg-gold-soft/20 px-8 py-7 text-center sm:flex-row sm:justify-between sm:text-left">
+              <div>
+                <p className="font-serif text-base font-bold text-primary">비용이 궁금하세요?</p>
+                <p className="mt-1 text-sm text-text-muted">사안·난이도별 예상 수임료를 30초 만에 확인해 보세요.</p>
+              </div>
+              <Link
+                href="/pricing-calculator"
+                className="ethos-cta-shine inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-gold/50 bg-surface px-6 text-sm font-bold text-primary shadow-sm transition hover:border-gold hover:bg-gold-soft/40"
+              >
+                예상 수임료 30초 계산 →
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </div>
 
       {/* ═══════════════ 진행 절차 — soft band, 타임라인 ═══════════════ */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28" aria-labelledby="process-heading">

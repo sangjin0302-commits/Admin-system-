@@ -4,21 +4,15 @@
  */
 
 import { prisma } from "@/lib/prisma/client";
+import {
+  TESTIMONIAL_CATEGORY_LABELS,
+  type PublicTestimonial
+} from "@/lib/services/testimonials-shared";
 
-export type PublicTestimonial = {
-  quote: string;
-  author: string;
-  context: string;
-  category: string;
-};
-
-export const TESTIMONIAL_CATEGORY_LABELS: Record<string, string> = {
-  VISA_STAY: "비자/체류",
-  ADMIN_APPEAL: "행정심판",
-  CONTRACT_INVESTIGATION: "계약서/사실조사",
-  LICENSE_PERMIT: "인허가",
-  CORP_FORMATION: "법인 설립"
-};
+export {
+  TESTIMONIAL_CATEGORY_LABELS,
+  type PublicTestimonial
+} from "@/lib/services/testimonials-shared";
 
 const DEFAULT_TESTIMONIALS: readonly PublicTestimonial[] = [
   {
@@ -26,14 +20,18 @@ const DEFAULT_TESTIMONIALS: readonly PublicTestimonial[] = [
       "처분서를 받고 막막했는데, 처음 상담 때부터 청구기한과 다음 단계를 정확히 짚어주셔서 마음이 놓였습니다.",
     author: "박○○",
     context: "영업정지 처분 행정심판",
-    category: "ADMIN_APPEAL"
+    category: "ADMIN_APPEAL",
+    outcome: "청구기한 내 접수",
+    timeline: "약 2주 준비"
   },
   {
     quote:
       "체류 자격 변경 자료가 복잡했는데, 점수제 항목별로 무엇이 부족한지 명확히 안내해주셔서 차근차근 준비할 수 있었습니다.",
     author: "Mr. T",
     context: "F-2 자격 변경",
-    category: "VISA_STAY"
+    category: "VISA_STAY",
+    outcome: "체류자격 변경 진행",
+    timeline: "약 3주"
   },
   {
     quote:

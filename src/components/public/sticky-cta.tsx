@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { CHANNELS } from "@/lib/constants/channels";
+
 const FALLBACK_PHONE = "02-0000-0000";
 
 /**
@@ -42,27 +44,43 @@ export function StickyCta() {
       className="fixed inset-x-0 bottom-16 z-30 px-3 pb-2 lg:hidden"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.5rem)" }}
     >
-      <div className="mx-auto flex max-w-md gap-2 rounded-2xl border border-gold/40 bg-surface/95 p-2 shadow-floating backdrop-blur">
-        <a
-          href={tel}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-primary/20 bg-surface px-3 py-2.5 font-serif text-sm font-bold text-primary transition hover:bg-gold-soft/30"
-        >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-          </svg>
-          전화 상담
-        </a>
-        <Link
-          href="/intake"
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 font-serif text-sm font-bold text-gold-soft transition hover:bg-text-strong"
-          style={{ color: "rgb(232 208 145)" }}
-        >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <path d="M14 2v6h6M8 13h8M8 17h5" />
-          </svg>
-          온라인 신청
-        </Link>
+      <div className="mx-auto max-w-md rounded-2xl border border-gold/40 bg-surface/95 p-2 shadow-floating backdrop-blur">
+        <div className="flex gap-2">
+          <a
+            href={tel}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-primary/20 bg-surface px-2.5 py-2.5 font-serif text-sm font-bold text-primary transition hover:bg-gold-soft/30"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            전화
+          </a>
+          <a
+            href={CHANNELS.naverTalk.url}
+            target="_blank"
+            rel="noreferrer"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#03C75A]/40 bg-[#03C75A]/10 px-2.5 py-2.5 font-serif text-sm font-bold text-[#028a40] transition hover:bg-[#03C75A]/20"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            톡톡
+          </a>
+          <Link
+            href="/intake"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-2.5 py-2.5 font-serif text-sm font-bold transition hover:bg-text-strong"
+            style={{ color: "rgb(232 208 145)" }}
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6M8 13h8M8 17h5" />
+            </svg>
+            신청
+          </Link>
+        </div>
+        <p className="mt-1.5 text-center text-[11px] font-medium text-text-muted">
+          평균 회신 24시간 내 · 무료 검토
+        </p>
       </div>
     </div>
   );

@@ -14,6 +14,9 @@ const LABELS = {
     faq: "자주 묻는 질문",
     docsNote: "※ 사안별로 추가/축소될 수 있습니다.",
     deadlineNote: "※ 개별 사안에 따라 다를 수 있습니다.",
+    outcomes: "이렇게 도와드립니다",
+    risks: "방치하면 생기는 일",
+    highlight: "실무 하이라이트",
     ctaTitle: "상담을 시작하시겠습니까?",
     ctaPrimary: "상담 신청",
     ctaSecondary: "다른 분야 보기"
@@ -26,6 +29,9 @@ const LABELS = {
     faq: "Frequently asked",
     docsNote: "※ May expand or narrow per case.",
     deadlineNote: "※ May differ by individual case.",
+    outcomes: "How we help you",
+    risks: "What happens if you wait",
+    highlight: "Practice highlight",
     ctaTitle: "Ready to begin?",
     ctaPrimary: "Request consultation",
     ctaSecondary: "Other practice areas"
@@ -43,7 +49,22 @@ export type ServicePageData = {
   documents: readonly string[];
   deadlines: readonly { label: string; value: string }[];
   faq: readonly { q: string; a: string }[];
+  outcomes?: readonly string[];
+  risks?: readonly string[];
+  caseHighlight?: { label: string; stat: string };
 };
+
+const DEFAULT_OUTCOMES: readonly string[] = [
+  "가능성·리스크를 먼저 진단해 드립니다",
+  "필요 서류와 제출 전략을 정리해 드립니다",
+  "서면 작성부터 제출·결과 확인까지 한 창구로 진행합니다"
+];
+
+const DEFAULT_RISKS: readonly string[] = [
+  "청구·불복 기한이 지나면 구제 수단이 사라집니다",
+  "서류 미비로 반려되면 처리 기간이 배로 늘어납니다",
+  "잘못된 대응은 이후 절차에서 불리하게 작용합니다"
+];
 
 export function ServicePage({
   data,
@@ -70,6 +91,9 @@ export function ServicePage({
   const description = descriptionOverride?.trim()
     ? descriptionOverride
     : en?.description ?? data.description;
+  const outcomes = data.outcomes ?? DEFAULT_OUTCOMES;
+  const risks = data.risks ?? DEFAULT_RISKS;
+  const caseHighlight = data.caseHighlight;
   const qs = lang === "en" ? "?lang=en" : "";
 
   return (
@@ -121,6 +145,43 @@ export function ServicePage({
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* What You Get — outcome-focused */}
+      <section className="py-24 sm:py-28">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <Reveal>
+            <div className="ethos-card p-8 sm:p-10">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="ethos-eyebrow">What You Get</p>
+                  <h2 className="ethos-display mt-3 text-2xl sm:text-3xl">{L.outcomes}</h2>
+                </div>
+                {caseHighlight ? (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold-soft/30 px-4 py-2">
+                    <span className="font-serif text-[10px] font-bold uppercase tracking-[0.18em] text-gold-deep">
+                      {L.highlight}
+                    </span>
+                    <span className="text-xs text-text-muted">{caseHighlight.label}</span>
+                    <span className="font-serif text-sm font-bold text-primary">{caseHighlight.stat}</span>
+                  </div>
+                ) : null}
+              </div>
+              <ul className="mt-8 space-y-4">
+                {outcomes.map((item) => (
+                  <li key={item} className="flex items-start gap-3.5">
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-gold/40 bg-gold-soft/40 text-gold-deep">
+                      <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                    </span>
+                    <span className="text-sm leading-7 text-text">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -252,6 +313,32 @@ export function ServicePage({
           <p className="ethos-quote mx-auto mt-10 max-w-2xl text-center text-xs italic text-text-muted">
             {PUBLIC_MARKETING_SAFE_NOTICE}
           </p>
+        </div>
+      </section>
+
+      {/* Risk of inaction — loss framing */}
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <Reveal>
+            <div className="rounded-2xl border-2 border-amber-300/70 bg-amber-50/60 p-7 sm:p-9">
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-white">
+                  <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+                  </svg>
+                </span>
+                <h2 className="font-serif text-lg font-bold text-amber-900 sm:text-xl">{L.risks}</h2>
+              </div>
+              <ul className="mt-6 space-y-3.5">
+                {risks.map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-sm leading-7 text-amber-900/90">
+                    <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
         </div>
       </section>
 
