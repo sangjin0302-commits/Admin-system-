@@ -1,5 +1,6 @@
 import { type TodayItem } from "@/components/admin/dashboard-today-widget";
 import { CaseAccountingDashboardCard } from "@/components/admin/case-accounting-dashboard-card";
+import { NextActionsPanel } from "@/components/admin/next-actions-panel";
 import { CaseMatterActionSummaryCard } from "@/components/admin/case-matter-action-summary-card";
 import { DocumentLabDashboardCard } from "@/components/admin/document-lab-dashboard-card";
 import {
@@ -241,6 +242,8 @@ export default async function AdminDashboardContent() {
         lawbotStatus={lawbotStatus}
         marketingStatus={marketingStatus}
       />
+
+      <NextActionsPanel />
 
       <DashboardStats
         inquiriesCount={inquiries.length}

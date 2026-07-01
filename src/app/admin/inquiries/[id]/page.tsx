@@ -1,6 +1,15 @@
+import { DeadlineCalculatorCard } from "@/components/admin/deadline-calculator-card";
 import { InquiryActionChecklistPanel } from "@/components/admin/inquiry-action-checklist-panel";
+import { LawbotOutcomePrediction } from "@/components/admin/lawbot-outcome-prediction";
+import { QuoteGuidanceCard } from "@/components/admin/quote-guidance-card";
+import { SimilarInquiriesCard } from "@/components/admin/similar-inquiries-card";
+import { LawbotPlaybookCard } from "@/components/admin/lawbot-playbook-card";
+import { LawbotPrecedentsCard } from "@/components/admin/lawbot-precedents-card";
+import type { LawbotResponse } from "@/lib/services/lawbot-case-analysis-types";
 import { InquiryCaseConversionPanel } from "@/components/admin/inquiry-case-conversion-panel";
 import { InquiryLawbotRerunButton } from "@/components/admin/inquiry-lawbot-rerun-button";
+import { LawbotDocumentDraftPanel } from "@/components/admin/lawbot-document-draft-panel";
+import { LawbotMessageDraftPanel } from "@/components/admin/lawbot-message-draft-panel";
 import {
   InquiryDetailEvidenceSection,
   InquiryDetailIntakeCategorySection,
@@ -130,6 +139,19 @@ export default async function AdminInquiryDetailPage({
       checklistActionItems
     } = await buildInquiryDetailPageData(inquiry);
     const intakeCategorySummary = buildIntakeCategoryDetailSummary(inquiry.description);
+
+    let lawbotSnapshotForCards: Partial<LawbotResponse> | null = null;
+    if (inquiry.lawbotSnapshotPayload) {
+      try {
+        const parsed = JSON.parse(inquiry.lawbotSnapshotPayload);
+        lawbotSnapshotForCards =
+          (parsed && typeof parsed === "object" && "payload" in parsed
+            ? (parsed as { payload?: Partial<LawbotResponse> }).payload ?? parsed
+            : parsed) as Partial<LawbotResponse>;
+      } catch {
+        lawbotSnapshotForCards = null;
+      }
+    }
     const publicTrackingCode = getPublicTrackingCodeFromInquiry(inquiry);
     const intakeSourceTracking = buildIntakeSourceTrackingViewModel(inquiry);
     const emailProviderReadiness = buildCustomerEmailProviderReadiness(process.env);
@@ -209,6 +231,31 @@ export default async function AdminInquiryDetailPage({
 
         <InquiryDetailQuickNav />
 
+        {lawbotSnapshotForCards && (
+          <LawbotOutcomePrediction snapshot={lawbotSnapshotForCards as LawbotResponse} />
+        )}
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <QuoteGuidanceCard
+            snapshot={(lawbotSnapshotForCards as LawbotResponse | null) ?? null}
+            category={inquiry.intakeCategory ?? null}
+          />
+          <DeadlineCalculatorCard defaultCategory={inquiry.intakeCategory ?? null} />
+        </div>
+
+        {lawbotSnapshotForCards && (
+          <LawbotPlaybookCard
+            inquiryId={inquiry.id}
+            snapshot={lawbotSnapshotForCards}
+          />
+        )}
+
+        {lawbotSnapshotForCards && (
+          <LawbotPrecedentsCard snapshot={lawbotSnapshotForCards} />
+        )}
+
+        <SimilarInquiriesCard inquiryId={inquiry.id} />
+
         <InquiryDetailRiskBoard
           detailRiskHighlights={detailRiskHighlights}
           detailImmediateActions={detailImmediateActions}
@@ -228,6 +275,11 @@ export default async function AdminInquiryDetailPage({
           mockMarketAnalyzeSignal={mockMarketAnalyzeSignal}
           externalInsightSlots={externalInsightSlots}
         />
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <LawbotDocumentDraftPanel inquiryId={inquiry.id} />
+          <LawbotMessageDraftPanel inquiryId={inquiry.id} />
+        </div>
 
         <div id="detail-core-ops">
           <WorkflowProgressPanelSafeV3

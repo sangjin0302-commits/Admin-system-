@@ -401,8 +401,10 @@ enum CaseTaskPriority {
 
 model Inquiry {
   id                       String        @id @default(cuid())
+  orgId                    String?
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
+  firstResponseAt          DateTime?
   status                   InquiryStatus @default(NEW)
   inquiryType              InquiryType   @default(UNKNOWN)
   urgencyLevel             UrgencyLevel  @default(MEDIUM)
@@ -676,6 +678,7 @@ model CaseRecord {
 
 model CaseMatter {
   id                 String             @id @default(cuid())
+  orgId               String?
   caseNo              String?            @unique
   title               String
   matterType          String
@@ -1238,6 +1241,34 @@ model CaseEvent {
   @@index([createdAt])
 }
 
+model BlogPost {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  excerpt     String   @default("")
+  body        String
+  category    String   @default("general")
+  tags        String   @default("[]")
+  coverImage  String?
+  published   Boolean  @default(false)
+  publishedAt DateTime?
+  authorName  String   @default("ETHOS 행정사사무소")
+  viewCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  titleEn      String?
+  bodyEn       String?
+  excerptEn    String?
+  source       String   @default("manual")
+  originalUrl  String?
+  importedAt   DateTime?
+
+  @@index([published, publishedAt])
+  @@index([slug])
+  @@index([category])
+  @@index([source, importedAt])
+}
+
 model LegacyImportLog {
   id            String   @id @default(cuid())
   source        String
@@ -1245,6 +1276,318 @@ model LegacyImportLog {
   payloadJson   String?
   importedAt    DateTime @default(now())
   createdCount  Int      @default(0)
+}
+
+// ---------------------------------------------------------------------------
+// Round X — 멀티사무소 (Organization) 기반
+// ---------------------------------------------------------------------------
+
+enum OrganizationPlan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+model Organization {
+  id          String           @id @default(cuid())
+  name        String
+  subdomain   String           @unique
+  ownerEmail  String
+  plan        OrganizationPlan @default(PRO)
+  active      Boolean          @default(true)
+  brandColor  String?
+  logoUrl     String?
+  contactPhone String?
+  addressLine String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([subdomain])
+  @@index([active])
+}
+
+// ---------------------------------------------------------------------------
+// Round W — 결제/전자서명/알림 audit trail
+// ---------------------------------------------------------------------------
+
+enum PaymentStatus {
+  REQUESTED      // 결제 세션 생성됨
+  CONFIRMED      // Toss 승인 완료
+  CANCELED       // 전체 취소
+  PARTIAL_CANCELED
+  FAILED
+  EXPIRED
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  orgId           String?
+  orderId         String        @unique             // CASE-<caseId>-<suffix>
+  paymentKey      String?       @unique             // Toss paymentKey
+  caseId          String?
+  amount          Int
+  currency        String        @default("KRW")
+  orderName       String
+  customerName    String?
+  customerEmail   String?
+  status          PaymentStatus @default(REQUESTED)
+  method          String?                           // 카드, 가상계좌, 등
+  receiptUrl      String?
+  rawProviderJson String?                           // 마지막 응답 원본
+  approvedAt      DateTime?
+  canceledAt      DateTime?
+  cancelReason    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([caseId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ESignStatus {
+  PENDING
+  SIGNED
+  REJECTED
+  EXPIRED
+}
+
+enum ESignProvider {
+  IN_MEMORY
+  MODUSIGN
+}
+
+model ESignRequest {
+  id              String         @id @default(cuid())
+  orgId           String?
+  externalId      String?        @unique           // Modusign document id
+  caseId          String?
+  documentTitle   String
+  signerName      String
+  signerEmail     String
+  signerPhone     String?
+  documentUrl     String?
+  templateId      String?
+  provider        ESignProvider  @default(IN_MEMORY)
+  status          ESignStatus    @default(PENDING)
+  signUrl         String?
+  internalToken   String                            // in-memory MVP 클릭검증용
+  createdAt       DateTime       @default(now())
+  signedAt        DateTime?
+  expiresAt       DateTime?
+  rawProviderJson String?
+
+  @@index([caseId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum NotificationChannel {
+  ALIMTALK
+  SMS
+  EMAIL
+  PUSH
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  FAILED
+  SKIPPED          // 환경변수 미설정 등으로 건너뜀
+}
+
+// ---------------------------------------------------------------------------
+// Round Z — RBAC (역할 기반 접근 제어)
+// ---------------------------------------------------------------------------
+
+enum AdminRole {
+  SUPER       // 소장 — 모든 권한
+  MANAGER     // 관리자 — 결제/세금계산서 제외 거의 모든 권한
+  STAFF       // 직원 — 사건 처리 + 알림 발송 (재무/RBAC 불가)
+  EXTERNAL    // 외부협력 — 지정된 사건만 read-only
+  AUDITOR     // 감사 — 전체 read-only
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  orgId        String?
+  email        String    @unique
+  name         String
+  role         AdminRole @default(STAFF)
+  active       Boolean   @default(true)
+  passwordHash String?                       // NextAuth Credentials 호환
+  totpSecret   String?                       // 2FA
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([orgId, role])
+  @@index([active])
+}
+
+enum CaseAnalysisStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+model CaseAnalysisRun {
+  id              String              @id @default(cuid())
+  orgId           String?
+  caseId          String
+  runType         String              @default("scheduled")    // scheduled | manual | on_create
+  status          CaseAnalysisStatus  @default(PENDING)
+  resultSummary   String?
+  strengthScore   Int?
+  strengthLabel   String?
+  recommendation  String?
+  rawJson         String?                                       // 전체 결과
+  errorMessage    String?
+  createdAt       DateTime            @default(now())
+  completedAt     DateTime?
+
+  @@index([caseId, createdAt])
+  @@index([status])
+}
+
+enum AdminAuditAction {
+  LOGIN
+  LOGOUT
+  CREATE
+  UPDATE
+  DELETE
+  EXPORT
+  PAYMENT_CANCEL
+  ESIGN_SEND
+  ALIMTALK_SEND
+  ROLE_CHANGE
+  CONFIG_CHANGE
+}
+
+model AdminAuditEvent {
+  id          String           @id @default(cuid())
+  orgId       String?
+  actorEmail  String
+  actorRole   AdminRole?
+  action      AdminAuditAction
+  resource    String                          // e.g. "Payment", "CaseMatter"
+  resourceId  String?
+  details     String?                         // JSON.stringify
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime         @default(now())
+
+  @@index([orgId, createdAt])
+  @@index([actorEmail])
+  @@index([action])
+  @@index([resource, resourceId])
+}
+
+// ---------------------------------------------------------------------------
+// Round Y — Google Calendar OAuth + 전자세금계산서 (바로빌)
+// ---------------------------------------------------------------------------
+
+model GoogleOAuthToken {
+  id            String   @id @default(cuid())
+  orgId         String?
+  userId        String   @unique             // admin user identifier (email/sub)
+  accessToken   String
+  refreshToken  String
+  expiresAt     DateTime
+  scope         String?
+  calendarId    String?  @default("primary")
+  syncToken     String?                       // Google incremental sync token
+  lastSyncedAt  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+/** Google Calendar 이벤트 ↔ 내부 사건/작업 매핑. 중복 push 방지용. */
+model GoogleCalendarSyncMap {
+  id              String   @id @default(cuid())
+  orgId           String?
+  internalKind    String                     // "case_due" | "case_next_action" | "task"
+  internalId      String                     // CaseMatter.id / CaseTask.id
+  googleEventId   String   @unique
+  calendarId      String   @default("primary")
+  lastPushedAt    DateTime @default(now())
+
+  @@unique([internalKind, internalId])
+  @@index([orgId])
+}
+
+enum TaxInvoiceStatus {
+  DRAFT
+  ISSUED
+  SENT
+  CANCELED
+  FAILED
+}
+
+model TaxInvoice {
+  id                 String           @id @default(cuid())
+  orgId              String?
+  paymentId          String?          @unique
+  caseId             String?
+  invoiceNumber      String?          @unique
+  supplyAmount       Int                                // 공급가액
+  taxAmount          Int                                // 세액
+  totalAmount        Int                                // 합계
+  customerBusinessNo String?                            // 의뢰인 사업자번호 (B2B 시)
+  customerName       String
+  customerEmail      String?
+  itemName           String
+  status             TaxInvoiceStatus @default(DRAFT)
+  providerType       String           @default("BAROBILL")
+  providerId         String?                            // 바로빌 MgtKey 또는 NTSConfirmNum
+  ntsConfirmNum      String?                            // 국세청 승인번호
+  errorMessage       String?
+  rawProviderJson    String?
+  issuedAt           DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([caseId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model NotificationLog {
+  id           String              @id @default(cuid())
+  orgId        String?
+  channel      NotificationChannel
+  templateId   String?
+  recipient    String                                // 전화번호/이메일/디바이스토큰
+  caseId       String?
+  subject      String?
+  body         String?
+  variables    String?                               // JSON.stringify
+  status       NotificationStatus  @default(QUEUED)
+  errorMessage String?
+  providerId   String?                               // Solapi messageId 등
+  createdAt    DateTime            @default(now())
+  sentAt       DateTime?
+
+  @@index([caseId])
+  @@index([status, createdAt])
+  @@index([channel, status])
+}
+
+model IntakeAbandonment {
+  id             String    @id @default(cuid())
+  email          String
+  phone          String?
+  name           String?
+  category       String?
+  step           Int       @default(1)
+  reminded       Int       @default(0)
+  lastRemindedAt DateTime?
+  convertedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 model SatisfactionSurvey {
