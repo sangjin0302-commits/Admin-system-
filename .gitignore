@@ -24,3 +24,6 @@ data/marketing-sync-latest.json
 
 .vercel
 .env*
+
+# Storybook build output
+storybook-static/
