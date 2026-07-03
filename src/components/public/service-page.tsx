@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { Reveal } from "@/components/public/reveal";
+import { ScrollToCtaPill } from "@/components/public/scroll-to-cta-pill";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
 import { SERVICE_EN } from "@/lib/services/service-content-en";
 
@@ -98,6 +99,8 @@ export function ServicePage({
 
   return (
     <div className="overflow-x-clip">
+      <ScrollToCtaPill />
+
       {/* HERO */}
       <section className="relative overflow-hidden pt-20 pb-16 sm:pt-28 sm:pb-20">
         <div className="ethos-aurora ethos-aurora-animated" aria-hidden />
@@ -343,7 +346,7 @@ export function ServicePage({
       </section>
 
       {/* CTA */}
-      <section className="py-20 sm:py-24">
+      <section id="consult-cta" className="py-20 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal>
             <div className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 ethos-dark-card p-12 text-center shadow-floating sm:p-16">

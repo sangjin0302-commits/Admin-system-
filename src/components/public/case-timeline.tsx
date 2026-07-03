@@ -3,14 +3,14 @@
  * 현재 상태를 받아 단계 별 진행도를 시각화.
  */
 
-type Phase = { key: string; label: string; statuses: readonly string[] };
+type Phase = { key: string; label: string; duration: string; statuses: readonly string[] };
 
 const PHASES: readonly Phase[] = [
-  { key: "intake", label: "접수 / 상담", statuses: ["INTAKE_REVIEW", "CONSULTING", "QUOTED", "CONTRACT_PENDING"] },
-  { key: "prepare", label: "자료 준비", statuses: ["OPEN", "DOCUMENT_COLLECTING", "DOCUMENT_REVIEWING"] },
-  { key: "submit", label: "제출", statuses: ["READY_TO_SUBMIT", "SUBMITTED", "SUPPLEMENT_REQUESTED"] },
-  { key: "wait", label: "기관 처리", statuses: ["WAITING_AGENCY", "RESULT_RECEIVED"] },
-  { key: "close", label: "종결", statuses: ["CLOSING", "CLOSED"] }
+  { key: "intake", label: "접수 / 상담", duration: "1~3일", statuses: ["INTAKE_REVIEW", "CONSULTING", "QUOTED", "CONTRACT_PENDING"] },
+  { key: "prepare", label: "자료 준비", duration: "3~7일", statuses: ["OPEN", "DOCUMENT_COLLECTING", "DOCUMENT_REVIEWING"] },
+  { key: "submit", label: "제출", duration: "1~2일", statuses: ["READY_TO_SUBMIT", "SUBMITTED", "SUPPLEMENT_REQUESTED"] },
+  { key: "wait", label: "기관 처리", duration: "14~90일", statuses: ["WAITING_AGENCY", "RESULT_RECEIVED"] },
+  { key: "close", label: "종결", duration: "1~3일", statuses: ["CLOSING", "CLOSED"] }
 ];
 
 const STATUS_LABELS: Record<string, string> = {
@@ -41,12 +41,20 @@ function getActivePhaseIndex(status: string): number {
   return 0;
 }
 
+const pulseKeyframes = `
+@keyframes ethos-phase-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 169, 97, 0.45); }
+  50% { box-shadow: 0 0 0 8px rgba(201, 169, 97, 0); }
+}
+`;
+
 export function CaseTimeline({ status }: { status: string }) {
   const activeIndex = getActivePhaseIndex(status);
   const statusLabel = STATUS_LABELS[status] ?? status;
 
   return (
     <section aria-labelledby="case-timeline-heading" className="ethos-card p-7">
+      <style dangerouslySetInnerHTML={{ __html: pulseKeyframes }} />
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <p className="ethos-eyebrow">Progress</p>
@@ -83,6 +91,7 @@ export function CaseTimeline({ status }: { status: string }) {
                     ? "border-gold bg-surface text-primary ring-4 ring-gold/30"
                     : "border-gold/30 bg-surface text-text-muted"
                 }`}
+                style={active ? { animation: "ethos-phase-pulse 2s ease-in-out infinite" } : undefined}
               >
                 {done ? "✓" : i + 1}
               </span>
@@ -93,6 +102,9 @@ export function CaseTimeline({ status }: { status: string }) {
                 }`}
               >
                 {phase.label}
+              </p>
+              <p className="mt-0.5 text-[10px] text-text-muted">
+                {phase.duration}
               </p>
             </li>
           );
@@ -114,20 +126,30 @@ export function CaseTimeline({ status }: { status: string }) {
                     ? "border-gold bg-surface text-primary ring-4 ring-gold/30"
                     : "border-gold/30 bg-surface text-text-muted"
                 }`}
+                style={active ? { animation: "ethos-phase-pulse 2s ease-in-out infinite" } : undefined}
               >
                 {done ? "✓" : i + 1}
               </span>
-              <p
-                className={`font-serif text-sm font-bold ${
-                  active ? "text-primary" : done ? "text-text" : "text-text-muted"
-                }`}
-              >
-                {phase.label}
-              </p>
+              <div>
+                <p
+                  className={`font-serif text-sm font-bold ${
+                    active ? "text-primary" : done ? "text-text" : "text-text-muted"
+                  }`}
+                >
+                  {phase.label}
+                </p>
+                <p className="text-[10px] text-text-muted">
+                  {phase.duration}
+                </p>
+              </div>
             </li>
           );
         })}
       </ol>
+
+      <p className="mt-6 text-center text-xs text-text-muted">
+        예상 소요 기간은 사안에 따라 달라질 수 있습니다.
+      </p>
 
       {(status === "CANCELLED" || status === "ON_HOLD") && (
         <p className="mt-6 rounded-lg border-l-2 border-amber-400 bg-amber-50 px-4 py-3 text-xs text-amber-900">

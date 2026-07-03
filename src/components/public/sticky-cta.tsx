@@ -59,12 +59,12 @@ export function StickyCta() {
             href={CHANNELS.naverTalk.url}
             target="_blank"
             rel="noreferrer"
-            className="flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#03C75A]/40 bg-[#03C75A]/10 px-2.5 py-2.5 font-serif text-sm font-bold text-[#028a40] transition hover:bg-[#03C75A]/20"
+            className="flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-2.5 py-2.5 font-serif text-sm font-bold text-primary transition hover:bg-primary/20"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            톡톡
+            톡톡 상담
           </a>
           <Link
             href="/intake"
@@ -75,11 +75,11 @@ export function StickyCta() {
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <path d="M14 2v6h6M8 13h8M8 17h5" />
             </svg>
-            신청
+            온라인 신청
           </Link>
         </div>
         <p className="mt-1.5 text-center text-[11px] font-medium text-text-muted">
-          평균 회신 24시간 내 · 무료 검토
+          30분 내 회신 · 비용 발생 없음
         </p>
       </div>
     </div>

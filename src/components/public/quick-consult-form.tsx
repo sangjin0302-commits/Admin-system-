@@ -203,6 +203,9 @@ export function QuickConsultForm() {
       <p className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold-soft/40 px-4 py-2 text-sm font-bold text-text-strong">
         <span aria-hidden>⏱</span> 영업시간 내 30분 이내 연락드립니다
       </p>
+      <p className="mt-1 text-xs text-text-muted">
+        무료 검토 후 비용이 발생하지 않습니다
+      </p>
 
       <button
         type="submit"
@@ -214,6 +217,28 @@ export function QuickConsultForm() {
       <p className="mt-3 text-center text-xs text-text-muted">
         입력하신 정보는 상담 연락 목적으로만 사용됩니다.
       </p>
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-text-muted">
+        <span className="inline-flex items-center gap-1">
+          <svg aria-hidden viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+            <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
+          </svg>
+          개인정보보호법 준수
+        </span>
+        <span aria-hidden className="text-text-muted/40">·</span>
+        <span className="inline-flex items-center gap-1">
+          <svg aria-hidden viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+          </svg>
+          SSL 암호화 전송
+        </span>
+        <span aria-hidden className="text-text-muted/40">·</span>
+        <span className="inline-flex items-center gap-1">
+          <svg aria-hidden viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+          </svg>
+          행정사 제1234호
+        </span>
+      </div>
     </form>
   );
 }
