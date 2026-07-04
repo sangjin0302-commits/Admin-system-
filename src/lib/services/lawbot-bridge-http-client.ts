@@ -11,6 +11,7 @@ import type {
   BridgeIntakeAnalyzeResponse,
   BridgeIntakeProfileResponse
 } from "./lawbot-bridge-workflow-mapping-service";
+import { lawbotCache } from "./lawbot-cache";
 
 type FetchLike = typeof fetch;
 
@@ -213,6 +214,13 @@ export class LawbotBridgeHttpClient implements LawbotBridgeWorkflowClient {
   }
 
   private async postJson<T>(request: RequestOptions): Promise<T> {
+    // Check cache first
+    const cacheKey = lawbotCache.generateKey({ path: request.path, ...request.body });
+    const cached = lawbotCache.get(cacheKey);
+    if (cached) {
+      return cached.value as T;
+    }
+
     let attempt = 0;
     let lastError: unknown;
 
@@ -243,7 +251,12 @@ export class LawbotBridgeHttpClient implements LawbotBridgeWorkflowClient {
           throw mapped;
         }
 
-        return (await response.json()) as T;
+        const result = (await response.json()) as T;
+
+        // Cache successful responses
+        lawbotCache.set(cacheKey, result);
+
+        return result;
       } catch (error) {
         lastError = error;
         if (isAbortError(error)) {
