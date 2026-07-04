@@ -8,11 +8,13 @@ import { prisma } from "@/lib/prisma/client";
 import { FaqAccordion } from "@/components/public/faq-accordion";
 import { TrustStats } from "@/components/public/trust-stats";
 import { Testimonials } from "@/components/public/testimonials";
+import { TrustBelt } from "@/components/public/trust-belt";
 import { Reveal } from "@/components/public/reveal";
 import { ConsultStructure } from "@/components/public/consult-structure";
 import { HeroScrollIndicator } from "@/components/public/hero-scroll-indicator";
 import { ParallaxAurora } from "@/components/public/parallax-aurora";
-import { NewsletterBanner } from "@/components/public/newsletter-banner";
+import { NewsletterWidget } from "@/components/public/newsletter-widget";
+import { NaverReviewBand } from "@/components/public/naver-review-band";
 import { NaverBlogSection } from "@/components/public/naver-blog-section";
 import { HeroCtaSubtitleVariants } from "@/components/public/hero-cta-variants";
 import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
@@ -774,11 +776,17 @@ export default async function PublicMarketingHomePage({
         <NaverBlogSection posts={naverPosts} blogId={naverBlogId} />
       )}
 
+      {/* ═══════════════ 신뢰 뱃지 벨트 ═══════════════ */}
+      <TrustBelt />
+
       {/* ═══════════════ 의뢰인 후기 ═══════════════ */}
       <Testimonials items={testimonials} />
 
+      {/* ═══════════════ Naver Place 실제 방문자 후기 ═══════════════ */}
+      <NaverReviewBand />
+
       {/* ═══════════════ Newsletter ═══════════════ */}
-      <NewsletterBanner />
+      <NewsletterWidget />
 
       {/* ═══════════════ FAQ — soft band ═══════════════ */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28" aria-labelledby="home-faq-heading">

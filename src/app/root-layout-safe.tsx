@@ -14,6 +14,7 @@ import { LiveChat } from "@/components/public/live-chat";
 import { LocalBusinessJsonLd } from "@/components/public/json-ld";
 import { PWARegister } from "@/components/public/pwa-register";
 import { AbBootstrap } from "@/components/public/ab-bootstrap";
+import { BrandIntro } from "@/components/public/brand-intro";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 
@@ -98,6 +99,7 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
   return (
     <html lang="ko">
       <body>
+        <BrandIntro />
         <AppShellSafe>{children}</AppShellSafe>
         <ToastProvider />
         <SonnerToaster

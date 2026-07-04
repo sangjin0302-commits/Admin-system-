@@ -43,6 +43,18 @@ export async function PATCH(
       );
     }
 
+    // 워크플로 엔진 훅 (best-effort, background)
+    {
+      const { runWorkflow } = await import("@/lib/services/workflow-engine");
+      runWorkflow("case", undefined, payload.status, {
+        id: caseMatter.id,
+        title: caseMatter.title,
+        caseNo: caseMatter.caseNo,
+        inquiryId: caseMatter.inquiryId,
+        inquiry: (caseMatter as { inquiry?: unknown }).inquiry
+      }).catch((err) => logger.warn("[workflow-engine] case hook error", err));
+    }
+
     return api.ok({
       ok: true,
       caseMatter

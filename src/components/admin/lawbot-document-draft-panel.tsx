@@ -7,11 +7,58 @@ import { Card } from "@/components/ui/card";
 
 type DraftKind = "opinion" | "appeal" | "objection" | "petition";
 
-const DRAFT_KIND_OPTIONS: { value: DraftKind; label: string }[] = [
-  { value: "opinion", label: "의견서" },
-  { value: "appeal", label: "행정심판청구서" },
-  { value: "objection", label: "이의신청서" },
-  { value: "petition", label: "청원서" }
+const DRAFT_KIND_OPTIONS: {
+  value: DraftKind;
+  label: string;
+  avgMinutes: number;
+  checklist: string[];
+}[] = [
+  {
+    value: "opinion",
+    label: "의견서",
+    avgMinutes: 25,
+    checklist: [
+      "사실관계 요약",
+      "쟁점 정리",
+      "적용 법령",
+      "결론 (요청 사항)"
+    ]
+  },
+  {
+    value: "appeal",
+    label: "행정심판청구서",
+    avgMinutes: 45,
+    checklist: [
+      "청구인/피청구인 정보",
+      "처분 내용 특정",
+      "청구 취지",
+      "청구 이유",
+      "관계 법령",
+      "증거 서류 목록"
+    ]
+  },
+  {
+    value: "objection",
+    label: "이의신청서",
+    avgMinutes: 30,
+    checklist: [
+      "처분 통지 수령일",
+      "이의 사유",
+      "요청 사항",
+      "첨부 서류"
+    ]
+  },
+  {
+    value: "petition",
+    label: "청원서",
+    avgMinutes: 20,
+    checklist: [
+      "청원인 인적사항",
+      "청원 대상 기관",
+      "청원 사유",
+      "요청 사항"
+    ]
+  }
 ];
 
 type ApiResponse = {
@@ -22,13 +69,20 @@ type ApiResponse = {
   error?: string;
 };
 
+type Step = 1 | 2 | 3;
+
 export function LawbotDocumentDraftPanel({ inquiryId }: { inquiryId: string }) {
+  const [step, setStep] = useState<Step>(1);
   const [draftKind, setDraftKind] = useState<DraftKind>("opinion");
   const [extraContext, setExtraContext] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApiResponse | null>(null);
+  const [draftText, setDraftText] = useState("");
   const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const activeOption = DRAFT_KIND_OPTIONS.find((o) => o.value === draftKind)!;
 
   async function handleGenerate() {
     setLoading(true);
@@ -49,6 +103,7 @@ export function LawbotDocumentDraftPanel({ inquiryId }: { inquiryId: string }) {
         setError(data.error ?? "AI 서면 초안 생성에 실패했습니다.");
       } else {
         setResult(data);
+        setDraftText(data.draft ?? "");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "네트워크 오류가 발생했습니다.");
@@ -58,9 +113,9 @@ export function LawbotDocumentDraftPanel({ inquiryId }: { inquiryId: string }) {
   }
 
   async function handleCopy() {
-    if (!result?.draft) return;
+    if (!draftText) return;
     try {
-      await navigator.clipboard.writeText(result.draft);
+      await navigator.clipboard.writeText(draftText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -68,95 +123,229 @@ export function LawbotDocumentDraftPanel({ inquiryId }: { inquiryId: string }) {
     }
   }
 
+  async function handleExportDocx() {
+    if (!draftText.trim()) return;
+    setExporting(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/inquiries/${inquiryId}/draft-document/export`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ draftText, documentType: draftKind })
+        }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "다운로드 실패" }));
+        setError(data.error ?? "docx 내보내기 실패");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${activeOption.label}-${inquiryId}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "네트워크 오류");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
-    <Card className="p-4 md:p-6">
-      <div className="mb-3">
-        <p className="text-xs text-text-muted">Lawbot AI</p>
-        <h3 className="text-sm font-semibold text-text-strong">AI 서면 초안 생성</h3>
-        <p className="mt-1 text-xs text-text-muted">
-          문의 정보를 기반으로 법률 서면 초안을 생성합니다.
-        </p>
-      </div>
-
-      <div className="space-y-3">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-text-strong">
-            서면 종류
-          </label>
-          <select
-            value={draftKind}
-            onChange={(e) => setDraftKind(e.target.value as DraftKind)}
-            disabled={loading}
-            className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm"
-          >
-            {DRAFT_KIND_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
+      <Card className="p-4 md:p-6">
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-text-muted">Lawbot AI · 3단계 마법사</p>
+            <h3 className="text-sm font-semibold text-text-strong">AI 서면 초안 생성</h3>
+          </div>
+          <StepIndicator step={step} />
         </div>
 
-        <div>
-          <label className="mb-1 block text-xs font-medium text-text-strong">
-            추가 사실관계 (선택)
-          </label>
-          <textarea
-            value={extraContext}
-            onChange={(e) => setExtraContext(e.target.value)}
-            disabled={loading}
-            rows={4}
-            placeholder="문의에 포함되지 않은 추가 사실이나 강조할 쟁점을 입력하세요."
-            className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm"
-          />
-        </div>
+        {step === 1 && (
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-strong">
+                서면 종류
+              </label>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {DRAFT_KIND_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setDraftKind(opt.value)}
+                    className={
+                      "rounded-md border px-3 py-2 text-sm transition " +
+                      (draftKind === opt.value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-line bg-white text-text-strong hover:bg-surface-muted")
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-strong">
+                추가 사실관계 (선택)
+              </label>
+              <textarea
+                value={extraContext}
+                onChange={(e) => setExtraContext(e.target.value)}
+                rows={5}
+                placeholder="문의에 포함되지 않은 추가 사실이나 강조할 쟁점을 입력하세요."
+                className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button variant="primary" size="md" onClick={() => setStep(2)}>
+                다음: 초안 생성 →
+              </Button>
+            </div>
+          </div>
+        )}
 
-        <Button
-          onClick={handleGenerate}
-          disabled={loading}
-          variant="primary"
-          size="md"
-        >
-          {loading ? "생성 중..." : "AI 초안 생성"}
-        </Button>
-      </div>
+        {step === 2 && (
+          <div className="space-y-3">
+            <p className="text-xs text-text-muted">
+              선택: <b>{activeOption.label}</b>
+            </p>
+            <Button
+              onClick={handleGenerate}
+              disabled={loading}
+              variant="primary"
+              size="md"
+            >
+              {loading ? "생성 중..." : result ? "다시 생성" : "AI 초안 생성"}
+            </Button>
 
-      {error && (
-        <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
-          {error}
-        </div>
-      )}
+            {result?.warnings && result.warnings.length > 0 && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                <p className="font-medium">확인 필요:</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  {result.warnings.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-      {result?.warnings && result.warnings.length > 0 && (
-        <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <p className="font-medium">확인 필요:</p>
-          <ul className="mt-1 list-disc space-y-1 pl-5">
-            {result.warnings.map((w, i) => (
-              <li key={i}>{w}</li>
+            {result && (
+              <div>
+                <p className="mb-2 text-xs font-medium text-text-strong">
+                  초안 (편집 가능)
+                </p>
+                <textarea
+                  value={draftText}
+                  onChange={(e) => setDraftText(e.target.value)}
+                  rows={16}
+                  className="w-full rounded-md border border-line bg-white px-3 py-2 font-mono text-xs"
+                />
+              </div>
+            )}
+
+            <div className="flex justify-between">
+              <Button variant="secondary" size="md" onClick={() => setStep(1)}>
+                ← 이전
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => setStep(3)}
+                disabled={!draftText.trim()}
+              >
+                다음: 저장/내보내기 →
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-3">
+            <p className="text-sm text-text-strong">최종 결과를 저장하거나 내보냅니다.</p>
+            <div className="rounded-md border border-line bg-surface-muted p-3">
+              <pre className="max-h-64 overflow-auto whitespace-pre-wrap text-xs text-text-strong">
+                {draftText}
+              </pre>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" size="md" onClick={handleCopy}>
+                {copied ? "복사됨" : "복사하기"}
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleExportDocx}
+                disabled={exporting}
+              >
+                {exporting ? "생성 중..." : ".docx 다운로드"}
+              </Button>
+              <Button variant="secondary" size="md" onClick={() => setStep(2)}>
+                ← 편집으로
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+            {error}
+          </div>
+        )}
+      </Card>
+
+      <aside className="space-y-3">
+        <Card className="p-3">
+          <p className="ui-kicker">관련 사례 (Lawbot)</p>
+          <p className="mt-1 text-xs text-text-muted">
+            검색 결과는 Step 2에서 초안 생성 시 자동 반영됩니다.
+          </p>
+        </Card>
+        <Card className="p-3">
+          <p className="ui-kicker">체크리스트 ({activeOption.label})</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-text-strong">
+            {activeOption.checklist.map((c) => (
+              <li key={c}>{c}</li>
             ))}
           </ul>
-        </div>
-      )}
+        </Card>
+        <Card className="p-3">
+          <p className="ui-kicker">예상 소요 시간</p>
+          <p className="mt-1 text-lg font-semibold text-text-strong">
+            약 {activeOption.avgMinutes}분
+          </p>
+          <p className="text-xs text-text-muted">AI 생성 + 검토 평균</p>
+        </Card>
+      </aside>
+    </div>
+  );
+}
 
-      {result?.draft && (
-        <div className="mt-4">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-medium text-text-strong">생성된 초안</p>
-            <Button onClick={handleCopy} variant="secondary" size="sm">
-              {copied ? "복사됨" : "복사"}
-            </Button>
-          </div>
-          <pre className="whitespace-pre-wrap rounded-md border border-line bg-surface-muted p-3 text-sm text-text-strong">
-            {result.draft}
-          </pre>
-        </div>
-      )}
-
-      {result && !result.draft && (
-        <p className="mt-4 text-sm text-text-muted">
-          초안 텍스트를 받지 못했습니다. Lawbot 응답을 확인해 주세요.
-        </p>
-      )}
-    </Card>
+function StepIndicator({ step }: { step: Step }) {
+  const steps = [1, 2, 3] as const;
+  return (
+    <div className="flex items-center gap-1">
+      {steps.map((s) => (
+        <span
+          key={s}
+          className={
+            "flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold " +
+            (s === step
+              ? "bg-primary text-white"
+              : s < step
+                ? "bg-emerald-500 text-white"
+                : "bg-surface-muted text-text-muted")
+          }
+        >
+          {s}
+        </span>
+      ))}
+    </div>
   );
 }

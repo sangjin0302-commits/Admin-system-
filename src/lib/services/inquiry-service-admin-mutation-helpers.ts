@@ -12,6 +12,7 @@ import { syncInquiryConsultationSnapshot } from "@/lib/services/inquiry-consulta
 import { parseInquiryCommunicationLogs } from "@/lib/services/inquiry-guard-helpers";
 import type { InquiryStatus } from "@/types/inquiry";
 import { logger } from "@/lib/utils/logger";
+import { runWorkflow } from "@/lib/services/workflow-engine";
 
 export async function updateInquiryAdminFields(
   id: string,
@@ -67,6 +68,21 @@ export async function updateInquiryAdminFields(
     });
   } catch (error) {
     logger.error("Failed to refresh consultation Notion sync", error);
+  }
+
+  // 워크플로 엔진 훅 — 상태가 실제로 변한 경우에만 실행. best-effort.
+  if (statusChangeEntry && current.status !== updated.status) {
+    try {
+      await runWorkflow("inquiry", current.status, updated.status as string, {
+        id: updated.id,
+        title: updated.title,
+        email: updated.email,
+        contactName: updated.contactName,
+        status: updated.status
+      });
+    } catch (error) {
+      logger.error("[workflow-engine] inquiry hook failed", error);
+    }
   }
 
   return updated;
