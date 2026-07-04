@@ -95,6 +95,30 @@ export async function POST(request: Request) {
     payload: { fileId: record.id, mimeType: record.mimeType, sizeBytes: record.sizeBytes }
   });
 
+  // Fire-and-forget: auto-OCR + classification for images (Claude Vision)
+  if (file.type.startsWith("image/")) {
+    (async () => {
+      try {
+        const { ocrDocument } = await import("@/lib/services/document-ocr-service");
+        const r = await ocrDocument({ imageBase64: buffer.toString("base64"), mimeType: file.type });
+        const tag = JSON.stringify({
+          type: r.type,
+          confidence: r.confidence,
+          usedVision: r.usedVision,
+          fileName: record.fileName,
+          taggedAt: new Date().toISOString(),
+        });
+        await prisma.siteSetting.upsert({
+          where: { key: `portal.doc.type.${record.id}` },
+          create: { key: `portal.doc.type.${record.id}`, value: tag },
+          update: { value: tag },
+        });
+      } catch (err) {
+        logger.warn("[portal/upload] auto-ocr failed", err);
+      }
+    })();
+  }
+
   return NextResponse.json({
     ok: true,
     file: {

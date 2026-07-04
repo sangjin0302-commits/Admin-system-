@@ -336,6 +336,45 @@ export async function POST(request: Request) {
           ).catch((err) => logger.warn("[intake] kakao notify failed", err));
         }
       }).catch(() => undefined);
+      // 영업시간 외 자동 응대 (Claude Haiku)
+      import("@/lib/services/after-hours-ai-service").then(async (mod) => {
+        try {
+          if (!(await mod.shouldTriggerAfterHours())) return;
+          const siteMod = await import("@/lib/services/site-settings").catch(() => null);
+          const kakaoUrl = siteMod
+            ? await siteMod.getSiteSetting("contact.kakaoUrl").catch(() => "")
+            : "";
+          const reply = await mod.generateAfterHoursResponse({
+            contactName: String(payload.name ?? inquiry.contactName ?? ""),
+            inquiryType: String(payload.inquiryType ?? inquiry.inquiryType ?? ""),
+            message: String(payload.message ?? ""),
+            kakaoUrl: kakaoUrl || undefined,
+          });
+          // Send via email if configured
+          if (inquiry.email) {
+            const emailMod = await import("@/lib/services/email-notification-service").catch(() => null);
+            const send = (emailMod as unknown as { sendAfterHoursAutoReply?: (a: { to: string; subject: string; body: string }) => Promise<unknown>; sendPlainEmail?: (a: { to: string; subject: string; body: string }) => Promise<unknown> } | null);
+            if (send?.sendAfterHoursAutoReply) {
+              await send.sendAfterHoursAutoReply({ to: inquiry.email, subject: reply.subject, body: reply.body }).catch(() => undefined);
+            } else if (send?.sendPlainEmail) {
+              await send.sendPlainEmail({ to: inquiry.email, subject: reply.subject, body: reply.body }).catch(() => undefined);
+            }
+          }
+          // Stash for success page display
+          try {
+            await (await import("@/lib/prisma/client")).prisma.siteSetting.upsert({
+              where: { key: `intake.afterHours.${inquiry.id}` },
+              create: {
+                key: `intake.afterHours.${inquiry.id}`,
+                value: JSON.stringify({ subject: reply.subject, body: reply.body, nextOpenAt: reply.nextOpenAt, usedAi: reply.usedAi }),
+              },
+              update: { value: JSON.stringify({ subject: reply.subject, body: reply.body, nextOpenAt: reply.nextOpenAt, usedAi: reply.usedAi }) },
+            });
+          } catch { /* best-effort */ }
+        } catch (err) {
+          logger.warn("[intake] after-hours auto-reply failed", err);
+        }
+      }).catch(() => undefined);
       // 텔레그램 알림 (Jean 개인 봇)
       import("@/lib/services/telegram-notify").then((mod) => {
         const lines = [

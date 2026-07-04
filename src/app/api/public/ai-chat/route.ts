@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { logger } from "@/lib/utils/logger";
+import { getUsage, incrementUsage } from "@/lib/services/ai-subscription-service";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-4-5-20251001";
@@ -31,6 +32,29 @@ export async function POST(request: NextRequest) {
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: "메시지가 필요합니다." }, { status: 400 });
+    }
+
+    // AI subscription quota gate: only enforced when the caller identifies
+    // themselves. Anonymous callers keep the legacy unlimited behavior.
+    const userId =
+      request.headers.get("x-user-email") ||
+      request.headers.get("x-portal-user") ||
+      (typeof body.userId === "string" ? body.userId : "");
+    if (userId) {
+      const usage = await getUsage(userId).catch(() => null);
+      if (usage && usage.quota >= 0 && usage.remaining <= 0) {
+        return NextResponse.json(
+          {
+            error:
+              "이번 달 무료 상담 5회를 모두 사용하셨습니다. Pro 요금제로 업그레이드하시면 무제한 상담이 가능합니다.",
+            code: "QUOTA_EXCEEDED",
+            upgradeUrl: "/ai-subscription",
+          },
+          { status: 402 }
+        );
+      }
+      // Consume one credit for tracking (best-effort, non-blocking on failure)
+      await incrementUsage(userId).catch(() => null);
     }
 
     const trimmed = messages.slice(-MAX_MESSAGES).map((m) => ({

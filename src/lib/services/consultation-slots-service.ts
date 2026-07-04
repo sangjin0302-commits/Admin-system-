@@ -256,5 +256,102 @@ export async function bookSlot(input: BookingInput): Promise<BookingResult> {
     select: { id: true },
   });
 
+  // Fire-and-forget: create video meeting and stash URL for portal + client email
+  (async () => {
+    try {
+      const { createMeeting } = await import("./video-meeting-service");
+      const [h, m] = input.time.split(":").map(Number);
+      const [y, mo, d] = input.date.split("-").map(Number);
+      const startKst = new Date(Date.UTC(y, mo - 1, d, (h - 9 + 24) % 24, m || 0)); // KST → UTC
+      const attendees = input.email ? [input.email] : [];
+      const meet = await createMeeting({
+        topic: `[ETHOS 상담] ${category} · ${name}`,
+        startAt: startKst,
+        durationMin: 30,
+        attendees,
+      });
+      const meta = JSON.stringify({
+        inquiryId: created.id,
+        provider: meet.provider,
+        meetingId: meet.meetingId,
+        joinUrl: meet.joinUrl,
+        hostUrl: meet.hostUrl ?? null,
+        password: meet.password ?? null,
+        date: input.date,
+        time: input.time,
+        createdAt: new Date().toISOString(),
+      });
+      await prisma.siteSetting.upsert({
+        where: { key: `booking.meeting.${created.id}` },
+        create: { key: `booking.meeting.${created.id}`, value: meta },
+        update: { value: meta },
+      });
+      // Append join url to memo
+      const cur = await prisma.inquiry.findUnique({
+        where: { id: created.id },
+        select: { internalMemo: true },
+      });
+      if (cur) {
+        await prisma.inquiry.update({
+          where: { id: created.id },
+          data: {
+            internalMemo: `${cur.internalMemo ?? ""}\n[MEETING provider=${meet.provider} url=${meet.joinUrl}]`.slice(0, 8000),
+          },
+        });
+      }
+      // Client email (best-effort)
+      if (input.email) {
+        try {
+          const emailMod = await import("./email-notification-service").catch(() => null);
+          const send = (emailMod as unknown as { sendMeetingInvite?: (a: { to: string; subject: string; body: string }) => Promise<unknown>; sendPlainEmail?: (a: { to: string; subject: string; body: string }) => Promise<unknown> } | null);
+          const subject = `[ETHOS] 화상 상담 링크 · ${input.date} ${input.time}`;
+          const body = `${name}님, 상담 예약이 확정되었습니다.\n\n일시: ${input.date} ${input.time} (KST)\n주제: ${category}\n\n화상 상담 참여 링크:\n${meet.joinUrl}\n\n감사합니다.\n행정사 ETHOS`;
+          if (send?.sendMeetingInvite) {
+            await send.sendMeetingInvite({ to: input.email, subject, body }).catch(() => undefined);
+          } else if (send?.sendPlainEmail) {
+            await send.sendPlainEmail({ to: input.email, subject, body }).catch(() => undefined);
+          }
+        } catch { /* best-effort */ }
+      }
+    } catch { /* meeting creation is best-effort */ }
+  })();
+
   return { ok: true, inquiryId: created.id };
+}
+
+/** Fetch meeting info stored for a booking (SiteSetting-backed). */
+export async function getBookingMeeting(inquiryId: string): Promise<{
+  provider: string;
+  meetingId: string;
+  joinUrl: string;
+  hostUrl?: string | null;
+  password?: string | null;
+  date?: string;
+  time?: string;
+} | null> {
+  try {
+    const row = await prisma.siteSetting.findUnique({ where: { key: `booking.meeting.${inquiryId}` } });
+    if (!row?.value) return null;
+    const parsed = JSON.parse(row.value) as {
+      provider?: string;
+      meetingId?: string;
+      joinUrl?: string;
+      hostUrl?: string | null;
+      password?: string | null;
+      date?: string;
+      time?: string;
+    };
+    if (!parsed.joinUrl || !parsed.meetingId || !parsed.provider) return null;
+    return {
+      provider: parsed.provider,
+      meetingId: parsed.meetingId,
+      joinUrl: parsed.joinUrl,
+      hostUrl: parsed.hostUrl ?? null,
+      password: parsed.password ?? null,
+      date: parsed.date,
+      time: parsed.time,
+    };
+  } catch {
+    return null;
+  }
 }

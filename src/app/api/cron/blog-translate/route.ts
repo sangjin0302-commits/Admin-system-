@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
-import { translateBlogPost } from "@/lib/services/blog-translation-service";
+import {
+  translateBlogPost,
+  translateBlogPostTo,
+  getBlogTranslationZh,
+  saveBlogTranslationZh,
+} from "@/lib/services/blog-translation-service";
 import { sendTelegramAlert } from "@/lib/services/telegram-notify";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 180;
+
+function isZhEnabled(): boolean {
+  const raw = process.env.BLOG_TRANSLATE_ZH?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+}
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
@@ -17,27 +27,19 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY not set" }, { status: 400 });
   }
 
-  // Find published posts without English translation
+  // ── English pass ────────────────────────────────────────────
   const untranslated = await prisma.blogPost.findMany({
     where: {
       published: true,
-      OR: [
-        { titleEn: null },
-        { titleEn: "" },
-      ],
+      OR: [{ titleEn: null }, { titleEn: "" }],
     },
     orderBy: { publishedAt: "desc" },
-    take: 5, // Process 5 per run to stay within limits
+    take: 5,
     select: { id: true, title: true, excerpt: true, body: true, slug: true },
   });
 
-  if (untranslated.length === 0) {
-    return NextResponse.json({ translated: 0, message: "All posts translated" });
-  }
-
-  let translated = 0;
-  const errors: string[] = [];
-
+  let enCount = 0;
+  const enErrors: string[] = [];
   for (const post of untranslated) {
     try {
       const result = await translateBlogPost({
@@ -45,7 +47,6 @@ export async function GET(req: Request) {
         excerpt: post.excerpt || "",
         body: post.body,
       });
-
       if (result) {
         await prisma.blogPost.update({
           where: { id: post.id },
@@ -55,25 +56,71 @@ export async function GET(req: Request) {
             bodyEn: result.bodyEn,
           },
         });
-        translated++;
+        enCount++;
       }
-
-      // Rate limit: wait 1s between API calls
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, 1000));
     } catch (err) {
-      logger.warn("[blog-translate] failed", { slug: post.slug, err });
-      errors.push(post.slug);
+      logger.warn("[blog-translate] EN failed", { slug: post.slug, err });
+      enErrors.push(post.slug);
     }
   }
 
-  // Report to Telegram
-  if (translated > 0) {
+  // ── Chinese pass (opt-in) ───────────────────────────────────
+  let zhCount = 0;
+  const zhErrors: string[] = [];
+  let zhCandidates = 0;
+  if (isZhEnabled()) {
+    const publishedPosts = await prisma.blogPost.findMany({
+      where: { published: true },
+      orderBy: { publishedAt: "desc" },
+      take: 20,
+      select: { id: true, title: true, excerpt: true, body: true, slug: true },
+    });
+
+    const pending: typeof publishedPosts = [];
+    for (const p of publishedPosts) {
+      const existing = await getBlogTranslationZh(p.id);
+      if (!existing) pending.push(p);
+      if (pending.length >= 5) break;
+    }
+    zhCandidates = pending.length;
+
+    for (const post of pending) {
+      try {
+        const result = await translateBlogPostTo(
+          { title: post.title, excerpt: post.excerpt || "", body: post.body },
+          "zh"
+        );
+        if (result) {
+          await saveBlogTranslationZh(post.id, result);
+          zhCount++;
+        }
+        await new Promise((r) => setTimeout(r, 1000));
+      } catch (err) {
+        logger.warn("[blog-translate] ZH failed", { slug: post.slug, err });
+        zhErrors.push(post.slug);
+      }
+    }
+  }
+
+  const totalTranslated = enCount + zhCount;
+  if (totalTranslated > 0) {
+    const lines: string[] = [];
+    if (untranslated.length) lines.push(`EN: ${enCount}/${untranslated.length}`);
+    if (isZhEnabled()) lines.push(`ZH: ${zhCount}/${zhCandidates}`);
+    if (enErrors.length) lines.push(`EN 실패: ${enErrors.join(", ")}`);
+    if (zhErrors.length) lines.push(`ZH 실패: ${zhErrors.join(", ")}`);
     await sendTelegramAlert({
       kind: "system",
-      title: `🌐 블로그 자동 번역: ${translated}/${untranslated.length}편 완료`,
-      lines: errors.length > 0 ? [`실패: ${errors.join(", ")}`] : undefined,
+      title: `🌐 블로그 자동 번역 완료 (총 ${totalTranslated}편)`,
+      lines,
     }).catch(() => {});
   }
 
-  return NextResponse.json({ translated, total: untranslated.length, errors });
+  return NextResponse.json({
+    en: { translated: enCount, total: untranslated.length, errors: enErrors },
+    zh: isZhEnabled()
+      ? { translated: zhCount, total: zhCandidates, errors: zhErrors }
+      : { skipped: true, hint: "set BLOG_TRANSLATE_ZH=1 to enable" },
+  });
 }

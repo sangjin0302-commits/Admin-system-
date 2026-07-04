@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma/client";
+import { logSearch } from "@/lib/services/search-log-service";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,11 @@ export async function GET(request: Request) {
       publishedAt: true
     }
   }).catch(() => []);
+
+  if (q) {
+    // Non-blocking: never delay the response on log-write failures.
+    void logSearch(q, posts.length);
+  }
 
   return NextResponse.json(
     {

@@ -7,6 +7,7 @@ import { Suspense, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { BlogSearchTrigger } from "@/components/public/blog-search";
+import { LangSwitcher } from "@/components/layout/lang-switcher";
 
 const NAV_ITEMS = [
   { href: "/", label: "홈", labelEn: "Home" },
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/services", label: "분야", labelEn: "Practice" },
   { href: "/consult", label: "상담", labelEn: "Consult" },
   { href: "/quick-check", label: "AI 진단", labelEn: "AI" },
+  { href: "/ai-screen", label: "빠른 진단", labelEn: "Screen" },
   { href: "/cases", label: "활동", labelEn: "Lectures" },
   { href: "/blog", label: "칼럼", labelEn: "Insights" }
 ] as const;
@@ -97,6 +99,13 @@ function HeaderInner() {
               key={item.href}
               href={`${item.href}${qs}`}
               aria-current={isActive(item.href) ? "page" : undefined}
+              data-tour-id={
+                item.href === "/quick-check"
+                  ? "nav-ai"
+                  : item.href === "/blog"
+                    ? "nav-blog"
+                    : undefined
+              }
               className={`relative whitespace-nowrap px-3 py-2 font-serif text-sm font-semibold transition ${
                 isActive(item.href) ? "text-primary" : "text-text-muted hover:text-primary"
               }`}
@@ -114,7 +123,7 @@ function HeaderInner() {
         <div className="hidden lg:block"><BlogSearchTrigger /></div>
 
         {/* 언어 토글 */}
-        <LangToggle pathname={pathname} />
+        <LangSwitcher />
 
         {/* CTA */}
         <div className="hidden items-center gap-2 lg:flex">

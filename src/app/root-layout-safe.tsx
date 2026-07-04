@@ -15,6 +15,7 @@ import { LocalBusinessJsonLd } from "@/components/public/json-ld";
 import { PWARegister } from "@/components/public/pwa-register";
 import { AbBootstrap } from "@/components/public/ab-bootstrap";
 import { BrandIntro } from "@/components/public/brand-intro";
+import { OnboardingTour } from "@/components/public/onboarding-tour";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 
@@ -124,6 +125,7 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
         <SocialProofPopup />
         <AbBootstrap />
         <BottomSheetMount />
+        <OnboardingTour />
       </body>
     </html>
   );

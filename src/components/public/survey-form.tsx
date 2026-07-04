@@ -61,12 +61,40 @@ export function SurveyForm({ token, clientName }: SurveyFormProps) {
   }
 
   if (submitted) {
+    const isPromoter = score !== null && score >= 9;
+    const naverReviewUrl = process.env.NEXT_PUBLIC_NAVER_REVIEW_URL || "https://map.naver.com/";
+    const kakaoReviewUrl = process.env.NEXT_PUBLIC_KAKAO_REVIEW_URL || "https://place.map.kakao.com/";
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
           <div className="text-5xl mb-4">🙏</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">감사합니다!</h1>
           <p className="text-gray-600">소중한 의견이 더 나은 서비스를 만드는 데 큰 도움이 됩니다.</p>
+          {isPromoter && (
+            <div className="mt-6 pt-6 border-t border-gray-200 text-left">
+              <p className="text-sm text-gray-700 mb-3 text-center">
+                높은 점수 감사드립니다. 괜찮으시다면 아래 링크에 짧은 후기를 남겨주실 수 있을까요?
+              </p>
+              <div className="flex flex-col gap-2">
+                <a
+                  href={naverReviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 rounded-lg font-bold text-white text-center bg-green-600 hover:bg-green-700 transition"
+                >
+                  네이버 리뷰 남기기
+                </a>
+                <a
+                  href={kakaoReviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 rounded-lg font-bold text-gray-900 text-center bg-yellow-400 hover:bg-yellow-500 transition"
+                >
+                  카카오 리뷰 남기기
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

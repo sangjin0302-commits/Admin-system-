@@ -321,6 +321,7 @@ export default async function PublicMarketingHomePage({
               <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
                 <Link
                   href={intakeHref}
+                  data-tour-id="cta-consult"
                   className="ethos-cta-shine group inline-flex h-14 items-center justify-center gap-2 rounded-lg bg-primary px-8 text-base font-bold text-white shadow-md transition-all duration-300 hover:bg-text-strong hover:shadow-lg hover:shadow-primary/25"
                 >
                   무료 검토 신청

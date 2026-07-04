@@ -19,6 +19,7 @@ import { buildAdminInquiryPageData } from "@/lib/services/admin-inquiry-page-dat
 import { readMarketingSnapshot } from "@/lib/services/marketing-sync-service";
 import { parseAdminInquiryQuery } from "@/lib/validation/admin-safe-v2";
 import { listInquiries } from "@/lib/services/inquiry-service";
+import { getScoresForInquiries } from "@/lib/services/priority-scoring-service";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +59,10 @@ export default async function AdminInquiryListPage({
     safeListInquiries(filters),
     safeReadMarketingSnapshot()
   ]);
+  const priorityScores = await getScoresForInquiries(inquiries.map((i) => i.id)).catch((error) => {
+    logger.error("Failed to load priority scores", error);
+    return {};
+  });
   const {
     activeInquiries,
     prioritizedInquiries,
@@ -328,7 +333,7 @@ export default async function AdminInquiryListPage({
           ) : (
             <>
               <InquiryCardList inquiries={prioritizedInquiries} />
-              <InquiryTable inquiries={prioritizedInquiries} />
+              <InquiryTable inquiries={prioritizedInquiries} scores={priorityScores} />
             </>
           )
         ) : (

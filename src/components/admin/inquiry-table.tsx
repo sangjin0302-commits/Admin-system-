@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableContainer } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/utils";
+import { scoreTone, type PriorityScore } from "@/lib/services/priority-scoring-service";
 import {
   getInquiryStatusLabel,
   getInquiryTypeLabel,
@@ -39,7 +40,13 @@ type InquiryItem = {
   checklistTotalCount?: number;
 };
 
-export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
+export function InquiryTable({
+  inquiries,
+  scores
+}: {
+  inquiries: InquiryItem[];
+  scores?: Record<string, PriorityScore>;
+}) {
   return (
     <TableContainer className="hidden lg:block">
       <Table>
@@ -49,6 +56,7 @@ export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
             <th>유형</th>
             <th>상태</th>
             <th>긴급도</th>
+            <th>우선순위</th>
             <th>언어</th>
             <th>희망 일정</th>
             <th>다음 연락</th>
@@ -87,6 +95,21 @@ export function InquiryTable({ inquiries }: { inquiries: InquiryItem[] }) {
                   <Badge tone="urgency" urgency={inquiryUrgency}>
                     {getUrgencyLabel(inquiryUrgency)}
                   </Badge>
+                </td>
+                <td>
+                  {(() => {
+                    const s = scores?.[inquiry.id];
+                    if (!s) return <span className="text-xs text-text-muted">-</span>;
+                    const t = scoreTone(s.total);
+                    return (
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold ${t.className}`}
+                        title={s.reasoning}
+                      >
+                        {t.label} {s.total}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td>
                   <Badge tone="language" language={inquiryLanguage}>

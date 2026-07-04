@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
+import { CaseSearch } from "@/components/public/case-search";
 import { CHANNELS } from "@/lib/constants/channels";
 import { EventJsonLd } from "@/components/seo/json-ld";
 
@@ -149,6 +150,7 @@ export default async function LecturesPage({
           </Reveal>
           <Reveal delay={1}>
             <h1 className="ethos-display mt-5 text-4xl sm:text-[3.6rem]">{t.heading}</h1>
+            <div className="mt-8"><CaseSearch /></div>
           </Reveal>
           <Reveal delay={2}>
             <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-text-muted">{t.intro}</p>
