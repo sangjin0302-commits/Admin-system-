@@ -7,6 +7,7 @@
  */
 
 import { prisma } from "@/lib/prisma/client";
+import { broadcastPortalNotification } from "@/lib/services/portal-event-bus";
 
 export type PortalNotificationInput = {
   clientId: string;
@@ -19,7 +20,7 @@ export type PortalNotificationInput = {
 };
 
 export async function createPortalNotification(input: PortalNotificationInput) {
-  return prisma.portalNotification.create({
+  const created = await prisma.portalNotification.create({
     data: {
       clientId: input.clientId,
       caseId: input.caseId ?? null,
@@ -30,6 +31,23 @@ export async function createPortalNotification(input: PortalNotificationInput) {
       link: input.link ?? null
     }
   });
+
+  // Best-effort real-time push. Failure here must not affect DB write.
+  try {
+    broadcastPortalNotification(input.clientId, {
+      id: created.id,
+      event: created.event,
+      title: created.title,
+      body: created.body,
+      link: created.link,
+      readAt: created.readAt ? created.readAt.toISOString() : null,
+      createdAt: created.createdAt.toISOString()
+    });
+  } catch {
+    /* no-op — SSE is additive */
+  }
+
+  return created;
 }
 
 export async function listPortalNotifications(clientId: string, opts: { limit?: number } = {}) {

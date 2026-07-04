@@ -806,3 +806,145 @@ a {
       rgba(255, 255, 255, 0.88);
   }
 }
+
+/* ────────────────────────────────────────────────
+   ETHOS Premium Micro-Interactions
+   Pure CSS. Respect prefers-reduced-motion.
+   ──────────────────────────────────────────────── */
+
+/* 1. Button ripple on click */
+.ethos-ripple {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ethos-ripple::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0;
+  height: 0;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(201, 169, 97, 0.55) 0%,
+    rgba(201, 169, 97, 0.25) 40%,
+    rgba(201, 169, 97, 0) 70%
+  );
+  opacity: 0;
+  transform: scale(0);
+  pointer-events: none;
+  transition:
+    transform 400ms ease-out,
+    opacity 400ms ease-out,
+    width 400ms ease-out,
+    height 400ms ease-out;
+  z-index: 0;
+}
+.ethos-ripple:active::after {
+  width: 250%;
+  height: 250%;
+  opacity: 1;
+  transform: scale(1);
+  transition-duration: 0ms;
+}
+.ethos-ripple > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 2. Card hover lift */
+.ethos-lift {
+  transition:
+    transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 200ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: transform;
+}
+.ethos-lift:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 28px rgba(16, 24, 32, 0.1),
+    0 4px 10px rgba(16, 24, 32, 0.06);
+}
+
+/* 3. Form input focus glow (augments existing .ui-input focus) */
+.ui-input:focus,
+.ui-select:focus,
+.ui-textarea:focus {
+  border-color: rgb(201 169 97);
+  box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.15);
+  transition:
+    border-color 180ms ease-out,
+    box-shadow 180ms ease-out;
+}
+
+/* 4. Link underline slide */
+.ethos-link-slide {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  transition: background-size 250ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  padding-bottom: 2px;
+}
+.ethos-link-slide:hover,
+.ethos-link-slide:focus-visible {
+  background-size: 100% 1px;
+}
+
+/* 5. Success checkmark draw */
+@keyframes ethos-check-draw {
+  from {
+    stroke-dashoffset: var(--ethos-check-length, 48);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.ethos-check-anim {
+  stroke-dasharray: var(--ethos-check-length, 48);
+  stroke-dashoffset: var(--ethos-check-length, 48);
+  animation: ethos-check-draw 500ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+/* Reduced motion — disable all above */
+@media (prefers-reduced-motion: reduce) {
+  .ethos-ripple::after,
+  .ethos-lift,
+  .ui-input:focus,
+  .ui-select:focus,
+  .ui-textarea:focus,
+  .ethos-link-slide {
+    transition: none !important;
+  }
+  .ethos-lift:hover {
+    transform: none;
+  }
+  .ethos-check-anim {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Bottom sheet transitions */
+.ethos-sheet-backdrop {
+  opacity: 0;
+  transition: opacity 240ms ease-out;
+}
+.ethos-sheet-backdrop[data-open="true"] {
+  opacity: 1;
+}
+.ethos-sheet-panel {
+  transform: translateY(100%);
+  transition: transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.ethos-sheet-panel[data-open="true"] {
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ethos-sheet-backdrop,
+  .ethos-sheet-panel {
+    transition: none !important;
+  }
+}

@@ -4,9 +4,19 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { extractIntakeFromChat } from "@/lib/utils/chat-to-intake";
 
 type Message = {
+  id: string;
   role: "user" | "assistant";
   content: string;
 };
+
+type FeedbackState = {
+  rating: "up" | "down";
+  ack: boolean;
+};
+
+function makeId() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 const SUGGESTED_QUESTIONS = [
   "D-8 비자 만료가 다가오는데 어떻게 해야 하나요?",
@@ -19,6 +29,7 @@ export function AiChatWidget() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
+  const [feedback, setFeedback] = useState<Record<string, FeedbackState>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -30,16 +41,50 @@ export function AiChatWidget() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  async function submitFeedback(msg: Message, rating: "up" | "down") {
+    if (feedback[msg.id]) return;
+    // Find preceding user question
+    const idx = messages.findIndex((m) => m.id === msg.id);
+    const question =
+      idx > 0
+        ? [...messages.slice(0, idx)].reverse().find((m) => m.role === "user")?.content ?? ""
+        : "";
+    setFeedback((prev) => ({ ...prev, [msg.id]: { rating, ack: true } }));
+    try {
+      await fetch("/api/public/ai-chat/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messageId: msg.id,
+          rating,
+          question,
+          answer: msg.content,
+        }),
+        keepalive: true,
+      });
+    } catch {
+      // best-effort
+    }
+    setTimeout(() => {
+      setFeedback((prev) => {
+        const next = { ...prev };
+        if (next[msg.id]) next[msg.id] = { ...next[msg.id], ack: false };
+        return next;
+      });
+    }, 2000);
+  }
+
   async function sendMessage(text: string) {
     if (!text.trim() || streaming) return;
 
-    const userMsg: Message = { role: "user", content: text.trim() };
+    const userMsg: Message = { id: makeId(), role: "user", content: text.trim() };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput("");
     setStreaming(true);
 
-    const assistantMsg: Message = { role: "assistant", content: "" };
+    const assistantId = makeId();
+    const assistantMsg: Message = { id: assistantId, role: "assistant", content: "" };
     setMessages([...newMessages, assistantMsg]);
 
     try {
@@ -53,7 +98,7 @@ export function AiChatWidget() {
         const err = await res.json().catch(() => ({ error: "오류 발생" }));
         setMessages([
           ...newMessages,
-          { role: "assistant", content: err.error || "응답 오류가 발생했습니다." },
+          { id: assistantId, role: "assistant", content: err.error || "응답 오류가 발생했습니다." },
         ]);
         setStreaming(false);
         return;
@@ -80,7 +125,7 @@ export function AiChatWidget() {
             const parsed = JSON.parse(data);
             if (parsed.type === "content_block_delta" && parsed.delta?.text) {
               accumulated += parsed.delta.text;
-              setMessages([...newMessages, { role: "assistant", content: accumulated }]);
+              setMessages([...newMessages, { id: assistantId, role: "assistant", content: accumulated }]);
             }
           } catch {
             // skip parse errors
@@ -91,13 +136,13 @@ export function AiChatWidget() {
       if (!accumulated) {
         setMessages([
           ...newMessages,
-          { role: "assistant", content: "응답을 받지 못했습니다. 다시 시도해 주세요." },
+          { id: assistantId, role: "assistant", content: "응답을 받지 못했습니다. 다시 시도해 주세요." },
         ]);
       }
     } catch {
       setMessages([
         ...newMessages,
-        { role: "assistant", content: "네트워크 오류가 발생했습니다." },
+        { id: assistantId, role: "assistant", content: "네트워크 오류가 발생했습니다." },
       ]);
     } finally {
       setStreaming(false);
@@ -159,32 +204,69 @@ export function AiChatWidget() {
           </div>
         )}
 
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
+        {messages.map((msg, i) => {
+          const isLast = i === messages.length - 1;
+          const isStreamingThis = streaming && isLast && msg.role === "assistant";
+          const showFeedback =
+            msg.role === "assistant" && !isStreamingThis && msg.content.trim().length > 0;
+          const fb = feedback[msg.id];
+          return (
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                msg.role === "user"
-                  ? "bg-primary text-white rounded-br-md"
-                  : "bg-surface-muted text-text rounded-bl-md"
-              }`}
+              key={msg.id}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              {msg.content}
-              {streaming && i === messages.length - 1 && msg.role === "assistant" && (
-                msg.content ? (
-                  <span className="ethos-caret ml-0.5 inline-block" />
-                ) : (
-                  <span className="inline-flex items-center gap-2" role="status">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-gold/30 border-t-gold-deep" aria-hidden />
-                    <span className="text-xs text-text-muted">답변 생성 중…</span>
-                  </span>
-                )
-              )}
+              <div
+                className={`relative max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                  msg.role === "user"
+                    ? "bg-primary text-white rounded-br-md"
+                    : "bg-surface-muted text-text rounded-bl-md"
+                }`}
+              >
+                {msg.content}
+                {isStreamingThis && (
+                  msg.content ? (
+                    <span className="ethos-caret ml-0.5 inline-block" />
+                  ) : (
+                    <span className="inline-flex items-center gap-2" role="status">
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-gold/30 border-t-gold-deep" aria-hidden />
+                      <span className="text-xs text-text-muted">답변 생성 중…</span>
+                    </span>
+                  )
+                )}
+                {showFeedback && (
+                  <div className="mt-2 flex items-center justify-end gap-1.5">
+                    {fb?.ack ? (
+                      <span className="text-[10px] text-text-muted">감사합니다</span>
+                    ) : fb ? (
+                      <span className="text-[10px] text-text-muted">
+                        {fb.rating === "up" ? "👍" : "👎"}
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => submitFeedback(msg, "up")}
+                          aria-label="도움이 되었습니다"
+                          className="rounded-md px-1.5 py-0.5 text-xs leading-none text-text-muted transition hover:bg-gold-soft/40 hover:text-gold-deep"
+                        >
+                          👍
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => submitFeedback(msg, "down")}
+                          aria-label="도움이 되지 않았습니다"
+                          className="rounded-md px-1.5 py-0.5 text-xs leading-none text-text-muted transition hover:bg-gold-soft/40 hover:text-gold-deep"
+                        >
+                          👎
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={bottomRef} />
       </div>
 

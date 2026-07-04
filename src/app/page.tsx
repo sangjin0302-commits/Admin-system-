@@ -14,6 +14,7 @@ import { HeroScrollIndicator } from "@/components/public/hero-scroll-indicator";
 import { ParallaxAurora } from "@/components/public/parallax-aurora";
 import { NewsletterBanner } from "@/components/public/newsletter-banner";
 import { NaverBlogSection } from "@/components/public/naver-blog-section";
+import { HeroCtaSubtitleVariants } from "@/components/public/hero-cta-variants";
 import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
 import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
@@ -291,9 +292,7 @@ export default async function PublicMarketingHomePage({
             </Reveal>
 
             <Reveal delay={2}>
-              <p className="mt-7 max-w-xl text-base leading-8 text-text">
-                혼자 고민하지 마세요. 무료 검토로 가능성과 예상 비용, 다음 절차를 먼저 확인하세요.
-              </p>
+              <HeroCtaSubtitleVariants />
             </Reveal>
 
             {/* 혜택 배지 행 — 24h·비용·다국어 전면 노출 */}

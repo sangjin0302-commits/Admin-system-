@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { Reveal } from "@/components/public/reveal";
 import { ScrollToCtaPill } from "@/components/public/scroll-to-cta-pill";
+import { ComparisonTable } from "@/components/public/comparison-table";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
 import { SERVICE_EN } from "@/lib/services/service-content-en";
 
@@ -295,6 +296,9 @@ export function ServicePage({
           </Reveal>
         </div>
       </section>
+
+      {/* Service Comparison Table */}
+      <ComparisonTable />
 
       {/* FAQ — soft band */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28">

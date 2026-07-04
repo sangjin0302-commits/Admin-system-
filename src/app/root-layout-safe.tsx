@@ -8,10 +8,12 @@ import { Toaster as SonnerToaster } from "sonner";
 import { AppShellSafe } from "@/components/layout/app-shell-safe";
 import { Analytics } from "@/components/public/analytics";
 import { AiChatWidget } from "@/components/public/ai-chat-widget";
+import { BottomSheetMount } from "@/components/public/bottom-sheet-mount";
 import { SocialProofPopup } from "@/components/public/social-proof-popup";
 import { LiveChat } from "@/components/public/live-chat";
 import { LocalBusinessJsonLd } from "@/components/public/json-ld";
 import { PWARegister } from "@/components/public/pwa-register";
+import { AbBootstrap } from "@/components/public/ab-bootstrap";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 
@@ -118,6 +120,8 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
         <PWARegister />
         <LocalBusinessJsonLd />
         <SocialProofPopup />
+        <AbBootstrap />
+        <BottomSheetMount />
       </body>
     </html>
   );
