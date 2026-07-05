@@ -116,6 +116,26 @@
     {
       "path": "/api/cron/backup-mirror",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/queue-worker",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/ai-regression-run",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/auto-rollback-check",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/self-healing-scan",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/auto-marketing",
+      "schedule": "0 6 * * *"
     }
   ]
 }

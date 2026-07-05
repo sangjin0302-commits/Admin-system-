@@ -102,6 +102,21 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "ai_metrics_tracking", label: "AI 모델 성능 대시보드", category: "operations", default: true, description: "AI 호출별 토큰/지연/비용/성공률 집계 및 대시보드" },
   { key: "prompt_optimizer", label: "자동 프롬프트 최적화", category: "operations", default: false, description: "프롬프트 버전 A/B 및 사용자 피드백 기반 자동 승격" },
   { key: "smart_model_routing", label: "AI 모델 자동 선택", category: "operations", default: true, description: "태스크 종류·복잡도에 따라 Haiku/Sonnet/Opus 자동 선택 (비용 최적화)" },
+  { key: "distributed_tracing", label: "분산 트레이싱", category: "operations", default: false, description: "OpenTelemetry 호환 스팬 수집·워터폴 뷰 (성능 오버헤드)" },
+  { key: "ai_regression_test", label: "AI 응답 품질 회귀 테스트", category: "operations", default: true, description: "일일 AI 응답 회귀 테스트 자동 실행·품질 저하 감지" },
+  { key: "canary_rollout", label: "카나리 배포", category: "operations", default: false, description: "기능 플래그를 사용자 비율 기반으로 단계적 노출 (해시 기반)" },
+  { key: "auto_rollback", label: "자동 롤백", category: "operations", default: false, description: "오류율 급증 감지 시 최근 활성화된 플래그·카나리 자동 롤백" },
+  { key: "chaos_engineering", label: "혼돈 공학 실험", category: "operations", default: false, description: "지연·오류 자동 주입 실험 (dev/staging 전용)" },
+  { key: "cloudflare_images", label: "Cloudflare Images 리사이즈", category: "operations", default: false, description: "Cloudflare Images로 이미지 업로드·자동 리사이즈" },
+  { key: "read_replica_routing", label: "DB 읽기 복제본 라우팅", category: "operations", default: false, description: "읽기 쿼리를 복제본으로 라우팅하여 주 DB 부하 감소" },
+  { key: "job_queue", label: "잡 큐 시스템", category: "operations", default: true, description: "자체 구현 잡 큐 — 비동기 작업 예약·재시도" },
+  { key: "multi_admin_sync", label: "다중 관리자 실시간 동기", category: "operations", default: true, description: "관리자 동시 편집 감지·존재 표시 (SSE)" },
+  { key: "edge_cache_optimization", label: "글로벌 CDN 캐싱", category: "operations", default: true, description: "Vercel Edge Cache-Control 헤더·경로 재검증" },
+  { key: "self_documentation", label: "자기 문서화 시스템", category: "operations", default: true, description: "코드 상태에서 시스템 문서(기능/설정/환경) 자동 생성", public: true },
+  { key: "self_healing", label: "자가 치유 시스템", category: "operations", default: true, description: "에러 감지 → 알려진 안전 복구 자동 실행 · 미지 에러는 AI 분석 후 승인 대기" },
+  { key: "adaptive_ui", label: "자가 학습 UI", category: "ux", default: true, description: "관리자 사용 패턴 추적 · 자주 쓰는 페이지 바로가기 및 재배치 제안" },
+  { key: "ai_standby_operator", label: "24/7 AI 대행 (승인 워크플로)", category: "operations", default: false, description: "업무 외 시간 AI가 문의 대응 · 관리자 아침 승인 큐" },
+  { key: "auto_marketing_campaign", label: "자율 마케팅 캠페인", category: "marketing", default: false, description: "광고 성과 기반 예산·카피 자동 조정 추천 (실제 적용은 승인 필요)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));
