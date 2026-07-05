@@ -6,6 +6,7 @@ import { PortalHeader } from "@/components/layout/portal-header";
 import { CaseTimeline } from "@/components/public/case-timeline";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/client";
+import { predictDuration } from "@/lib/services/duration-predictor-service";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,14 @@ export default async function PortalCaseDetail({
     take: 20
   });
 
+  const durationPrediction = await predictDuration(caseMatter.category, caseMatter.riskLevel).catch(() => null);
+  const expectedCloseLabel = durationPrediction
+    ? new Date(
+        (caseMatter.openedAt ?? caseMatter.createdAt).getTime() +
+          durationPrediction.p50Days * 24 * 3600 * 1000
+      ).toLocaleDateString("ko-KR")
+    : null;
+
   return (
     <div className="min-h-screen bg-canvas">
       <PortalHeader clientName={client.name} />
@@ -54,6 +63,9 @@ export default async function PortalCaseDetail({
         <p className="mt-1 text-sm text-text-muted">
           {caseMatter.caseNo ?? "-"} · 상태: {caseMatter.status}
         </p>
+        {expectedCloseLabel && (
+          <p className="mt-1 text-sm text-text-muted">예상 종결: {expectedCloseLabel}</p>
+        )}
         {caseMatter.summary && (
           <p className="mt-4 rounded-lg bg-surface-muted/50 p-3 text-sm text-text">
             {caseMatter.summary}

@@ -42,6 +42,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "portal_realtime", label: "포털 실시간 알림", category: "ux", default: true, description: "고객 포털 실시간 알림 (SSE)" },
   { key: "review_automation", label: "후기 요청 자동화", category: "marketing", default: true, description: "종결 사건 후기 요청 자동 발송" },
   { key: "priority_scoring", label: "AI 우선순위 스코어", category: "operations", default: true, description: "AI가 문의 우선순위 자동 점수화" },
+  { key: "pr_syndication", label: "PR 다채널 배포", category: "marketing", default: false, description: "블로그 발행 시 채널별 문안(네이버·페이스북·링크드인·텔레그램) 자동 생성" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

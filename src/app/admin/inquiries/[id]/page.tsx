@@ -1,4 +1,5 @@
 import { DeadlineCalculatorCard } from "@/components/admin/deadline-calculator-card";
+import { ConsultationScriptPanel } from "@/components/admin/consultation-script-panel";
 import { InquiryActionChecklistPanel } from "@/components/admin/inquiry-action-checklist-panel";
 import { LawbotOutcomePrediction } from "@/components/admin/lawbot-outcome-prediction";
 import { QuoteGuidanceCard } from "@/components/admin/quote-guidance-card";
@@ -46,6 +47,7 @@ import {
   getUrgencyLabel
 } from "@/types/inquiry";
 import { logger } from "@/lib/utils/logger";
+import { predictDuration } from "@/lib/services/duration-predictor-service";
 
 export const dynamic = "force-dynamic";
 
@@ -139,6 +141,7 @@ export default async function AdminInquiryDetailPage({
       checklistActionItems
     } = await buildInquiryDetailPageData(inquiry);
     const intakeCategorySummary = buildIntakeCategoryDetailSummary(inquiry.description);
+    const durationPrediction = await predictDuration(inquiry.intakeCategory, "NORMAL").catch(() => null);
 
     let lawbotSnapshotForCards: Partial<LawbotResponse> | null = null;
     if (inquiry.lawbotSnapshotPayload) {
@@ -205,6 +208,15 @@ export default async function AdminInquiryDetailPage({
                   statusGuardPreview={statusGuardPreview}
                 />
               </Card>
+              {durationPrediction && (
+                <p className="text-xs text-text-muted">
+                  예상 처리{" "}
+                  <span className="font-semibold text-text-strong">
+                    {durationPrediction.p50Days}일
+                  </span>{" "}
+                  (P90: {durationPrediction.p90Days}일)
+                </p>
+              )}
               <div className="flex justify-end">
                 <InquiryLawbotRerunButton inquiryId={inquiry.id} />
               </div>
@@ -255,6 +267,8 @@ export default async function AdminInquiryDetailPage({
         )}
 
         <SimilarInquiriesCard inquiryId={inquiry.id} />
+
+        <ConsultationScriptPanel inquiryId={inquiry.id} />
 
         <InquiryDetailRiskBoard
           detailRiskHighlights={detailRiskHighlights}

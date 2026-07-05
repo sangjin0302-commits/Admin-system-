@@ -13,6 +13,7 @@ import { LawbotAnalysisPanel } from "@/components/admin/lawbot-analysis-panel";
 import { CaseESignPanel } from "@/components/admin/case-esign-panel";
 import { CaseFinancePanel } from "@/components/admin/case-finance-panel";
 import { CaseTaskManagementPanel } from "@/components/admin/case-task-management-panel";
+import { CaseChecklistPanel } from "@/components/admin/case-checklist-panel";
 import { ImmigrationCaseDetailPanel } from "@/components/admin/immigration-case-detail-panel";
 import { ImmigrationCaseHintPanel } from "@/components/admin/immigration-case-hint-panel";
 import { AdminAppealDetailPanel } from "@/components/admin/admin-appeal-detail-panel";
@@ -357,6 +358,7 @@ export default async function AdminCaseMatterDetailPage({
         caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}
         tasks={caseTasks}
       />
+      <CaseChecklistPanel caseId={caseMatter.id} />
       <SupplementRequestManagementPanel
         caseMatterId={caseMatter.id}
         caseMatterUpdatedAt={caseMatter.updatedAt.toISOString()}

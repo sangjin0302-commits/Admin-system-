@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { onBlogPublished } from "@/lib/services/pr-syndication-service";
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +18,9 @@ export async function POST(request: Request) {
         publishedAt: data.published ? new Date() : null,
       },
     });
+    if (post.published) {
+      void onBlogPublished(post.id);
+    }
     return NextResponse.json(post);
   } catch (err) {
     logger.error("Blog create error:", err);
@@ -43,6 +47,9 @@ export async function PUT(request: Request) {
         publishedAt: data.published && !existing?.publishedAt ? new Date() : existing?.publishedAt,
       },
     });
+    if (post.published && !existing?.published) {
+      void onBlogPublished(post.id);
+    }
     return NextResponse.json(post);
   } catch (err) {
     logger.error("Blog update error:", err);
