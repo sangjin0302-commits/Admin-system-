@@ -20,8 +20,11 @@ import { AdminAppealDetailPanel } from "@/components/admin/admin-appeal-detail-p
 import { ContractDetailPanel } from "@/components/admin/contract-detail-panel";
 import { LicenseDetailPanel } from "@/components/admin/license-detail-panel";
 import { CaseMatterCategoryPanel } from "@/components/admin/case-matter-category-panel";
+import { CasePrecedentCard } from "@/components/admin/case-precedent-card";
+import { CaseTaxPartnerButton } from "@/components/admin/case-tax-partner-button";
 import { PortalUploadedFilesPanel } from "@/components/admin/portal-uploaded-files-panel";
 import { ClientMessageBox } from "@/components/admin/client-message-box";
+import { NeedsPredictionCard } from "@/components/admin/needs-prediction-card";
 import { prisma } from "@/lib/prisma/client";
 import { CaseMatterStatusForm } from "@/components/admin/case-matter-status-form";
 import { RequiredDocumentStatusPanel } from "@/components/admin/required-document-status-panel";
@@ -285,6 +288,8 @@ export default async function AdminCaseMatterDetailPage({
       />
       <CaseMatterSummaryCards caseMatter={caseMatter} status={currentStatus} locale={locale} />
       <LawbotAnalysisPanel caseId={caseMatter.id} />
+      <CasePrecedentCard category={caseMatter.category ?? null} keywords={[caseMatter.title, caseMatter.summary ?? ""].filter(Boolean) as string[]} />
+      <div className="flex flex-wrap gap-2"><CaseTaxPartnerButton category={caseMatter.category ?? null} text={`${caseMatter.title ?? ""} ${caseMatter.summary ?? ""}`} /></div>
       <CaseFinancePanel caseId={caseMatter.id} />
       <CaseESignPanel caseId={caseMatter.id} />
       <CaseMatterPartiesSection parties={caseMatter.parties} />
@@ -384,6 +389,7 @@ export default async function AdminCaseMatterDetailPage({
       />
       <PortalUploadedFilesPanel uploads={portalUploads} />
       <ClientMessageBox caseId={caseMatter.id} />
+      <NeedsPredictionCard caseId={caseMatter.id} />
       <CaseMatterEventTimeline events={caseMatter.events} />
     </div>
   );

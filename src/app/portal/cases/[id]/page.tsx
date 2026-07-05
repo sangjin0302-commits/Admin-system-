@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { PortalHeader } from "@/components/layout/portal-header";
 import { CaseTimeline } from "@/components/public/case-timeline";
+import { Gov24RequestCard } from "@/components/portal/gov24-request-card";
+import { ModusignPendingCard } from "@/components/portal/modusign-pending-card";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/client";
 import { predictDuration } from "@/lib/services/duration-predictor-service";
@@ -75,6 +77,8 @@ export default async function PortalCaseDetail({
 
       {/* 진행 단계 타임라인 */}
       <CaseTimeline status={caseMatter.status} />
+      <Gov24RequestCard caseId={caseMatter.id} />
+      <ModusignPendingCard caseId={caseMatter.id} />
 
       {/* 필요 자료 */}
       <Card className="p-7">

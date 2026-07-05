@@ -4,6 +4,7 @@ import { AdminSearchBar } from "@/components/admin/admin-search-bar";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminMobileNav } from "@/components/admin/mobile-nav";
 import { InstallPWAPrompt } from "@/components/admin/install-pwa-prompt";
+import { VoiceCommandMic } from "@/components/admin/voice-command-mic";
 import { listInquiries } from "@/lib/services/inquiry-service";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -43,6 +44,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </div>
       <AdminMobileNav />
       <InstallPWAPrompt />
+      <VoiceCommandMic />
     </div>
   );
 }
