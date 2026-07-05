@@ -54,6 +54,17 @@ export async function PATCH(
       statusChangeSource: "status_panel",
       expectedUpdatedAt: payload.expectedUpdatedAt
     });
+
+    // 통합 훅 (best-effort, background)
+    {
+      Promise.all([
+        import("@/lib/services/notion-integration-service").then((m) => m.fireAndForgetSyncInquiry(inquiry.id)),
+        import("@/lib/services/backup-mirror-service").then((m) =>
+          m.fireAndForgetMirror("inquiry", { id: inquiry.id, status: inquiry.status, title: inquiry.title })
+        ),
+      ]).catch(() => undefined);
+    }
+
     return api.ok({ ok: true, inquiry });
   } catch (error) {
     if (error instanceof ZodError) {

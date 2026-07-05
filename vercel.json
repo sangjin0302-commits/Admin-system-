@@ -96,6 +96,26 @@
     {
       "path": "/api/cron/podcast-generate",
       "schedule": "0 21 * * 2"
+    },
+    {
+      "path": "/api/cron/ab-auto-promote",
+      "schedule": "0 13 * * 0"
+    },
+    {
+      "path": "/api/cron/deadline-autopilot",
+      "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/api/cron/audit-anomaly-scan",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/tax-report-autopilot",
+      "schedule": "0 3 1 * *"
+    },
+    {
+      "path": "/api/cron/backup-mirror",
+      "schedule": "0 3 * * *"
     }
   ]
 }

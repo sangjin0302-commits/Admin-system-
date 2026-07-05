@@ -26,6 +26,7 @@ import { CaseTaxPartnerButton } from "@/components/admin/case-tax-partner-button
 import { PortalUploadedFilesPanel } from "@/components/admin/portal-uploaded-files-panel";
 import { ClientMessageBox } from "@/components/admin/client-message-box";
 import { NeedsPredictionCard } from "@/components/admin/needs-prediction-card";
+import { AiNextActionCard } from "@/components/admin/ai-next-action-card";
 import { prisma } from "@/lib/prisma/client";
 import { CaseMatterStatusForm } from "@/components/admin/case-matter-status-form";
 import { RequiredDocumentStatusPanel } from "@/components/admin/required-document-status-panel";
@@ -392,6 +393,7 @@ export default async function AdminCaseMatterDetailPage({
       <PortalUploadedFilesPanel uploads={portalUploads} />
       <ClientMessageBox caseId={caseMatter.id} />
       <NeedsPredictionCard caseId={caseMatter.id} />
+      <AiNextActionCard caseId={caseMatter.id} />
       <CaseMatterEventTimeline events={caseMatter.events} />
     </div>
   );

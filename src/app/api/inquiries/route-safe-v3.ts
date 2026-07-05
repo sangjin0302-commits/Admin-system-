@@ -375,6 +375,10 @@ export async function POST(request: Request) {
           logger.warn("[intake] after-hours auto-reply failed", err);
         }
       }).catch(() => undefined);
+      // 완전 자동 사건 진행 (플래그 + 화이트리스트 통과 시)
+      import("@/lib/services/full-auto-case-service").then((mod) => {
+        mod.maybeTriggerFullAutoFlow(inquiry.id).catch((err) => logger.warn("[intake] full-auto trigger failed", err));
+      }).catch(() => undefined);
       // 텔레그램 알림 (Jean 개인 봇)
       import("@/lib/services/telegram-notify").then((mod) => {
         const lines = [

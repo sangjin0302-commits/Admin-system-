@@ -55,6 +55,23 @@ export async function PATCH(
       }).catch((err) => logger.warn("[workflow-engine] case hook error", err));
     }
 
+    // 통합 훅 (Notion / Zapier / CRM / Backup) — best-effort
+    {
+      Promise.all([
+        import("@/lib/services/notion-integration-service").then((m) => m.fireAndForgetSyncCase(caseMatter.id)),
+        import("@/lib/services/zapier-webhook-service").then((m) => {
+          m.fireAndForgetNotify("case_status_changed", { id: caseMatter.id, status: payload.status, caseNo: caseMatter.caseNo });
+          if (payload.status === "CLOSED") {
+            m.fireAndForgetNotify("case_closed", { id: caseMatter.id, caseNo: caseMatter.caseNo });
+          }
+        }),
+        import("@/lib/services/crm-integration-service").then((m) => m.fireAndForgetCaseToCrm(caseMatter.id)),
+        import("@/lib/services/backup-mirror-service").then((m) =>
+          m.fireAndForgetMirror("case", { id: caseMatter.id, status: payload.status, title: caseMatter.title })
+        ),
+      ]).catch((err) => logger.warn("[integrations] case status hooks failed", err));
+    }
+
     return api.ok({
       ok: true,
       caseMatter

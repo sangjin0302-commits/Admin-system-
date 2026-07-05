@@ -191,6 +191,22 @@ export async function createInquiry(payload: unknown) {
       // webhook dispatch is best-effort
     }
 
+    // 통합 훅 (best-effort, 실패 시 무시)
+    try {
+      const [{ fireAndForgetSyncInquiry }, { fireAndForgetNotify }, { fireAndForgetInquiryToCrm }, { fireAndForgetMirror }] = await Promise.all([
+        import("@/lib/services/notion-integration-service"),
+        import("@/lib/services/zapier-webhook-service"),
+        import("@/lib/services/crm-integration-service"),
+        import("@/lib/services/backup-mirror-service"),
+      ]);
+      fireAndForgetSyncInquiry(updated.id);
+      fireAndForgetNotify("new_inquiry", { id: updated.id, title: updated.title, email: updated.email });
+      fireAndForgetInquiryToCrm(updated.id);
+      fireAndForgetMirror("inquiry", { id: updated.id, status: updated.status, title: updated.title });
+    } catch (err) {
+      logger.warn("[integrations] inquiry.create hooks failed", err);
+    }
+
     // AI 자동 회신 평가 (best-effort, flag-gated)
     try {
       const { isFeatureEnabled } = await import("@/lib/services/feature-flags-service");

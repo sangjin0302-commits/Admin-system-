@@ -17,6 +17,9 @@ import { NewsletterWidget } from "@/components/public/newsletter-widget";
 import { NaverReviewBand } from "@/components/public/naver-review-band";
 import { NaverBlogSection } from "@/components/public/naver-blog-section";
 import { HeroCtaSubtitleVariants } from "@/components/public/hero-cta-variants";
+import { HoloLogo } from "@/components/public/holo-logo";
+import { PersonalizedHero } from "@/components/public/personalized-hero";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
 import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
@@ -221,6 +224,7 @@ export default async function PublicMarketingHomePage({
   // 로고 (DB → /logo.webp fallback)
   const heroLogoRow = await prisma.siteSetting.findUnique({ where: { key: "image.logo" } }).catch(() => null);
   const heroLogo = heroLogoRow?.value || "/logo.webp";
+  const [holoLogoEnabled, personalizationEnabled] = await Promise.all([isFeatureEnabled("holographic_logo"), isFeatureEnabled("homepage_personalization")]);
 
   // 대표 프로필 사진 — about 페이지와 동일한 site-setting 사용
   const aboutPhotoRow = await prisma.siteSetting.findUnique({ where: { key: "image.aboutPhoto" } }).catch(() => null);
@@ -263,6 +267,7 @@ export default async function PublicMarketingHomePage({
 
         <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-20 sm:px-6 sm:pb-28 sm:pt-28 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
+            {personalizationEnabled && <PersonalizedHero fallbackBadge={heroBadge} fallbackTitle={heroTitleOverride || "비자 거절, 행정처분, 인허가 —\n2주 안에 해결 방향을 드립니다"} fallbackDescription={heroDescription} />}
             <Reveal>
               <span className="ethos-eyebrow inline-flex items-center gap-2 text-gold-deep">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold" />
@@ -362,6 +367,7 @@ export default async function PublicMarketingHomePage({
 
                 {/* 로고 prominent — 흰 타일로 가시성 보장 */}
                 <div className="relative flex h-52 w-52 items-center justify-center overflow-hidden rounded-3xl bg-white p-6 shadow-floating ring-4 ring-gold/40 sm:h-60 sm:w-60">
+                  {holoLogoEnabled ? <HoloLogo label="ETHOS 3D 로고" /> : (
                   <Image
                     src={heroLogo}
                     alt="ETHOS 행정사사무소 로고"
@@ -371,6 +377,7 @@ export default async function PublicMarketingHomePage({
                     unoptimized={heroLogo.startsWith("http")}
                     sizes="(max-width: 768px) 13rem, 15rem"
                   />
+                  )}
                 </div>
 
                 <p className="mt-7 font-serif text-base font-bold tracking-[0.32em] text-white">ETHOS</p>
