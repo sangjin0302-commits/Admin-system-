@@ -18,6 +18,9 @@ export function PrecedentsAdminClient({ initial }: Props) {
   });
   const [showForm, setShowForm] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
+  const [mode, setMode] = useState<"keyword" | "meaning">("keyword");
+  const [meaningResults, setMeaningResults] = useState<Array<{ precedent: Precedent; score: number }>>([]);
+  const [vectorMsg, setVectorMsg] = useState("");
 
   const categories = useMemo(
     () => Array.from(new Set(list.map((p) => p.category))).filter(Boolean),
@@ -25,6 +28,11 @@ export function PrecedentsAdminClient({ initial }: Props) {
   );
 
   const filtered = useMemo(() => {
+    if (mode === "meaning") {
+      return meaningResults
+        .map((r) => r.precedent)
+        .filter((p) => !category || p.category === category);
+    }
     const needle = q.trim().toLowerCase();
     return list.filter((p) => {
       if (category && p.category !== category) return false;
@@ -36,7 +44,35 @@ export function PrecedentsAdminClient({ initial }: Props) {
         p.keywords.some((k) => k.toLowerCase().includes(needle))
       );
     });
-  }, [list, q, category]);
+  }, [list, q, category, mode, meaningResults]);
+
+  const scoreById = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of meaningResults) m.set(r.precedent.id, r.score);
+    return m;
+  }, [meaningResults]);
+
+  async function runMeaningSearch() {
+    if (!q.trim()) {
+      setMeaningResults([]);
+      setVectorMsg("");
+      return;
+    }
+    setBusy(true);
+    setVectorMsg("");
+    try {
+      const res = await fetch(`/api/admin/precedents/vector-search?q=${encodeURIComponent(q)}&topK=30`);
+      const j = await res.json();
+      if (j.ok) {
+        setMeaningResults(j.results ?? []);
+        if (j.degraded) setVectorMsg("의미 검색 비활성 — 키워드로 대체");
+        else if (j.status?.mode === "not-built") setVectorMsg("인덱스 미빌드 — 첫 검색은 느릴 수 있습니다");
+        else if (j.status?.mode === "none") setVectorMsg("VOYAGE_API_KEY 미설정 — Haiku 리랭킹 사용");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function refresh() {
     const res = await fetch("/api/admin/precedents");
@@ -104,12 +140,42 @@ export function PrecedentsAdminClient({ initial }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
+        <div className="inline-flex overflow-hidden rounded-lg border border-line">
+          <button
+            type="button"
+            onClick={() => setMode("keyword")}
+            className={`h-10 px-3 text-xs font-semibold ${mode === "keyword" ? "bg-primary text-white" : "bg-white"}`}
+          >
+            키워드
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("meaning")}
+            className={`h-10 px-3 text-xs font-semibold ${mode === "meaning" ? "bg-primary text-white" : "bg-white"}`}
+          >
+            의미
+          </button>
+        </div>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="사건번호·요지·키워드 검색"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && mode === "meaning") runMeaningSearch();
+          }}
+          placeholder={mode === "meaning" ? "의미로 검색 (Enter)" : "사건번호·요지·키워드 검색"}
           className="h-10 flex-1 min-w-[200px] rounded-lg border border-line px-3 text-sm"
         />
+        {mode === "meaning" && (
+          <button
+            type="button"
+            onClick={runMeaningSearch}
+            disabled={busy}
+            className="h-10 rounded-lg border border-line px-3 text-xs font-semibold"
+          >
+            의미 검색
+          </button>
+        )}
+        {vectorMsg && <span className="text-xs text-text-muted">{vectorMsg}</span>}
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
@@ -176,7 +242,14 @@ export function PrecedentsAdminClient({ initial }: Props) {
             onClick={() => setSelected(p)}
             className="rounded-lg border border-line bg-surface p-4 text-left transition hover:border-primary"
           >
-            <p className="text-xs text-text-muted">{p.court} · {p.decisionDate}</p>
+            <p className="text-xs text-text-muted">
+              {p.court} · {p.decisionDate}
+              {mode === "meaning" && scoreById.has(p.id) && (
+                <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 font-semibold text-primary">
+                  유사도 {(scoreById.get(p.id)! * 100).toFixed(0)}%
+                </span>
+              )}
+            </p>
             <p className="mt-1 font-mono text-sm font-semibold">{p.caseNo}</p>
             <p className="mt-2 text-xs text-primary">{p.category}</p>
             <p className="mt-2 line-clamp-3 text-sm">{p.summary}</p>

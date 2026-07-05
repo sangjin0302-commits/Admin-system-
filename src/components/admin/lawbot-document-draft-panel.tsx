@@ -81,6 +81,11 @@ export function LawbotDocumentDraftPanel({ inquiryId }: { inquiryId: string }) {
   const [draftText, setDraftText] = useState("");
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<{
+    citations: Array<{ raw: string; normalized: string; status: string; note?: string; kind: string; offset: number }>;
+    summary: { total: number; verified: number; unknown: number; deprecated: number };
+  } | null>(null);
+  const [verifying, setVerifying] = useState(false);
 
   const activeOption = DRAFT_KIND_OPTIONS.find((o) => o.value === draftKind)!;
 
@@ -109,6 +114,29 @@ export function LawbotDocumentDraftPanel({ inquiryId }: { inquiryId: string }) {
       setError(err instanceof Error ? err.message : "네트워크 오류가 발생했습니다.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleVerifyCitations() {
+    if (!draftText.trim()) return;
+    setVerifying(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/document/verify-citations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: draftText }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? "인용 검증 실패");
+      } else {
+        setVerifyResult({ citations: data.citations, summary: data.summary });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "네트워크 오류");
+    } finally {
+      setVerifying(false);
     }
   }
 
@@ -247,6 +275,45 @@ export function LawbotDocumentDraftPanel({ inquiryId }: { inquiryId: string }) {
                   rows={16}
                   className="w-full rounded-md border border-line bg-white px-3 py-2 font-mono text-xs"
                 />
+              </div>
+            )}
+
+            {result && (
+              <div>
+                <Button variant="secondary" size="md" onClick={handleVerifyCitations} disabled={verifying || !draftText.trim()}>
+                  {verifying ? "검증 중..." : "인용 검증"}
+                </Button>
+                {verifyResult && (
+                  <div className="mt-2 rounded-md border border-line bg-surface-muted p-3 text-xs">
+                    <p className="font-semibold">
+                      총 {verifyResult.summary.total}건 · 확인 {verifyResult.summary.verified} · 미확인 {verifyResult.summary.unknown} · 폐지 {verifyResult.summary.deprecated}
+                    </p>
+                    {verifyResult.citations.length > 0 && (
+                      <ul className="mt-2 space-y-1">
+                        {verifyResult.citations.map((c, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span
+                              className={
+                                "inline-block rounded px-1.5 py-0.5 font-semibold " +
+                                (c.status === "verified"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : c.status === "deprecated"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-amber-100 text-amber-700")
+                              }
+                            >
+                              {c.status}
+                            </span>
+                            <span>
+                              <span className="font-mono">{c.normalized}</span>
+                              {c.note && <span className="ml-2 text-text-muted">{c.note}</span>}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

@@ -191,6 +191,17 @@ export async function createInquiry(payload: unknown) {
       // webhook dispatch is best-effort
     }
 
+    // AI 자동 회신 평가 (best-effort, flag-gated)
+    try {
+      const { isFeatureEnabled } = await import("@/lib/services/feature-flags-service");
+      if (await isFeatureEnabled("ai_auto_reply")) {
+        const { evaluateAndReply } = await import("@/lib/services/ai-auto-reply-service");
+        evaluateAndReply(updated.id).catch((err) => logger.warn("[auto-reply] background error", err));
+      }
+    } catch (err) {
+      logger.warn("[auto-reply] hook error", err);
+    }
+
     // 자동 lawbot 분석 (best-effort, await 안 함 — 응답 지연 방지)
     if (process.env.LAWBOT_BRIDGE_BASE_URL) {
       const { autoAnalyzeInquiryWithLawbot } = await import("@/lib/services/auto-lawbot-analysis");

@@ -20,6 +20,7 @@ import { AdminAppealDetailPanel } from "@/components/admin/admin-appeal-detail-p
 import { ContractDetailPanel } from "@/components/admin/contract-detail-panel";
 import { LicenseDetailPanel } from "@/components/admin/license-detail-panel";
 import { CaseMatterCategoryPanel } from "@/components/admin/case-matter-category-panel";
+import { CaseCopilotDrawer } from "@/components/admin/case-copilot-drawer";
 import { CasePrecedentCard } from "@/components/admin/case-precedent-card";
 import { CaseTaxPartnerButton } from "@/components/admin/case-tax-partner-button";
 import { PortalUploadedFilesPanel } from "@/components/admin/portal-uploaded-files-panel";
@@ -229,6 +230,7 @@ export default async function AdminCaseMatterDetailPage({
 
   return (
     <div className="space-y-6">
+      <CaseCopilotDrawer caseId={caseMatter.id} />
       <Card className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
