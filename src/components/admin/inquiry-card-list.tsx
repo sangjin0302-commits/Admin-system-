@@ -1,7 +1,10 @@
-﻿import Link from "next/link";
+﻿"use client";
+
+import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { usePreloadOnHover } from "@/lib/hooks/use-tab-preload";
 import { formatDateTime } from "@/lib/utils";
 import {
   getInquiryStatusLabel,
@@ -50,7 +53,7 @@ export function InquiryCardList({ inquiries }: { inquiries: InquiryItem[] }) {
         const inquiryLanguage = normalizeLanguageCode(inquiry.preferredLanguage);
 
         return (
-          <Link key={inquiry.id} href={`/admin/inquiries/${inquiry.id}`}>
+          <InquiryCardLink key={inquiry.id} id={inquiry.id}>
             <Card className="p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="urgency" urgency={inquiryUrgency}>
@@ -89,9 +92,23 @@ export function InquiryCardList({ inquiries }: { inquiries: InquiryItem[] }) {
                 </p>
               </div>
             </Card>
-          </Link>
+          </InquiryCardLink>
         );
       })}
     </div>
+  );
+}
+
+function InquiryCardLink({ id, children }: { id: string; children: React.ReactNode }) {
+  const { hoverHandler, leaveHandler } = usePreloadOnHover(id, "inquiry");
+  return (
+    <Link
+      href={`/admin/inquiries/${id}`}
+      onMouseEnter={hoverHandler}
+      onMouseLeave={leaveHandler}
+      onFocus={hoverHandler}
+    >
+      {children}
+    </Link>
   );
 }

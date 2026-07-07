@@ -32,6 +32,8 @@ import { WorkflowProgressPanelSafeV3 } from "@/components/admin/workflow-progres
 import { Card } from "@/components/ui/card";
 import { ReviewTemplateCopy } from "@/components/admin/review-template-copy";
 import { ClientProfileEnrichmentCard } from "@/components/admin/client-profile-enrichment-card";
+import { AcceptanceAdvisorCard } from "@/components/admin/acceptance-advisor-card";
+import { EmotionTrendChart } from "@/components/admin/emotion-trend-chart";
 import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { buildInquiryDetailPageData } from "@/lib/services/inquiry-detail-page-data";
 import { safeGetInquiryForDetail } from "@/lib/services/inquiry-detail-loaders";
@@ -400,6 +402,8 @@ export default async function AdminInquiryDetailPage({
         </div>
 
         <ClientProfileEnrichmentCard email={inquiry.email} />
+        <AcceptanceAdvisorCard inquiryId={inquiry.id} status={String(inquiry.status)} />
+        <EmotionTrendChart inquiryId={inquiry.id} />
 
         <Card className="p-5">
           <p className="ui-kicker">v4.8 검토 응답 템플릿 (Quick Copy)</p>

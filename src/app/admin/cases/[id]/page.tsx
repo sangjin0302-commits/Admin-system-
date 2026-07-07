@@ -21,11 +21,14 @@ import { ContractDetailPanel } from "@/components/admin/contract-detail-panel";
 import { LicenseDetailPanel } from "@/components/admin/license-detail-panel";
 import { CaseMatterCategoryPanel } from "@/components/admin/case-matter-category-panel";
 import { CaseCopilotDrawer } from "@/components/admin/case-copilot-drawer";
+import { OneClickCloseButton } from "@/components/admin/one-click-close-button";
+import { ClientContextSidebar } from "@/components/admin/client-context-sidebar";
 import { CasePrecedentCard } from "@/components/admin/case-precedent-card";
 import { CaseTaxPartnerButton } from "@/components/admin/case-tax-partner-button";
 import { PortalUploadedFilesPanel } from "@/components/admin/portal-uploaded-files-panel";
 import { ClientMessageBox } from "@/components/admin/client-message-box";
 import { NeedsPredictionCard } from "@/components/admin/needs-prediction-card";
+import { CaseOutcomeCard } from "@/components/admin/case-outcome-card";
 import { AiNextActionCard } from "@/components/admin/ai-next-action-card";
 import { prisma } from "@/lib/prisma/client";
 import { CaseMatterStatusForm } from "@/components/admin/case-matter-status-form";
@@ -232,6 +235,7 @@ export default async function AdminCaseMatterDetailPage({
   return (
     <div className="space-y-6">
       <CaseCopilotDrawer caseId={caseMatter.id} />
+      {inquiryEmail && <ClientContextSidebar email={inquiryEmail} />}
       <Card className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -270,6 +274,7 @@ export default async function AdminCaseMatterDetailPage({
                 심판 청구서 PDF
               </a>
             )}
+            <OneClickCloseButton caseId={caseMatter.id} />
             <Link
               href="/admin/cases"
               className="inline-flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
@@ -392,6 +397,7 @@ export default async function AdminCaseMatterDetailPage({
       />
       <PortalUploadedFilesPanel uploads={portalUploads} />
       <ClientMessageBox caseId={caseMatter.id} />
+      <CaseOutcomeCard caseId={caseMatter.id} />
       <NeedsPredictionCard caseId={caseMatter.id} />
       <AiNextActionCard caseId={caseMatter.id} />
       <CaseMatterEventTimeline events={caseMatter.events} />

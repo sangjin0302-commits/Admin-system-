@@ -86,8 +86,49 @@ export function LawbotDocumentDraftPanel({ inquiryId }: { inquiryId: string }) {
     summary: { total: number; verified: number; unknown: number; deprecated: number };
   } | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateBusy, setGateBusy] = useState(false);
+  const [gateResult, setGateResult] = useState<{
+    passed: boolean;
+    blockers: Array<{ code: string; message: string }>;
+    warnings: Array<{ code: string; message: string }>;
+  } | null>(null);
+  const [gateError, setGateError] = useState<string | null>(null);
 
   const activeOption = DRAFT_KIND_OPTIONS.find((o) => o.value === draftKind)!;
+
+  async function runGate(): Promise<boolean> {
+    if (!draftText.trim()) return false;
+    setGateBusy(true);
+    setGateError(null);
+    try {
+      const res = await fetch("/api/admin/document/verify-gate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: draftText }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setGateError(data.error ?? "게이트 실행 실패");
+        setGateResult(null);
+        return false;
+      }
+      setGateResult({ passed: data.passed, blockers: data.blockers, warnings: data.warnings });
+      return Boolean(data.passed);
+    } catch (err) {
+      setGateError(err instanceof Error ? err.message : "네트워크 오류");
+      return false;
+    } finally {
+      setGateBusy(false);
+    }
+  }
+
+  async function guardedExport() {
+    setGateOpen(true);
+    const ok = await runGate();
+    if (!ok) return; // blocker → 저장/내보내기 차단
+    await handleExportDocx();
+  }
 
   async function handleGenerate() {
     setLoading(true);
@@ -348,14 +389,84 @@ export function LawbotDocumentDraftPanel({ inquiryId }: { inquiryId: string }) {
               <Button
                 variant="primary"
                 size="md"
-                onClick={handleExportDocx}
-                disabled={exporting}
+                onClick={guardedExport}
+                disabled={exporting || gateBusy}
               >
-                {exporting ? "생성 중..." : ".docx 다운로드"}
+                {exporting ? "생성 중..." : gateBusy ? "게이트 검증 중..." : "게이트 통과 후 .docx 다운로드"}
               </Button>
               <Button variant="secondary" size="md" onClick={() => setStep(2)}>
                 ← 편집으로
               </Button>
+            </div>
+
+            <div className="rounded-md border border-line bg-white">
+              <button
+                type="button"
+                onClick={() => {
+                  setGateOpen((v) => !v);
+                  if (!gateOpen && !gateResult) void runGate();
+                }}
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-text-strong"
+              >
+                <span>
+                  발송 전 인용 검증
+                  {gateResult && (
+                    <span
+                      className={
+                        "ml-2 rounded px-1.5 py-0.5 text-xs font-semibold " +
+                        (gateResult.passed
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-rose-100 text-rose-700")
+                      }
+                    >
+                      {gateResult.passed ? "통과" : `차단 ${gateResult.blockers.length}건`}
+                    </span>
+                  )}
+                </span>
+                <span className="text-text-muted">{gateOpen ? "▲" : "▼"}</span>
+              </button>
+              {gateOpen && (
+                <div className="border-t border-line px-3 py-3 text-xs">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Button variant="secondary" size="sm" onClick={runGate} disabled={gateBusy}>
+                      {gateBusy ? "검증 중..." : "다시 검증"}
+                    </Button>
+                    <span className="text-text-muted">
+                      폐지 조문은 자동 차단, 미확인 인용은 경고
+                    </span>
+                  </div>
+                  {gateError && (
+                    <p className="rounded bg-rose-50 p-2 text-rose-700">{gateError}</p>
+                  )}
+                  {gateResult && (
+                    <div className="space-y-2">
+                      {gateResult.blockers.length > 0 && (
+                        <div>
+                          <p className="font-semibold text-rose-700">차단 항목</p>
+                          <ul className="mt-1 list-disc space-y-0.5 pl-5 text-rose-800">
+                            {gateResult.blockers.map((b, i) => (
+                              <li key={`b-${i}`}>{b.message}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {gateResult.warnings.length > 0 && (
+                        <div>
+                          <p className="font-semibold text-amber-700">경고</p>
+                          <ul className="mt-1 list-disc space-y-0.5 pl-5 text-amber-800">
+                            {gateResult.warnings.map((w, i) => (
+                              <li key={`w-${i}`}>{w.message}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {gateResult.passed && gateResult.warnings.length === 0 && (
+                        <p className="text-emerald-700">모든 인용이 확인되었습니다.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -5,7 +5,9 @@
  * 하드코드 법령은 최소 서브셋 — 관리자의 실무 카테고리와 겹치는 조문 위주.
  */
 
+import { prisma } from "@/lib/prisma/client";
 import { listPrecedents } from "@/lib/services/precedent-database-service";
+import { logger } from "@/lib/utils/logger";
 
 export type CitationKind = "law" | "precedent";
 
@@ -97,7 +99,11 @@ const LAW_REGEX = /([가-힣A-Za-z]{2,10}법)\s*제\s*(\d+)\s*조(?:\s*제\s*\d+
 // 판례번호: "대법원 2018두12345" / "2020구합1234" / "2019나56789"
 const PRECEDENT_REGEX = /((?:대법원\s*|서울고등법원\s*|헌법재판소\s*)?\d{4}\s*(?:두|다|가합|가단|구합|구단|나|고합|고단|허)\d{2,6})/g;
 
-function verifyLaw(lawName: string, articleNo: string): { status: CitationHit["status"]; note?: string } {
+// 테스트용 export — 순수 파서/검증기 재사용
+export const CITATION_LAW_REGEX = LAW_REGEX;
+export const CITATION_PRECEDENT_REGEX = PRECEDENT_REGEX;
+
+export function verifyLaw(lawName: string, articleNo: string): { status: CitationHit["status"]; note?: string } {
   const table = LAW_ARTICLES[lawName];
   if (!table) return { status: "unknown", note: "하드코드 조문표에 없음 (외부 검증 필요)" };
   const art = table[articleNo];
@@ -166,5 +172,112 @@ export async function verifyCitations(text: string): Promise<VerificationResult>
     citations: hits,
     summary,
     verifiedAt: new Date().toISOString(),
+  };
+}
+
+// ─── 발송 전 게이트 (블로커/경고 판정) ───────────────────────────────
+const GATE_POLICY_KEY = "citation.gate.policy";
+
+export type CitationGatePolicy = {
+  blockOnDeprecated: boolean;
+  blockOnUnknownLaw: boolean;
+  blockOnUnknownPrecedent: boolean;
+  minCitations: number;
+};
+
+const DEFAULT_GATE_POLICY: CitationGatePolicy = {
+  blockOnDeprecated: true,
+  blockOnUnknownLaw: false,
+  blockOnUnknownPrecedent: false,
+  minCitations: 0,
+};
+
+export async function getCitationGatePolicy(): Promise<CitationGatePolicy> {
+  try {
+    const row = await prisma.siteSetting.findUnique({ where: { key: GATE_POLICY_KEY } });
+    if (!row?.value) return DEFAULT_GATE_POLICY;
+    const parsed = JSON.parse(row.value) as Partial<CitationGatePolicy>;
+    return { ...DEFAULT_GATE_POLICY, ...parsed };
+  } catch (err) {
+    logger.warn("[citation-gate] 정책 읽기 실패", err);
+    return DEFAULT_GATE_POLICY;
+  }
+}
+
+export async function setCitationGatePolicy(patch: Partial<CitationGatePolicy>): Promise<CitationGatePolicy> {
+  const current = await getCitationGatePolicy();
+  const next: CitationGatePolicy = { ...current, ...patch };
+  await prisma.siteSetting.upsert({
+    where: { key: GATE_POLICY_KEY },
+    create: { key: GATE_POLICY_KEY, value: JSON.stringify(next) },
+    update: { value: JSON.stringify(next) },
+  });
+  return next;
+}
+
+export type CitationGateIssue = {
+  code:
+    | "deprecated_law"
+    | "unknown_law"
+    | "unknown_precedent"
+    | "no_citations"
+    | "too_few_citations";
+  citation?: CitationHit;
+  message: string;
+};
+
+export type CitationGateResult = {
+  passed: boolean;
+  blockers: CitationGateIssue[];
+  warnings: CitationGateIssue[];
+  verification: VerificationResult;
+  policy: CitationGatePolicy;
+};
+
+export async function runVerificationGate(
+  text: string,
+  options?: { policy?: Partial<CitationGatePolicy> }
+): Promise<CitationGateResult> {
+  const policyBase = await getCitationGatePolicy();
+  const policy: CitationGatePolicy = { ...policyBase, ...(options?.policy ?? {}) };
+  const verification = await verifyCitations(text);
+  const blockers: CitationGateIssue[] = [];
+  const warnings: CitationGateIssue[] = [];
+
+  for (const c of verification.citations) {
+    if (c.status === "deprecated") {
+      const issue: CitationGateIssue = {
+        code: "deprecated_law",
+        citation: c,
+        message: `폐지·삭제 조문 인용: ${c.normalized}${c.note ? ` (${c.note})` : ""}`,
+      };
+      if (policy.blockOnDeprecated) blockers.push(issue);
+      else warnings.push(issue);
+    } else if (c.status === "unknown") {
+      const isLaw = c.kind === "law";
+      const issue: CitationGateIssue = {
+        code: isLaw ? "unknown_law" : "unknown_precedent",
+        citation: c,
+        message: `${isLaw ? "미확인 법조문" : "미확인 판례"}: ${c.normalized}${c.note ? ` (${c.note})` : ""}`,
+      };
+      const block = isLaw ? policy.blockOnUnknownLaw : policy.blockOnUnknownPrecedent;
+      if (block) blockers.push(issue);
+      else warnings.push(issue);
+    }
+  }
+
+  if (policy.minCitations > 0 && verification.summary.total < policy.minCitations) {
+    blockers.push({
+      code: verification.summary.total === 0 ? "no_citations" : "too_few_citations",
+      message: `인용 최소 ${policy.minCitations}건 필요 (현재 ${verification.summary.total}건)`,
+    });
+  }
+
+  return {
+    passed: blockers.length === 0,
+    blockers,
+    warnings,
+    verification,
+    policy,
   };
 }

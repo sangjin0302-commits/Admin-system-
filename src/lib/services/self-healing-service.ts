@@ -7,6 +7,7 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { getRecentErrors, type ErrorEvent } from "@/lib/services/error-monitor-service";
+import { markSentryEventResolved } from "@/lib/services/sentry-integration-service";
 import { logger } from "@/lib/utils/logger";
 
 const LOG_KEY = "self_healing.log";
@@ -187,6 +188,10 @@ export async function analyzeAndHeal(
       status: "auto_healed",
     };
     await appendRecord(record);
+    // Sentry 연동: 치유 성공 시 관련 이벤트를 resolved 로 마킹 (best-effort)
+    if (error.id) {
+      void markSentryEventResolved(error.id).catch(() => undefined);
+    }
     return { healed: true, action: matched.action, record };
   }
 

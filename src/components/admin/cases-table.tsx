@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { SortableTable } from "./sortable-table";
+import { usePreloadOnHover } from "@/lib/hooks/use-tab-preload";
 
 type CaseRow = {
   id: string;
@@ -75,16 +76,24 @@ const columns = [
   {
     key: "action",
     label: "",
-    render: (r: CaseRow) => (
-      <Link
-        href={`/admin/cases/${r.id}`}
-        className="inline-flex h-9 items-center rounded-lg border border-line bg-surface px-3 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
-      >
-        상세
-      </Link>
-    ),
+    render: (r: CaseRow) => <CaseDetailLink id={r.id} />,
   },
 ];
+
+function CaseDetailLink({ id }: { id: string }) {
+  const { hoverHandler, leaveHandler } = usePreloadOnHover(id, "case");
+  return (
+    <Link
+      href={`/admin/cases/${id}`}
+      onMouseEnter={hoverHandler}
+      onMouseLeave={leaveHandler}
+      onFocus={hoverHandler}
+      className="inline-flex h-9 items-center rounded-lg border border-line bg-surface px-3 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"
+    >
+      상세
+    </Link>
+  );
+}
 
 export function CasesTable({ rows }: { rows: CaseRow[] }) {
   return (
