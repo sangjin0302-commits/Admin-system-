@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { sendTelegramAlert } from "@/lib/services/telegram-notify";
 import { getTopNextActions } from "@/lib/services/next-actions-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,10 @@ export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
   if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!(await isFeatureEnabled("morning_telegram_push"))) {
+    return NextResponse.json({ ok: true, skipped: "feature_disabled" });
   }
 
   try {
