@@ -9,6 +9,7 @@ import { BlogInlineCta } from "@/components/public/blog-inline-cta";
 import { RelatedKeywords } from "@/components/public/related-keywords";
 import { ScrollProgress } from "@/components/public/scroll-progress";
 import { BlogScrollTracker } from "@/components/public/blog-scroll-tracker";
+import { BlogMidCta } from "@/components/public/blog-mid-cta";
 import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
 import { sanitizeHtml } from "@/lib/utils/sanitize-html";
 import { autoLinkKeywords, extractKeywords } from "@/lib/utils/keyword-linker";
@@ -146,6 +147,7 @@ export default async function BlogDetailPage({
     <div className="relative mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
       <ScrollProgress />
       <BlogScrollTracker slug={post.slug} />
+      <BlogMidCta category={PUBLIC_CATEGORY_LABEL[toPublicCategory(post.category)]} />
       <ArticleJsonLd
         title={post.title}
         description={post.excerpt}

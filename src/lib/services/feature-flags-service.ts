@@ -248,6 +248,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "public_dark_mode_toggle", label: "public 다크모드 토글", category: "ux", default: false, public: true, description: "public footer에 라이트/자동/다크 토글" },
   { key: "returning_visitor_badge", label: "재방문자 배지", category: "marketing", default: true, public: true, description: '홈에서 재방문자에게 "지난번 본 서비스 이어보기" 칩 (localStorage, 30일)' },
   { key: "intake_progress_chip", label: "intake 필수항목 진행 칩", category: "ux", default: true, description: "접수 폼 상단 sticky 4단계 필수항목 완료 표시" },
+  { key: "blog_mid_cta", label: "블로그 50% CTA", category: "marketing", default: true, public: true, description: "블로그 글 50% 스크롤 시 무료검토 슬라이드인 CTA (세션당 1회)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

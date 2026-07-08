@@ -231,17 +231,18 @@ export default async function PublicMarketingHomePage({
   ]);
 
   // UX5: 히어로 이미지 일자별 로테이션 — SiteSetting "image.hero.rotation" = JSON string[]
+  //   DB 미설정 시 기본 배열 (커밋된 브랜드 배경) 사용
   if (heroRotationEnabled) {
+    let list: string[] = ["/hero-rotation-1.png"];
     const rotationRow = await prisma.siteSetting.findUnique({ where: { key: "image.hero.rotation" } }).catch(() => null);
     if (rotationRow?.value) {
       try {
-        const list = JSON.parse(rotationRow.value) as string[];
-        if (Array.isArray(list) && list.length > 0) {
-          const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-          heroLogo = list[dayOfYear % list.length] || heroLogo;
-        }
-      } catch { /* malformed JSON → 기본 로고 유지 */ }
+        const parsed = JSON.parse(rotationRow.value) as string[];
+        if (Array.isArray(parsed) && parsed.length > 0) list = parsed;
+      } catch { /* malformed JSON → 기본 배열 유지 */ }
     }
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+    heroLogo = list[dayOfYear % list.length] || heroLogo;
   }
 
   // 대표 프로필 사진 — about 페이지와 동일한 site-setting 사용
