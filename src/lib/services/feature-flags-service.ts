@@ -228,6 +228,8 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "case_progress_visualization", label: "사건 진행률 시각화", category: "ux", default: true, description: "사건 상세 상단에 5단계 progress bar (접수→착수→제출→대기→종결)" },
   { key: "flag_audit_filters", label: "flag-audit 필터/검색", category: "ux", default: true, description: "flag-audit 페이지에 필터 chip + q 검색" },
   { key: "sidebar_quote_pending_badge", label: "sidebar 견적 승인대기 뱃지", category: "ux", default: true, description: "quote-calc 링크에 QUOTE_PENDING 문의 count 뱃지" },
+  { key: "quote_pending_24h_reminder", label: "견적 24h+ 미승인 리마인더", category: "operations", default: false, description: "follow-up-reminder cron이 QUOTE_PENDING 24h 경과 문의에 이메일+텔레그램 발송" },
+  { key: "quick_note_fab", label: "빠른 노트 FAB", category: "ux", default: true, description: "우하단 플로팅 노트 버튼 (Ctrl+/ 단축키, localStorage)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

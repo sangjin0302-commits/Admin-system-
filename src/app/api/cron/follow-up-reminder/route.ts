@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { sendTelegramAlert } from "@/lib/services/telegram-notify";
 import { sendEmail } from "@/lib/services/email-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -68,5 +69,38 @@ export async function GET(req: Request) {
     reminded++;
   }
 
-  return NextResponse.json({ reminded, total: staleInquiries.length });
+  let quoteReminded = 0;
+  if (await isFeatureEnabled("quote_pending_24h_reminder").catch(() => false)) {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const staleQuotes = await prisma.inquiry.findMany({
+      where: { status: "QUOTE_PENDING", updatedAt: { lte: oneDayAgo } },
+      select: { id: true, contactName: true, email: true, publicTrackingCode: true, updatedAt: true },
+      take: 20,
+    }).catch(() => []);
+
+    for (const inq of staleQuotes) {
+      const hoursSince = Math.floor((Date.now() - inq.updatedAt.getTime()) / (1000 * 60 * 60));
+      if (inq.email) {
+        try {
+          await sendEmail({
+            to: inq.email,
+            subject: `[ETHOS] ${inq.contactName || "고객"}님, 견적 확인 요청드립니다`,
+            html: `<p>${inq.contactName || "고객"}님, 안녕하세요.</p>
+<p>발송드린 견적이 아직 승인되지 않아 확인 부탁드립니다. (${hoursSince}시간 경과)</p>
+<p>궁금하신 부분이나 조정이 필요하시면 편하게 회신 주세요.</p>
+<p>— ETHOS 행정사사무소</p>`,
+          });
+        } catch (err) {
+          logger.warn("[follow-up-quote] email failed", { inquiryId: inq.id, err });
+        }
+      }
+      await sendTelegramAlert({
+        kind: "system",
+        title: `💰 견적 미승인 24h+: ${inq.contactName || "미상"} (${inq.publicTrackingCode || inq.id.slice(0, 8)}) — ${hoursSince}h 경과`,
+      }).catch(() => {});
+      quoteReminded++;
+    }
+  }
+
+  return NextResponse.json({ reminded, total: staleInquiries.length, quoteReminded });
 }
