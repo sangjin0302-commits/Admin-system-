@@ -30,6 +30,16 @@ export type CommandItem = {
 
 const STATIC_PAGES: CommandItem[] = [
   { id: "page:home", group: "page", label: "대시보드", href: "/admin", aliases: ["홈", "메인"] },
+  { id: "page:morning", group: "page", label: "아침 3분 브리핑", href: "/admin/morning", aliases: ["브리핑", "morning", "아침"], keywords: ["KPI", "요약"] },
+  { id: "page:inbox", group: "page", label: "통합 수신함", href: "/admin/inbox", aliases: ["인박스", "inbox", "미응답"], keywords: ["긴급", "SLA"] },
+  { id: "page:funnel", group: "page", label: "전환 퍼널", href: "/admin/funnel", aliases: ["funnel", "전환률"], keywords: ["consult", "quote", "WON"] },
+  { id: "page:channel-roi", group: "page", label: "채널 ROI", href: "/admin/channel-roi", aliases: ["ROI", "CPL", "CPA", "ROAS"], keywords: ["광고비", "채널"] },
+  { id: "page:ref-tracking", group: "page", label: "레퍼럴 트래킹", href: "/admin/ref-tracking", aliases: ["ref", "referral", "유입"], keywords: ["UTM"] },
+  { id: "page:landing-gaps", group: "page", label: "랜딩 갭 파인더", href: "/admin/landing-gaps", aliases: ["landing", "GSC", "키워드"], keywords: ["SEO"] },
+  { id: "page:vips", group: "page", label: "VIP 리스트", href: "/admin/vips", aliases: ["VIP", "리피터"], keywords: ["repeat", "충성"] },
+  { id: "page:tax-export", group: "page", label: "세무 CSV", href: "/admin/tax-export", aliases: ["세무", "tax", "CSV"], keywords: ["부가세", "결산"] },
+  { id: "page:flag-audit", group: "page", label: "Flag 감사", href: "/admin/flag-audit", aliases: ["flag", "감사"], keywords: ["플래그"] },
+  { id: "page:quote-calc", group: "page", label: "견적 계산기", href: "/admin/quote-calc", aliases: ["견적", "quote", "가격", "calc"], keywords: ["상담", "안내"] },
   { id: "page:inquiries", group: "page", label: "문의 목록", href: "/admin/inquiries", aliases: ["문의"] },
   { id: "page:inquiries.new", group: "page", label: "새 문의 등록", href: "/admin/inquiries/new", aliases: ["새 의뢰", "신규 문의", "문의 등록"] },
   { id: "page:cases", group: "page", label: "사건 목록", href: "/admin/cases", aliases: ["사건"] },

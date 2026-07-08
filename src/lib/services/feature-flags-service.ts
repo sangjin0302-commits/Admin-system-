@@ -191,6 +191,11 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "dashboard_loading_skeletons", label: "대시보드 loading skeleton", category: "ux", default: true, description: "신규 페이지 loading.tsx 스켈레톤 추가 (ethos-skeleton class)" },
   { key: "dark_mode", label: "다크모드", category: "ux", default: false, description: "prefers-color-scheme 감지 + 수동 토글 (야간 작업 대응)" },
   { key: "semantic_color_tokens", label: "semantic color tokens", category: "ux", default: false, description: "text-red-600 등 raw color → text-danger/success/warning 추상화" },
+  { key: "quote_calculator", label: "견적 계산기", category: "operations", default: true, description: "사건유형·옵션 조합 → 기본금+추가금 즉시 계산 (/admin/quote-calc)" },
+  { key: "inquiry_kakao_deeplink_action", label: "문의 카톡 딥링크", category: "operations", default: true, description: "문의 상세에서 카톡 채팅 원클릭 열기 (kakaotalk://plusfriend/chat)" },
+  { key: "morning_telegram_push", label: "아침 브리핑 텔레그램", category: "operations", default: false, description: "매일 아침 KPI + 마감 리스트를 텔레그램으로 자동 전송 (별도 cron)" },
+  { key: "inquiry_next_action_chips", label: "문의 다음 액션 chips", category: "ux", default: true, description: "문의 상세 상단에 다음 권장 액션 chip (답장/견적/상담예약/거절)" },
+  { key: "command_palette_new_dashboards", label: "command palette 신규 인덱싱", category: "ux", default: true, description: "9개 신규 dashboard가 command palette 검색에 노출" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));
