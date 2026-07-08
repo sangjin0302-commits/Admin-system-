@@ -19,6 +19,7 @@ import {
 } from "@/components/admin/inquiry-detail-content-sections";
 import { InquiryDetailUnavailable } from "@/components/admin/inquiry-detail-common";
 import { InquiryQuickActions } from "@/components/admin/inquiry-quick-actions";
+import { ReplyDraftButton } from "@/components/admin/reply-draft-button";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import {
   InquiryDetailAnalysisHub,
@@ -163,15 +164,17 @@ export default async function AdminInquiryDetailPage({
     const publicTrackingCode = getPublicTrackingCodeFromInquiry(inquiry);
     const intakeSourceTracking = buildIntakeSourceTrackingViewModel(inquiry);
     const emailProviderReadiness = buildCustomerEmailProviderReadiness(process.env);
-    const [kakaoEnabled, chipsEnabled] = await Promise.all([
+    const [kakaoEnabled, chipsEnabled, kakaoPresetEnabled, replyDraftEnabled] = await Promise.all([
       isFeatureEnabled("inquiry_kakao_deeplink_action"),
       isFeatureEnabled("inquiry_next_action_chips"),
+      isFeatureEnabled("kakao_first_message_preset"),
+      isFeatureEnabled("reply_draft_auto"),
     ]);
     const kakaoChannelId = process.env.KAKAO_CHANNEL_ID ?? null;
 
     return (
       <div className="space-y-6">
-        {(kakaoEnabled || chipsEnabled) ? (
+        {(kakaoEnabled || chipsEnabled || kakaoPresetEnabled) ? (
           <InquiryQuickActions
             inquiryId={inquiry.id}
             phone={inquiry.phone}
@@ -179,8 +182,12 @@ export default async function AdminInquiryDetailPage({
             kakaoChannelId={kakaoChannelId}
             kakaoEnabled={kakaoEnabled}
             chipsEnabled={chipsEnabled}
+            kakaoPresetEnabled={kakaoPresetEnabled}
+            contactName={inquiry.contactName}
+            inquiryTitle={inquiry.title}
           />
         ) : null}
+        {replyDraftEnabled ? <ReplyDraftButton inquiryId={inquiry.id} enabled={replyDraftEnabled} /> : null}
         <InquiryDetailHeaderCard
           status={inquiryStatus}
           urgency={inquiryUrgency}

@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { InquiryStatus, UrgencyLevel } from "@generated/prisma-client/client";
 import { EmptyState } from "@/components/admin/empty-state";
+import { SavedFilters } from "@/components/admin/saved-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -111,6 +112,8 @@ export default async function InboxPage({
           </Link>
         ))}
       </div>
+
+      <SavedFilters scope="inbox" enabled={await isFeatureEnabled("saved_filter_views")} />
 
       <Card className="p-0 overflow-hidden">
         {rows.length === 0 ? (

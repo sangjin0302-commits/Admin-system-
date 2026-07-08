@@ -14,6 +14,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 export type InquiryQuickActionsProps = {
   inquiryId: string;
@@ -22,6 +23,9 @@ export type InquiryQuickActionsProps = {
   kakaoChannelId?: string | null;
   kakaoEnabled?: boolean;
   chipsEnabled?: boolean;
+  contactName?: string | null;
+  inquiryTitle?: string | null;
+  kakaoPresetEnabled?: boolean;
 };
 
 const NEXT_ACTIONS = [
@@ -33,8 +37,18 @@ const NEXT_ACTIONS = [
 
 const LS_KEY = "admin.inquiry.recent_action";
 
+function copyKakaoPreset(inquiryTitle: string | null | undefined, contactName: string | null | undefined) {
+  const name = contactName?.trim() || "고객님";
+  const title = inquiryTitle?.trim() || "문의";
+  const preset = `${name} 안녕하세요, ETHOS 행정사사무소입니다.\n\n"${title}" 관련 문의 확인했습니다. 상세 안내 도와드리겠습니다.`;
+  try {
+    void navigator.clipboard.writeText(preset);
+    return true;
+  } catch { return false; }
+}
+
 export function InquiryQuickActions(props: InquiryQuickActionsProps) {
-  const { inquiryId, phone, email, kakaoChannelId, kakaoEnabled, chipsEnabled } = props;
+  const { inquiryId, phone, email, kakaoChannelId, kakaoEnabled, chipsEnabled, contactName, inquiryTitle, kakaoPresetEnabled } = props;
   const [recent, setRecent] = useState<string | null>(null);
 
   useEffect(() => {
@@ -81,6 +95,20 @@ export function InquiryQuickActions(props: InquiryQuickActionsProps) {
         >
           💬 카톡 채널
         </a>
+      ) : null}
+      {kakaoPresetEnabled ? (
+        <button
+          type="button"
+          onClick={() => {
+            const ok = copyKakaoPreset(inquiryTitle, contactName);
+            if (ok) toast.success("카톡 첫 메시지 복사됨");
+            else toast.error("복사 실패");
+          }}
+          className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-3 py-1.5 text-xs font-medium text-yellow-900 hover:bg-yellow-100"
+          title="첫 메시지 클립보드 복사"
+        >
+          📋 첫 메시지
+        </button>
       ) : null}
       {chipsEnabled ? (
         <>

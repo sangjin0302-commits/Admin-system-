@@ -232,6 +232,11 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "quick_note_fab", label: "빠른 노트 FAB", category: "ux", default: true, description: "우하단 플로팅 노트 버튼 (Ctrl+/ 단축키, localStorage)" },
   { key: "kanban_progress_mini", label: "kanban 진행률 mini", category: "ux", default: true, description: "kanban 카드에 CaseProgressBar mini bar 표시 (labels 없이)" },
   { key: "weekly_kpi_email", label: "주간 KPI 이메일", category: "marketing", default: false, description: "매주 weekly-report cron이 ADMIN_ALERT_EMAIL로 KPI 리포트 발송 (WoW, WON, SLA 포함)" },
+  { key: "kakao_first_message_preset", label: "카톡 첫 메시지 프리셋", category: "operations", default: true, description: "문의 상세에서 카톡 첫 메시지 클립보드 자동 복사 (name+title 프리셋)" },
+  { key: "reply_draft_auto", label: "답장 초안 자동생성", category: "operations", default: true, description: "문의 상세에서 Claude Haiku 답장 초안 원클릭 생성 + 복사" },
+  { key: "saved_filter_views", label: "필터 저장 (내 뷰)", category: "ux", default: true, description: "현재 URL 필터를 localStorage에 저장. inbox/cases 등에서 재사용" },
+  { key: "inquiry_auto_labeling", label: "문의 자동 라벨링", category: "operations", default: false, description: "요구/공포/불만/문의 자동 태깅 (실코드 준비 중)" },
+  { key: "case_delay_detection", label: "사건 지연 감지", category: "operations", default: false, description: "사건유형별 평균 대비 +50% 지연 감지 + 관리자 알림 (실코드 준비 중)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));
