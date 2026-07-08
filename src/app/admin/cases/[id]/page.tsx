@@ -10,6 +10,8 @@ import {
 } from "@/components/admin/case-matter-detail-sections";
 import { CaseAccountingMemoPanel } from "@/components/admin/case-accounting-memo-panel";
 import { CaseProgressBar } from "@/components/admin/case-progress-bar";
+import { CaseEventTimeline } from "@/components/admin/case-event-timeline";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { LawbotAnalysisPanel } from "@/components/admin/lawbot-analysis-panel";
 import { CaseESignPanel } from "@/components/admin/case-esign-panel";
 import { CaseFinancePanel } from "@/components/admin/case-finance-panel";
@@ -128,6 +130,7 @@ export default async function AdminCaseMatterDetailPage({
     );
   }
 
+  const timelineEnabled = await isFeatureEnabled("case_event_timeline");
   const currentStatus = normalizeCaseMatterStatus(caseMatter.status);
   const allowedCaseTransitions = getAllowedCaseMatterTransitions(currentStatus).map((status) =>
     normalizeCaseMatterStatus(status)
@@ -248,6 +251,11 @@ export default async function AdminCaseMatterDetailPage({
             <div className="mt-4 max-w-md">
               <CaseProgressBar status={caseMatter.status} />
             </div>
+            {timelineEnabled ? (
+              <div className="mt-6 max-w-md">
+                <CaseEventTimeline caseId={caseMatter.id} />
+              </div>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
             <a

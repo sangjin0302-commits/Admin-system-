@@ -8,6 +8,7 @@ import { VoiceCommandMic } from "@/components/admin/voice-command-mic";
 import { CommandPalette } from "@/components/admin/command-palette";
 import { DarkModeToggle } from "@/components/admin/dark-mode-toggle";
 import { QuickNoteFab } from "@/components/admin/quick-note-fab";
+import { MacroHotkeyListener } from "@/components/admin/macro-hotkey-listener";
 import { listInquiries } from "@/lib/services/inquiry-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
@@ -19,6 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   } catch { /* ignore */ }
   const darkToggleEnabled = await isFeatureEnabled("dark_mode_manual_toggle");
   const quickNoteEnabled = await isFeatureEnabled("quick_note_fab");
+  const macroHotkeysEnabled = await isFeatureEnabled("macro_hotkeys");
 
   return (
     <div className="flex gap-6">
@@ -54,6 +56,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <VoiceCommandMic />
       <CommandPalette />
       <QuickNoteFab enabled={quickNoteEnabled} />
+      <MacroHotkeyListener enabled={macroHotkeysEnabled} />
     </div>
   );
 }

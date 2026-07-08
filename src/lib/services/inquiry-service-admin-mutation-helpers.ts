@@ -13,6 +13,7 @@ import { parseInquiryCommunicationLogs } from "@/lib/services/inquiry-guard-help
 import type { InquiryStatus } from "@/types/inquiry";
 import { logger } from "@/lib/utils/logger";
 import { runWorkflow } from "@/lib/services/workflow-engine";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
 export async function updateInquiryAdminFields(
   id: string,
@@ -52,13 +53,23 @@ export async function updateInquiryAdminFields(
     payload
   );
 
+  // BBB1: 첫 응답 시 NEW → CONSULTATION_REQUIRED 자동 전환
+  //   (payload.status가 지정 안 된 경우에만)
+  let autoStatusPatch: Partial<{ status: InquiryStatus }> = {};
+  const isFirstResponse = statusChangeEntry && !current.firstResponseAt;
+  const flag = await isFeatureEnabled("auto_status_on_first_response").catch(() => false);
+  if (isFirstResponse && flag && !payload.status && current.status === "NEW") {
+    autoStatusPatch = { status: "CONSULTATION_REQUIRED" as InquiryStatus };
+  }
+
   const updated = await prisma.inquiry.update({
     where: { id },
     data: {
       ...buildInquiryAdminUpdateData(payload, currentLogs, statusChangeEntry),
       ...(statusChangeEntry && !current.firstResponseAt
         ? { firstResponseAt: new Date() }
-        : {})
+        : {}),
+      ...autoStatusPatch,
     }
   });
 

@@ -241,6 +241,9 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "inquiry_bulk_actions", label: "문의 배치 액션", category: "operations", default: true, description: "다중 문의 일괄 상태변경·담당자할당·읽음처리 (최대 50건)" },
   { key: "my_activity_timeline", label: "내 활동 timeline", category: "ux", default: true, description: "/admin/my-activity: 최근 40건 문의+사건+블로그 통합 timeline" },
   { key: "inquiry_similar_search", label: "유사 문의 검색", category: "operations", default: true, description: "/admin/similar-search: 자연어로 과거 문의 유사도 검색 (토큰 매칭)" },
+  { key: "auto_status_on_first_response", label: "첫 응답 시 자동 상태전환", category: "operations", default: false, description: "NEW→CONSULTATION_REQUIRED 자동 (첫 응답 firstResponseAt 세팅 시)" },
+  { key: "macro_hotkeys", label: "매크로 hotkey (Ctrl+1~9)", category: "ux", default: true, description: "Ctrl+1~9로 매크로 즉시 삽입/복사. /admin/macro-hotkeys에서 편집" },
+  { key: "case_event_timeline", label: "사건 진행 timeline", category: "ux", default: true, description: "사건 상세 상단에 CaseEvent 최근 20건 timeline 표시" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));
