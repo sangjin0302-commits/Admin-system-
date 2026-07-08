@@ -13,6 +13,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { sendTelegramAlert } from "@/lib/services/telegram-notify";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import { smartInvoke } from "@/lib/services/smart-ai-client";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -45,19 +46,36 @@ export async function GET(req: Request) {
   try {
     const interests = await getInterests();
     const today = new Date().toLocaleDateString("ko-KR");
+    const aiEnabled = await isFeatureEnabled("legal_info_ai_summary").catch(() => false);
 
-    const lines = [
-      "",
-      `📚 관심 분야: ${interests.join(", ")}`,
-      "",
-      "🔎 오늘 확인할 자료:",
-      `  • 국가법령정보센터 최근 개정 법령 (${interests[0]} 관련)`,
-      `  • 행정심판재결례 최신 공개분`,
-      `  • 대법원 종합법률정보 신 판례`,
-      "",
-      "🔗 https://www.law.go.kr",
-      "🔗 https://www.simpan.go.kr",
-    ];
+    let aiSummary: string | null = null;
+    if (aiEnabled) {
+      try {
+        const res = await smartInvoke(
+          "summarize",
+          `당신은 한국 행정사 실무자입니다. 다음 관심 분야에 대해 오늘(${today}) 실무자가 체크할 만한 최근 트렌드/이슈 3가지를 각 1줄로 요약해주세요.\n\n관심 분야: ${interests.join(", ")}\n\n형식:\n1. [분야] 이슈 요약\n2. [분야] 이슈 요약\n3. [분야] 이슈 요약`,
+          { system: "간결하게. 실무 관점. 마크다운 없이 평문.", maxTokens: 400 },
+        );
+        aiSummary = res.text?.trim() ?? null;
+      } catch (err) {
+        logger.warn("[legal-info-daily] AI summary failed, fallback to stub", err);
+      }
+    }
+
+    const lines = aiSummary
+      ? ["", `📚 관심 분야: ${interests.join(", ")}`, "", "🤖 AI 요약:", aiSummary, "", "🔗 https://www.law.go.kr"]
+      : [
+          "",
+          `📚 관심 분야: ${interests.join(", ")}`,
+          "",
+          "🔎 오늘 확인할 자료:",
+          `  • 국가법령정보센터 최근 개정 법령 (${interests[0]} 관련)`,
+          `  • 행정심판재결례 최신 공개분`,
+          `  • 대법원 종합법률정보 신 판례`,
+          "",
+          "🔗 https://www.law.go.kr",
+          "🔗 https://www.simpan.go.kr",
+        ];
 
     await sendTelegramAlert({
       kind: "system",
@@ -65,7 +83,7 @@ export async function GET(req: Request) {
       lines,
     });
 
-    return NextResponse.json({ ok: true, sent: true, interests });
+    return NextResponse.json({ ok: true, sent: true, interests, aiUsed: Boolean(aiSummary) });
   } catch (err) {
     logger.error("[legal-info-daily] error", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

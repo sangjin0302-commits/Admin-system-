@@ -223,6 +223,8 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "dark_mode_manual_toggle", label: "다크모드 수동 토글", category: "ux", default: false, description: "라이트/자동/다크 3단 토글 UI (data-theme + localStorage)" },
   { key: "skeleton_cards_variant", label: "skeleton cards variant", category: "ux", default: true, description: "DashboardLoadingSkeleton에 cards variant 추가" },
   { key: "sidebar_cmdk_hint", label: "sidebar Cmd+K hint", category: "ux", default: true, description: "sidebar 하단에 Ctrl+K 단축키 안내" },
+  { key: "quote_preset_from_inquiry", label: "견적 자동 프리셋", category: "operations", default: true, description: "quote-calc?inquiryId=xxx 지원. 사건유형·재의뢰 자동매핑" },
+  { key: "legal_info_ai_summary", label: "법률정보 AI 요약", category: "operations", default: false, description: "매일 법률정보 cron에 Claude Haiku 요약 활성. 미활성 시 stub 링크만" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

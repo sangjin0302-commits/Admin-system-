@@ -26,7 +26,7 @@ export type InquiryQuickActionsProps = {
 
 const NEXT_ACTIONS = [
   { key: "reply", label: "답장", href: (id: string) => `/admin/inquiries/${id}?compose=reply` },
-  { key: "quote", label: "견적 안내", href: (_id: string) => `/admin/quote-calc` },
+  { key: "quote", label: "견적 안내", href: (id: string) => `/admin/quote-calc?inquiryId=${id}` },
   { key: "book", label: "상담 예약", href: (id: string) => `/admin/inquiries/${id}?compose=booking` },
   { key: "decline", label: "정중 거절", href: (id: string) => `/admin/inquiries/${id}?compose=decline` },
 ] as const;

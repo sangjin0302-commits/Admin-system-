@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 
 type MatterType = {
@@ -44,10 +45,52 @@ const DISCOUNT_OPTIONS = [
 
 const fmt = (n: number) => new Intl.NumberFormat("ko-KR").format(n);
 
+const CATEGORY_TO_MATTER: Record<string, string> = {
+  ADMIN_APPEAL: "admin_appeal",
+  ADMIN_LAWSUIT: "admin_lawsuit",
+  LICENSE_PERMIT: "license_permit",
+  OBJECTION: "objection",
+  CONTRACT: "contract_review",
+  FACT_INVESTIGATION: "fact_investigation",
+  ADVISORY: "consult_only",
+};
+
 export default function QuoteCalcClient() {
+  const searchParams = useSearchParams();
+  const inquiryId = searchParams.get("inquiryId");
+  const preset = searchParams.get("preset");
   const [matterKey, setMatterKey] = useState(MATTER_TYPES[0].key);
   const [selectedAddOns, setSelectedAddOns] = useState<Set<string>>(new Set());
   const [discountKey, setDiscountKey] = useState("none");
+  const [presetLoaded, setPresetLoaded] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (preset && CATEGORY_TO_MATTER[preset]) {
+      const matched = CATEGORY_TO_MATTER[preset];
+      setMatterKey(matched);
+      setPresetLoaded(`preset=${preset} → ${MATTER_TYPES.find((m) => m.key === matched)?.label}`);
+      return;
+    }
+    if (!inquiryId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/inquiries/${inquiryId}/quote-preset`, { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { category?: string; discount?: string };
+        if (cancelled) return;
+        if (data.category && CATEGORY_TO_MATTER[data.category]) {
+          const matched = CATEGORY_TO_MATTER[data.category];
+          setMatterKey(matched);
+          setPresetLoaded(`문의 #${inquiryId.slice(0, 8)} → ${MATTER_TYPES.find((m) => m.key === matched)?.label}`);
+        }
+        if (data.discount && DISCOUNT_OPTIONS.find((d) => d.key === data.discount)) {
+          setDiscountKey(data.discount);
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [inquiryId, preset]);
   const [copied, setCopied] = useState(false);
 
   const matter = MATTER_TYPES.find((m) => m.key === matterKey) ?? MATTER_TYPES[0];
@@ -101,6 +144,12 @@ export default function QuoteCalcClient() {
   };
 
   return (
+    <div className="space-y-4">
+      {presetLoaded ? (
+        <div className="rounded-lg border border-emerald-500 bg-emerald-50 px-4 py-2 text-xs text-emerald-900">
+          ✅ 자동 프리셋 적용: {presetLoaded}
+        </div>
+      ) : null}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="space-y-4">
         <div>
@@ -194,6 +243,7 @@ export default function QuoteCalcClient() {
           {copied ? "복사됨 ✓" : "견적 문안 복사 (카톡/이메일용)"}
         </button>
       </div>
+    </div>
     </div>
   );
 }
