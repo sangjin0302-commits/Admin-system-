@@ -217,6 +217,10 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "mentor_precedent_quiz", label: "판례 퀴즈", category: "operations", default: false, description: "판례 사실관계 → 결론 예측 훈련 (준비 중)" },
   { key: "mentor_client_roleplay", label: "클라이언트 롤플레이", category: "operations", default: false, description: "AI 클라이언트 역할 상담 훈련 (준비 중)" },
   { key: "legal_info_delivery_daily", label: "매일 법률정보 전달", category: "operations", default: false, description: "매일 아침 관심 카테고리 신법령·판례 요약 텔레그램 (별도 cron)" },
+  { key: "empty_state_unified", label: "Empty state 통일", category: "ux", default: true, description: "EmptyState 공통 컴포넌트 (icon+title+desc+action)" },
+  { key: "sidebar_group_collapse", label: "sidebar 그룹 접기", category: "ux", default: true, description: "sidebar 그룹 헤더 클릭으로 접기/펴기 (localStorage 유지)" },
+  { key: "toast_quote_copy", label: "견적 복사 toast", category: "ux", default: true, description: "quote-calc 복사 시 react-hot-toast 알림" },
+  { key: "dark_mode_manual_toggle", label: "다크모드 수동 토글", category: "ux", default: false, description: "라이트/자동/다크 3단 토글 UI (data-theme + localStorage)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

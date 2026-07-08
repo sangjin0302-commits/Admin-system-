@@ -98,7 +98,14 @@ export const metadata: Metadata = {
 
 export default function RootLayoutSafe({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('ethos.theme');if(t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.dataset.theme='dark';}}catch(e){}`,
+          }}
+        />
+      </head>
       <body>
         <BrandIntro />
         <AppShellSafe>{children}</AppShellSafe>

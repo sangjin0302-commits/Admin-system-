@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 type MatterType = {
   key: string;
@@ -92,9 +93,10 @@ export default function QuoteCalcClient() {
     try {
       await navigator.clipboard.writeText(summary);
       setCopied(true);
+      toast.success("견적 문안이 복사되었습니다");
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* ignore */
+      toast.error("복사 실패 — 브라우저 권한을 확인하세요");
     }
   };
 

@@ -167,19 +167,43 @@ export function AdminSidebar({ newInquiryCount = 0 }: { newInquiryCount?: number
     return pathname.startsWith(href);
   };
 
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem("admin.sidebar.collapsedGroups");
+      return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+    } catch { return new Set(); }
+  });
+  const toggleGroup = (title: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(title)) next.delete(title);
+      else next.add(title);
+      try { localStorage.setItem("admin.sidebar.collapsedGroups", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
   const sidebar = (
     <nav className={cn(
       "flex flex-col gap-1 overflow-y-auto",
       collapsed ? "items-center" : ""
     )}>
-      {NAV_GROUPS.map((group) => (
+      {NAV_GROUPS.map((group) => {
+        const groupCollapsed = collapsedGroups.has(group.title);
+        return (
         <div key={group.title} className="mb-2">
           {!collapsed && (
-            <p className="mb-1 px-3 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-text-muted">
+            <button
+              type="button"
+              onClick={() => toggleGroup(group.title)}
+              className="mb-1 flex w-full items-center gap-1 px-3 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-text-muted hover:text-text"
+              aria-expanded={!groupCollapsed}
+            >
+              <span aria-hidden className="text-[8px]">{groupCollapsed ? "▶" : "▼"}</span>
               {group.title}
-            </p>
+            </button>
           )}
-          {group.items.map((item) => (
+          {(!groupCollapsed || collapsed) && group.items.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -208,7 +232,8 @@ export function AdminSidebar({ newInquiryCount = 0 }: { newInquiryCount?: number
             </Link>
           ))}
         </div>
-      ))}
+        );
+      })}
     </nav>
   );
 
