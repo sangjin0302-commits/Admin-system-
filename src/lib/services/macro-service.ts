@@ -264,3 +264,21 @@ export async function runMacro(macroId: string, ctx: MacroRunContext = {}): Prom
   }
   return summary;
 }
+
+/**
+ * 문의유형/상태 keyword로 매크로 자동 매칭.
+ * name·description에 keyword 포함되는 매크로 → score순 정렬 반환.
+ * KK1: kakao_reply_template_autopick 지원.
+ */
+export async function suggestMacros(keywords: string[], limit = 5): Promise<Array<Macro & { score: number }>> {
+  if (!(await isFeatureEnabled("kakao_reply_template_autopick"))) return [];
+  const list = await listMacros();
+  const kw = keywords.filter(Boolean).map((k) => k.toLowerCase());
+  if (kw.length === 0) return [];
+  const scored = list.map((m) => {
+    const hay = `${m.name} ${m.description ?? ""}`.toLowerCase();
+    const score = kw.reduce((s, k) => (hay.includes(k) ? s + 1 : s), 0);
+    return { ...m, score };
+  });
+  return scored.filter((m) => m.score > 0).sort((a, b) => b.score - a.score).slice(0, limit);
+}
