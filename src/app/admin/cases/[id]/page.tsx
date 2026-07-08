@@ -9,6 +9,7 @@ import {
   RequiredDocumentSummarySection
 } from "@/components/admin/case-matter-detail-sections";
 import { CaseAccountingMemoPanel } from "@/components/admin/case-accounting-memo-panel";
+import { CaseProgressBar } from "@/components/admin/case-progress-bar";
 import { LawbotAnalysisPanel } from "@/components/admin/lawbot-analysis-panel";
 import { CaseESignPanel } from "@/components/admin/case-esign-panel";
 import { CaseFinancePanel } from "@/components/admin/case-finance-panel";
@@ -244,6 +245,9 @@ export default async function AdminCaseMatterDetailPage({
             <p className="mt-2 text-sm text-text-muted">
               {caseMatter.caseNo ?? t("caseNoMissing")} | {formatCaseMatterTypeLabel(caseMatter.matterType)}
             </p>
+            <div className="mt-4 max-w-md">
+              <CaseProgressBar status={caseMatter.status} />
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <a

@@ -225,6 +225,8 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "sidebar_cmdk_hint", label: "sidebar Cmd+K hint", category: "ux", default: true, description: "sidebar 하단에 Ctrl+K 단축키 안내" },
   { key: "quote_preset_from_inquiry", label: "견적 자동 프리셋", category: "operations", default: true, description: "quote-calc?inquiryId=xxx 지원. 사건유형·재의뢰 자동매핑" },
   { key: "legal_info_ai_summary", label: "법률정보 AI 요약", category: "operations", default: false, description: "매일 법률정보 cron에 Claude Haiku 요약 활성. 미활성 시 stub 링크만" },
+  { key: "case_progress_visualization", label: "사건 진행률 시각화", category: "ux", default: true, description: "사건 상세 상단에 5단계 progress bar (접수→착수→제출→대기→종결)" },
+  { key: "flag_audit_filters", label: "flag-audit 필터/검색", category: "ux", default: true, description: "flag-audit 페이지에 필터 chip + q 검색" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));
