@@ -7,7 +7,8 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const [unresponded, receivables, dueSoon] = await Promise.all([
+    const quotePendingEnabled = await isFeatureEnabled("sidebar_quote_pending_badge").catch(() => true);
+    const [unresponded, receivables, dueSoon, quotePending] = await Promise.all([
       prisma.inquiry
         .count({
           where: {
@@ -38,9 +39,14 @@ export async function GET() {
           },
         })
         .catch(() => 0),
+      quotePendingEnabled
+        ? prisma.inquiry
+            .count({ where: { status: "QUOTE_PENDING" } })
+            .catch(() => 0)
+        : Promise.resolve(0),
     ]);
-    return NextResponse.json({ unresponded, receivables, dueSoon });
+    return NextResponse.json({ unresponded, receivables, dueSoon, quotePending });
   } catch {
-    return NextResponse.json({ unresponded: 0, receivables: 0, dueSoon: 0 });
+    return NextResponse.json({ unresponded: 0, receivables: 0, dueSoon: 0, quotePending: 0 });
   }
 }

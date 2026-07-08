@@ -5,11 +5,12 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
-type SidebarCounts = { unresponded: number; receivables: number; dueSoon: number };
+type SidebarCounts = { unresponded: number; receivables: number; dueSoon: number; quotePending: number };
 const BADGE_MAP: Record<string, keyof SidebarCounts> = {
   "/admin/inbox": "unresponded",
   "/admin/receivables": "receivables",
   "/admin/morning": "dueSoon",
+  "/admin/quote-calc": "quotePending",
 };
 
 type NavItem = {
@@ -143,7 +144,7 @@ export function AdminSidebar({ newInquiryCount = 0 }: { newInquiryCount?: number
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [counts, setCounts] = useState<SidebarCounts>({ unresponded: 0, receivables: 0, dueSoon: 0 });
+  const [counts, setCounts] = useState<SidebarCounts>({ unresponded: 0, receivables: 0, dueSoon: 0, quotePending: 0 });
 
   useEffect(() => {
     let alive = true;
