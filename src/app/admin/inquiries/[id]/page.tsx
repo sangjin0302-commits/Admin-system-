@@ -18,6 +18,8 @@ import {
   InquiryDetailInternalMemoSection
 } from "@/components/admin/inquiry-detail-content-sections";
 import { InquiryDetailUnavailable } from "@/components/admin/inquiry-detail-common";
+import { InquiryQuickActions } from "@/components/admin/inquiry-quick-actions";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import {
   InquiryDetailAnalysisHub,
   InquiryDetailHeaderCard,
@@ -161,9 +163,24 @@ export default async function AdminInquiryDetailPage({
     const publicTrackingCode = getPublicTrackingCodeFromInquiry(inquiry);
     const intakeSourceTracking = buildIntakeSourceTrackingViewModel(inquiry);
     const emailProviderReadiness = buildCustomerEmailProviderReadiness(process.env);
+    const [kakaoEnabled, chipsEnabled] = await Promise.all([
+      isFeatureEnabled("inquiry_kakao_deeplink_action"),
+      isFeatureEnabled("inquiry_next_action_chips"),
+    ]);
+    const kakaoChannelId = process.env.KAKAO_CHANNEL_ID ?? null;
 
     return (
       <div className="space-y-6">
+        {(kakaoEnabled || chipsEnabled) ? (
+          <InquiryQuickActions
+            inquiryId={inquiry.id}
+            phone={inquiry.phone}
+            email={inquiry.email}
+            kakaoChannelId={kakaoChannelId}
+            kakaoEnabled={kakaoEnabled}
+            chipsEnabled={chipsEnabled}
+          />
+        ) : null}
         <InquiryDetailHeaderCard
           status={inquiryStatus}
           urgency={inquiryUrgency}
