@@ -230,6 +230,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "sidebar_quote_pending_badge", label: "sidebar 견적 승인대기 뱃지", category: "ux", default: true, description: "quote-calc 링크에 QUOTE_PENDING 문의 count 뱃지" },
   { key: "quote_pending_24h_reminder", label: "견적 24h+ 미승인 리마인더", category: "operations", default: false, description: "follow-up-reminder cron이 QUOTE_PENDING 24h 경과 문의에 이메일+텔레그램 발송" },
   { key: "quick_note_fab", label: "빠른 노트 FAB", category: "ux", default: true, description: "우하단 플로팅 노트 버튼 (Ctrl+/ 단축키, localStorage)" },
+  { key: "kanban_progress_mini", label: "kanban 진행률 mini", category: "ux", default: true, description: "kanban 카드에 CaseProgressBar mini bar 표시 (labels 없이)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

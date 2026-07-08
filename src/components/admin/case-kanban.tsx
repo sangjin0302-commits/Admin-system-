@@ -6,6 +6,7 @@ import {
   Draggable,
   type DropResult,
 } from "@hello-pangea/dnd";
+import { CaseProgressBar } from "@/components/admin/case-progress-bar";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -185,6 +186,10 @@ function KanbanCard({ item, index }: { item: KanbanItem; index: number }) {
             <span className="rounded-full border border-line bg-surface-muted px-2 py-0.5 text-xs font-medium text-text-muted">
               {item.matterTypeLabel}
             </span>
+          </div>
+
+          <div className="mt-2">
+            <CaseProgressBar status={item.status} showLabels={false} />
           </div>
         </div>
       )}
