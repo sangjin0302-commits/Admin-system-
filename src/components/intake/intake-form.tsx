@@ -368,10 +368,12 @@ function getCommonSubtypeDisplay(value: string, locale: IntakeCategoryDisplayLoc
 
 export function IntakeFormSafeV3({
   initialLocale,
-  initialTracking = {}
+  initialTracking = {},
+  progressChipEnabled = false
 }: {
   initialLocale: Locale;
   initialTracking?: IntakeSourceTrackingPayload;
+  progressChipEnabled?: boolean;
 }) {
   const locale = getDisplayLocale(initialLocale);
   const copy = intakeFormCopy[locale];
@@ -632,8 +634,30 @@ export function IntakeFormSafeV3({
     }
   }
 
+  // UX7: 필수 항목 완료 진행률 (category / 이름 / 연락수단 / 동의)
+  const essentials = [
+    Boolean(form.category),
+    Boolean(form.contactName.trim()),
+    Boolean(form.phone.trim() || form.email.trim()),
+    form.consentToPrivacy,
+  ];
+  const essentialsDone = essentials.filter(Boolean).length;
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      {progressChipEnabled ? (
+        <div className="sticky top-2 z-30 flex justify-end" aria-live="polite">
+          <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-surface/95 px-3 py-1.5 text-xs shadow-panel backdrop-blur">
+            <span className="text-text-muted">{locale === "en" ? "Required" : "필수 항목"}</span>
+            <div className="flex gap-1" aria-hidden>
+              {essentials.map((done, i) => (
+                <span key={i} className={`h-1.5 w-5 rounded-full ${done ? "bg-gold" : "bg-line"}`} />
+              ))}
+            </div>
+            <span className="font-bold text-primary">{essentialsDone}/4</span>
+          </div>
+        </div>
+      ) : null}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div
           aria-hidden="true"

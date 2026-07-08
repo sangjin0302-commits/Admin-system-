@@ -13,6 +13,7 @@ import { ExitIntent } from "@/components/public/exit-intent";
 import { PWAInstallPrompt } from "@/components/public/pwa-install-prompt";
 import { ChannelTracker } from "@/components/public/channel-tracker";
 import { ScrollDepthTracker } from "@/components/public/scroll-depth-tracker";
+import { ReturningVisitorBadge } from "@/components/public/returning-visitor-badge";
 
 const PUBLIC_PATHS = ["/", "/about", "/services", "/cases", "/blog", "/track", "/intake", "/quick-check", "/contact", "/fees", "/privacy", "/terms", "/consult", "/en", "/ar", "/keyword"];
 
@@ -35,9 +36,15 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
   if (isPublic) {
     return (
       <div className="min-h-screen bg-canvas">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:text-white"
+        >
+          본문으로 건너뛰기
+        </a>
         <ScrollProgress />
         <PublicHeader />
-        <main><PageTransition>{children}</PageTransition></main>
+        <main id="main-content"><PageTransition>{children}</PageTransition></main>
         <PublicFooter />
         <FloatingContact />
         <LawbotChatWidget />
@@ -45,6 +52,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
         <PWAInstallPrompt />
         <ChannelTracker />
         <ScrollDepthTracker />
+        <ReturningVisitorBadge />
       </div>
     );
   }

@@ -1,4 +1,5 @@
 import { IntakeFormSafeV3 } from "@/components/intake/intake-form";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { IntakePrefillBanner } from "@/components/public/intake-prefill-banner";
 import { LocaleSwitcher } from "@/components/public/locale-switcher";
 import { Reveal } from "@/components/public/reveal";
@@ -149,7 +150,7 @@ export default async function IntakePageSafe({
           <Reveal delay={1}>
             <IntakePrefillBanner />
             <div className="ethos-card ethos-card-topline mt-2 p-8 sm:p-10">
-              <IntakeFormSafeV3 initialLocale={locale} initialTracking={intakeTracking} />
+              <IntakeFormSafeV3 initialLocale={locale} initialTracking={intakeTracking} progressChipEnabled={await isFeatureEnabled("intake_progress_chip")} />
             </div>
           </Reveal>
         </div>

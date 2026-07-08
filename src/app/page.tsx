@@ -27,7 +27,7 @@ import { OrganizationJsonLd, LegalServiceJsonLd } from "@/components/seo/json-ld
 import { getSiteSettings } from "@/lib/services/site-settings";
 import { listPublicTestimonials } from "@/lib/services/testimonials";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "ETHOS 행정사사무소 — 절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를",
@@ -223,8 +223,26 @@ export default async function PublicMarketingHomePage({
 
   // 로고 (DB → /logo.webp fallback)
   const heroLogoRow = await prisma.siteSetting.findUnique({ where: { key: "image.logo" } }).catch(() => null);
-  const heroLogo = heroLogoRow?.value || "/logo.webp";
-  const [holoLogoEnabled, personalizationEnabled] = await Promise.all([isFeatureEnabled("holographic_logo"), isFeatureEnabled("homepage_personalization")]);
+  let heroLogo = heroLogoRow?.value || "/logo.webp";
+  const [holoLogoEnabled, personalizationEnabled, heroRotationEnabled] = await Promise.all([
+    isFeatureEnabled("holographic_logo"),
+    isFeatureEnabled("homepage_personalization"),
+    isFeatureEnabled("hero_image_rotation"),
+  ]);
+
+  // UX5: 히어로 이미지 일자별 로테이션 — SiteSetting "image.hero.rotation" = JSON string[]
+  if (heroRotationEnabled) {
+    const rotationRow = await prisma.siteSetting.findUnique({ where: { key: "image.hero.rotation" } }).catch(() => null);
+    if (rotationRow?.value) {
+      try {
+        const list = JSON.parse(rotationRow.value) as string[];
+        if (Array.isArray(list) && list.length > 0) {
+          const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+          heroLogo = list[dayOfYear % list.length] || heroLogo;
+        }
+      } catch { /* malformed JSON → 기본 로고 유지 */ }
+    }
+  }
 
   // 대표 프로필 사진 — about 페이지와 동일한 site-setting 사용
   const aboutPhotoRow = await prisma.siteSetting.findUnique({ where: { key: "image.aboutPhoto" } }).catch(() => null);
