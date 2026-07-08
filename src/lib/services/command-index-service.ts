@@ -41,6 +41,8 @@ const STATIC_PAGES: CommandItem[] = [
   { id: "page:flag-audit", group: "page", label: "Flag 감사", href: "/admin/flag-audit", aliases: ["flag", "감사"], keywords: ["플래그"] },
   { id: "page:quote-calc", group: "page", label: "견적 계산기", href: "/admin/quote-calc", aliases: ["견적", "quote", "가격", "calc"], keywords: ["상담", "안내"] },
   { id: "page:tone-tools", group: "page", label: "톤 조정 도구", href: "/admin/tone-tools", aliases: ["톤", "tone", "재작성", "친근", "공식"], keywords: ["AI", "답변"] },
+  { id: "page:my-activity", group: "page", label: "내 활동 timeline", href: "/admin/my-activity", aliases: ["활동", "activity", "timeline", "내"], keywords: ["최근", "이력"] },
+  { id: "page:similar-search", group: "page", label: "유사 문의 검색", href: "/admin/similar-search", aliases: ["유사", "similar", "search", "검색"], keywords: ["과거", "사례"] },
   { id: "page:receivables", group: "page", label: "미수금 알림", href: "/admin/receivables", aliases: ["미수금", "unpaid", "receivable"], keywords: ["결제"] },
   { id: "page:blog-rewrite-queue", group: "page", label: "블로그 리라이트 큐", href: "/admin/blog-rewrite-queue", aliases: ["리라이트", "rewrite", "CTR"], keywords: ["GSC", "SEO"] },
   { id: "page:utm-heatmap", group: "page", label: "UTM heatmap", href: "/admin/utm-heatmap", aliases: ["UTM", "heatmap", "전환"], keywords: ["소스", "매체"] },
