@@ -196,6 +196,17 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "morning_telegram_push", label: "아침 브리핑 텔레그램", category: "operations", default: false, description: "매일 아침 KPI + 마감 리스트를 텔레그램으로 자동 전송 (별도 cron)" },
   { key: "inquiry_next_action_chips", label: "문의 다음 액션 chips", category: "ux", default: true, description: "문의 상세 상단에 다음 권장 액션 chip (답장/견적/상담예약/거절)" },
   { key: "command_palette_new_dashboards", label: "command palette 신규 인덱싱", category: "ux", default: true, description: "9개 신규 dashboard가 command palette 검색에 노출" },
+  { key: "inquiry_case_promote_oneclick", label: "문의→사건 원클릭 승격", category: "operations", default: true, description: "문의 상세에서 사건 원클릭 생성 + caseNo 자동 발급" },
+  { key: "kakao_reply_template_autopick", label: "카톡 답변 템플릿 자동추천", category: "operations", default: true, description: "문의유형·상태 매칭하여 매크로 템플릿 자동 추천 (기존 macros 재활용)" },
+  { key: "quote_conversion_tracking", label: "견적 승인율 트래킹", category: "marketing", default: false, description: "quote_id UUID 발급 → 승인/거절 추적 → 견적금액대별 win rate" },
+  { key: "receivable_alert", label: "미수금 알림", category: "operations", default: true, description: "WON 후 30일+ 미입금 인보이스 자동 감지 (기존 payment-risk 활용)" },
+  { key: "precedent_similar_search", label: "유사사례 검색", category: "operations", default: true, description: "사건유형별 최근 처분사례 검색 (/admin/precedents 재활용)" },
+  { key: "ai_draft_citation_verify", label: "AI 초안 인용 검증", category: "operations", default: true, description: "citation-verifier-service로 법령·판례 인용 자동 검증 (기존)" },
+  { key: "inquiry_trust_score", label: "문의 신뢰도 스코어", category: "operations", default: false, description: "블랙리스트/의심번호/의뢰이력 종합 → 우선순위 낮춤" },
+  { key: "consult_noshow_predict", label: "상담 노쇼 예측", category: "operations", default: false, description: "과거 노쇼 이력 + 문의채널 조합 → 예상 노쇼율 표시" },
+  { key: "blog_low_ctr_rewrite_queue", label: "블로그 저CTR 리라이트 큐", category: "marketing", default: false, description: "GSC CTR 하위 20% 글 자동 리라이트 큐에 적재 (기존 blog-performance cron)" },
+  { key: "auto_review_request_naver", label: "네이버 리뷰 자동요청", category: "marketing", default: true, description: "WON 후 3일 KakaoAlimtalk로 네이버 플레이스 딥링크 발송 (기존 review_automation 확장)" },
+  { key: "utm_conversion_heatmap", label: "UTM 전환 heatmap", category: "marketing", default: true, description: "UTM source×medium 매트릭스 → WON 전환율 heatmap (기존 utm_dashboard 확장)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));
