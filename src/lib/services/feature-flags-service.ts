@@ -206,7 +206,11 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "consult_noshow_predict", label: "상담 노쇼 예측", category: "operations", default: false, description: "과거 노쇼 이력 + 문의채널 조합 → 예상 노쇼율 표시" },
   { key: "blog_low_ctr_rewrite_queue", label: "블로그 저CTR 리라이트 큐", category: "marketing", default: false, description: "GSC CTR 하위 20% 글 자동 리라이트 큐에 적재 (기존 blog-performance cron)" },
   { key: "auto_review_request_naver", label: "네이버 리뷰 자동요청", category: "marketing", default: true, description: "WON 후 3일 KakaoAlimtalk로 네이버 플레이스 딥링크 발송 (기존 review_automation 확장)" },
-  { key: "utm_conversion_heatmap", label: "UTM 전환 heatmap", category: "marketing", default: true, description: "UTM source×medium 매트릭스 → WON 전환율 heatmap (기존 utm_dashboard 확장)" },
+  { key: "utm_conversion_heatmap", label: "UTM 전환 heatmap", category: "marketing", default: true, description: "UTM source×medium 매트릭스 → WON 전환율 heatmap (/admin/utm-heatmap)" },
+  { key: "reengagement_6mo_auto", label: "재의뢰 6개월 자동감지", category: "operations", default: false, description: "WON 후 180d+ · 최근 90d 신규 없는 고객 텔레그램 알림 (cron: reengagement-6mo)" },
+  { key: "gov_form_update_watch", label: "정부양식 업데이트 감시", category: "operations", default: false, description: "정부24/법령 양식 diff 감지 → 변경 시 알림 (Poli-admin 벤치마크)" },
+  { key: "sidebar_badge_polling", label: "사이드바 뱃지 폴링", category: "ux", default: true, description: "5분 간격 미응답/미수금/D-7 count 실시간 표시 (/api/admin/sidebar-counts)" },
+  { key: "blog_low_ctr_rewrite_queue_page", label: "블로그 리라이트 큐 페이지", category: "marketing", default: true, description: "/admin/blog-rewrite-queue GSC 저CTR 실시간 조회" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

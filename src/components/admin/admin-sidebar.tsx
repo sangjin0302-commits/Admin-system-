@@ -40,6 +40,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/quote-calc", label: "견적 계산기", icon: "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" },
       { href: "/admin/receivables", label: "미수금 알림", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
       { href: "/admin/blog-rewrite-queue", label: "블로그 리라이트 큐", icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" },
+      { href: "/admin/utm-heatmap", label: "UTM heatmap", icon: "M4 6h16M4 10h16M4 14h16M4 18h16" },
     ]
   },
   {
