@@ -211,6 +211,12 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "gov_form_update_watch", label: "정부양식 업데이트 감시", category: "operations", default: false, description: "정부24/법령 양식 diff 감지 → 변경 시 알림 (Poli-admin 벤치마크)" },
   { key: "sidebar_badge_polling", label: "사이드바 뱃지 폴링", category: "ux", default: true, description: "5분 간격 미응답/미수금/D-7 count 실시간 표시 (/api/admin/sidebar-counts)" },
   { key: "blog_low_ctr_rewrite_queue_page", label: "블로그 리라이트 큐 페이지", category: "marketing", default: true, description: "/admin/blog-rewrite-queue GSC 저CTR 실시간 조회" },
+  { key: "mentor_hub", label: "실무 멘토링 허브", category: "operations", default: true, description: "/admin/mentor 4개 훈련 도구 카드 그리드" },
+  { key: "mentor_case_simulator", label: "사례 시뮬레이터", category: "operations", default: true, description: "AI 상담 시나리오 생성 + 답변 채점 (mentor/case-simulator)" },
+  { key: "mentor_document_critique", label: "서면 첨삭", category: "operations", default: false, description: "AI rubric 기반 서면 첨삭 (준비 중)" },
+  { key: "mentor_precedent_quiz", label: "판례 퀴즈", category: "operations", default: false, description: "판례 사실관계 → 결론 예측 훈련 (준비 중)" },
+  { key: "mentor_client_roleplay", label: "클라이언트 롤플레이", category: "operations", default: false, description: "AI 클라이언트 역할 상담 훈련 (준비 중)" },
+  { key: "legal_info_delivery_daily", label: "매일 법률정보 전달", category: "operations", default: false, description: "매일 아침 관심 카테고리 신법령·판례 요약 텔레그램 (별도 cron)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

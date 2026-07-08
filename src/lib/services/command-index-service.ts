@@ -43,6 +43,8 @@ const STATIC_PAGES: CommandItem[] = [
   { id: "page:receivables", group: "page", label: "미수금 알림", href: "/admin/receivables", aliases: ["미수금", "unpaid", "receivable"], keywords: ["결제"] },
   { id: "page:blog-rewrite-queue", group: "page", label: "블로그 리라이트 큐", href: "/admin/blog-rewrite-queue", aliases: ["리라이트", "rewrite", "CTR"], keywords: ["GSC", "SEO"] },
   { id: "page:utm-heatmap", group: "page", label: "UTM heatmap", href: "/admin/utm-heatmap", aliases: ["UTM", "heatmap", "전환"], keywords: ["소스", "매체"] },
+  { id: "page:mentor", group: "page", label: "실무 멘토링", href: "/admin/mentor", aliases: ["멘토", "연습", "훈련", "mentor"], keywords: ["학습", "실무"] },
+  { id: "page:mentor.case", group: "page", label: "사례 시뮬레이터", href: "/admin/mentor/case-simulator", aliases: ["시뮬", "사례", "케이스"], keywords: ["훈련", "상담"] },
   { id: "page:inquiries", group: "page", label: "문의 목록", href: "/admin/inquiries", aliases: ["문의"] },
   { id: "page:inquiries.new", group: "page", label: "새 문의 등록", href: "/admin/inquiries/new", aliases: ["새 의뢰", "신규 문의", "문의 등록"] },
   { id: "page:cases", group: "page", label: "사건 목록", href: "/admin/cases", aliases: ["사건"] },
