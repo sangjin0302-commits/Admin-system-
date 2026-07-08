@@ -235,8 +235,10 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "kakao_first_message_preset", label: "카톡 첫 메시지 프리셋", category: "operations", default: true, description: "문의 상세에서 카톡 첫 메시지 클립보드 자동 복사 (name+title 프리셋)" },
   { key: "reply_draft_auto", label: "답장 초안 자동생성", category: "operations", default: true, description: "문의 상세에서 Claude Haiku 답장 초안 원클릭 생성 + 복사" },
   { key: "saved_filter_views", label: "필터 저장 (내 뷰)", category: "ux", default: true, description: "현재 URL 필터를 localStorage에 저장. inbox/cases 등에서 재사용" },
-  { key: "inquiry_auto_labeling", label: "문의 자동 라벨링", category: "operations", default: false, description: "요구/공포/불만/문의 자동 태깅 (실코드 준비 중)" },
-  { key: "case_delay_detection", label: "사건 지연 감지", category: "operations", default: false, description: "사건유형별 평균 대비 +50% 지연 감지 + 관리자 알림 (실코드 준비 중)" },
+  { key: "inquiry_auto_labeling", label: "문의 자동 라벨링", category: "operations", default: false, description: "요구/공포/불만/문의 자동 태깅 (Haiku 분류, POST /api/admin/inquiries/{id}/labels)" },
+  { key: "case_delay_detection", label: "사건 지연 감지", category: "operations", default: false, description: "matterType 평균 대비 +50% 지연 감지 + 텔레그램 알림. 매주 월요일 23:00 cron" },
+  { key: "message_tone_adjust", label: "메시지 톤 조정 AI", category: "operations", default: true, description: "/admin/tone-tools에서 원문을 친근/공식/사과/안심 톤으로 재작성 (Haiku)" },
+  { key: "inquiry_bulk_actions", label: "문의 배치 액션", category: "operations", default: true, description: "다중 문의 일괄 상태변경·담당자할당·읽음처리 (최대 50건)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

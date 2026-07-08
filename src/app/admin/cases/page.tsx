@@ -6,6 +6,8 @@ import { CasesTableWithFilters } from "@/components/admin/cases-table-with-filte
 import { DeadlineScanButton } from "@/components/admin/deadline-scan-button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
+import { SavedFilters } from "@/components/admin/saved-filters";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { adminCasesMessages } from "@/i18n/locales/admin-cases";
 import { createTranslator, normalizeUiLocale } from "@/i18n/shared";
 import { PRACTICE_AREAS } from "@/lib/practice-areas";
@@ -179,6 +181,8 @@ export default async function AdminCasesPage({
           <span className="ml-1 text-xs text-text-muted">({cases.length}건)</span>
         </div>
       </div>
+
+      <SavedFilters scope="cases" enabled={await isFeatureEnabled("saved_filter_views")} />
 
       <CaseMatterActionSections dashboard={actionDashboard} locale={locale} />
 

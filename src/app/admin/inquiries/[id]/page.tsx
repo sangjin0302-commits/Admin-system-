@@ -20,6 +20,7 @@ import {
 import { InquiryDetailUnavailable } from "@/components/admin/inquiry-detail-common";
 import { InquiryQuickActions } from "@/components/admin/inquiry-quick-actions";
 import { ReplyDraftButton } from "@/components/admin/reply-draft-button";
+import { InquiryLabels } from "@/components/admin/inquiry-labels";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import {
   InquiryDetailAnalysisHub,
@@ -164,11 +165,12 @@ export default async function AdminInquiryDetailPage({
     const publicTrackingCode = getPublicTrackingCodeFromInquiry(inquiry);
     const intakeSourceTracking = buildIntakeSourceTrackingViewModel(inquiry);
     const emailProviderReadiness = buildCustomerEmailProviderReadiness(process.env);
-    const [kakaoEnabled, chipsEnabled, kakaoPresetEnabled, replyDraftEnabled] = await Promise.all([
+    const [kakaoEnabled, chipsEnabled, kakaoPresetEnabled, replyDraftEnabled, labelingEnabled] = await Promise.all([
       isFeatureEnabled("inquiry_kakao_deeplink_action"),
       isFeatureEnabled("inquiry_next_action_chips"),
       isFeatureEnabled("kakao_first_message_preset"),
       isFeatureEnabled("reply_draft_auto"),
+      isFeatureEnabled("inquiry_auto_labeling"),
     ]);
     const kakaoChannelId = process.env.KAKAO_CHANNEL_ID ?? null;
 
@@ -188,6 +190,7 @@ export default async function AdminInquiryDetailPage({
           />
         ) : null}
         {replyDraftEnabled ? <ReplyDraftButton inquiryId={inquiry.id} enabled={replyDraftEnabled} /> : null}
+        {labelingEnabled ? <InquiryLabels inquiryId={inquiry.id} enabled={labelingEnabled} /> : null}
         <InquiryDetailHeaderCard
           status={inquiryStatus}
           urgency={inquiryUrgency}
