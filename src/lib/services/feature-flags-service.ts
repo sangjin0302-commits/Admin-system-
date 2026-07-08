@@ -221,6 +221,8 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "sidebar_group_collapse", label: "sidebar 그룹 접기", category: "ux", default: true, description: "sidebar 그룹 헤더 클릭으로 접기/펴기 (localStorage 유지)" },
   { key: "toast_quote_copy", label: "견적 복사 toast", category: "ux", default: true, description: "quote-calc 복사 시 react-hot-toast 알림" },
   { key: "dark_mode_manual_toggle", label: "다크모드 수동 토글", category: "ux", default: false, description: "라이트/자동/다크 3단 토글 UI (data-theme + localStorage)" },
+  { key: "skeleton_cards_variant", label: "skeleton cards variant", category: "ux", default: true, description: "DashboardLoadingSkeleton에 cards variant 추가" },
+  { key: "sidebar_cmdk_hint", label: "sidebar Cmd+K hint", category: "ux", default: true, description: "sidebar 하단에 Ctrl+K 단축키 안내" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

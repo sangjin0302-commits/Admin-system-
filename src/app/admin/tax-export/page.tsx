@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/admin/empty-state";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { prisma } from "@/lib/prisma/client";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
@@ -96,7 +97,7 @@ export default async function TaxExportPage({
 
       <Card className="p-0 overflow-hidden">
         {rows.length === 0 ? (
-          <p className="p-6 text-sm text-text-muted">{key} WON 계약이 없습니다.</p>
+          <EmptyState icon="🧾" title={`${key} WON 계약 없음`} description="다른 월을 선택하거나 문의 상태를 WON으로 마킹하세요." action={{ label: "문의 목록", href: "/admin/inquiries" }} />
         ) : (
           <table className="w-full text-xs">
             <thead className="bg-surface-muted">

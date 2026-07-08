@@ -3,6 +3,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { prisma } from "@/lib/prisma/client";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { notFound } from "next/navigation";
+import { EmptyState } from "@/components/admin/empty-state";
 
 export const dynamic = "force-dynamic";
 
@@ -140,7 +141,7 @@ export default async function ChannelRoiPage({
           채널 광고비는 <strong>월 기준</strong>으로 저장. 선택 기간에 비례 스케일 적용.
         </p>
         {rows.length === 0 ? (
-          <p className="mt-3 text-sm text-text-muted">기간 내 채널 데이터 없음.</p>
+          <EmptyState icon="💰" title="기간 내 채널 데이터 없음" description="채널별 광고비를 등록하고 UTM 트래킹을 활성화하세요." action={{ label: "광고비 등록", href: "/admin/features" }} />
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-xs">

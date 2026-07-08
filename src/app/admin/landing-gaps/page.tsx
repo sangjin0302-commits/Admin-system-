@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/admin/empty-state";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { getTopSearchQueries } from "@/lib/services/gsc-service";
@@ -60,7 +61,7 @@ export default async function LandingGapsPage() {
           노출 많지만 대응 랜딩이 없는 검색어 — 새 <code>/keyword/[term]</code> 페이지 만들면 유입 증가 기대.
         </p>
         {gaps.length === 0 ? (
-          <p className="mt-3 text-sm text-emerald-600">모든 상위 키워드가 랜딩과 매칭됩니다. </p>
+          <EmptyState icon="✅" title="모든 상위 키워드가 랜딩과 매칭됨" description="새 키워드 랜딩을 추가할 필요가 없습니다. GSC 데이터가 없다면 서비스 연동을 확인하세요." />
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-xs">

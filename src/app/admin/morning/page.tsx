@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/admin/empty-state";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { prisma } from "@/lib/prisma/client";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
@@ -89,7 +90,7 @@ export default async function MorningPage() {
           <Link href="/admin/inbox?filter=urgent" className="text-xs text-gold-deep hover:underline">전체 보기 →</Link>
         </div>
         {dueSoon.length === 0 ? (
-          <p className="mt-3 text-sm text-emerald-600">임박한 마감 없음</p>
+          <EmptyState icon="✅" title="임박한 마감 없음" description="7일 내 마감 문의가 없습니다. 여유롭게 다른 업무를 진행하세요." />
         ) : (
           <ul className="mt-4 space-y-2">
             {dueSoon.map((r) => {

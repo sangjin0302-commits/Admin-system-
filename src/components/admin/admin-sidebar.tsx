@@ -300,6 +300,14 @@ export function AdminSidebar({ newInquiryCount = 0 }: { newInquiryCount?: number
         <div className="flex-1 overflow-y-auto p-2">
           {sidebar}
         </div>
+        {!collapsed && (
+          <div className="border-t border-line px-3 py-2 text-[11px] text-text-muted">
+            빠른 검색{" "}
+            <kbd className="ml-1 rounded border border-line-strong bg-surface-muted px-1.5 py-0.5 font-mono text-[10px]">Ctrl</kbd>
+            <span className="mx-0.5">+</span>
+            <kbd className="rounded border border-line-strong bg-surface-muted px-1.5 py-0.5 font-mono text-[10px]">K</kbd>
+          </div>
+        )}
       </aside>
     </>
   );

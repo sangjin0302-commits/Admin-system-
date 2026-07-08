@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/admin/empty-state";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { prisma } from "@/lib/prisma/client";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
@@ -101,9 +102,7 @@ export default async function RefTrackingPage({
 
       <Card className="p-0 overflow-hidden">
         {refs.length === 0 ? (
-          <p className="p-6 text-sm text-text-muted">
-            기간 내 <code>?ref=</code> 파라미터 유입이 없습니다. 공유 링크에 <code>?ref=친구</code>, <code>?ref=강연2026</code> 형식으로 부여하세요.
-          </p>
+          <EmptyState icon="🔗" title="레퍼럴 유입 없음" description="공유 링크에 ?ref=친구, ?ref=강연2026 형식으로 부여하세요." />
         ) : (
           <table className="w-full text-xs">
             <thead className="bg-surface-muted">
