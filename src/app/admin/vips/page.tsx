@@ -6,6 +6,7 @@ import { listActiveVips } from "@/lib/services/vip-membership-service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { InquiryStatus } from "@generated/prisma-client/client";
+import { EmptyState } from "@/components/admin/empty-state";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +77,7 @@ export default async function VipsPage() {
       <Card className="p-5">
         <p className="ui-kicker">구독형 VIP (월 결제 활성)</p>
         {activeVips.length === 0 ? (
-          <p className="mt-3 text-sm text-text-muted">활성 구독자 없음.</p>
+          <EmptyState icon="⭐" title="활성 VIP 구독자 없음" description="월정 자문/멤버십 프로그램을 개설하거나 리피터 고객을 승격하세요." action={{ label: "멤버십 설정", href: "/admin/features" }} />
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-xs">

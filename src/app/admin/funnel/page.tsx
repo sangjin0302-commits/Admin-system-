@@ -3,6 +3,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { prisma } from "@/lib/prisma/client";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { notFound } from "next/navigation";
+import { EmptyState } from "@/components/admin/empty-state";
 
 export const dynamic = "force-dynamic";
 
@@ -166,7 +167,7 @@ export default async function FunnelPage({
         <p className="ui-kicker">채널별 성과</p>
         <p className="mt-1 text-xs text-text-muted">intakeChannel 필드 기준 · 계약률 = WON / 총 문의</p>
         {channels.length === 0 ? (
-          <p className="mt-3 text-sm text-text-muted">채널 데이터 없음. UTM 파라미터를 통한 트래킹이 활성화되어야 합니다.</p>
+          <EmptyState icon="📊" title="채널 데이터 없음" description="UTM 파라미터 트래킹이 활성화되면 채널별 성과가 표시됩니다." action={{ label: "UTM 대시보드", href: "/admin/utm" }} />
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-xs">

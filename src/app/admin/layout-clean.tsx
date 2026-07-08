@@ -6,7 +6,9 @@ import { AdminMobileNav } from "@/components/admin/mobile-nav";
 import { InstallPWAPrompt } from "@/components/admin/install-pwa-prompt";
 import { VoiceCommandMic } from "@/components/admin/voice-command-mic";
 import { CommandPalette } from "@/components/admin/command-palette";
+import { DarkModeToggle } from "@/components/admin/dark-mode-toggle";
 import { listInquiries } from "@/lib/services/inquiry-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   let newCount = 0;
@@ -14,6 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const newInquiries = await listInquiries({ status: "NEW" });
     newCount = newInquiries.length;
   } catch { /* ignore */ }
+  const darkToggleEnabled = await isFeatureEnabled("dark_mode_manual_toggle");
 
   return (
     <div className="flex gap-6">
@@ -32,8 +35,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <p className="mt-2 text-sm text-text-muted">
                 문의 접수부터 상담, 견적, 사건 진행, 분석 연동 준비 상태까지 한 곳에서 보는 관리자 화면입니다.
               </p>
-              <div className="mt-4">
-                <AdminSearchBar />
+              <div className="mt-4 flex items-center gap-3">
+                <div className="flex-1"><AdminSearchBar /></div>
+                <DarkModeToggle enabled={darkToggleEnabled} />
               </div>
             </div>
           </div>

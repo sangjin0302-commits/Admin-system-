@@ -5,6 +5,7 @@ import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { InquiryStatus, UrgencyLevel } from "@generated/prisma-client/client";
+import { EmptyState } from "@/components/admin/empty-state";
 
 export const dynamic = "force-dynamic";
 
@@ -113,7 +114,7 @@ export default async function InboxPage({
 
       <Card className="p-0 overflow-hidden">
         {rows.length === 0 ? (
-          <p className="p-6 text-sm text-text-muted">해당 필터의 문의가 없습니다.</p>
+          <EmptyState icon="📭" title="해당 필터에 문의 없음" description="다른 필터를 선택하거나 신규 문의를 기다려주세요." action={{ label: "신규 문의 등록", href: "/admin/inquiries/new" }} />
         ) : (
           <table className="w-full text-xs">
             <thead className="bg-surface-muted">
