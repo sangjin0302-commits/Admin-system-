@@ -3,12 +3,14 @@ import { Card } from "@/components/ui/card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { getTopSearchQueries } from "@/lib/services/gsc-service";
+import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
+import { RewriteQueueClient } from "./rewrite-queue-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function BlogRewriteQueuePage() {
-  if (!(await isFeatureEnabled("blog_low_ctr_rewrite_queue"))) notFound();
+  if (!(await isFeatureEnabled("blog_low_ctr_rewrite_queue_page"))) notFound();
 
   const queries = await getTopSearchQueries(28, 100);
   const gscOk = queries.length > 0;
@@ -23,13 +25,37 @@ export default async function BlogRewriteQueuePage() {
     .sort((a, b) => b.impressions - a.impressions)
     .slice(0, 20);
 
+  const lowViewPosts = await prisma.blogPost.findMany({
+    where: { published: true },
+    orderBy: { viewCount: "asc" },
+    take: 20,
+    select: { id: true, title: true, slug: true, viewCount: true, body: true },
+  });
+
+  const postsForClient = lowViewPosts.map((p) => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    viewCount: p.viewCount,
+    body: p.body,
+  }));
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
         kicker="Blog Rewrite"
         title="블로그 리라이트 큐"
-        description="GSC CTR 하위 20% 노출 대비 클릭 저조 쿼리 → 리라이트 우선순위"
+        description="GSC CTR 하위 쿼리 + 저조회 블로그 글 → 리라이트 우선순위"
       />
+
+      <Card className="p-5">
+        <p className="ui-kicker mb-3">저조회 블로그 글 (AI 리라이트)</p>
+        {postsForClient.length === 0 ? (
+          <p className="text-sm text-text-muted">발행된 블로그 글이 없습니다.</p>
+        ) : (
+          <RewriteQueueClient posts={postsForClient} />
+        )}
+      </Card>
 
       {!gscOk ? (
         <Card className="p-6">

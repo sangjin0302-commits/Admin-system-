@@ -14,6 +14,7 @@ import { prisma } from "@/lib/prisma/client";
 import { createAdminRequestContext } from "@/lib/http/admin-api";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { smartInvoke } from "@/lib/services/smart-ai-client";
+import { getRelatedBlogPosts } from "@/lib/services/blog-recommend-service";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -97,8 +98,16 @@ ${inquiry.description}
       system: SYSTEM,
       maxTokens: 400,
     });
-    const draft = res.text?.trim() ?? "";
+    let draft = res.text?.trim() ?? "";
     if (!draft) return api.error(500, "빈 응답", { code: "EMPTY_RESPONSE" });
+
+    if (await isFeatureEnabled("inquiry_blog_recommend").catch(() => false)) {
+      const keywords = inquiry.title.split(/\s+/).filter((w) => w.length >= 2);
+      const posts = await getRelatedBlogPosts(inquiry.inquiryType, keywords);
+      if (posts.length > 0) {
+        draft += "\n\n관련 글:\n" + posts.map((p) => `- ${p.title}: /blog/${p.slug}`).join("\n");
+      }
+    }
 
     return api.ok({ draft, model: res.model });
   } catch (err) {

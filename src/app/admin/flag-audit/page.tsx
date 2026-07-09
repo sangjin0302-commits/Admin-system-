@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { getFeatureRegistry, getAllFlags, isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import { detectDormantFlags } from "@/lib/services/flag-dormancy-service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -12,6 +13,8 @@ const FILTER_OPTIONS = [
   { key: "off", label: "비활성만" },
   { key: "diverged", label: "기본값과 다름" },
   { key: "public", label: "공개" },
+  { key: "dormant", label: "Dormant" },
+  { key: "duplicate", label: "중복 의심" },
 ] as const;
 type FilterKey = (typeof FILTER_OPTIONS)[number]["key"];
 
@@ -28,6 +31,13 @@ export default async function FlagAuditPage({
   const filter = (FILTER_OPTIONS.find((f) => f.key === sp.filter)?.key ?? "all") as FilterKey;
   const q = (sp.q ?? "").trim().toLowerCase();
 
+  const dormancyEnabled = await isFeatureEnabled("flag_dormancy_auto_detect");
+  const dormancy = dormancyEnabled ? await detectDormantFlags() : null;
+  const dormantSet = new Set(dormancy?.dormant ?? []);
+  const duplicateKeys = new Set(
+    (dormancy?.duplicateSuspects ?? []).flatMap((d) => [d.key1, d.key2])
+  );
+
   const passesFilter = (f: (typeof registry)[number]): boolean => {
     const actual = active[f.key] ?? f.default;
     const divergedFlag = active[f.key] !== undefined && active[f.key] !== f.default;
@@ -35,6 +45,8 @@ export default async function FlagAuditPage({
     if (filter === "off" && actual) return false;
     if (filter === "diverged" && !divergedFlag) return false;
     if (filter === "public" && !f.public) return false;
+    if (filter === "dormant" && !dormantSet.has(f.key)) return false;
+    if (filter === "duplicate" && !duplicateKeys.has(f.key)) return false;
     if (q && !`${f.key} ${f.label} ${f.description ?? ""}`.toLowerCase().includes(q)) return false;
     return true;
   };
@@ -63,7 +75,7 @@ export default async function FlagAuditPage({
         description="138개 feature flag 카테고리별 현황 + default vs stored 대조."
       />
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-5">
         <Card className="p-5">
           <p className="text-xs uppercase tracking-wider text-text-muted">전체</p>
           <p className="mt-2 text-3xl font-bold text-primary">{total}</p>
@@ -83,6 +95,13 @@ export default async function FlagAuditPage({
           <p className="mt-2 text-3xl font-bold text-primary">{publicCount}</p>
           <p className="mt-1 text-[11px] text-text-muted">public API 화이트리스트</p>
         </Card>
+        {dormancy && (
+          <Card className="p-5">
+            <p className="text-xs uppercase tracking-wider text-text-muted">Dormant</p>
+            <p className="mt-2 text-3xl font-bold text-red-500">{dormancy.dormant.length}</p>
+            <p className="mt-1 text-[11px] text-text-muted">미사용 (default:false, DB 없음)</p>
+          </Card>
+        )}
       </div>
 
       <Card className="p-4">
@@ -176,6 +195,36 @@ export default async function FlagAuditPage({
           </div>
         </Card>
       ))}
+
+      {dormancy && dormancy.duplicateSuspects.length > 0 && (
+        <Card className="p-5">
+          <p className="ui-kicker">중복 의심 Flag ({dormancy.duplicateSuspects.length}쌍)</p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-gold/20 text-left">
+                  <th className="pb-2 font-bold text-text-strong">Key 1</th>
+                  <th className="pb-2 font-bold text-text-strong">Key 2</th>
+                  <th className="pb-2 text-center font-bold text-text-strong">유사도</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dormancy.duplicateSuspects.map((d, i) => (
+                  <tr key={i} className="border-b border-gold/10">
+                    <td className="py-2 font-mono text-[11px] text-text-muted">{d.key1}</td>
+                    <td className="py-2 font-mono text-[11px] text-text-muted">{d.key2}</td>
+                    <td className="py-2 text-center">
+                      <span className={`font-bold ${d.similarity < 3 ? "text-red-500" : "text-amber-500"}`}>
+                        {d.similarity}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
 
       <Card className="p-5">
         <p className="ui-kicker">정리 팁</p>

@@ -65,6 +65,7 @@ const STATIC_PAGES: CommandItem[] = [
   { id: "page:audit-log", group: "page", label: "활동 로그", href: "/admin/activity" },
   { id: "page:features", group: "page", label: "기능 플래그", href: "/admin/features", aliases: ["플래그", "feature"] },
   { id: "page:macros", group: "page", label: "매크로 관리", href: "/admin/macros", aliases: ["macro", "매크로"] },
+  { id: "page:kakao-stats", group: "page", label: "카카오 발송 통계", href: "/admin/kakao-stats", aliases: ["카카오", "알림톡", "kakao"], keywords: ["발송", "성공률", "실패"] },
 ];
 
 const STATIC_ACTIONS: CommandItem[] = [

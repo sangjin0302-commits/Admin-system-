@@ -55,6 +55,49 @@ export async function GET(request: Request) {
     avgResponseHours = (totalMs / responded.length / (1000 * 60 * 60)).toFixed(1) + "h";
   }
 
+  const chartEnabled = await isFeatureEnabled("kpi_email_chart");
+  let trendHtml = "";
+  if (chartEnabled) {
+    const days: { date: string; inquiries: number; won: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const next = new Date(d.getTime() + 86400000);
+      const [inq, won] = await Promise.all([
+        prisma.inquiry.count({ where: { createdAt: { gte: d, lt: next } } }).catch(() => 0),
+        prisma.inquiry.count({ where: { status: "WON", updatedAt: { gte: d, lt: next } } }).catch(() => 0),
+      ]);
+      days.push({ date: d.toISOString().slice(5, 10), inquiries: inq, won });
+    }
+    const maxInq = Math.max(...days.map((d) => d.inquiries), 1);
+    const maxWon = Math.max(...days.map((d) => d.won), 1);
+    trendHtml = `
+      <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e8e0d4;">
+        <p style="font-size: 14px; font-weight: 600; color: #1a3c5f; margin: 0 0 12px;">7일 추이</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <tr>
+            <th style="text-align: left; padding: 4px 8px; color: #6b7280;">날짜</th>
+            <th style="text-align: left; padding: 4px 8px; color: #6b7280;">신규 문의</th>
+            <th style="text-align: left; padding: 4px 8px; color: #6b7280;">WON</th>
+          </tr>
+          ${days
+            .map(
+              (d) => `<tr>
+            <td style="padding: 4px 8px; color: #374151;">${d.date}</td>
+            <td style="padding: 4px 8px;">
+              <div style="display: inline-block; height: 14px; width: ${Math.round((d.inquiries / maxInq) * 100)}%; min-width: 2px; background-color: #3b82f6; border-radius: 2px;"></div>
+              <span style="margin-left: 4px; color: #374151;">${d.inquiries}</span>
+            </td>
+            <td style="padding: 4px 8px;">
+              <div style="display: inline-block; height: 14px; width: ${Math.round((d.won / maxWon) * 100)}%; min-width: 2px; background-color: #22c55e; border-radius: 2px;"></div>
+              <span style="margin-left: 4px; color: #374151;">${d.won}</span>
+            </td>
+          </tr>`
+            )
+            .join("")}
+        </table>
+      </div>`;
+  }
+
   const html = `
     <div style="font-family: 'Pretendard', sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: #1a3c5f; padding: 24px 32px; border-radius: 12px 12px 0 0;">
@@ -85,7 +128,7 @@ export async function GET(request: Request) {
             <td style="padding: 12px 0; color: #6b7280;">평균 응답 시간</td>
             <td style="padding: 12px 0; text-align: right; font-weight: 600; color: #1a3c5f;">${avgResponseHours}</td>
           </tr>
-        </table>
+        </table>${trendHtml}
       </div>
     </div>
   `;

@@ -262,6 +262,12 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "kakao_retry_auto", label: "카카오 알림톡 재시도", category: "operations", default: false, description: "카카오 알림톡 발송 실패 자동 재시도 (최대 3회)" },
   { key: "daily_dashboard_email", label: "일일 KPI 이메일", category: "operations", default: false, description: "매일 KPI 스냅샷 이메일 (ADMIN_ALERT_EMAIL env 필요)" },
   { key: "macro_server_sync", label: "매크로 서버 동기화", category: "operations", default: false, description: "매크로 hotkey 서버 저장 (기기간 동기화)" },
+  { key: "kpi_email_chart", label: "KPI 이메일 차트", category: "operations", default: false, description: "일일 KPI 이메일에 7일 추이 차트 포함 (HTML table 기반)" },
+  { key: "flag_dormancy_auto_detect", label: "Flag 미사용/중복 감지", category: "operations", default: true, description: "180개+ flag 중 미사용/중복 자동 감지 + flag-audit 페이지 표시" },
+  { key: "blog_to_card_news", label: "블로그→카드뉴스", category: "marketing", default: false, description: "블로그 글→카드뉴스 이미지 자동 생성 (인스타/카카오용)" },
+  { key: "case_close_story_draft", label: "사건종결 사례스토리 초안", category: "marketing", default: false, description: "사건 종결 시 AI 사례 스토리 초안 자동생성 (익명화)" },
+  { key: "inquiry_blog_recommend", label: "답장 블로그 추천", category: "operations", default: true, description: "답장 초안에 관련 블로그 링크 자동 추천" },
+  { key: "kakao_delivery_dashboard", label: "카카오 발송 대시보드", category: "operations", default: false, description: "카카오 알림톡 발송 성공/실패/재시도 통계 대시보드" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

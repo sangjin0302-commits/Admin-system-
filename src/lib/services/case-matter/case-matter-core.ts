@@ -4,6 +4,7 @@ import type {
 } from "@generated/prisma-client/client";
 
 import { prisma } from "@/lib/prisma/client";
+import { generateCaseStoryDraft } from "@/lib/services/case-story-draft-service";
 import { generateCaseMatterNumberTx } from "@/lib/services/case-matter-number-helpers";
 import {
   assertCaseMatterTransition,
@@ -273,7 +274,7 @@ export async function convertInquiryToCaseMatter(
 }
 
 export async function updateCaseMatterStatus(input: UpdateCaseMatterStatusInput) {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const snapshot = await tx.caseMatter.findUnique({
       where: { id: input.caseMatterId },
       select: {
@@ -348,6 +349,12 @@ export async function updateCaseMatterStatus(input: UpdateCaseMatterStatusInput)
       );
     }
 
-    return attachNextAction(caseMatter);
+    return { result: attachNextAction(caseMatter), statusChanged: snapshot.status !== input.status, newStatus: input.status, caseId: snapshot.id };
   });
+
+  if (result.statusChanged && result.newStatus === "CLOSED") {
+    generateCaseStoryDraft(result.caseId).catch(() => {});
+  }
+
+  return result.result;
 }
