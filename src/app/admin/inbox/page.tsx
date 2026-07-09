@@ -8,6 +8,7 @@ import { InquiryStatus, UrgencyLevel } from "@generated/prisma-client/client";
 import { EmptyState } from "@/components/admin/empty-state";
 import { SavedFilters } from "@/components/admin/saved-filters";
 import { InquiryLabelBadge } from "@/components/admin/inquiry-label-badge";
+import { ReplyToneStats } from "@/components/admin/reply-tone-stats";
 
 export const dynamic = "force-dynamic";
 
@@ -117,6 +118,8 @@ export default async function InboxPage({
       </div>
 
       <SavedFilters scope="inbox" enabled={await isFeatureEnabled("saved_filter_views")} />
+
+      {await isFeatureEnabled("reply_tone_ab_tracking") && <ReplyToneStats />}
 
       <Card className="p-0 overflow-hidden">
         {rows.length === 0 ? (

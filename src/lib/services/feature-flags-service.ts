@@ -11,7 +11,7 @@ import { logger } from "@/lib/utils/logger";
 const SITE_SETTING_KEY = "feature.flags";
 const CACHE_MS = 30_000;
 
-export type FeatureCategory = "marketing" | "operations" | "ux";
+export type FeatureCategory = "marketing" | "operations" | "ux" | "portal" | "ai";
 
 export type FeatureDefinition = {
   key: string;
@@ -269,6 +269,16 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "inquiry_blog_recommend", label: "답장 블로그 추천", category: "operations", default: true, description: "답장 초안에 관련 블로그 링크 자동 추천" },
   { key: "kakao_delivery_dashboard", label: "카카오 발송 대시보드", category: "operations", default: false, description: "카카오 알림톡 발송 성공/실패/재시도 통계 대시보드" },
   { key: "cron_dispatcher_mode", label: "Cron Dispatcher 통합", category: "operations", default: false, description: "40 cron → 1 dispatcher로 통합 (Hobby 제한 대비)" },
+  { key: "blog_cross_post_naver", label: "블로그 자동 공유 (네이버)", category: "marketing", default: false, description: "네이버 블로그용 포맷 복사 기능" },
+  { key: "weekly_pdf_report", label: "주간 리포트 자동 생성", category: "operations", default: false, description: "주간 운영 리포트 HTML 이메일 자동 발송" },
+  { key: "case_fee_tracking", label: "사건 수임료 수금 추적", category: "operations", default: true, description: "사건별 수임료 수금 현황 추적 및 관리" },
+  { key: "satisfaction_survey_auto", label: "고객 만족도 설문 자동 발송", category: "operations", default: true, description: "사건 종결 3일 후 고객 만족도 설문 자동 발송" },
+  { key: "ga4_conversion_tracking", label: "GA4 전환 이벤트 추적", category: "marketing", default: true, description: "접수/전화/카톡/견적/상담폼 GA4 전환 이벤트 전송", public: true },
+  { key: "prompt_ab_testing", label: "AI 프롬프트 A/B 테스트", category: "operations", default: false, description: "답장 초안 등 AI 생성 태스크에 프롬프트 변형(A/B) 적용 및 결과 로깅" },
+  { key: "ga4_page_view_enhanced", label: "GA4 전환 이벤트 트래킹", category: "marketing", default: true, description: "GA4 page_view 향상 이벤트 + 스크롤 깊이 자동 추적", public: true },
+  { key: "portal_timeline_live", label: "포털 타임라인 실데이터", category: "portal", default: true, description: "고객 포털 사건 타임라인에 CaseEvent 실데이터 표시" },
+  { key: "reply_prompt_ab", label: "답장 프롬프트 A/B", category: "ai", default: false, description: "답장 초안 프롬프트를 formal/empathetic/solution-focused 중 해시 기반 선택" },
+  { key: "email_template_manager", label: "이메일 템플릿 관리", category: "operations", default: true, description: "이메일 템플릿 관리 UI (/admin/email-templates)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

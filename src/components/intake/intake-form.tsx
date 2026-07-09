@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { parseClientApiError } from "@/lib/http/client-api";
+import { useFeatureFlag } from "@/lib/hooks/use-feature-flag";
+import { trackIntakeSubmit } from "@/lib/utils/ga4-events";
 import type { IntakeSourceTrackingPayload } from "@/lib/services/intake-source-tracking";
 import type { Locale, UrgencyLevel } from "@/types/inquiry";
 import {
@@ -389,6 +391,7 @@ export function IntakeFormSafeV3({
   const [intakeMessage, setIntakeMessage] = useState("");
   const [completedMessage, setCompletedMessage] = useState("");
   const [completedTrackingCode, setCompletedTrackingCode] = useState("");
+  const ga4Enabled = useFeatureFlag("ga4_conversion_tracking") !== false;
 
   const selectedCategory = form.category || null;
   const selectedCategoryFields = useMemo(

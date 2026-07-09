@@ -62,11 +62,12 @@ const SCHEDULE: ScheduleEntry[] = [
   { cronPath: "/api/cron/deploy-status-check", hour: 16, minute: 0 },
   { cronPath: "/api/cron/kakao-retry", hour: 17, minute: 0 },
   { cronPath: "/api/cron/daily-kpi-email", hour: 8, minute: 30 },
+  { cronPath: "/api/cron/satisfaction-survey", hour: 10, minute: 0 },
 
   // Weekly (Sunday = 0)
   { cronPath: "/api/cron/cleanup", hour: 12, minute: 0, dayOfWeek: 0 },
   { cronPath: "/api/cron/audit-cleanup", hour: 13, minute: 0, dayOfWeek: 0 },
-  { cronPath: "/api/cron/weekly-report", hour: 21, minute: 0, dayOfWeek: 0 },
+  { cronPath: "/api/cron/weekly-report", hour: 9, minute: 0, dayOfWeek: 1 },
   { cronPath: "/api/cron/nps-survey", hour: 19, minute: 0, dayOfWeek: 0 },
   { cronPath: "/api/cron/ad-optimizer-digest", hour: 10, minute: 0, dayOfWeek: 1 },
   { cronPath: "/api/cron/newsletter-digest", hour: 9, minute: 0, dayOfWeek: 1 },

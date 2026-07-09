@@ -67,6 +67,8 @@ const STATIC_PAGES: CommandItem[] = [
   { id: "page:macros", group: "page", label: "매크로 관리", href: "/admin/macros", aliases: ["macro", "매크로"] },
   { id: "page:kakao-stats", group: "page", label: "카카오 발송 통계", href: "/admin/kakao-stats", aliases: ["카카오", "알림톡", "kakao"], keywords: ["발송", "성공률", "실패"] },
   { id: "page:quote-conversion", group: "page", label: "견적 전환율", href: "/admin/quote-conversion", aliases: ["전환율", "conversion", "win rate"], keywords: ["견적", "WON", "마케팅"] },
+  { id: "page:fee-tracking", group: "page", label: "수임료 수금 관리", href: "/admin/fee-tracking", aliases: ["수임료", "수금", "fee"], keywords: ["재무", "tracking", "payment"] },
+  { id: "page:satisfaction-survey", group: "page", label: "고객 만족도 설문", href: "/admin/satisfaction-survey", aliases: ["만족도", "설문", "survey"], keywords: ["고객", "satisfaction"] },
 ];
 
 const STATIC_ACTIONS: CommandItem[] = [

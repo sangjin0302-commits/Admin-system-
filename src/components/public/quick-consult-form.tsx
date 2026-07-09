@@ -2,6 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 
+import { useFeatureFlag } from "@/lib/hooks/use-feature-flag";
+import { trackConsultFormSubmit } from "@/lib/utils/ga4-events";
+
 const CATEGORIES = ["비자·체류", "행정심판", "인허가", "법인", "기타"] as const;
 
 type Category = (typeof CATEGORIES)[number];
@@ -27,6 +30,7 @@ export function QuickConsultForm() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const ga4Enabled = useFeatureFlag("ga4_conversion_tracking") !== false;
 
   const nameInvalid = name.trim().length < 2;
   const phoneInvalid = phone.replace(/\D/g, "").length < 9;
@@ -61,6 +65,7 @@ export function QuickConsultForm() {
         return;
       }
       setDone(true);
+      if (ga4Enabled) trackConsultFormSubmit();
     } catch {
       setError("접수 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {

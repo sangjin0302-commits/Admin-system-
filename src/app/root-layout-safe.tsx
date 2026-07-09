@@ -14,6 +14,7 @@ import { LiveChat } from "@/components/public/live-chat";
 import { LocalBusinessJsonLd } from "@/components/public/json-ld";
 import { PWARegister } from "@/components/public/pwa-register";
 import { AbBootstrap } from "@/components/public/ab-bootstrap";
+import { GA4ConversionTracker } from "@/components/analytics/ga4-conversion-tracker";
 import { BrandIntro } from "@/components/public/brand-intro";
 import { OnboardingTour } from "@/components/public/onboarding-tour";
 import { ToastProvider } from "@/components/ui/toast-provider";
@@ -124,6 +125,7 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
         />
         <AiChatWidget />
         <LiveChat />
+        <GA4ConversionTracker enabled={true} />
         <Analytics />
         <VercelAnalytics />
         <SpeedInsights />
