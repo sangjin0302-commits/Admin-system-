@@ -57,6 +57,42 @@ ${inquiry.description}
 
 위 문의에 대한 첫 답장 초안을 작성해주세요.`;
 
+    // BBB2: 3버전 요청 지원 — ?variants=3
+    const url = new URL(_req.url);
+    const wantVariants = url.searchParams.get("variants") === "3"
+      && (await isFeatureEnabled("reply_draft_variants").catch(() => false));
+
+    if (wantVariants) {
+      const variantSystem = `${SYSTEM}
+
+이번에는 같은 문의에 대해 톤이 다른 3가지 버전을 작성합니다.
+응답 형식 (구분자 정확히 유지, 다른 텍스트 금지):
+===친근===
+<친근하고 따뜻한 버전>
+===공식===
+<공식적이고 정중한 버전>
+===실무===
+<핵심만 간결한 실무 버전>`;
+      const res = await smartInvoke("drafting", prompt, {
+        system: variantSystem,
+        maxTokens: 900,
+      });
+      const text = res.text ?? "";
+      const pick = (label: string) => {
+        const m = text.match(new RegExp(`===${label}===\\s*([\\s\\S]*?)(?====|$)`));
+        return m?.[1]?.trim() ?? "";
+      };
+      const variants = {
+        friendly: pick("친근"),
+        formal: pick("공식"),
+        practical: pick("실무"),
+      };
+      if (!variants.friendly && !variants.formal && !variants.practical) {
+        return api.error(500, "파싱 실패", { code: "PARSE_FAILED" });
+      }
+      return api.ok({ variants, model: res.model });
+    }
+
     const res = await smartInvoke("drafting", prompt, {
       system: SYSTEM,
       maxTokens: 400,

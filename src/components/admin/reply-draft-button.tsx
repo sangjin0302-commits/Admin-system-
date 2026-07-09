@@ -10,25 +10,44 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-export function ReplyDraftButton({ inquiryId, enabled = true }: { inquiryId: string; enabled?: boolean }) {
+type Variants = { friendly: string; formal: string; practical: string };
+const VARIANT_LABELS: Array<{ key: keyof Variants; label: string }> = [
+  { key: "friendly", label: "😊 친근" },
+  { key: "formal", label: "🎩 공식" },
+  { key: "practical", label: "⚡ 실무" },
+];
+
+export function ReplyDraftButton({ inquiryId, enabled = true, variantsEnabled = false }: { inquiryId: string; enabled?: boolean; variantsEnabled?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [draft, setDraft] = useState<string | null>(null);
   const [model, setModel] = useState<string | null>(null);
+  const [variants, setVariants] = useState<Variants | null>(null);
+  const [activeVariant, setActiveVariant] = useState<keyof Variants>("friendly");
 
   if (!enabled) return null;
 
-  const run = async () => {
+  const run = async (asVariants: boolean) => {
     setLoading(true);
     setDraft(null);
+    setVariants(null);
     try {
-      const res = await fetch(`/api/admin/inquiries/${inquiryId}/reply-draft`, { method: "POST" });
-      const data = (await res.json()) as { data?: { draft?: string; model?: string }; error?: string };
+      const qs = asVariants ? "?variants=3" : "";
+      const res = await fetch(`/api/admin/inquiries/${inquiryId}/reply-draft${qs}`, { method: "POST" });
+      const data = (await res.json()) as {
+        data?: { draft?: string; model?: string; variants?: Variants };
+        error?: string;
+      };
       if (!res.ok) {
         toast.error(data.error ?? "초안 생성 실패");
         return;
       }
-      const d = data.data?.draft ?? "";
-      setDraft(d);
+      if (data.data?.variants) {
+        setVariants(data.data.variants);
+        setActiveVariant("friendly");
+        setDraft(data.data.variants.friendly || data.data.variants.formal || data.data.variants.practical);
+      } else {
+        setDraft(data.data?.draft ?? "");
+      }
       setModel(data.data?.model ?? null);
       toast.success("답장 초안 생성됨");
     } catch (err) {
@@ -48,14 +67,36 @@ export function ReplyDraftButton({ inquiryId, enabled = true }: { inquiryId: str
 
   return (
     <div className="rounded-xl border border-line bg-surface-muted p-3">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
-          onClick={run}
+          onClick={() => run(false)}
           disabled={loading}
           className="inline-flex items-center gap-1 rounded-full bg-gold text-white px-3 py-1.5 text-xs font-medium disabled:opacity-50"
         >
           {loading ? "생성 중…" : "🤖 답장 초안 자동생성"}
         </button>
+        {variantsEnabled ? (
+          <button
+            onClick={() => run(true)}
+            disabled={loading}
+            className="inline-flex items-center gap-1 rounded-full border border-gold bg-surface px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
+          >
+            🎭 3버전 생성
+          </button>
+        ) : null}
+        {variants ? (
+          <div className="inline-flex gap-1">
+            {VARIANT_LABELS.map((v) => (
+              <button
+                key={v.key}
+                onClick={() => { setActiveVariant(v.key); setDraft(variants[v.key]); }}
+                className={`rounded-full px-2 py-1 text-[11px] ${activeVariant === v.key ? "bg-black text-white" : "border border-line bg-surface"}`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {draft ? (
           <button
             onClick={copy}

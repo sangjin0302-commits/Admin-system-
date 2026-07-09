@@ -249,6 +249,9 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "returning_visitor_badge", label: "재방문자 배지", category: "marketing", default: true, public: true, description: '홈에서 재방문자에게 "지난번 본 서비스 이어보기" 칩 (localStorage, 30일)' },
   { key: "intake_progress_chip", label: "intake 필수항목 진행 칩", category: "ux", default: true, description: "접수 폼 상단 sticky 4단계 필수항목 완료 표시" },
   { key: "blog_mid_cta", label: "블로그 50% CTA", category: "marketing", default: true, public: true, description: "블로그 글 50% 스크롤 시 무료검토 슬라이드인 CTA (세션당 1회)" },
+  { key: "reply_draft_variants", label: "답장 초안 3버전", category: "operations", default: true, description: "문의 답장 초안을 친근/공식/실무 3가지 톤으로 동시 생성" },
+  { key: "gsc_rank_drop_alert", label: "GSC 순위 급락 알림", category: "marketing", default: false, description: "주 1회 최근 7일 vs 직전 7일 position 비교, 5계단+ 하락 시 텔레그램 (GSC env 필요)" },
+  { key: "local_seo_landing", label: "지역 SEO 랜딩", category: "marketing", default: true, description: "/local/[region] — 서울 25구+수도권 주요 시 로컬 검색 랜딩 31개" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

@@ -77,6 +77,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: "/intake", priority: 0.5 },
     { url: "/privacy", priority: 0.3 },
     { url: "/terms", priority: 0.3 },
+    // SS2: 지역 SEO 랜딩
+    ...[
+      "gangnam", "seocho", "songpa", "gangdong", "gwangjin", "seongdong", "dongdaemun",
+      "jungnang", "nowon", "dobong", "gangbuk", "seongbuk", "jongno", "junggu", "yongsan",
+      "mapo", "seodaemun", "eunpyeong", "yangcheon", "gangseo", "guro", "geumcheon",
+      "yeongdeungpo", "dongjak", "gwanak", "suwon", "yongin", "seongnam", "goyang",
+      "bucheon", "incheon",
+    ].map((r) => ({ url: `/local/${r}`, priority: 0.65 })),
   ];
 
   const dynamicRoutes = await loadDynamicRoutes();

@@ -21,12 +21,17 @@ export type GscTopQuery = {
 };
 
 export async function getTopSearchQueries(days = 28, limit = 20): Promise<GscTopQuery[]> {
+  return getSearchQueriesRange(days, 0, limit);
+}
+
+/** startDaysAgo ~ endDaysAgo 구간의 검색 쿼리 (DDD2 순위 비교용). */
+export async function getSearchQueriesRange(startDaysAgo: number, endDaysAgo: number, limit = 20): Promise<GscTopQuery[]> {
   const accessToken = await getGscAccessToken();
   if (!accessToken) return [];
 
   const siteUrl = process.env.GSC_SITE_URL ?? "https://ethosattorney.com";
-  const endDate = new Date().toISOString().slice(0, 10);
-  const startDate = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const endDate = new Date(Date.now() - endDaysAgo * 86400000).toISOString().slice(0, 10);
+  const startDate = new Date(Date.now() - startDaysAgo * 86400000).toISOString().slice(0, 10);
 
   try {
     const res = await fetch(

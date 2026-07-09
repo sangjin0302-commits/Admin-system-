@@ -189,7 +189,7 @@ export default async function AdminInquiryDetailPage({
             inquiryTitle={inquiry.title}
           />
         ) : null}
-        {replyDraftEnabled ? <ReplyDraftButton inquiryId={inquiry.id} enabled={replyDraftEnabled} /> : null}
+        {replyDraftEnabled ? <ReplyDraftButton inquiryId={inquiry.id} enabled={replyDraftEnabled} variantsEnabled={await isFeatureEnabled("reply_draft_variants")} /> : null}
         {labelingEnabled ? <InquiryLabels inquiryId={inquiry.id} enabled={labelingEnabled} /> : null}
         <InquiryDetailHeaderCard
           status={inquiryStatus}
