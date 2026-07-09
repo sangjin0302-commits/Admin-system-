@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CaseDelayBadge } from "@/components/admin/case-delay-badge";
 import { SortableTable } from "./sortable-table";
 import { usePreloadOnHover } from "@/lib/hooks/use-tab-preload";
 
@@ -15,6 +16,8 @@ type CaseRow = {
   dueDate: string | null;
   pendingDocs: number;
   updatedAt: string;
+  createdAt: string;
+  matterType: string;
 };
 
 const columns = [
@@ -25,7 +28,10 @@ const columns = [
     getValue: (r: CaseRow) => r.title,
     render: (r: CaseRow) => (
       <div>
-        <p className="font-semibold text-text-strong">{r.title}</p>
+        <p className="font-semibold text-text-strong">
+          {r.title}
+          <CaseDelayBadge caseId={r.id} createdAt={new Date(r.createdAt)} matterType={r.matterType} enabled />
+        </p>
         <p className="mt-1 text-xs text-text-muted">{r.caseNo ?? "사건번호 미정"} | {r.matterTypeLabel}</p>
       </div>
     ),

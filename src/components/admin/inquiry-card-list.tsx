@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import { InquiryLabelBadge } from "@/components/admin/inquiry-label-badge";
 import { Card } from "@/components/ui/card";
 import { usePreloadOnHover } from "@/lib/hooks/use-tab-preload";
 import { formatDateTime } from "@/lib/utils";
@@ -66,7 +67,10 @@ export function InquiryCardList({ inquiries }: { inquiries: InquiryItem[] }) {
                   {getLanguageCodeLabel(inquiryLanguage)}
                 </Badge>
               </div>
-              <h3 className="mt-3 truncate whitespace-nowrap text-base font-semibold text-text-strong">{inquiry.title}</h3>
+              <h3 className="mt-3 truncate whitespace-nowrap text-base font-semibold text-text-strong">
+                {inquiry.title}
+                <InquiryLabelBadge inquiryId={inquiry.id} enabled />
+              </h3>
               <p className="mt-2 truncate whitespace-nowrap text-sm text-text">{inquiry.generatedSummary}</p>
               <div className="mt-3 grid gap-1 text-sm text-text-muted">
                 <p className="truncate whitespace-nowrap">

@@ -268,6 +268,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "case_close_story_draft", label: "사건종결 사례스토리 초안", category: "marketing", default: false, description: "사건 종결 시 AI 사례 스토리 초안 자동생성 (익명화)" },
   { key: "inquiry_blog_recommend", label: "답장 블로그 추천", category: "operations", default: true, description: "답장 초안에 관련 블로그 링크 자동 추천" },
   { key: "kakao_delivery_dashboard", label: "카카오 발송 대시보드", category: "operations", default: false, description: "카카오 알림톡 발송 성공/실패/재시도 통계 대시보드" },
+  { key: "cron_dispatcher_mode", label: "Cron Dispatcher 통합", category: "operations", default: false, description: "40 cron → 1 dispatcher로 통합 (Hobby 제한 대비)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

@@ -17,10 +17,11 @@ export default async function MorningPage() {
   const startOfYesterday = new Date(startOfDay.getTime() - 24 * 60 * 60 * 1000);
   const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const notClosed = { notIn: [InquiryStatus.WON, InquiryStatus.CLOSED] };
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const showChannelKpi = await isFeatureEnabled("morning_channel_kpi");
   const startOfWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const [dueSoon, unresponded, yesterdayNew, urgent, todayNew, channel7d] = await Promise.all([
+  const [dueSoon, unresponded, yesterdayNew, urgent, todayNew, wonThisMonth, channel7d] = await Promise.all([
     prisma.inquiry.findMany({
       where: { dueDate: { lte: in7Days, gte: now }, status: notClosed },
       select: { id: true, title: true, contactName: true, dueDate: true, urgencyLevel: true },
@@ -38,6 +39,7 @@ export default async function MorningPage() {
       where: { urgencyLevel: { in: [UrgencyLevel.HIGH, UrgencyLevel.CRITICAL] }, status: notClosed },
     }).catch(() => 0),
     prisma.inquiry.count({ where: { createdAt: { gte: startOfDay } } }).catch(() => 0),
+    prisma.inquiry.count({ where: { status: InquiryStatus.WON, updatedAt: { gte: startOfMonth } } }).catch(() => 0),
     showChannelKpi
       ? prisma.inquiry.groupBy({
           by: ["intakeChannel"],
@@ -63,11 +65,12 @@ export default async function MorningPage() {
         description={`${now.toLocaleDateString("ko-KR", { weekday: "long", month: "long", day: "numeric" })} · 오늘 처리할 것만.`}
       />
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-5">
         <Stat label="오늘 신규" value={todayNew} tone="primary" />
         <Stat label="어제 신규" value={yesterdayNew} tone="muted" />
         <Stat label="미응답 24h+" value={unresponded.length} tone={unresponded.length > 0 ? "red" : "emerald"} />
         <Stat label="긴급 활성" value={urgent} tone={urgent > 0 ? "amber" : "emerald"} />
+        <Stat label="이번 달 WON" value={wonThisMonth} tone="emerald" />
       </div>
 
       {showChannelKpi && channelKpi.length > 0 && (

@@ -16,8 +16,27 @@ import { autoLinkKeywords, extractKeywords } from "@/lib/utils/keyword-linker";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/blog-posts";
 import { prisma } from "@/lib/prisma/client";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { getRelatedBlogPosts } from "@/lib/services/blog-recommend-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
 export const dynamic = "force-dynamic";
+
+function extractFaqPairs(html: string): { question: string; answer: string }[] {
+  const text = html.replace(/<[^>]+>/g, "\n");
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const pairs: { question: string; answer: string }[] = [];
+  for (let i = 0; i < lines.length - 1; i++) {
+    const qMatch = lines[i].match(/^(?:Q[:.]|[?])\s*(.+)/);
+    if (qMatch) {
+      const aMatch = lines[i + 1]?.match(/^A[:.]?\s*(.+)/);
+      if (aMatch) {
+        pairs.push({ question: qMatch[1].trim(), answer: aMatch[1].trim() });
+        i++;
+      }
+    }
+  }
+  return pairs;
+}
 
 type Lang = "ko" | "en";
 
@@ -120,6 +139,14 @@ export default async function BlogDetailPage({
   if (!post) notFound();
 
   const all = await listBlogPosts();
+  const [blogRelatedAutoEnabled, faqSchemaAutoEnabled] = await Promise.all([
+    isFeatureEnabled("blog_related_auto"),
+    isFeatureEnabled("faq_schema_auto"),
+  ]);
+  const faqPairs = faqSchemaAutoEnabled ? extractFaqPairs(post.contentHtml) : [];
+  const dbRelated = blogRelatedAutoEnabled
+    ? await getRelatedBlogPosts(post.category).catch(() => [])
+    : [];
 
   // Fuse 유사도 — 제목+요약+카테고리 매칭, 폴백은 카테고리
   const FuseMod = await import("fuse.js").then((m) => m.default).catch(() => null);
@@ -161,6 +188,25 @@ export default async function BlogDetailPage({
           { name: post.title, url: `/blog/${post.slug}` },
         ]}
       />
+      {faqPairs.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: faqPairs.map((faq) => ({
+                "@type": "Question",
+                name: faq.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: faq.answer,
+                },
+              })),
+            }),
+          }}
+        />
+      )}
       <div className="absolute left-full top-20 hidden h-full pl-10 xl:block">
         <div className="w-56">
           <BlogToc />
@@ -248,6 +294,26 @@ export default async function BlogDetailPage({
         />
 
         <BlogInlineCta category={post.category} />
+
+        {dbRelated.length > 0 && (
+          <section className="my-10 rounded-xl border border-gold/20 bg-surface p-5">
+            <p className="font-serif text-xs font-bold uppercase tracking-[0.3em] text-gold-deep">
+              {lang === "en" ? "Related posts" : "관련 글"}
+            </p>
+            <ul className="mt-3 space-y-2">
+              {dbRelated.map((r) => (
+                <li key={r.slug}>
+                  <Link
+                    href={`/blog/${r.slug}`}
+                    className="text-sm font-medium text-primary hover:text-gold-deep hover:underline"
+                  >
+                    {r.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <ShareButtons title={post.title} />
       </article>

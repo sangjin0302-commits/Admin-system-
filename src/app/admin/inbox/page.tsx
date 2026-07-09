@@ -7,6 +7,7 @@ import Link from "next/link";
 import { InquiryStatus, UrgencyLevel } from "@generated/prisma-client/client";
 import { EmptyState } from "@/components/admin/empty-state";
 import { SavedFilters } from "@/components/admin/saved-filters";
+import { InquiryLabelBadge } from "@/components/admin/inquiry-label-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,8 @@ export default async function InboxPage({
   searchParams?: Promise<{ filter?: string }>;
 }) {
   if (!(await isFeatureEnabled("unified_inbox"))) notFound();
+
+  const labelBadgeEnabled = await isFeatureEnabled("inquiry_label_badge_inbox");
 
   const sp = (await searchParams) ?? {};
   const filter = (FILTER_OPTIONS.find((f) => f.key === sp.filter)?.key ?? "unresponded") as FilterKey;
@@ -146,6 +149,7 @@ export default async function InboxPage({
                       <Link href={`/admin/inquiries/${r.id}`} className="font-medium text-text-strong hover:text-gold-deep">
                         {r.title || "(제목 없음)"}
                       </Link>
+                      {labelBadgeEnabled && <InquiryLabelBadge inquiryId={r.id} enabled={labelBadgeEnabled} />}
                     </td>
                     <td className="px-4 py-2 text-text-muted">{r.contactName || "—"}</td>
                     <td className="px-4 py-2 text-text-muted">{r.intakeChannel || "직접"}</td>

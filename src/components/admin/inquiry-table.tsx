@@ -1,6 +1,7 @@
 ﻿import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import { InquiryLabelBadge } from "@/components/admin/inquiry-label-badge";
 import { Table, TableContainer } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/utils";
 import { scoreTone, type PriorityScore } from "@/lib/services/priority-scoring-service";
@@ -78,7 +79,10 @@ export function InquiryTable({
               <tr key={inquiry.id}>
                 <td>
                   <Link href={`/admin/inquiries/${inquiry.id}`} className="block">
-                    <p className="truncate whitespace-nowrap font-semibold text-text-strong">{inquiry.title}</p>
+                    <p className="truncate whitespace-nowrap font-semibold text-text-strong">
+                      {inquiry.title}
+                      <InquiryLabelBadge inquiryId={inquiry.id} enabled />
+                    </p>
                     <p className="mt-1 truncate whitespace-nowrap text-sm text-text">{inquiry.contactName}</p>
                     <p className="truncate whitespace-nowrap text-sm text-text-muted">
                       {inquiry.organizationName || inquiry.email}

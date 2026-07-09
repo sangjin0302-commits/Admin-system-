@@ -207,6 +207,8 @@ export default async function AdminCasesPage({
               dueDate: formatDate(item.dueDate),
               pendingDocs: countRequiredDocumentBacklog(item),
               updatedAt: formatDateTime(item.updatedAt),
+              createdAt: item.createdAt.toISOString(),
+              matterType: item.matterType,
             }))}
           />
         </Card>

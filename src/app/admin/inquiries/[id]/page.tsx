@@ -1,5 +1,6 @@
 import { DeadlineCalculatorCard } from "@/components/admin/deadline-calculator-card";
 import { ConsultationScriptPanel } from "@/components/admin/consultation-script-panel";
+import { InquiryPromoteButton } from "@/components/admin/inquiry-promote-button";
 import { InquiryActionChecklistPanel } from "@/components/admin/inquiry-action-checklist-panel";
 import { LawbotOutcomePrediction } from "@/components/admin/lawbot-outcome-prediction";
 import { QuoteGuidanceCard } from "@/components/admin/quote-guidance-card";
@@ -165,12 +166,13 @@ export default async function AdminInquiryDetailPage({
     const publicTrackingCode = getPublicTrackingCodeFromInquiry(inquiry);
     const intakeSourceTracking = buildIntakeSourceTrackingViewModel(inquiry);
     const emailProviderReadiness = buildCustomerEmailProviderReadiness(process.env);
-    const [kakaoEnabled, chipsEnabled, kakaoPresetEnabled, replyDraftEnabled, labelingEnabled] = await Promise.all([
+    const [kakaoEnabled, chipsEnabled, kakaoPresetEnabled, replyDraftEnabled, labelingEnabled, promoteEnabled] = await Promise.all([
       isFeatureEnabled("inquiry_kakao_deeplink_action"),
       isFeatureEnabled("inquiry_next_action_chips"),
       isFeatureEnabled("kakao_first_message_preset"),
       isFeatureEnabled("reply_draft_auto"),
       isFeatureEnabled("inquiry_auto_labeling"),
+      isFeatureEnabled("inquiry_case_promote_oneclick"),
     ]);
     const kakaoChannelId = process.env.KAKAO_CHANNEL_ID ?? null;
 
@@ -250,6 +252,7 @@ export default async function AdminInquiryDetailPage({
               <div className="flex justify-end">
                 <InquiryLawbotRerunButton inquiryId={inquiry.id} />
               </div>
+              {promoteEnabled && <InquiryPromoteButton inquiryId={inquiry.id} enabled={promoteEnabled} />}
               <InquiryCaseConversionPanel
                 inquiryId={inquiry.id}
                 inquiryTitle={inquiry.title}
