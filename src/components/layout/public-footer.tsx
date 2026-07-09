@@ -72,7 +72,7 @@ export function PublicFooter() {
   return (
     <footer className="mt-24 border-t border-gold/30 bg-primary text-white/90">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="grid gap-10 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
+        <div className="grid gap-10 md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr]">
           {/* 브랜드 */}
           <div>
             <p className="font-serif text-2xl font-bold tracking-[0.25em] text-white">ETHOS</p>
@@ -114,6 +114,24 @@ export function PublicFooter() {
               <li><Link href="/keyword" className="transition-colors duration-200 hover:text-gold-soft">키워드 가이드</Link></li>
               <li><Link href="/portal" className="transition-colors duration-200 hover:text-gold-soft">포털 · 진행조회</Link></li>
             </ul>
+          </div>
+
+          {/* 지역 서비스 */}
+          <div>
+            <p className="font-serif text-sm font-bold uppercase tracking-wider text-gold-soft">
+              지역 서비스
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-white/80">
+              <li><Link href="/local/gangnam" className="transition-colors duration-200 hover:text-gold-soft">강남구</Link></li>
+              <li><Link href="/local/seocho" className="transition-colors duration-200 hover:text-gold-soft">서초구</Link></li>
+              <li><Link href="/local/songpa" className="transition-colors duration-200 hover:text-gold-soft">송파구</Link></li>
+              <li><Link href="/local/mapo" className="transition-colors duration-200 hover:text-gold-soft">마포구</Link></li>
+              <li><Link href="/local/yongsan" className="transition-colors duration-200 hover:text-gold-soft">용산구</Link></li>
+              <li><Link href="/local/suwon" className="transition-colors duration-200 hover:text-gold-soft">수원시</Link></li>
+            </ul>
+            <Link href="/local/gangnam" className="mt-3 inline-block text-xs text-gold-soft/80 transition-colors duration-200 hover:text-gold-soft">
+              전체 31개 지역 →
+            </Link>
           </div>
 
           {/* 연락 */}

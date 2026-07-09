@@ -9,6 +9,7 @@
  * /admin/macros 페이지에서 편집. 이 컴포넌트는 layout에서 mount.
  *
  * Feature flag: `macro_hotkeys`
+ * EEE8: macro_server_sync 플래그 on 시 서버에서 매크로 동기화 (서버 우선)
  */
 
 import { useEffect } from "react";
@@ -26,7 +27,39 @@ function loadMacros(): Macro[] {
   } catch { return []; }
 }
 
-export function MacroHotkeyListener({ enabled = true }: { enabled?: boolean }) {
+/** EEE8: 서버에서 매크로를 가져와 localStorage와 병합 (서버 우선) */
+async function syncFromServer(): Promise<void> {
+  try {
+    const res = await fetch("/api/admin/macro-hotkeys");
+    if (!res.ok) return; // flag off or error — skip
+    const data = await res.json();
+    const serverMacros = data.macros as { slot: number; label: string; text: string }[];
+    if (!Array.isArray(serverMacros) || serverMacros.length === 0) return;
+
+    const local = loadMacros();
+    const merged: Macro[] = [];
+    for (let k = 1; k <= 9; k++) {
+      const server = serverMacros.find((m) => m.slot === k);
+      const localM = local.find((m) => m.key === k);
+      if (server && server.text) {
+        merged.push({ key: k, text: server.text, name: server.label || undefined });
+      } else if (localM) {
+        merged.push(localM);
+      }
+    }
+    if (merged.length > 0) {
+      window.localStorage.setItem(LS_KEY, JSON.stringify(merged));
+    }
+  } catch { /* network error — use local fallback */ }
+}
+
+export function MacroHotkeyListener({ enabled = true, serverSync = false }: { enabled?: boolean; serverSync?: boolean }) {
+  // EEE8: sync from server on mount if flag enabled
+  useEffect(() => {
+    if (!enabled || !serverSync) return;
+    void syncFromServer();
+  }, [enabled, serverSync]);
+
   useEffect(() => {
     if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {

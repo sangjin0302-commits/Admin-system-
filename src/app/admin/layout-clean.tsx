@@ -21,6 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const darkToggleEnabled = await isFeatureEnabled("dark_mode_manual_toggle");
   const quickNoteEnabled = await isFeatureEnabled("quick_note_fab");
   const macroHotkeysEnabled = await isFeatureEnabled("macro_hotkeys");
+  const macroServerSync = await isFeatureEnabled("macro_server_sync");
 
   return (
     <div className="flex gap-6">
@@ -56,7 +57,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <VoiceCommandMic />
       <CommandPalette />
       <QuickNoteFab enabled={quickNoteEnabled} />
-      <MacroHotkeyListener enabled={macroHotkeysEnabled} />
+      <MacroHotkeyListener enabled={macroHotkeysEnabled} serverSync={macroServerSync} />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import type { InquiryStatus } from "@/types/inquiry";
 import { logger } from "@/lib/utils/logger";
 import { runWorkflow } from "@/lib/services/workflow-engine";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import { autoCreateCaseFromInquiry } from "@/lib/services/quote-to-case-service";
 
 export async function updateInquiryAdminFields(
   id: string,
@@ -79,6 +80,14 @@ export async function updateInquiryAdminFields(
     });
   } catch (error) {
     logger.error("Failed to refresh consultation Notion sync", error);
+  }
+
+  if (statusChangeEntry && current.status !== updated.status && updated.status === "WON") {
+    try {
+      await autoCreateCaseFromInquiry(id);
+    } catch (error) {
+      logger.error("[quote-to-case] auto-create failed", error);
+    }
   }
 
   // 워크플로 엔진 훅 — 상태가 실제로 변한 경우에만 실행. best-effort.

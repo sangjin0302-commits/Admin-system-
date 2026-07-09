@@ -39,9 +39,18 @@ export function MacroHotkeysClient() {
 
   useEffect(() => { setMacros(loadMacros()); }, []);
 
-  const save = () => {
+  const save = async () => {
     try {
       window.localStorage.setItem(LS_KEY, JSON.stringify(macros));
+      // EEE8: macro_server_sync — also save to server
+      try {
+        const payload = macros.map((m) => ({ slot: m.key, label: m.name ?? "", text: m.text }));
+        await fetch("/api/admin/macro-hotkeys", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ macros: payload }),
+        });
+      } catch { /* server sync failed — local save still succeeded */ }
       setDirty(false);
       toast.success("저장됨");
     } catch { toast.error("저장 실패"); }

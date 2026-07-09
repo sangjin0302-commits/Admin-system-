@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { DeployStatusCard } from "@/components/admin/deploy-status-card";
 import { getSiteSettings } from "@/lib/services/site-settings";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,7 @@ type SetupItem = {
 
 export default async function SetupPage() {
   const site = await getSiteSettings();
+  const showDeployCard = await isFeatureEnabled("deploy_status_card");
 
   // 환경변수는 process.env로 확인 (정확한 값은 노출 안 함, 존재 여부만)
   const env = {
@@ -298,6 +301,8 @@ export default async function SetupPage() {
           <li>8. <strong>텔레그램 공개 채널</strong> (구독자 확보, 선택)</li>
         </ol>
       </Card>
+
+      {showDeployCard && <DeployStatusCard />}
     </div>
   );
 }

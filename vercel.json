@@ -148,6 +148,18 @@
     {
       "path": "/api/cron/auto-marketing",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/deploy-status-check",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/kakao-retry",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/daily-kpi-email",
+      "schedule": "30 23 * * *"
     }
   ]
 }

@@ -252,6 +252,16 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "reply_draft_variants", label: "답장 초안 3버전", category: "operations", default: true, description: "문의 답장 초안을 친근/공식/실무 3가지 톤으로 동시 생성" },
   { key: "gsc_rank_drop_alert", label: "GSC 순위 급락 알림", category: "marketing", default: false, description: "주 1회 최근 7일 vs 직전 7일 position 비교, 5계단+ 하락 시 텔레그램 (GSC env 필요)" },
   { key: "local_seo_landing", label: "지역 SEO 랜딩", category: "marketing", default: true, description: "/local/[region] — 서울 25구+수도권 주요 시 로컬 검색 랜딩 31개" },
+  { key: "quote_to_case_auto", label: "견적 승인→사건 자동생성", category: "operations", default: false, description: "WON 전환 시 CaseMatter 자동 생성 (ETHOS-YYYY-NNN)" },
+  { key: "inquiry_label_badge_inbox", label: "문의 라벨 배지 (inbox)", category: "ux", default: true, description: "inbox 목록에 자동 라벨링 결과 컬러 칩 표시" },
+  { key: "case_delay_badge", label: "사건 지연 배지", category: "ux", default: true, description: "cases 목록에 30일+ 지연 사건 빨간 배지 표시" },
+  { key: "deploy_status_monitor", label: "배포 상태 모니터링", category: "operations", default: false, description: "Vercel 배포 상태 모니터링 + 실패 시 텔레그램 알림 (VERCEL_TOKEN env 필요)" },
+  { key: "deploy_status_card", label: "배포 상태 카드", category: "operations", default: true, description: "관리자 설정 페이지에 최근 배포 상태 표시" },
+  { key: "reply_tone_ab_tracking", label: "답장 톤 A/B 추적", category: "marketing", default: false, description: "답장 톤 선택 → WON 전환 추적 (어느 톤이 계약 전환율 높은지)" },
+  { key: "local_landing_nav", label: "지역 랜딩 네비 노출", category: "marketing", default: true, public: true, description: "홈페이지·사이드바에 지역 랜딩 링크 노출" },
+  { key: "kakao_retry_auto", label: "카카오 알림톡 재시도", category: "operations", default: false, description: "카카오 알림톡 발송 실패 자동 재시도 (최대 3회)" },
+  { key: "daily_dashboard_email", label: "일일 KPI 이메일", category: "operations", default: false, description: "매일 KPI 스냅샷 이메일 (ADMIN_ALERT_EMAIL env 필요)" },
+  { key: "macro_server_sync", label: "매크로 서버 동기화", category: "operations", default: false, description: "매크로 hotkey 서버 저장 (기기간 동기화)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

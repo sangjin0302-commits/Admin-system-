@@ -26,6 +26,7 @@ import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/serv
 import { OrganizationJsonLd, LegalServiceJsonLd } from "@/components/seo/json-ld";
 import { getSiteSettings } from "@/lib/services/site-settings";
 import { listPublicTestimonials } from "@/lib/services/testimonials";
+import { LocalLandingGrid } from "@/components/public/local-landing-grid";
 
 export const revalidate = 300;
 
@@ -842,6 +843,8 @@ export default async function PublicMarketingHomePage({
       </section>
 
       {/* ═══════════════ 최종 CTA ═══════════════ */}
+      <LocalLandingGrid />
+
       <section className="py-20 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal>
