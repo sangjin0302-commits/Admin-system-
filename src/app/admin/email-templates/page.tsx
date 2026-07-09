@@ -2,10 +2,25 @@ import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
 import { listTemplates } from "@/lib/services/email-template-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
 export const dynamic = "force-dynamic";
 
 export default async function EmailTemplatesPage() {
+  const enabled = await isFeatureEnabled("email_template_manager").catch(() => true);
+  if (!enabled) {
+    return (
+      <div className="space-y-6">
+        <Card className="p-6">
+          <p className="ui-kicker">Settings</p>
+          <h1 className="mt-2 ui-page-title">이메일 템플릿</h1>
+          <p className="mt-2 text-sm text-text-muted">
+            이 기능은 현재 비활성화되어 있습니다.
+          </p>
+        </Card>
+      </div>
+    );
+  }
   const templates = await listTemplates();
 
   return (

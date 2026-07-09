@@ -1,5 +1,22 @@
 import { createAdminRequestContext, safeReadJsonBody } from "@/lib/http/admin-api";
-import { saveTemplate } from "@/lib/services/email-template-service";
+import { listTemplates, saveTemplate } from "@/lib/services/email-template-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+
+export async function GET() {
+  const api = createAdminRequestContext("admin.email-templates.list");
+  if (!(await isFeatureEnabled("email_template_manager").catch(() => true))) {
+    return api.error(403, "이메일 템플릿 관리가 비활성화되어 있습니다", {
+      code: "FEATURE_DISABLED",
+    });
+  }
+  try {
+    const templates = await listTemplates();
+    return api.ok({ templates });
+  } catch (error) {
+    api.logError(error);
+    return api.error(500, "템플릿 목록 조회 실패", { code: "TEMPLATE_LIST_FAILED" });
+  }
+}
 
 export async function PUT(request: Request) {
   const api = createAdminRequestContext("admin.email-templates.save");

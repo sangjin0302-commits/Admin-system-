@@ -139,10 +139,25 @@ export default async function BlogDetailPage({
   if (!post) notFound();
 
   const all = await listBlogPosts();
-  const [blogRelatedAutoEnabled, faqSchemaAutoEnabled] = await Promise.all([
+  const [blogRelatedAutoEnabled, faqSchemaAutoEnabled, blogSeoAutoEnabled] = await Promise.all([
     isFeatureEnabled("blog_related_auto"),
     isFeatureEnabled("faq_schema_auto"),
+    isFeatureEnabled("blog_seo_auto"),
   ]);
+  let blogPostingSchema: Record<string, unknown> | null = null;
+  if (blogSeoAutoEnabled) {
+    const row = await prisma.siteSetting
+      .findUnique({ where: { key: `blog.seo.${post.slug}` } })
+      .catch(() => null);
+    if (row?.value) {
+      try {
+        const parsed = JSON.parse(row.value) as { schemaOrg?: Record<string, unknown> };
+        if (parsed.schemaOrg) blogPostingSchema = parsed.schemaOrg;
+      } catch {
+        /* ignore */
+      }
+    }
+  }
   const faqPairs = faqSchemaAutoEnabled ? extractFaqPairs(post.contentHtml) : [];
   const dbRelated = blogRelatedAutoEnabled
     ? await getRelatedBlogPosts(post.category).catch(() => [])
@@ -181,6 +196,12 @@ export default async function BlogDetailPage({
         url={`/blog/${post.slug}`}
         publishedAt={post.date}
       />
+      {blogPostingSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
+        />
+      )}
       <BreadcrumbJsonLd
         items={[
           { name: "홈", url: "/" },

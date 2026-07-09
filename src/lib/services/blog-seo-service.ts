@@ -1,4 +1,6 @@
 import { logger } from "@/lib/utils/logger";
+import { smartInvoke } from "./smart-ai-client";
+
 export type BlogSEOMeta = {
   metaTitle: string;
   metaDescription: string;
@@ -113,3 +115,138 @@ JSON 형식:
 
   return JSON.parse(match[0]) as BlogSEOMeta;
 }
+
+// ---------------------------------------------------------------------------
+// III5: blog_seo_auto — generateSeoMeta(post) → { metaDescription, ogTitle, ogDescription, schemaOrg }
+// ---------------------------------------------------------------------------
+
+export type BlogPostSeoInput = {
+  id?: string;
+  slug: string;
+  title: string;
+  body: string;
+  excerpt?: string | null;
+  category?: string | null;
+  coverImage?: string | null;
+  authorName?: string | null;
+  publishedAt?: Date | string | null;
+  createdAt?: Date | string | null;
+};
+
+export type BlogSeoMeta = {
+  metaDescription: string;
+  ogTitle: string;
+  ogDescription: string;
+  schemaOrg: Record<string, unknown>;
+};
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethos.kr";
+const HAIKU_MODEL = "claude-haiku-4-5-20251001";
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+async function generateMetaDescription(post: BlogPostSeoInput): Promise<string> {
+  const plain = stripHtml(post.body).slice(0, 3000);
+  const prompt = [
+    "다음 법률 블로그 글의 메타 설명을 한국어 140-155자로 작성합니다.",
+    "- 검색 결과 스니펫 용도 (SEO)",
+    "- 핵심 키워드 포함, 클릭 유도",
+    "- 따옴표·이모지·번호 없이 한 문단",
+    "",
+    `제목: ${post.title}`,
+    `본문: ${plain}`,
+    "",
+    "메타 설명만 출력:",
+  ].join("\n");
+
+  // Try smartInvoke first (routes to Haiku for summarize)
+  try {
+    const res = await smartInvoke("summarize", prompt, { maxTokens: 300 });
+    const text = res.text?.trim();
+    if (text) return text.replace(/^["'`]|["'`]$/g, "").slice(0, 160);
+  } catch (err) {
+    logger.warn("[blog-seo] smartInvoke failed, falling back to Haiku direct", err);
+  }
+
+  // Direct Haiku fallback
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (apiKey) {
+    try {
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: HAIKU_MODEL,
+          max_tokens: 300,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      if (resp.ok) {
+        const j = (await resp.json()) as { content?: Array<{ text?: string }> };
+        const text = j.content?.[0]?.text?.trim();
+        if (text) return text.replace(/^["'`]|["'`]$/g, "").slice(0, 160);
+      }
+    } catch (err) {
+      logger.warn("[blog-seo] Haiku direct fallback failed", err);
+    }
+  }
+
+  const src = post.excerpt?.trim() || stripHtml(post.body);
+  return src.slice(0, 155).trim();
+}
+
+function buildBlogPostingSchema(
+  post: BlogPostSeoInput,
+  description: string
+): Record<string, unknown> {
+  const url = `${SITE_URL}/blog/${post.slug}`;
+  const datePublished = post.publishedAt
+    ? new Date(post.publishedAt).toISOString()
+    : post.createdAt
+    ? new Date(post.createdAt).toISOString()
+    : new Date().toISOString();
+
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description,
+    datePublished,
+    dateModified: datePublished,
+    author: {
+      "@type": "Organization",
+      name: post.authorName ?? "ETHOS 행정사사무소",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "ETHOS 행정사사무소",
+      logo: { "@type": "ImageObject", url: `${SITE_URL}/logo.png` },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+  };
+  if (post.coverImage) {
+    schema.image = post.coverImage.startsWith("http")
+      ? post.coverImage
+      : `${SITE_URL}${post.coverImage.startsWith("/") ? "" : "/"}${post.coverImage}`;
+  }
+  return schema;
+}
+
+export async function generateSeoMeta(post: BlogPostSeoInput): Promise<BlogSeoMeta> {
+  const metaDescription = await generateMetaDescription(post);
+  const ogTitle = post.title.length > 70 ? `${post.title.slice(0, 67)}...` : post.title;
+  return {
+    metaDescription,
+    ogTitle,
+    ogDescription: metaDescription,
+    schemaOrg: buildBlogPostingSchema(post, metaDescription),
+  };
+}
+

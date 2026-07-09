@@ -25,6 +25,7 @@ import { LicenseDetailPanel } from "@/components/admin/license-detail-panel";
 import { CaseMatterCategoryPanel } from "@/components/admin/case-matter-category-panel";
 import { CaseCopilotDrawer } from "@/components/admin/case-copilot-drawer";
 import { OneClickCloseButton } from "@/components/admin/one-click-close-button";
+import { CaseDocGenButton } from "@/components/admin/case-doc-gen-button";
 import { ClientContextSidebar } from "@/components/admin/client-context-sidebar";
 import { CasePrecedentCard } from "@/components/admin/case-precedent-card";
 import { CaseTaxPartnerButton } from "@/components/admin/case-tax-partner-button";
@@ -131,6 +132,7 @@ export default async function AdminCaseMatterDetailPage({
   }
 
   const timelineEnabled = await isFeatureEnabled("case_event_timeline");
+  const caseDocGenEnabled = await isFeatureEnabled("case_doc_gen");
   const currentStatus = normalizeCaseMatterStatus(caseMatter.status);
   const allowedCaseTransitions = getAllowedCaseMatterTransitions(currentStatus).map((status) =>
     normalizeCaseMatterStatus(status)
@@ -287,6 +289,7 @@ export default async function AdminCaseMatterDetailPage({
               </a>
             )}
             <OneClickCloseButton caseId={caseMatter.id} />
+            {caseDocGenEnabled ? <CaseDocGenButton caseId={caseMatter.id} /> : null}
             <Link
               href="/admin/cases"
               className="inline-flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-text-strong transition hover:border-line-strong hover:bg-surface-muted"

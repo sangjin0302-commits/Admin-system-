@@ -15,6 +15,8 @@ import { createAdminRequestContext } from "@/lib/http/admin-api";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { smartInvoke } from "@/lib/services/smart-ai-client";
 import { getRelatedBlogPosts } from "@/lib/services/blog-recommend-service";
+import { getPromptVariant } from "@/lib/services/prompt-ab-service";
+import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -58,13 +60,35 @@ ${inquiry.description}
 
 위 문의에 대한 첫 답장 초안을 작성해주세요.`;
 
+    // III2: reply_prompt_ab — 활성 시 프롬프트 A/B 변형 적용
+    let systemPrompt = SYSTEM;
+    let abVariantId: string | null = null;
+    try {
+      if (await isFeatureEnabled("reply_prompt_ab")) {
+        const variant = getPromptVariant("reply_draft", id);
+        if (variant) {
+          systemPrompt = `${SYSTEM}\n\n${variant.systemSuffix}`;
+          abVariantId = variant.id;
+          try {
+            logger.info(
+              `[reply-draft.ab] taskType=reply_draft inquiryId=${id} variantId=${variant.id}`
+            );
+          } catch {
+            /* best-effort */
+          }
+        }
+      }
+    } catch (flagErr) {
+      logger.warn("[reply-draft] reply_prompt_ab flag check failed", flagErr);
+    }
+
     // BBB2: 3버전 요청 지원 — ?variants=3
     const url = new URL(_req.url);
     const wantVariants = url.searchParams.get("variants") === "3"
       && (await isFeatureEnabled("reply_draft_variants").catch(() => false));
 
     if (wantVariants) {
-      const variantSystem = `${SYSTEM}
+      const variantSystem = `${systemPrompt}
 
 이번에는 같은 문의에 대해 톤이 다른 3가지 버전을 작성합니다.
 응답 형식 (구분자 정확히 유지, 다른 텍스트 금지):
@@ -91,11 +115,11 @@ ${inquiry.description}
       if (!variants.friendly && !variants.formal && !variants.practical) {
         return api.error(500, "파싱 실패", { code: "PARSE_FAILED" });
       }
-      return api.ok({ variants, model: res.model });
+      return api.ok({ variants, model: res.model, abVariantId });
     }
 
     const res = await smartInvoke("drafting", prompt, {
-      system: SYSTEM,
+      system: systemPrompt,
       maxTokens: 400,
     });
     let draft = res.text?.trim() ?? "";
@@ -109,7 +133,7 @@ ${inquiry.description}
       }
     }
 
-    return api.ok({ draft, model: res.model });
+    return api.ok({ draft, model: res.model, abVariantId });
   } catch (err) {
     api.logError(err);
     return api.error(500, "초안 생성 실패", { code: "DRAFT_FAILED" });

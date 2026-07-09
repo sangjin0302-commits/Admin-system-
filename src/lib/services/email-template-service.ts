@@ -52,6 +52,46 @@ export const DEFAULT_TEMPLATES: Record<string, EmailTemplate> = {
 <p>회신 부탁드립니다.</p>`,
     variables: ["name", "title"],
   },
+  intake_confirm: {
+    key: "intake_confirm",
+    subject: "[ETHOS] 상담 접수 확인 - {{caseNo}}",
+    bodyHtml: `<p>{{name}}님,</p>
+<p>상담 요청이 정상 접수되었습니다. 접수번호 <strong>{{caseNo}}</strong>로 기록되었습니다.</p>
+<p>담당자가 검토 후 곧 연락드리겠습니다.</p>`,
+    variables: ["name", "caseNo"],
+  },
+  quote_followup: {
+    key: "quote_followup",
+    subject: "[ETHOS] 견적 관련 후속 안내 - {{caseNo}}",
+    bodyHtml: `<p>{{name}}님,</p>
+<p>이전에 안내드린 견적(<strong>{{caseNo}}</strong>)에 대해 진행 여부를 확인드립니다.</p>
+<p>추가 문의사항이 있으시면 회신 부탁드립니다.</p>`,
+    variables: ["name", "caseNo"],
+  },
+  case_update: {
+    key: "case_update",
+    subject: "[ETHOS] 사건 진행 업데이트 - {{caseNo}}",
+    bodyHtml: `<p>{{name}}님,</p>
+<p>사건 <strong>{{caseNo}}</strong>의 진행 상황을 업데이트드립니다.</p>
+<p>{{message}}</p>`,
+    variables: ["name", "caseNo", "message"],
+  },
+  case_closed: {
+    key: "case_closed",
+    subject: "[ETHOS] 사건 종결 안내 - {{caseNo}}",
+    bodyHtml: `<p>{{name}}님,</p>
+<p>사건 <strong>{{caseNo}}</strong>이(가) 종결되었습니다.</p>
+<p>이용해 주셔서 감사합니다.</p>`,
+    variables: ["name", "caseNo"],
+  },
+  satisfaction_survey: {
+    key: "satisfaction_survey",
+    subject: "[ETHOS] 만족도 설문 요청 - {{caseNo}}",
+    bodyHtml: `<p>{{name}}님,</p>
+<p>최근 진행한 사건 <strong>{{caseNo}}</strong>에 대해 짧은 만족도 설문을 부탁드립니다.</p>
+<p><a href="{{link}}">설문 참여하기</a></p>`,
+    variables: ["name", "caseNo", "link"],
+  },
 };
 
 function settingKey(key: string) {

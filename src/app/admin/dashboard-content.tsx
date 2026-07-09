@@ -1,4 +1,6 @@
 import { type TodayItem } from "@/components/admin/dashboard-today-widget";
+import { AdminDashboardV2Section } from "@/components/admin/dashboard-v2-section";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { CaseAccountingDashboardCard } from "@/components/admin/case-accounting-dashboard-card";
 import { NextActionsPanel } from "@/components/admin/next-actions-panel";
 import { CaseMatterActionSummaryCard } from "@/components/admin/case-matter-action-summary-card";
@@ -143,6 +145,7 @@ async function safeCount<T>(label: string, task: Promise<T>, fallback: T) {
 }
 
 export default async function AdminDashboardContent() {
+  const dashboardV2Enabled = await isFeatureEnabled("admin_dashboard_v2");
   const [
     inquiries,
     marketingSnapshot,
@@ -224,6 +227,7 @@ export default async function AdminDashboardContent() {
 
   return (
     <div className="space-y-6">
+      {dashboardV2Enabled ? <AdminDashboardV2Section /> : null}
       <DashboardTodayStrip todayItems={todayItems} />
 
       <DashboardHero

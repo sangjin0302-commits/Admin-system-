@@ -9,6 +9,7 @@ import { ModusignPendingCard } from "@/components/portal/modusign-pending-card";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/client";
 import { predictDuration } from "@/lib/services/duration-predictor-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,7 @@ export default async function PortalCaseDetail({
     take: 20
   });
 
+  const timelineLive = await isFeatureEnabled("portal_timeline_live").catch(() => false);
   const durationPrediction = await predictDuration(caseMatter.category, caseMatter.riskLevel).catch(() => null);
   const expectedCloseLabel = durationPrediction
     ? new Date(
@@ -76,7 +78,7 @@ export default async function PortalCaseDetail({
       </Card>
 
       {/* 진행 단계 타임라인 */}
-      <CaseTimeline status={caseMatter.status} />
+      <CaseTimeline status={caseMatter.status} caseId={caseMatter.id} liveEnabled={timelineLive} />
       <Gov24RequestCard caseId={caseMatter.id} />
       <ModusignPendingCard caseId={caseMatter.id} />
 

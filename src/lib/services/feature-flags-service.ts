@@ -11,7 +11,7 @@ import { logger } from "@/lib/utils/logger";
 const SITE_SETTING_KEY = "feature.flags";
 const CACHE_MS = 30_000;
 
-export type FeatureCategory = "marketing" | "operations" | "ux" | "portal" | "ai";
+export type FeatureCategory = "marketing" | "operations" | "ux" | "portal" | "ai" | "platform";
 
 export type FeatureDefinition = {
   key: string;
@@ -279,6 +279,11 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "portal_timeline_live", label: "포털 타임라인 실데이터", category: "portal", default: true, description: "고객 포털 사건 타임라인에 CaseEvent 실데이터 표시" },
   { key: "reply_prompt_ab", label: "답장 프롬프트 A/B", category: "ai", default: false, description: "답장 초안 프롬프트를 formal/empathetic/solution-focused 중 해시 기반 선택" },
   { key: "email_template_manager", label: "이메일 템플릿 관리", category: "operations", default: true, description: "이메일 템플릿 관리 UI (/admin/email-templates)" },
+  { key: "portal_survey_page", label: "고객 포털 설문 페이지", category: "portal", default: true, description: "종결 사건 만족도 설문 페이지 (/portal/survey/[caseId])" },
+  { key: "blog_seo_auto", label: "블로그 SEO 자동 최적화", category: "marketing", default: true, description: "블로그 발행 시 메타/OG/JSON-LD 자동 생성" },
+  { key: "case_doc_gen", label: "사건 문서 자동 생성", category: "operations", default: true, description: "위임장/영수증 등 사건 관련 서식 HTML 자동 생성 (window.print)" },
+  { key: "admin_dashboard_v2", label: "관리자 대시보드 v2", category: "operations", default: true, description: "관리자 홈 KPI/7일 추이/긴급건/오늘 마감 리뉴얼 섹션" },
+  { key: "multi_org_mode", label: "멀티 사무소 모드", category: "platform", default: false, description: "orgId 기반 다중 사무소 데이터 격리 (scaffolding — 실제 필터 적용 전)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

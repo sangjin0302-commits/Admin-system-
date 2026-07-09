@@ -1,9 +1,18 @@
 /**
  * 사건 진행 타임라인 — 의뢰인 사건 상세 페이지에 표시.
  * 현재 상태를 받아 단계 별 진행도를 시각화.
+ *
+ * III1: `liveEnabled` + `caseId` 주어지면 /api/portal/cases/{id}/timeline에서
+ * 실제 이벤트를 fetch하여 단계 아래에 시간순 목록으로 표시. 실패/비활성 시 정적 단계만.
  */
 
+"use client";
+
+import { useEffect, useState } from "react";
+
 type Phase = { key: string; label: string; duration: string; statuses: readonly string[] };
+
+type LiveEvent = { step: string; status: string; date: string; description: string };
 
 const PHASES: readonly Phase[] = [
   { key: "intake", label: "접수 / 상담", duration: "1~3일", statuses: ["INTAKE_REVIEW", "CONSULTING", "QUOTED", "CONTRACT_PENDING"] },
@@ -48,9 +57,41 @@ const pulseKeyframes = `
 }
 `;
 
-export function CaseTimeline({ status }: { status: string }) {
+export function CaseTimeline({
+  status,
+  caseId,
+  liveEnabled,
+}: {
+  status: string;
+  caseId?: string;
+  liveEnabled?: boolean;
+}) {
   const activeIndex = getActivePhaseIndex(status);
   const statusLabel = STATUS_LABELS[status] ?? status;
+  const [liveEvents, setLiveEvents] = useState<LiveEvent[] | null>(null);
+  const [liveError, setLiveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!liveEnabled || !caseId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/portal/cases/${caseId}/timeline`, {
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        const data = (await res.json()) as { ok?: boolean; events?: LiveEvent[] };
+        if (!cancelled && data.ok && Array.isArray(data.events)) {
+          setLiveEvents(data.events);
+        }
+      } catch (err) {
+        if (!cancelled) setLiveError(err instanceof Error ? err.message : String(err));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [liveEnabled, caseId]);
 
   return (
     <section aria-labelledby="case-timeline-heading" className="ethos-card p-7">
@@ -150,6 +191,28 @@ export function CaseTimeline({ status }: { status: string }) {
       <p className="mt-6 text-center text-xs text-text-muted">
         예상 소요 기간은 사안에 따라 달라질 수 있습니다.
       </p>
+
+      {liveEnabled && liveEvents && liveEvents.length > 0 && (
+        <div className="mt-8 border-t border-gold/20 pt-6">
+          <p className="ethos-eyebrow">Live Events</p>
+          <ol className="mt-4 space-y-3">
+            {liveEvents.map((ev, i) => (
+              <li key={`${ev.step}-${i}`} className="border-l-2 border-gold/40 pl-4">
+                <p className="text-xs text-text-muted">
+                  {new Date(ev.date).toLocaleString("ko-KR")} · {ev.status}
+                </p>
+                <p className="mt-1 text-sm text-text">{ev.description}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {liveEnabled && liveError && (
+        <p className="mt-4 text-[10px] text-text-muted">
+          실시간 타임라인을 불러오지 못했습니다.
+        </p>
+      )}
 
       {(status === "CANCELLED" || status === "ON_HOLD") && (
         <p className="mt-6 rounded-lg border-l-2 border-amber-400 bg-amber-50 px-4 py-3 text-xs text-amber-900">
