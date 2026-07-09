@@ -159,14 +159,28 @@ export async function AdminDashboardV2Section() {
           <p className="text-xs text-text-muted">총 {buckets.reduce((s, b) => s + b.count, 0)}건</p>
         </div>
         <div className="mt-3 overflow-x-auto">
-          <svg viewBox={`0 0 ${chartW} ${chartH + 24}`} width="100%" height={chartH + 24} role="img" aria-label="7일 문의 추이">
+          <svg
+            viewBox={`0 0 ${chartW} ${chartH + 24}`}
+            width="100%"
+            height={chartH + 24}
+            role="img"
+            aria-label={`7일간 문의 접수 추이 — 총 ${buckets.reduce((s, b) => s + b.count, 0)}건, 최대 ${maxCount}건/일`}
+            tabIndex={0}
+            focusable="true"
+          >
+            <title>7일간 문의 접수 추이</title>
+            <desc>
+              {buckets.map((b) => `${b.label}: ${b.count}건`).join(", ")}
+            </desc>
             {buckets.map((b, i) => {
               const h = (b.count / maxCount) * chartH;
               const x = i * (barW + 8) + 4;
               const y = chartH - h;
               return (
                 <g key={b.label}>
-                  <rect x={x} y={y} width={barW} height={h} rx={3} className="fill-primary/70" />
+                  <rect x={x} y={y} width={barW} height={h} rx={3} className="fill-primary/70">
+                    <title>{`${b.label}: ${b.count}건`}</title>
+                  </rect>
                   <text x={x + barW / 2} y={chartH + 14} textAnchor="middle" fontSize="10" className="fill-text-muted">
                     {b.label}
                   </text>
@@ -179,6 +193,23 @@ export async function AdminDashboardV2Section() {
               );
             })}
           </svg>
+          <table className="sr-only" aria-label="7일간 문의 접수 추이 데이터">
+            <caption>최근 7일 일자별 문의 접수 건수</caption>
+            <thead>
+              <tr>
+                <th scope="col">일자</th>
+                <th scope="col">문의 건수</th>
+              </tr>
+            </thead>
+            <tbody>
+              {buckets.map((b) => (
+                <tr key={`row-${b.label}`}>
+                  <th scope="row">{b.label}</th>
+                  <td>{b.count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Card>
 

@@ -46,6 +46,10 @@ const STATIC_PAGES: CommandItem[] = [
   { id: "page:macro-hotkeys", group: "page", label: "매크로 hotkey", href: "/admin/macro-hotkeys", aliases: ["매크로", "macro", "hotkey", "단축키"], keywords: ["Ctrl", "빠른"] },
   { id: "page:receivables", group: "page", label: "미수금 알림", href: "/admin/receivables", aliases: ["미수금", "unpaid", "receivable"], keywords: ["결제"] },
   { id: "page:blog-rewrite-queue", group: "page", label: "블로그 리라이트 큐", href: "/admin/blog-rewrite-queue", aliases: ["리라이트", "rewrite", "CTR"], keywords: ["GSC", "SEO"] },
+  { id: "page:blog-translate", group: "page", label: "블로그 자동 번역", href: "/admin/blog-translate", aliases: ["번역", "translate", "EN", "ZH"], keywords: ["blog", "auto"] },
+  { id: "page:ai-accuracy", group: "page", label: "AI 승소예측 정확도", href: "/admin/ai-accuracy", aliases: ["예측", "정확도", "prediction", "accuracy"], keywords: ["AI", "WON", "LOST"] },
+  { id: "page:label-training", group: "page", label: "문의 라벨 재학습", href: "/admin/label-training", aliases: ["라벨", "label", "training", "재학습"], keywords: ["AI", "inquiry"] },
+  { id: "page:org-onboard", group: "page", label: "사무소 온보딩", href: "/admin/orgs/new", aliases: ["사무소", "onboarding", "onboard", "신규"], keywords: ["organization", "wizard"] },
   { id: "page:utm-heatmap", group: "page", label: "UTM heatmap", href: "/admin/utm-heatmap", aliases: ["UTM", "heatmap", "전환"], keywords: ["소스", "매체"] },
   { id: "page:mentor", group: "page", label: "실무 멘토링", href: "/admin/mentor", aliases: ["멘토", "연습", "훈련", "mentor"], keywords: ["학습", "실무"] },
   { id: "page:mentor.case", group: "page", label: "사례 시뮬레이터", href: "/admin/mentor/case-simulator", aliases: ["시뮬", "사례", "케이스"], keywords: ["훈련", "상담"] },
@@ -59,6 +63,7 @@ const STATIC_PAGES: CommandItem[] = [
   { id: "page:stats", group: "page", label: "통계 / 재무", href: "/admin/stats" },
   { id: "page:ledger", group: "page", label: "원장 관리", href: "/admin/ledger" },
   { id: "page:site-content", group: "page", label: "홈페이지 운영", href: "/admin/site-content" },
+  { id: "page:content-editor", group: "page", label: "웹페이지 콘텐츠 편집", href: "/admin/content-editor", aliases: ["콘텐츠", "content", "CMS", "카피", "문구"], keywords: ["편집", "히어로", "푸터"] },
   { id: "page:case-studies", group: "page", label: "사례 관리", href: "/admin/case-studies" },
   { id: "page:testimonials", group: "page", label: "후기 관리", href: "/admin/testimonials" },
   { id: "page:fees", group: "page", label: "비용 관리", href: "/admin/fees" },
@@ -69,6 +74,7 @@ const STATIC_PAGES: CommandItem[] = [
   { id: "page:quote-conversion", group: "page", label: "견적 전환율", href: "/admin/quote-conversion", aliases: ["전환율", "conversion", "win rate"], keywords: ["견적", "WON", "마케팅"] },
   { id: "page:fee-tracking", group: "page", label: "수임료 수금 관리", href: "/admin/fee-tracking", aliases: ["수임료", "수금", "fee"], keywords: ["재무", "tracking", "payment"] },
   { id: "page:satisfaction-survey", group: "page", label: "고객 만족도 설문", href: "/admin/satisfaction-survey", aliases: ["만족도", "설문", "survey"], keywords: ["고객", "satisfaction"] },
+  { id: "page:survey-results", group: "page", label: "포털 설문 결과", href: "/admin/survey-results", aliases: ["설문결과", "survey", "NPS"], keywords: ["만족도", "포털", "results"] },
 ];
 
 const STATIC_ACTIONS: CommandItem[] = [

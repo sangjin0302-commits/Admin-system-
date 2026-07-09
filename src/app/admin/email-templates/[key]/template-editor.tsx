@@ -20,6 +20,33 @@ export function TemplateEditor({
   const [bodyHtml, setBodyHtml] = useState(initialBodyHtml);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewSubject, setPreviewSubject] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState(false);
+
+  async function handlePreview() {
+    setPreviewing(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/email-templates/${templateKey}/preview`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subject, bodyHtml }),
+      });
+      const data = await res.json();
+      const payload = (data?.data ?? data) as { subject?: string; html?: string; error?: string };
+      if (payload?.subject && payload?.html) {
+        setPreviewSubject(payload.subject);
+        setPreviewHtml(payload.html);
+      } else {
+        setMessage(`미리보기 실패: ${payload?.error ?? "unknown"}`);
+      }
+    } catch (error) {
+      setMessage(`오류: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setPreviewing(false);
+    }
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -79,6 +106,14 @@ export function TemplateEditor({
           >
             {saving ? "저장 중..." : "저장"}
           </button>
+          <button
+            type="button"
+            onClick={handlePreview}
+            disabled={previewing}
+            className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-text-strong transition hover:bg-surface-muted disabled:opacity-50"
+          >
+            {previewing ? "생성 중..." : "미리보기"}
+          </button>
           {message && <span className="text-xs text-text-muted">{message}</span>}
         </div>
       </div>
@@ -86,11 +121,22 @@ export function TemplateEditor({
       <div>
         <p className="text-xs font-semibold text-text-strong">미리보기</p>
         <div className="mt-1 rounded-md border border-line bg-surface p-3">
-          <p className="text-sm font-semibold text-text-strong">{subject}</p>
-          <div
-            className="mt-3 border-t border-line pt-3 text-sm"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(bodyHtml) }}
-          />
+          <p className="text-sm font-semibold text-text-strong">
+            {previewSubject ?? subject}
+          </p>
+          {previewHtml !== null ? (
+            <iframe
+              title="이메일 미리보기"
+              sandbox=""
+              srcDoc={previewHtml}
+              className="mt-3 h-96 w-full rounded border border-line bg-white"
+            />
+          ) : (
+            <div
+              className="mt-3 border-t border-line pt-3 text-sm"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(bodyHtml) }}
+            />
+          )}
         </div>
       </div>
     </div>

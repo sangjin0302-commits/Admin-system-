@@ -283,7 +283,14 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "blog_seo_auto", label: "블로그 SEO 자동 최적화", category: "marketing", default: true, description: "블로그 발행 시 메타/OG/JSON-LD 자동 생성" },
   { key: "case_doc_gen", label: "사건 문서 자동 생성", category: "operations", default: true, description: "위임장/영수증 등 사건 관련 서식 HTML 자동 생성 (window.print)" },
   { key: "admin_dashboard_v2", label: "관리자 대시보드 v2", category: "operations", default: true, description: "관리자 홈 KPI/7일 추이/긴급건/오늘 마감 리뉴얼 섹션" },
+  { key: "survey_results_dashboard", label: "포털 설문 결과 대시보드", category: "operations", default: true, description: "포털 만족도 설문 응답 집계 (/admin/survey-results)" },
+  { key: "case_doc_pdf", label: "사건 문서 PDF 다운로드", category: "operations", default: false, description: "위임장/영수증 인쇄 최적화 CSS + 자동 인쇄 다이얼로그 (PDF 저장)" },
   { key: "multi_org_mode", label: "멀티 사무소 모드", category: "platform", default: false, description: "orgId 기반 다중 사무소 데이터 격리 (scaffolding — 실제 필터 적용 전)" },
+  { key: "site_content_editor", label: "웹페이지 콘텐츠 편집", category: "operations", default: true, description: "홈/서비스/푸터 주요 문구를 관리자 CMS(/admin/content-editor)에서 인라인 편집" },
+  { key: "ai_prediction_accuracy", label: "AI 승소예측 정확도", category: "ai", default: false, description: "AI 승소 예측 신뢰도와 실제 결과 비교 트래킹" },
+  { key: "blog_auto_translate", label: "블로그 자동 번역 실행", category: "marketing", default: false, description: "미번역 블로그 포스트 일괄 자동 번역 (EN/ZH)" },
+  { key: "inquiry_label_retrain", label: "문의 라벨링 재학습", category: "ai", default: false, description: "자동 라벨링 정답/오답 피드백을 축적해 프롬프트 튜닝에 활용" },
+  { key: "org_onboarding_wizard", label: "사무소 온보딩 마법사", category: "platform", default: true, description: "신규 사무소 다단계 온보딩 위저드" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

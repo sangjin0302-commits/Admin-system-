@@ -4,11 +4,21 @@ import { useState } from "react";
 
 type DocType = "power_of_attorney" | "receipt";
 
+const PRINT_CSS = `
+<style>
+  @page { size: A4; margin: 20mm; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none !important; }
+  }
+</style>
+`;
+
 export function CaseDocGenButton({ caseId }: { caseId: string }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  async function generate(type: DocType) {
+  async function generate(type: DocType, asPdf: boolean = false) {
     setBusy(true);
     setOpen(false);
     try {
@@ -29,7 +39,16 @@ export function CaseDocGenButton({ caseId }: { caseId: string }) {
         alert(`문서 생성 실패: ${res.status} ${msg}`);
         return;
       }
-      const html = await res.text();
+      let html = await res.text();
+      if (asPdf) {
+        // Inject A4 print-optimized CSS + auto-trigger window.print for PDF save.
+        const printHook = `${PRINT_CSS}<script>window.addEventListener('load',()=>{setTimeout(()=>window.print(),300);});</script>`;
+        if (/<\/head>/i.test(html)) {
+          html = html.replace(/<\/head>/i, `${printHook}</head>`);
+        } else {
+          html = `${printHook}${html}`;
+        }
+      }
       const w = window.open("", "_blank");
       if (!w) {
         alert("팝업이 차단되었습니다. 팝업을 허용해 주세요.");
@@ -60,14 +79,28 @@ export function CaseDocGenButton({ caseId }: { caseId: string }) {
             onClick={() => generate("power_of_attorney")}
             className="block w-full px-3 py-2 text-left text-sm text-text-strong hover:bg-surface-muted"
           >
-            위임장
+            위임장 (HTML)
+          </button>
+          <button
+            type="button"
+            onClick={() => generate("power_of_attorney", true)}
+            className="block w-full px-3 py-2 text-left text-sm text-text-strong hover:bg-surface-muted"
+          >
+            위임장 PDF 다운로드
           </button>
           <button
             type="button"
             onClick={() => generate("receipt")}
             className="block w-full px-3 py-2 text-left text-sm text-text-strong hover:bg-surface-muted"
           >
-            영수증
+            영수증 (HTML)
+          </button>
+          <button
+            type="button"
+            onClick={() => generate("receipt", true)}
+            className="block w-full px-3 py-2 text-left text-sm text-text-strong hover:bg-surface-muted"
+          >
+            영수증 PDF 다운로드
           </button>
         </div>
       ) : null}

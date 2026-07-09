@@ -25,6 +25,7 @@ import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
 import { OrganizationJsonLd, LegalServiceJsonLd } from "@/components/seo/json-ld";
 import { getSiteSettings } from "@/lib/services/site-settings";
+import { getContentBatch } from "@/lib/services/site-content-service";
 import { listPublicTestimonials } from "@/lib/services/testimonials";
 import { LocalLandingGrid } from "@/components/public/local-landing-grid";
 
@@ -193,6 +194,13 @@ export default async function PublicMarketingHomePage({
 
   // 관리자 운영란 컨텐츠 (한국어에서만 override, 영어는 기본 카피)
   const site = await getSiteSettings();
+  // CMS 오버레이 (site_content_editor flag) — 편집 가능한 문구
+  const cms = await getContentBatch([
+    "home.deadline_strip.title",
+    "home.deadline_strip.subtitle",
+    "home.cta.label",
+    "footer.tagline"
+  ]);
   const heroBadge = lang === "ko" && site["home.heroBadge"] ? site["home.heroBadge"] : t.heroTagBadge;
   const heroDescription =
     lang === "ko" && site["home.heroDescription"] ? site["home.heroDescription"] : t.heroDescription;
@@ -261,9 +269,9 @@ export default async function PublicMarketingHomePage({
       {/* 긴급 상단 스트립 — 행정 기한 안내 */}
       <div className="border-b border-gold/30 bg-gold-soft/60 px-4 py-2 text-center text-[13px] leading-5 text-primary">
         <span aria-hidden className="mr-1">⚠️</span>
-        <span className="font-serif font-bold">행정심판 청구기한 90일 · 이의신청 60일</span>
+        <span className="font-serif font-bold">{cms["home.deadline_strip.title"]}</span>
         <span className="mx-1.5 text-gold-deep">—</span>
-        <span className="text-text-muted">기한이 지나면 구제가 어렵습니다.</span>{" "}
+        <span className="text-text-muted">{cms["home.deadline_strip.subtitle"]}</span>{" "}
         <Link
           href="/quick-check"
           className="ml-1 inline-flex items-center gap-1 font-semibold text-primary underline decoration-gold/60 underline-offset-2 transition-colors hover:text-gold-deep"

@@ -356,5 +356,19 @@ export async function updateCaseMatterStatus(input: UpdateCaseMatterStatusInput)
     generateCaseStoryDraft(result.caseId).catch(() => {});
   }
 
+  if (result.statusChanged && (result.newStatus === "CLOSED" || result.newStatus === "CANCELLED")) {
+    const outcome = result.newStatus === "CLOSED" ? "WON" : "LOST";
+    void (async () => {
+      try {
+        const { isFeatureEnabled } = await import("@/lib/services/feature-flags-service");
+        if (!(await isFeatureEnabled("ai_prediction_accuracy"))) return;
+        const { recordCaseOutcome } = await import("@/lib/services/ai-prediction-tracker");
+        await recordCaseOutcome(result.caseId, outcome);
+      } catch {
+        /* non-blocking */
+      }
+    })();
+  }
+
   return result.result;
 }
