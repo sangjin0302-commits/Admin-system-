@@ -308,3 +308,174 @@ export async function auditBlogPostOffline(post: BlogPostInput): Promise<SeoAudi
     if (prev !== undefined) process.env.ANTHROPIC_API_KEY = prev;
   }
 }
+
+// ============================================================================
+// URL-based site audit (DIY, no external Lighthouse)
+// ============================================================================
+
+export type SeoUrlCheck = {
+  key: string;
+  label: string;
+  pass: boolean;
+  value?: string;
+  detail?: string;
+};
+
+export type SeoUrlAuditResult = {
+  url: string;
+  fetchedAt: string;
+  status: number;
+  score: number; // 0..100
+  checks: SeoUrlCheck[];
+  issues: string[];
+};
+
+function pickAttr(re: RegExp, html: string): string | null {
+  const m = html.match(re);
+  return m ? (m[1] ?? "").trim() : null;
+}
+
+function countAll(re: RegExp, html: string): number {
+  return (html.match(re) ?? []).length;
+}
+
+function urlCheckTitle(html: string): SeoUrlCheck {
+  const title = pickAttr(/<title[^>]*>([\s\S]*?)<\/title>/i, html);
+  const len = title?.length ?? 0;
+  const pass = !!title && len >= 30 && len <= 60;
+  return {
+    key: "title",
+    label: "<title> 30-60자",
+    pass,
+    value: title ?? undefined,
+    detail: title ? `${len}자` : "<title> 태그 없음",
+  };
+}
+
+function urlCheckMetaDescription(html: string): SeoUrlCheck {
+  const desc =
+    pickAttr(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i, html) ??
+    pickAttr(/<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["'][^>]*>/i, html);
+  const len = desc?.length ?? 0;
+  const pass = !!desc && len >= 120 && len <= 160;
+  return {
+    key: "meta_description",
+    label: "meta description 120-160자",
+    pass,
+    value: desc ?? undefined,
+    detail: desc ? `${len}자` : "meta description 없음",
+  };
+}
+
+function urlCheckH1(html: string): SeoUrlCheck {
+  const count = countAll(/<h1\b[^>]*>/gi, html);
+  return { key: "h1", label: "<h1> 단일 사용", pass: count === 1, detail: `${count}개 발견` };
+}
+
+function urlCheckImgAlt(html: string): SeoUrlCheck {
+  const imgs = html.match(/<img\b[^>]*>/gi) ?? [];
+  const missing = imgs.filter((tag) => !/\balt\s*=\s*["'][^"']*["']/i.test(tag)).length;
+  return {
+    key: "img_alt",
+    label: "alt 없는 <img> 0개",
+    pass: missing === 0,
+    detail: `${imgs.length}개 중 ${missing}개 누락`,
+  };
+}
+
+function urlCheckOpenGraph(html: string): SeoUrlCheck {
+  const list = ["og:title", "og:description", "og:image", "og:url"].filter((k) =>
+    new RegExp(`property=["']${k}["']`, "i").test(html),
+  );
+  return {
+    key: "og",
+    label: "Open Graph 태그",
+    pass: list.length >= 3,
+    detail: `발견: ${list.join(", ") || "없음"}`,
+  };
+}
+
+function urlCheckCanonical(html: string): SeoUrlCheck {
+  const canonical =
+    pickAttr(/<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i, html) ??
+    pickAttr(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["'][^>]*>/i, html);
+  return {
+    key: "canonical",
+    label: "Canonical URL",
+    pass: !!canonical,
+    value: canonical ?? undefined,
+    detail: canonical ? undefined : "rel=canonical 없음",
+  };
+}
+
+function urlCheckJsonLd(html: string): SeoUrlCheck {
+  const count = countAll(
+    /<script[^>]+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi,
+    html,
+  );
+  return {
+    key: "json_ld",
+    label: "JSON-LD 구조화 데이터",
+    pass: count >= 1,
+    detail: `${count}개 스크립트`,
+  };
+}
+
+/**
+ * DIY 사이트 SEO 감사. URL을 fetch해 정규식으로 주요 SEO 요소를 점검합니다.
+ */
+export async function runSeoAudit(url: string): Promise<SeoUrlAuditResult> {
+  let target: URL;
+  try {
+    target = new URL(url);
+  } catch {
+    throw new Error("유효하지 않은 URL");
+  }
+  if (target.protocol !== "http:" && target.protocol !== "https:") {
+    throw new Error("http/https URL만 허용됩니다");
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
+  let status = 0;
+  let html = "";
+  try {
+    const res = await fetch(target.toString(), {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        "User-Agent": "ETHOS-SEO-Audit/1.0",
+        Accept: "text/html,application/xhtml+xml",
+      },
+    });
+    status = res.status;
+    html = await res.text();
+  } finally {
+    clearTimeout(timer);
+  }
+
+  const checks: SeoUrlCheck[] = [
+    urlCheckTitle(html),
+    urlCheckMetaDescription(html),
+    urlCheckH1(html),
+    urlCheckImgAlt(html),
+    urlCheckOpenGraph(html),
+    urlCheckCanonical(html),
+    urlCheckJsonLd(html),
+  ];
+
+  const passed = checks.filter((c) => c.pass).length;
+  const score = Math.round((passed / checks.length) * 100);
+  const issues = checks
+    .filter((c) => !c.pass)
+    .map((c) => `${c.label}${c.detail ? ` — ${c.detail}` : ""}`);
+
+  return {
+    url: target.toString(),
+    fetchedAt: new Date().toISOString(),
+    status,
+    score,
+    checks,
+    issues,
+  };
+}

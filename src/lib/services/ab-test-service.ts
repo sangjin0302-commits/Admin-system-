@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/prisma/client";
+
 export type ABTest = {
   key: string;
   name: string;
@@ -5,6 +7,9 @@ export type ABTest = {
   weights?: number[];
   active: boolean;
 };
+
+const EXPERIMENTS_KEY = "ab_experiments";
+const PAUSED_KEY = "ab_experiments_paused";
 
 export type ABMetric = {
   testKey: string;
@@ -85,6 +90,105 @@ export function getTestResults(testKey: string): {
     winner = eligible.reduce((a, b) => (b.rate > a.rate ? b : a)).name;
   }
   return { variants, winner };
+}
+
+/** SiteSetting `ab_experiments`에 저장된 사용자 정의 실험을 defineTest로 하이드레이션 */
+export async function loadExperimentsFromSetting(): Promise<void> {
+  try {
+    const row = await prisma.siteSetting.findUnique({ where: { key: EXPERIMENTS_KEY } });
+    if (row?.value) {
+      const parsed = JSON.parse(row.value) as unknown;
+      if (Array.isArray(parsed)) {
+        for (const raw of parsed) {
+          if (!raw || typeof raw !== "object") continue;
+          const t = raw as Partial<ABTest>;
+          if (
+            typeof t.key === "string" &&
+            typeof t.name === "string" &&
+            Array.isArray(t.variants) &&
+            t.variants.every((v) => typeof v === "string")
+          ) {
+            defineTest({
+              key: t.key,
+              name: t.name,
+              variants: t.variants,
+              weights: Array.isArray(t.weights) ? t.weights.map(Number) : undefined,
+              active: t.active !== false,
+            });
+          }
+        }
+      }
+    }
+    const pausedRow = await prisma.siteSetting.findUnique({ where: { key: PAUSED_KEY } });
+    if (pausedRow?.value) {
+      const paused = JSON.parse(pausedRow.value) as unknown;
+      if (Array.isArray(paused)) {
+        for (const k of paused) {
+          if (typeof k === "string") {
+            const t = tests.get(k);
+            if (t) t.active = false;
+          }
+        }
+      }
+    }
+  } catch {
+    // best-effort
+  }
+}
+
+async function readPausedSet(): Promise<Set<string>> {
+  const row = await prisma.siteSetting.findUnique({ where: { key: PAUSED_KEY } });
+  if (!row?.value) return new Set();
+  try {
+    const parsed = JSON.parse(row.value);
+    return new Set(Array.isArray(parsed) ? parsed.filter((v) => typeof v === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+async function readExperimentList(): Promise<ABTest[]> {
+  const row = await prisma.siteSetting.findUnique({ where: { key: EXPERIMENTS_KEY } });
+  if (!row?.value) return [];
+  try {
+    const parsed = JSON.parse(row.value);
+    return Array.isArray(parsed) ? (parsed as ABTest[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** 실험 일시정지/재개 — SiteSetting `ab_experiments_paused` 배열 + 인메모리 반영 */
+export async function setExperimentPaused(key: string, paused: boolean): Promise<void> {
+  const set = await readPausedSet();
+  if (paused) set.add(key);
+  else set.delete(key);
+  const value = JSON.stringify(Array.from(set));
+  await prisma.siteSetting.upsert({
+    where: { key: PAUSED_KEY },
+    create: { key: PAUSED_KEY, value },
+    update: { value },
+  });
+  const t = tests.get(key);
+  if (t) t.active = !paused;
+}
+
+/** 신규 실험 저장 — SiteSetting `ab_experiments` 배열 upsert + defineTest */
+export async function saveExperiment(test: ABTest): Promise<void> {
+  if (!test.key || !test.name || !Array.isArray(test.variants) || test.variants.length < 2) {
+    throw new Error("실험은 key/name과 2개 이상 variant가 필요합니다");
+  }
+  const list = await readExperimentList();
+  const idx = list.findIndex((t) => t.key === test.key);
+  if (idx >= 0) list[idx] = test;
+  else list.push(test);
+  const value = JSON.stringify(list);
+  await prisma.siteSetting.upsert({
+    where: { key: EXPERIMENTS_KEY },
+    create: { key: EXPERIMENTS_KEY, value },
+    update: { value },
+  });
+  defineTest(test);
 }
 
 // Pre-register default tests

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createAdminRequestContext, safeReadJsonBody, firstZodMessage } from "@/lib/http/admin-api";
 import { requireRole } from "@/lib/services/admin-rbac-service";
-import { getContent, setContent } from "@/lib/services/site-content-service";
+import { getContent, setContent, isContentEditor } from "@/lib/services/site-content-service";
 import { isValidContentKey } from "@/lib/services/site-content-keys";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +33,13 @@ const PutSchema = z.object({
 
 export async function PUT(req: Request, ctx: Ctx) {
   const api = createAdminRequestContext("admin.content.set");
-  const guard = await requireRole(req, ["SUPER", "MANAGER"]);
+  // SUPER/MANAGER 또는 cms_editor_role flag + editor emails 등록된 사용자 허용
+  const guard = await requireRole(req, ["SUPER", "MANAGER", "STAFF", "AUDITOR", "EXTERNAL"]);
   if (!guard.ok) return guard.response;
+  const allowed = await isContentEditor(guard.user.email, guard.user.role);
+  if (!allowed) {
+    return api.error(403, "편집 권한 없음", { code: "FORBIDDEN" });
+  }
 
   const { key } = await ctx.params;
   if (!isValidContentKey(key)) {
@@ -49,7 +54,7 @@ export async function PUT(req: Request, ctx: Ctx) {
   }
 
   try {
-    await setContent(key, validation.data.value);
+    await setContent(key, validation.data.value, guard.user.email);
     const value = await getContent(key);
     return api.ok({ ok: true, key, value });
   } catch (err) {

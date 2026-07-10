@@ -291,6 +291,14 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "blog_auto_translate", label: "블로그 자동 번역 실행", category: "marketing", default: false, description: "미번역 블로그 포스트 일괄 자동 번역 (EN/ZH)" },
   { key: "inquiry_label_retrain", label: "문의 라벨링 재학습", category: "ai", default: false, description: "자동 라벨링 정답/오답 피드백을 축적해 프롬프트 튜닝에 활용" },
   { key: "org_onboarding_wizard", label: "사무소 온보딩 마법사", category: "platform", default: true, description: "신규 사무소 다단계 온보딩 위저드" },
+  { key: "seo_audit", label: "사이트 SEO 감사", category: "marketing", default: true, description: "URL 입력 시 SEO 요소(타이틀·메타·H1·OG·JSON-LD) DIY 감사" },
+  { key: "ab_test_gui", label: "A/B 테스트 GUI", category: "marketing", default: true, description: "A/B 실험 목록·통계·일시정지·신규 실험 생성 UI" },
+  { key: "cms_extended", label: "CMS 키 확장", category: "operations", default: true, description: "서비스 페이지·소개·연락처 등 30+ 콘텐츠 키 노출" },
+  { key: "cms_image_upload", label: "CMS 이미지 업로드", category: "operations", default: true, description: "히어로 배경·인물·서비스 배경 이미지를 CMS에서 업로드/교체" },
+  { key: "cms_section_order", label: "CMS 섹션 순서", category: "operations", default: false, description: "홈페이지 섹션 순서를 관리자에서 재정렬 (scaffolding)" },
+  { key: "cms_preview", label: "사이트 편집 미리보기", category: "operations", default: true, description: "저장 전 오버라이드 값으로 홈페이지 섹션 미리보기 (/admin/content-editor/preview)" },
+  { key: "cms_history", label: "편집 히스토리·롤백", category: "operations", default: true, description: "콘텐츠 편집 이력 최근 10건 저장 및 롤백" },
+  { key: "cms_editor_role", label: "편집 권한 세분화", category: "operations", default: false, description: "cms_editor_emails 목록의 사용자에게 콘텐츠 편집 권한 위임" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

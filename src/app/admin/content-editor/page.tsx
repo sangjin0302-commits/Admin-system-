@@ -29,9 +29,23 @@ export default async function AdminContentEditorPage() {
     );
   }
 
+  const [extendedOn, imageOn] = await Promise.all([
+    isFeatureEnabled("cms_extended").catch(() => true),
+    isFeatureEnabled("cms_image_upload").catch(() => true)
+  ]);
+
+  const baseSections = new Set(["홈 · 히어로", "홈 · CTA", "홈 · 상단 스트립", "서비스", "푸터", "연락처"]);
+
   const values = await getAllContent();
   const grouped = groupContentKeys();
-  const sections = Object.entries(grouped).map(([section, items]) => ({
+  const filtered = Object.entries(grouped).filter(([section, items]) => {
+    const isBase = baseSections.has(section);
+    const isImage = items[0]?.type === "image";
+    if (isImage) return imageOn;
+    if (isBase) return true;
+    return extendedOn;
+  });
+  const sections = filtered.map(([section, items]) => ({
     section,
     items: items.map((it) => ({
       key: it.key,
