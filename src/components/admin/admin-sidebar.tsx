@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { isPageVisible } from "@/lib/services/admin-page-tiers";
 
 type SidebarCounts = { unresponded: number; receivables: number; dueSoon: number; quotePending: number };
 const BADGE_MAP: Record<string, keyof SidebarCounts> = {
@@ -140,7 +141,15 @@ function NavIcon({ d }: { d: string }) {
   );
 }
 
-export function AdminSidebar({ newInquiryCount = 0 }: { newInquiryCount?: number }) {
+export function AdminSidebar({
+  newInquiryCount = 0,
+  hideMode = false,
+  showAdvanced = false,
+}: {
+  newInquiryCount?: number;
+  hideMode?: boolean;
+  showAdvanced?: boolean;
+}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -191,6 +200,10 @@ export function AdminSidebar({ newInquiryCount = 0 }: { newInquiryCount?: number
     )}>
       {NAV_GROUPS.map((group) => {
         const groupCollapsed = collapsedGroups.has(group.title);
+        const filteredItems = group.items.filter((item) =>
+          !hideMode ? true : isPageVisible(item.href, hideMode, showAdvanced),
+        );
+        if (filteredItems.length === 0) return null;
         return (
         <div key={group.title} className="mb-2">
           {!collapsed && (
@@ -202,9 +215,14 @@ export function AdminSidebar({ newInquiryCount = 0 }: { newInquiryCount?: number
             >
               <span aria-hidden className="text-[8px]">{groupCollapsed ? "▶" : "▼"}</span>
               {group.title}
+              {hideMode && (
+                <span className="ml-1 text-[9px] font-normal text-text-muted opacity-70">
+                  {filteredItems.length}/{group.items.length}
+                </span>
+              )}
             </button>
           )}
-          {(!groupCollapsed || collapsed) && group.items.map((item) => (
+          {(!groupCollapsed || collapsed) && filteredItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}

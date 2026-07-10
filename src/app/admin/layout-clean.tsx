@@ -22,10 +22,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const quickNoteEnabled = await isFeatureEnabled("quick_note_fab");
   const macroHotkeysEnabled = await isFeatureEnabled("macro_hotkeys");
   const macroServerSync = await isFeatureEnabled("macro_server_sync");
+  const hideMode = await isFeatureEnabled("admin_hide_mode");
+  const showAdvanced = await isFeatureEnabled("admin_show_advanced");
 
   return (
     <div className="flex gap-6">
-      <AdminSidebar newInquiryCount={newCount} />
+      <AdminSidebar newInquiryCount={newCount} hideMode={hideMode} showAdvanced={showAdvanced} />
       <div className="min-w-0 flex-1 space-y-6 pb-16 lg:pb-0">
         <section className="rounded-[20px] border border-line bg-surface px-5 py-5 shadow-panel">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

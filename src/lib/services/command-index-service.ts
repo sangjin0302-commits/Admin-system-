@@ -79,6 +79,7 @@ const STATIC_PAGES: CommandItem[] = [
   { id: "page:guideline-rules", group: "page", label: "마케팅 지침 규칙", href: "/admin/guideline-rules", aliases: ["규칙", "rules", "금지문구"], keywords: ["v6.4", "지침", "규정"] },
   { id: "page:marketing-guideline", group: "page", label: "마케팅 지침 문서", href: "/admin/marketing-guideline", aliases: ["지침문서", "guideline doc", "v6.4", "v6.5"], keywords: ["편집", "버전", "지침", "문서"] },
   { id: "page:ai-draft-check", group: "page", label: "AI 초안 지침 검증", href: "/admin/ai-draft-check", aliases: ["초안검증", "draft check", "지침검증"], keywords: ["AI", "위반", "스캐너", "guideline"] },
+  { id: "page:hide-mode", group: "page", label: "감춤 모드 (사이드바 정리)", href: "/admin/hide-mode", aliases: ["hide", "감춤", "숨김", "사이드바"], keywords: ["tier", "필수만", "cognitive load", "정리"] },
 ];
 
 const STATIC_ACTIONS: CommandItem[] = [

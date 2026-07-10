@@ -9,7 +9,7 @@ export default function ConciergePage() {
       <p className="ui-kicker">VIP Portal</p>
       <h1 className="mt-2 font-serif text-2xl font-bold text-primary">VIP 컨시어지</h1>
       <p className="mt-2 text-sm text-text-muted">
-        VIP 회원 전용 24/7 AI 컨시어지. 사건 상태·마감·일정 문의를 즉시 응답합니다.
+        VIP 회원용 AI 컨시어지. 사건 상태·마감·일정을 언제든 확인할 수 있습니다.
       </p>
       <div className="mt-8">
         <ConciergeClient />

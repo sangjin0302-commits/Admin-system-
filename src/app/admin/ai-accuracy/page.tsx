@@ -16,7 +16,7 @@ export default async function AIAccuracyPage() {
       <div className="space-y-6">
         <AdminPageHeader
           kicker="AI"
-          title="AI 승소예측 정확도"
+          title="AI 결과 예측 정확도"
           description="ai_prediction_accuracy 플래그가 꺼져 있습니다."
         />
       </div>
@@ -30,7 +30,7 @@ export default async function AIAccuracyPage() {
     <div className="space-y-6">
       <AdminPageHeader
         kicker="AI"
-        title="AI 승소예측 정확도"
+        title="AI 결과 예측 정확도"
         description="사건 종결 시 실제 결과와 예측 신뢰도를 비교해 정확도를 산출합니다."
       />
 

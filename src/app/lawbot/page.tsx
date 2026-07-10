@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "법령 챗봇 — Lawbot",
-  description: "행정 절차·법령에 대해 즉시 안내받는 무료 챗봇.",
+  description: "행정 절차·법령을 안내하는 참고용 챗봇.",
 };
 
 export default async function LawbotPage() {

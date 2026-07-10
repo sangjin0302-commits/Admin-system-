@@ -13,7 +13,7 @@ export default function SearchPage() {
       <p className="ui-kicker">Search</p>
       <h1 className="ethos-display mt-2 text-2xl sm:text-4xl">통합 검색</h1>
       <p className="mt-2 text-sm text-text-muted">
-        업무분야 · 성공사례 · 블로그 글을 한 번에 검색합니다.
+        업무분야 · 블로그 글을 한 번에 검색합니다.
       </p>
 
       <div className="mt-6 sm:mt-8">

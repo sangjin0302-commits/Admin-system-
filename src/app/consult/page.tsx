@@ -71,7 +71,7 @@ export default function ConsultPage() {
           </Reveal>
           <Reveal delay={3}>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-gold-deep">
-              변호사 선임 대비 1/3~1/5 비용 수준으로 해결합니다.
+              변호사는 소송·법적 판단, 행정사는 절차 진행을 담당합니다. 역할이 다릅니다.
             </p>
           </Reveal>
         </div>

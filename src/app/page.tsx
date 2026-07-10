@@ -453,7 +453,7 @@ export default async function PublicMarketingHomePage({
             <h2 id="why-ethos-heading" className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">
               왜 ETHOS인가
             </h2>
-            <p className="mt-4 text-sm text-text-muted">변호사도, 혼자도 아닌 — 행정 전문가와 함께하는 가장 합리적인 길.</p>
+            <p className="mt-4 text-sm text-text-muted">변호사, 셀프, 행정사 — 사안별로 적합한 경로가 다릅니다.</p>
           </Reveal>
 
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -591,7 +591,7 @@ export default async function PublicMarketingHomePage({
                 <p className="mt-4 max-w-md text-sm leading-8 text-white/75">
                   에토스 행정사사무소는 아리스토텔레스가 말한 설득의 세 요소,
                   <span className="ethos-quote mx-1 text-gold-soft">Logos · Pathos · Ethos</span>
-                  를 바탕으로 가장 현실적인 방향을 함께 찾아갑니다.
+                  를 바탕으로 사안에 맞는 방향을 함께 찾아갑니다.
                 </p>
                   </>
                 )}
