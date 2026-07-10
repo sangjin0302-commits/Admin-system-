@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   description: "에토스 행정사사무소의 철학, 대표 행정사 소개, 운영 원칙을 안내합니다."
 };
 
-const VALUES = [
+const VALUES_KO = [
   {
     greek: "Logos",
     title: "이성으로 절차를",
@@ -34,7 +34,155 @@ const VALUES = [
   }
 ] as const;
 
-export default async function AboutPage() {
+const VALUES_EN = [
+  {
+    greek: "Logos",
+    title: "Reason in Process",
+    description: "We work through administrative matters with accurate statutes and logical judgment, not just intuition."
+  },
+  {
+    greek: "Pathos",
+    title: "Empathy for People",
+    description: "We take time to understand the circumstances and concerns behind each administrative matter."
+  },
+  {
+    greek: "Ethos",
+    title: "Trust in Every Step",
+    description: "We offer clear standards and direction our clients can follow, even through unfamiliar procedures."
+  }
+] as const;
+
+const COPY = {
+  ko: {
+    metaTitle: "사무소 소개 — ETHOS 행정사사무소",
+    metaDescription: "에토스 행정사사무소의 철학, 대표 행정사 소개, 운영 원칙을 안내합니다.",
+    eyebrowAbout: "About ETHOS",
+    heroTitle: "사무소 소개",
+    greetingEyebrow: "Greeting",
+    greetingTitleA: "행정 문제 뒤에 있는",
+    greetingTitleB: "사람의 마음까지",
+    greetingTitleC: "살피겠습니다.",
+    greetingBody1:
+      "AI가 많은 정보를 빠르게 정리하고, 이성적인 판단의 영역인 로고스(Logos)를 보조하는 시대가 되었습니다. 그러나 행정 문제 앞에 선 사람에게 필요한 것은 정보만이 아닙니다. 자신의 사정을 이해받고 있다는 안도감, 막막한 절차 속에서도 함께 걸어주는 사람이 있다는 신뢰가 필요합니다.",
+    greetingBody2Prefix: "",
+    greetingBody2Name: "에토스 행정사사무소",
+    greetingBody2Suffix:
+      "는 아리스토텔레스가 말한 설득의 세 요소, 로고스 · 파토스 · 에토스를 바탕으로 의뢰인의 상황을 세심하게 듣고 가장 현실적인 방향을 함께 찾아갑니다.",
+    greetingQuote: "절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를.",
+    scopeEyebrow: "Statutory Scope",
+    scopeTitle: "행정사 직무 범위",
+    scopeSubtitle: "행정사법 제2조에 따라 정해진 업무 범위 내에서 의뢰인을 대리합니다. 변호사·법무사·세무사·노무사의 업무가 아닙니다.",
+    scopeItems: [
+      { kicker: "행정사법 §2-1", title: "행정기관 제출서류", desc: "관공서·공공기관에 제출하는 신청·신고·청구·진정·이의신청 서류 작성·제출 대행" },
+      { kicker: "행정사법 §2-2", title: "권리·의무 사실증명", desc: "권리·의무 또는 사실관계에 관한 증명서류 작성" },
+      { kicker: "행정사법 §2-3", title: "인허가 신청", desc: "인가·허가·면허·등록·신고 등 신청 대행과 보완 대응" },
+      { kicker: "행정사법 §2-4", title: "행정심판 대리", desc: "행정심판 청구·재결·이의신청 대리" },
+      { kicker: "행정사법 §2-5", title: "법령 해석·자문", desc: "행정 업무 관련 법령 해석 및 절차 안내" },
+      { kicker: "행정사법 §2-6", title: "사실조사 · 확인", desc: "행정 절차에 필요한 사실관계 조사·확인·증명" }
+    ],
+    scopeNoticeTitle: "행정사 업무 범위 외 사안",
+    scopeNoticeBody:
+      "소송 대리 (변호사), 등기 신청 (법무사), 세무 신고 (세무사), 노동 분쟁 대리 (노무사) 등은 행정사 업무가 아닙니다. 검토 후 해당 사안일 경우 적합한 전문가를 안내드립니다.",
+    valuesEyebrow: "Our Values",
+    valuesTitle: "세 가지 가치",
+    values: VALUES_KO,
+    leadEyebrow: "Lead Attorney",
+    leadTitle: "행정사 Jean",
+    leadPhotoAlt: "대표 행정사",
+    leadBadge: "대표 행정사",
+    leadBadgeKicker: "Lead",
+    leadBody1:
+      "비자·출입국, 행정심판, 계약서·사실조사, 인허가, 법인설립 업무를 담당합니다. 주한 대사관 비자·출입국 실무를 2.5년 이상 경험하였고, 법무부 난민 판결문 공식 번역인 · 법원행정처 법정 통번역인으로 등록되어 있습니다.",
+    leadBody2Prefix: "한국어·영어·아랍어로 상담이 가능하며, 외국인 의뢰인의 사정에 맞춘",
+    leadBody2Highlight: " 다국어 서류 검토와 절차 안내",
+    leadBody2Suffix: "를 함께 진행합니다.",
+    credentialCards: [
+      { kicker: "Embassy", title: "주한 대사관 비자 실무", desc: "비자·출입국 실무 2.5년+" },
+      { kicker: "MOJ", title: "법무부 난민 판결문 번역인", desc: "공식 번역인 등록" },
+      { kicker: "Court", title: "법정 통번역인", desc: "법원행정처 등록" },
+      { kicker: "Academic", title: "한국외대 통번역대학원", desc: "한아과 · GPA 4.41" },
+      { kicker: "Lecture", title: "OASIS 4 강의", desc: "외국인 창업지원 프로그램" },
+      { kicker: "AI System", title: "법률 자동화 시스템", desc: "심판청구서·법령 자동수집 운영" }
+    ],
+    otherCredentialsLabel: "기타 자격",
+    ctaEyebrow: "Start with ETHOS",
+    ctaTitle: "오늘 상황을 말씀해 주세요",
+    ctaBody1: "비자·행정심판·인허가 어느 분야든 먼저 사실관계를 들어보겠습니다.",
+    ctaBody2: "1차 상담은 무료이며 영업일 기준 24시간 이내 회신드립니다.",
+    ctaIntake: "무료 검토 요청하기 →",
+    ctaQuickCheck: "AI 사전 진단 (30초)",
+    ctaFootnote: "검토 무료 · 24h 이내 회신 · 수임 시 상담료 차감"
+  },
+  en: {
+    metaTitle: "About Us — ETHOS Administrative Attorney Office",
+    metaDescription: "The philosophy, lead attorney, and operating principles of ETHOS Administrative Attorney Office.",
+    eyebrowAbout: "About ETHOS",
+    heroTitle: "About Us",
+    greetingEyebrow: "Greeting",
+    greetingTitleA: "We look after the person",
+    greetingTitleB: "behind every",
+    greetingTitleC: "administrative matter.",
+    greetingBody1:
+      "AI can now organize large amounts of information quickly, supporting Logos — the domain of reasoned judgment. But someone facing an administrative matter needs more than information. They need the reassurance of being understood, and the trust that comes from having someone walk through an unfamiliar process with them.",
+    greetingBody2Prefix: "",
+    greetingBody2Name: "ETHOS Administrative Attorney Office",
+    greetingBody2Suffix:
+      " is built on the three elements of persuasion described by Aristotle — Logos, Pathos, and Ethos — listening carefully to each client's situation and working together toward the most realistic path forward.",
+    greetingQuote: "Reason in Process. Empathy for People. Trust in Every Step.",
+    scopeEyebrow: "Statutory Scope",
+    scopeTitle: "Scope of Administrative Attorney Work",
+    scopeSubtitle:
+      "We represent clients within the scope defined by Article 2 of the Administrative Attorney Act. This does not cover the work of attorneys, judicial scriveners, tax accountants, or labor attorneys.",
+    scopeItems: [
+      { kicker: "Act §2-1", title: "Documents Filed with Agencies", desc: "Drafting and filing applications, reports, petitions, and objections submitted to government agencies" },
+      { kicker: "Act §2-2", title: "Certification of Rights & Facts", desc: "Drafting documents certifying rights, obligations, or factual matters" },
+      { kicker: "Act §2-3", title: "License & Permit Applications", desc: "Filing and follow-up for approvals, permits, licenses, and registrations" },
+      { kicker: "Act §2-4", title: "Administrative Appeal Representation", desc: "Representation in administrative appeal petitions, rulings, and objections" },
+      { kicker: "Act §2-5", title: "Statutory Interpretation & Advice", desc: "Interpreting relevant statutes and guiding procedures for administrative matters" },
+      { kicker: "Act §2-6", title: "Fact Investigation & Verification", desc: "Investigating, verifying, and certifying facts needed for administrative procedures" }
+    ],
+    scopeNoticeTitle: "Matters Outside Administrative Attorney Scope",
+    scopeNoticeBody:
+      "Litigation (attorneys), registry filings (judicial scriveners), tax filings (tax accountants), and labor dispute representation (labor attorneys) are outside administrative attorney work. If your matter falls into one of these areas, we will refer you to an appropriate specialist after review.",
+    valuesEyebrow: "Our Values",
+    valuesTitle: "Three Core Values",
+    values: VALUES_EN,
+    leadEyebrow: "Lead Attorney",
+    leadTitle: "Administrative Attorney Jean",
+    leadPhotoAlt: "Lead Administrative Attorney",
+    leadBadge: "Lead Administrative Attorney",
+    leadBadgeKicker: "Lead",
+    leadBody1:
+      "Handles visa and immigration matters, administrative appeals, contracts and fact investigation, licensing, and corporate registration. With over 2.5 years of visa/immigration experience at an embassy in Korea, registered as an official translator for Ministry of Justice refugee rulings and as a certified court interpreter/translator with the National Court Administration.",
+    leadBody2Prefix: "Consultations are available in Korean, English, and Arabic, with",
+    leadBody2Highlight: " multilingual document review and procedural guidance",
+    leadBody2Suffix: " tailored to foreign clients.",
+    credentialCards: [
+      { kicker: "Embassy", title: "Embassy Visa Practice", desc: "2.5+ years visa/immigration experience" },
+      { kicker: "MOJ", title: "MOJ Refugee Ruling Translator", desc: "Registered official translator" },
+      { kicker: "Court", title: "Certified Court Interpreter", desc: "Registered with National Court Administration" },
+      { kicker: "Academic", title: "HUFS Graduate School of Interpretation & Translation", desc: "Korean-Arabic · GPA 4.41" },
+      { kicker: "Lecture", title: "OASIS 4 Lecturer", desc: "Foreign entrepreneur support program" },
+      { kicker: "AI System", title: "Legal Automation System", desc: "Operates automated appeal drafting and statute collection" }
+    ],
+    otherCredentialsLabel: "Other Credentials",
+    ctaEyebrow: "Start with ETHOS",
+    ctaTitle: "Tell us about your situation today",
+    ctaBody1: "Whatever the matter — visa, administrative appeal, or licensing — we start by hearing the facts.",
+    ctaBody2: "The first review is free, with a reply within 24 business hours.",
+    ctaIntake: "Request a Free Review →",
+    ctaQuickCheck: "AI Pre-Check (30 sec)",
+    ctaFootnote: "Free review · Reply within 24h · Consultation fee deducted upon engagement"
+  }
+} as const;
+
+export default async function AboutPage({
+  searchParams
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}) {
+  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const t = COPY[lang];
   const greeting = await getSiteSetting("about.greeting");
   const credentials = await listPublicCredentials();
   const photoRow = await prisma.siteSetting.findUnique({ where: { key: "image.aboutPhoto" } }).catch(() => null);
@@ -48,10 +196,10 @@ export default async function AboutPage() {
         <div className="absolute inset-0 -z-10 ethos-grid-pattern" aria-hidden />
         <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">
           <Reveal>
-            <p className="ethos-eyebrow">About ETHOS</p>
+            <p className="ethos-eyebrow">{t.eyebrowAbout}</p>
           </Reveal>
           <Reveal delay={1}>
-            <h1 className="ethos-display mt-5 text-4xl sm:text-[3.6rem]">사무소 소개</h1>
+            <h1 className="ethos-display mt-5 text-4xl sm:text-[3.6rem]">{t.heroTitle}</h1>
           </Reveal>
           <Reveal delay={2}>
             <div className="mt-10 flex justify-center">
@@ -65,13 +213,13 @@ export default async function AboutPage() {
       <section className="ethos-band ethos-band-dark ethos-grain py-24 sm:py-32" style={{ backgroundColor: "rgb(22 50 80)" }}>
         <div className="mx-auto max-w-4xl px-4 sm:px-6">
           <Reveal>
-            <p className="ethos-eyebrow text-gold-soft">Greeting</p>
+            <p className="ethos-eyebrow text-gold-soft">{t.greetingEyebrow}</p>
             <h2 className="ethos-display mt-5 text-3xl leading-snug text-white sm:text-[2.6rem]">
-              행정 문제 뒤에 있는
+              {t.greetingTitleA}
               <br />
-              사람의 마음까지
+              {t.greetingTitleB}
               <br />
-              <span className="text-gold-soft">살피겠습니다.</span>
+              <span className="text-gold-soft">{t.greetingTitleC}</span>
             </h2>
           </Reveal>
           <div className="mt-10 space-y-6 text-base leading-8 text-white/80">
@@ -79,24 +227,18 @@ export default async function AboutPage() {
               <p className="ethos-dropcap">{greeting}</p>
             </Reveal>
             <Reveal delay={2}>
-              <p>
-                AI가 많은 정보를 빠르게 정리하고, 이성적인 판단의 영역인{" "}
-                <span className="ethos-quote text-gold-soft">로고스(Logos)</span>를 보조하는 시대가 되었습니다.
-                그러나 행정 문제 앞에 선 사람에게 필요한 것은 정보만이 아닙니다. 자신의 사정을 이해받고
-                있다는 안도감, 막막한 절차 속에서도 함께 걸어주는 사람이 있다는 신뢰가 필요합니다.
-              </p>
+              <p>{t.greetingBody1}</p>
             </Reveal>
             <Reveal delay={3}>
               <p>
-                <span className="font-serif font-bold text-white">에토스 행정사사무소</span>는 아리스토텔레스가
-                말한 설득의 세 요소,{" "}
-                <span className="ethos-quote text-gold-soft">로고스 · 파토스 · 에토스</span>를 바탕으로 의뢰인의
-                상황을 세심하게 듣고 가장 현실적인 방향을 함께 찾아갑니다.
+                {t.greetingBody2Prefix}
+                <span className="font-serif font-bold text-white">{t.greetingBody2Name}</span>
+                {t.greetingBody2Suffix}
               </p>
             </Reveal>
             <Reveal delay={4}>
               <p className="ethos-quote border-l-2 border-gold/60 pl-5 text-lg text-gold-soft">
-                절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를.
+                {t.greetingQuote}
               </p>
             </Reveal>
           </div>
@@ -107,23 +249,15 @@ export default async function AboutPage() {
       <section className="py-20 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal className="text-center">
-            <p className="ethos-eyebrow">Statutory Scope</p>
-            <h2 className="ethos-display mt-4 text-3xl sm:text-[2.4rem]">행정사 직무 범위</h2>
+            <p className="ethos-eyebrow">{t.scopeEyebrow}</p>
+            <h2 className="ethos-display mt-4 text-3xl sm:text-[2.4rem]">{t.scopeTitle}</h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm text-text-muted">
-              행정사법 제2조에 따라 정해진 업무 범위 내에서 의뢰인을 대리합니다.
-              변호사·법무사·세무사·노무사의 업무가 아닙니다.
+              {t.scopeSubtitle}
             </p>
           </Reveal>
 
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { kicker: "행정사법 §2-1", title: "행정기관 제출서류", desc: "관공서·공공기관에 제출하는 신청·신고·청구·진정·이의신청 서류 작성·제출 대행" },
-              { kicker: "행정사법 §2-2", title: "권리·의무 사실증명", desc: "권리·의무 또는 사실관계에 관한 증명서류 작성" },
-              { kicker: "행정사법 §2-3", title: "인허가 신청", desc: "인가·허가·면허·등록·신고 등 신청 대행과 보완 대응" },
-              { kicker: "행정사법 §2-4", title: "행정심판 대리", desc: "행정심판 청구·재결·이의신청 대리" },
-              { kicker: "행정사법 §2-5", title: "법령 해석·자문", desc: "행정 업무 관련 법령 해석 및 절차 안내" },
-              { kicker: "행정사법 §2-6", title: "사실조사 · 확인", desc: "행정 절차에 필요한 사실관계 조사·확인·증명" }
-            ].map((s) => (
+            {t.scopeItems.map((s) => (
               <div key={s.kicker} className="ethos-card ethos-card-hover p-6">
                 <p className="font-serif text-[10px] font-bold uppercase tracking-wider text-gold-deep">{s.kicker}</p>
                 <p className="mt-2 font-serif text-base font-bold text-text-strong">{s.title}</p>
@@ -133,10 +267,9 @@ export default async function AboutPage() {
           </div>
 
           <div className="mt-8 rounded-2xl border border-amber-300 bg-amber-50 p-5">
-            <p className="font-serif text-sm font-bold text-amber-900">행정사 업무 범위 외 사안</p>
+            <p className="font-serif text-sm font-bold text-amber-900">{t.scopeNoticeTitle}</p>
             <p className="mt-1.5 text-xs leading-6 text-amber-800">
-              소송 대리 (변호사), 등기 신청 (법무사), 세무 신고 (세무사), 노동 분쟁 대리 (노무사) 등은 행정사 업무가 아닙니다.
-              검토 후 해당 사안일 경우 적합한 전문가를 안내드립니다.
+              {t.scopeNoticeBody}
             </p>
           </div>
         </div>
@@ -146,11 +279,11 @@ export default async function AboutPage() {
       <section className="py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal className="text-center">
-            <p className="ethos-eyebrow">Our Values</p>
-            <h2 className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">세 가지 가치</h2>
+            <p className="ethos-eyebrow">{t.valuesEyebrow}</p>
+            <h2 className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">{t.valuesTitle}</h2>
           </Reveal>
           <div className="mt-14 grid gap-5 md:grid-cols-3">
-            {VALUES.map((v, i) => (
+            {t.values.map((v, i) => (
               <Reveal key={v.greek} delay={(i + 1) as 1 | 2 | 3}>
                 <div className="ethos-card ethos-card-hover relative h-full overflow-hidden p-9">
                   <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-gold to-transparent" />
@@ -172,28 +305,28 @@ export default async function AboutPage() {
               <div className="relative">
                 <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border-4 border-gold/40 bg-gradient-to-br from-primary/10 via-surface to-gold/10 shadow-floating">
                   {aboutPhoto ? (
-                    <Image src={aboutPhoto} alt="대표 행정사" fill className="object-cover" unoptimized sizes="(max-width: 768px) 100vw, 40vw" />
+                    <Image src={aboutPhoto} alt={t.leadPhotoAlt} fill className="object-cover" unoptimized sizes="(max-width: 768px) 100vw, 40vw" />
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-4">
                       <svg viewBox="0 0 80 100" width="120" className="text-primary/20" fill="currentColor" aria-hidden>
                         <circle cx="40" cy="28" r="18" />
                         <path d="M10 95 Q10 60 40 55 Q70 60 70 95 Z" />
                       </svg>
-                      <p className="font-serif text-xs tracking-wider text-text-muted">대표 행정사</p>
+                      <p className="font-serif text-xs tracking-wider text-text-muted">{t.leadBadge}</p>
                     </div>
                   )}
                 </div>
                 <div className="absolute -bottom-5 -right-5 rounded-xl bg-primary px-6 py-4 text-white shadow-floating">
-                  <p className="ethos-quote text-xs tracking-wider text-gold-soft">Lead</p>
-                  <p className="mt-1 font-serif text-lg font-bold">대표 행정사</p>
+                  <p className="ethos-quote text-xs tracking-wider text-gold-soft">{t.leadBadgeKicker}</p>
+                  <p className="mt-1 font-serif text-lg font-bold">{t.leadBadge}</p>
                 </div>
               </div>
             </Reveal>
 
             <Reveal delay={1}>
               <div>
-                <p className="ethos-eyebrow">Lead Attorney</p>
-                <h2 className="ethos-display mt-3 text-3xl sm:text-4xl">행정사 Jean</h2>
+                <p className="ethos-eyebrow">{t.leadEyebrow}</p>
+                <h2 className="ethos-display mt-3 text-3xl sm:text-4xl">{t.leadTitle}</h2>
 
                 {/* 다국어 배지 */}
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -209,27 +342,17 @@ export default async function AboutPage() {
                 </div>
 
                 <div className="mt-6 space-y-4 text-sm leading-7 text-text">
+                  <p>{t.leadBody1}</p>
                   <p>
-                    비자·출입국, 행정심판, 계약서·사실조사, 인허가, 법인설립 업무를 담당합니다.
-                    주한 대사관 비자·출입국 실무를 2.5년 이상 경험하였고, 법무부 난민 판결문 공식 번역인 ·
-                    법원행정처 법정 통번역인으로 등록되어 있습니다.
-                  </p>
-                  <p>
-                    한국어·영어·아랍어로 상담이 가능하며, 외국인 의뢰인의 사정에 맞춘
-                    <span className="font-bold text-primary"> 다국어 서류 검토와 절차 안내</span>를 함께 진행합니다.
+                    {t.leadBody2Prefix}
+                    <span className="font-bold text-primary">{t.leadBody2Highlight}</span>
+                    {t.leadBody2Suffix}
                   </p>
                 </div>
 
                 {/* 권위 신호 카드 */}
                 <div className="mt-7 grid gap-3 sm:grid-cols-2">
-                  {[
-                    { kicker: "Embassy", title: "주한 대사관 비자 실무", desc: "비자·출입국 실무 2.5년+" },
-                    { kicker: "MOJ", title: "법무부 난민 판결문 번역인", desc: "공식 번역인 등록" },
-                    { kicker: "Court", title: "법정 통번역인", desc: "법원행정처 등록" },
-                    { kicker: "Academic", title: "한국외대 통번역대학원", desc: "한아과 · GPA 4.41" },
-                    { kicker: "Lecture", title: "OASIS 4 강의", desc: "외국인 창업지원 프로그램" },
-                    { kicker: "AI System", title: "법률 자동화 시스템", desc: "심판청구서·법령 자동수집 운영" }
-                  ].map((c) => (
+                  {t.credentialCards.map((c) => (
                     <div key={c.title} className="rounded-xl border border-gold/30 bg-surface px-4 py-3 transition hover:border-gold/60 hover:bg-gold-soft/15">
                       <p className="font-serif text-[10px] font-bold uppercase tracking-wider text-gold-deep">{c.kicker}</p>
                       <p className="mt-1 text-sm font-bold text-text-strong">{c.title}</p>
@@ -241,7 +364,7 @@ export default async function AboutPage() {
                 {/* 동적 자격증 (DB) - 있을 때만 노출 */}
                 {credentials.length > 0 && (
                   <div className="mt-7 space-y-3 border-l-2 border-gold/50 pl-6">
-                    <p className="font-serif text-xs font-bold uppercase tracking-wider text-gold-deep">기타 자격</p>
+                    <p className="font-serif text-xs font-bold uppercase tracking-wider text-gold-deep">{t.otherCredentialsLabel}</p>
                     {credentials.map((c, i) => (
                       <div key={i} className="flex items-baseline gap-4">
                         <span className="ethos-quote w-16 flex-shrink-0 text-xl text-gold-deep">{c.year}</span>
@@ -267,30 +390,30 @@ export default async function AboutPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal>
             <div className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 ethos-dark-card p-12 text-center shadow-floating sm:p-16">
-              <p className="ethos-eyebrow text-gold-soft">Start with ETHOS</p>
+              <p className="ethos-eyebrow text-gold-soft">{t.ctaEyebrow}</p>
               <h2 className="ethos-display mt-4 text-3xl text-white sm:text-4xl">
-                오늘 상황을 말씀해 주세요
+                {t.ctaTitle}
               </h2>
               <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-white/80">
-                비자·행정심판·인허가 어느 분야든 먼저 사실관계를 들어보겠습니다.
+                {t.ctaBody1}
                 <br className="hidden sm:block" />
-                1차 상담은 무료이며 영업일 기준 24시간 이내 회신드립니다.
+                {t.ctaBody2}
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href="/intake"
+                  href={`/intake${lang === "en" ? "?lang=en" : ""}`}
                   className="inline-flex h-12 items-center rounded-lg bg-gold px-8 text-sm font-bold text-primary transition hover:bg-gold-soft"
                 >
-                  무료 검토 요청하기 →
+                  {t.ctaIntake}
                 </Link>
                 <Link
-                  href="/quick-check"
+                  href={`/quick-check${lang === "en" ? "?lang=en" : ""}`}
                   className="inline-flex h-12 items-center rounded-lg border border-gold/50 px-8 text-sm font-semibold text-gold-soft transition hover:bg-gold/10"
                 >
-                  AI 사전 진단 (30초)
+                  {t.ctaQuickCheck}
                 </Link>
               </div>
-              <p className="mt-6 text-xs text-white/70">검토 무료 · 24h 이내 회신 · 수임 시 상담료 차감</p>
+              <p className="mt-6 text-xs text-white/70">{t.ctaFootnote}</p>
             </div>
           </Reveal>
         </div>

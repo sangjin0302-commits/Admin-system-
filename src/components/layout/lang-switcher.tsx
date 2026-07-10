@@ -10,6 +10,11 @@ const LABELS: Record<Lang, string> = {
   zh: "中",
 };
 
+// Public switcher only supports ko/en. zh has no real public translations
+// (see src/lib/i18n-public.ts normalizeLang) so it is hidden here even
+// though the shared LANGS list still includes it for the admin locale system.
+const PUBLIC_LANGS = LANGS.filter((l) => l !== "zh");
+
 const COOKIE_NAME = "lang";
 
 function readCookieLang(): Lang | null {
@@ -57,7 +62,7 @@ export function LangSwitcher() {
       role="group"
       aria-label="Language"
     >
-      {LANGS.map((lang, i) => (
+      {PUBLIC_LANGS.map((lang, i) => (
         <span key={lang} className="flex items-center gap-1">
           <button
             type="button"
@@ -69,7 +74,7 @@ export function LangSwitcher() {
           >
             {LABELS[lang]}
           </button>
-          {i < LANGS.length - 1 && <span className="text-gold/40">|</span>}
+          {i < PUBLIC_LANGS.length - 1 && <span className="text-gold/40">|</span>}
         </span>
       ))}
     </div>

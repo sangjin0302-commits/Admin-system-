@@ -5,7 +5,12 @@ export const metadata: Metadata = {
   description: "에토스 행정사사무소 웹사이트 이용약관."
 };
 
-export default function TermsPage() {
+export default async function TermsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}) {
+  const lang = (await searchParams).lang === "en" ? "en" : "ko";
   return (
     <div className="overflow-x-clip">
       {/* HERO */}
@@ -22,6 +27,16 @@ export default function TermsPage() {
       {/* CONTENT */}
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          {lang === "en" && (
+            <div className="mb-8 rounded-2xl border border-amber-300 bg-amber-50 p-5">
+              <p className="font-serif text-sm font-bold text-amber-900">
+                This page is only available in Korean.
+              </p>
+              <p className="mt-1.5 text-xs leading-6 text-amber-800">
+                이 페이지는 한국어로 제공됩니다.
+              </p>
+            </div>
+          )}
           <div className="space-y-6">
             <Section title="제1조 (목적)">
               <p className="text-sm leading-relaxed text-text">본 약관은 에토스 행정사사무소(이하 "사무소")가 제공하는 웹사이트 및 상담 접수 서비스 이용에 관한 사항을 정합니다.</p>

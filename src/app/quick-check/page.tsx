@@ -8,7 +8,12 @@ export const metadata: Metadata = {
     "사안 내용을 입력하면 lawbot AI가 행정사 업무 범위, 확인 사항, 위험 신호를 사전 안내합니다. 상담 신청 전 빠르게 방향을 잡으세요."
 };
 
-export default function QuickCheckPage() {
+export default async function QuickCheckPage({
+  searchParams
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}) {
+  const lang = (await searchParams).lang === "en" ? "en" : "ko";
   return (
     <div className="relative overflow-hidden">
       <div className="ethos-aurora ethos-aurora-animated" aria-hidden />
@@ -23,6 +28,17 @@ export default function QuickCheckPage() {
             ※ 일반적 안내이며, 개별 사안의 결과를 보장하지 않습니다.
           </p>
         </section>
+
+        {lang === "en" && (
+          <div className="mx-auto max-w-2xl rounded-2xl border border-amber-300 bg-amber-50 p-5 text-center">
+            <p className="font-serif text-sm font-bold text-amber-900">
+              This tool is only available in Korean.
+            </p>
+            <p className="mt-1.5 text-xs leading-6 text-amber-800">
+              이 도구는 한국어로만 제공됩니다.
+            </p>
+          </div>
+        )}
 
         <QuickCheckClient />
 
