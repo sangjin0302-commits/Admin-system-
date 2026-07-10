@@ -309,6 +309,14 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "guideline_prompt_inject", label: "지침 프롬프트 자동 주입", category: "ai", default: true, description: "AI 초안 생성 시 마케팅 지침 문서 요약을 시스템 프롬프트에 자동 첨부" },
   { key: "admin_hide_mode", label: "감춤 모드 (사이드바 티어 필터)", category: "operations", default: true, description: "관리자 사이드바를 tier(핵심/자주/가끔/드묾)로 필터링하여 인지 부하 감소" },
   { key: "admin_show_advanced", label: "고급 페이지 표시", category: "operations", default: false, description: "감춤 모드에서 advanced tier 페이지까지 노출 (기본은 core만)" },
+  { key: "intake_form_autosave", label: "접수 폼 자동저장", category: "ux", default: true, description: "접수 폼 작성 중 자동 저장 및 복구 (localStorage)", public: true },
+  { key: "dynamic_cta_labels", label: "동적 CTA 문구", category: "ux", default: false, description: "시간대·디바이스에 따라 CTA 버튼 문구 자동 변경", public: true },
+  { key: "intake_ai_prescreen", label: "AI 사전 심사", category: "ai", default: false, description: "문의 접수 후 AI가 긴급도·예상 회신시간·추천 채널 자동 판정" },
+  { key: "morning_priority_sort", label: "아침 우선순위 자동정렬", category: "operations", default: true, description: "아침 브리핑에 우선순위 스코어 기반 오늘 할 일 섹션" },
+  { key: "auto_case_suggest", label: "사건 전환 자동 제안", category: "operations", default: true, description: "견적 수락 후 또는 대화 3회+ 진행 시 사건 전환 배너 표시" },
+  { key: "context_aware_reply_draft", label: "맥락 인식 답장 초안", category: "ai", default: true, description: "문의 언어·채널에 따라 답장 초안 톤과 언어 자동 조정" },
+  { key: "lead_scoring_dashboard", label: "리드 스코링 대시보드", category: "marketing", default: false, description: "채널·카테고리별 수임률 분석 대시보드 (/admin/lead-scoring)" },
+  { key: "public_trust_dashboard", label: "공개 운영 현황", category: "marketing", default: false, description: "공개 운영 현황 페이지 — 진행 사건·응답시간·완료 건 (/status)", public: true },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

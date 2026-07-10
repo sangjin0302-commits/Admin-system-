@@ -44,10 +44,12 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
       where: { id },
       select: {
         contactName: true,
+        email: true,
         title: true,
         description: true,
         inquiryType: true,
         urgencyLevel: true,
+        intakeChannel: true,
       },
     });
     if (!inquiry) return api.error(404, "문의 없음", { code: "NOT_FOUND" });
@@ -61,8 +63,39 @@ ${inquiry.description}
 
 위 문의에 대한 첫 답장 초안을 작성해주세요.`;
 
-    // III2: reply_prompt_ab — 활성 시 프롬프트 A/B 변형 적용
+    // Context-aware reply draft: language & channel detection
     let systemPrompt = SYSTEM;
+    const contextAware = await isFeatureEnabled("context_aware_reply_draft").catch(() => false);
+    if (contextAware) {
+      const channel = inquiry.intakeChannel ?? "직접";
+      const category = inquiry.inquiryType ?? "일반";
+
+      // Detect English hints from contactName, email, or body
+      const textSample = `${inquiry.contactName ?? ""} ${inquiry.email ?? ""} ${inquiry.description ?? ""}`;
+      const englishRatio = (textSample.match(/[a-zA-Z]/g)?.length ?? 0) / Math.max(textSample.length, 1);
+      const isEnglish = englishRatio > 0.5;
+
+      if (isEnglish) {
+        systemPrompt = `You are Jean, the CEO of ETHOS Administrative Services. Write a professional first reply in English.
+- Friendly but professional. 3-5 lines.
+- First line: greeting + acknowledge their inquiry.
+- Middle: confirm understanding + suggest one next action (call scheduling / document request / consultation).
+- End: closing without signature.
+- No pricing. No markdown. No emoji.`;
+      }
+
+      // Channel tone adjustment
+      if (channel.toLowerCase().includes("kakao") || channel.toLowerCase().includes("카카오")) {
+        systemPrompt += "\n\n톤 조정: 카카오 채널 문의이므로 짧고 친근하게 작성. 2~3줄 이내.";
+      } else if (channel.toLowerCase().includes("email") || channel.toLowerCase().includes("이메일")) {
+        systemPrompt += "\n\n톤 조정: 이메일 문의이므로 공식적이고 정중한 톤으로 작성.";
+      }
+
+      // Add client context
+      systemPrompt += `\n\n클라이언트 컨텍스트: 이 고객은 ${channel}로 문의했으며, ${category} 사안입니다.`;
+    }
+
+    // III2: reply_prompt_ab — 활성 시 프롬프트 A/B 변형 적용
     let abVariantId: string | null = null;
     try {
       if (await isFeatureEnabled("reply_prompt_ab")) {

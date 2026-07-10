@@ -66,6 +66,47 @@ export default async function MorningPage() {
   const daysUntil = (d: Date) => Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   const hoursAgo = (d: Date) => Math.round((now.getTime() - d.getTime()) / (1000 * 60 * 60));
 
+  // Feature 1: 오늘 우선순위 자동 정렬
+  const showPrioritySort = await isFeatureEnabled("morning_priority_sort");
+  type PriorityItem = { id: string; title: string; score: number; hint: string; type: "inquiry" | "case" };
+  const priorityItems: PriorityItem[] = [];
+
+  if (showPrioritySort) {
+    const in2Days = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+
+    for (const r of unresponded) {
+      const waiting = hoursAgo(r.createdAt);
+      const score = waiting * 2;
+      priorityItems.push({ id: r.id, title: r.title || "(제목 없음)", score, hint: "답장 필요", type: "inquiry" });
+    }
+
+    for (const r of dueSoon) {
+      const waiting = 0;
+      const urgencyBonus = r.urgencyLevel === UrgencyLevel.CRITICAL ? 20 : r.urgencyLevel === UrgencyLevel.HIGH ? 10 : 0;
+      const dueBonus = r.dueDate && r.dueDate <= in2Days ? 15 : 0;
+      const score = waiting + urgencyBonus + dueBonus;
+      priorityItems.push({ id: r.id, title: r.title || "(제목 없음)", score, hint: "마감 임박", type: "inquiry" });
+    }
+
+    for (const c of staleCases) {
+      const staleDays = Math.floor((now.getTime() - c.updatedAt.getTime()) / (1000 * 60 * 60 * 24));
+      const score = staleDays * 2;
+      priorityItems.push({ id: c.id, title: c.title, score, hint: "업데이트 필요", type: "case" });
+    }
+
+    // Deduplicate by id, keep highest score
+    const seen = new Map<string, PriorityItem>();
+    for (const item of priorityItems) {
+      const existing = seen.get(item.id);
+      if (!existing || item.score > existing.score) seen.set(item.id, item);
+    }
+    priorityItems.length = 0;
+    priorityItems.push(...Array.from(seen.values()));
+
+    priorityItems.sort((a, b) => b.score - a.score);
+    priorityItems.splice(8);
+  }
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
@@ -94,6 +135,34 @@ export default async function MorningPage() {
               </div>
             ))}
           </div>
+        </Card>
+      )}
+
+      {showPrioritySort && priorityItems.length > 0 && (
+        <Card className="p-5">
+          <p className="ui-kicker">오늘 우선순위 (자동 정렬)</p>
+          <ul className="mt-4 space-y-2">
+            {priorityItems.map((item) => (
+              <li key={item.id} className="flex items-center gap-3 text-sm">
+                <span className="inline-flex h-6 w-12 shrink-0 items-center justify-center rounded bg-primary/10 text-xs font-bold text-primary">
+                  {item.score}
+                </span>
+                <Link
+                  href={item.type === "case" ? `/admin/cases/${item.id}` : `/admin/inquiries/${item.id}`}
+                  className="flex-1 font-medium text-text-strong hover:text-gold-deep"
+                >
+                  {item.title}
+                </Link>
+                <span className={`rounded px-2 py-0.5 text-[10px] font-bold ${
+                  item.hint === "답장 필요" ? "bg-red-100 text-red-700" :
+                  item.hint === "마감 임박" ? "bg-amber-100 text-amber-700" :
+                  "bg-blue-100 text-blue-700"
+                }`}>
+                  {item.hint}
+                </span>
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
 

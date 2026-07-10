@@ -30,6 +30,8 @@ import {
   type IntakeCategoryDisplayLocale
 } from "@/types/intake-category";
 
+import { useFormAutosave } from "@/lib/hooks/use-form-autosave";
+import { IntakeDraftBanner } from "./intake-draft-banner";
 import { IntakeStepCategory } from "./steps/intake-step-category";
 import { IntakeStepContact } from "./steps/intake-step-contact";
 import { IntakeStepDetails } from "./steps/intake-step-details";
@@ -392,6 +394,8 @@ export function IntakeFormSafeV3({
   const [completedMessage, setCompletedMessage] = useState("");
   const [completedTrackingCode, setCompletedTrackingCode] = useState("");
   const ga4Enabled = useFeatureFlag("ga4_conversion_tracking") !== false;
+  const autosaveEnabled = useFeatureFlag("intake_form_autosave") !== false;
+  const { hasDraft, clearDraft, restoreDraft, dismissDraft } = useFormAutosave(form, autosaveEnabled);
 
   const selectedCategory = form.category || null;
   const selectedCategoryFields = useMemo(
@@ -619,6 +623,7 @@ export function IntakeFormSafeV3({
         setNotice(copy.deduplicated);
       }
 
+      clearDraft();
       setForm({
         ...initialState,
         preferredLanguage: form.preferredLanguage
@@ -660,6 +665,15 @@ export function IntakeFormSafeV3({
             <span className="font-bold text-primary">{essentialsDone}/4</span>
           </div>
         </div>
+      ) : null}
+      {hasDraft ? (
+        <IntakeDraftBanner
+          onRestore={() => {
+            const restored = restoreDraft();
+            if (restored) setForm(restored);
+          }}
+          onDismiss={dismissDraft}
+        />
       ) : null}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div
