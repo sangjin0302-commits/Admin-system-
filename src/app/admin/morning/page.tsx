@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma/client";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { InquiryStatus, UrgencyLevel } from "@generated/prisma-client/client";
+import { CaseMatterStatus, InquiryStatus, UrgencyLevel } from "@generated/prisma-client/client";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +21,9 @@ export default async function MorningPage() {
 
   const showChannelKpi = await isFeatureEnabled("morning_channel_kpi");
   const startOfWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const [dueSoon, unresponded, yesterdayNew, urgent, todayNew, wonThisMonth, channel7d] = await Promise.all([
+  const caseNotClosed = { notIn: [CaseMatterStatus.CLOSED, CaseMatterStatus.CANCELLED] };
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const [dueSoon, unresponded, yesterdayNew, urgent, todayNew, wonThisMonth, channel7d, activeCases, staleCases] = await Promise.all([
     prisma.inquiry.findMany({
       where: { dueDate: { lte: in7Days, gte: now }, status: notClosed },
       select: { id: true, title: true, contactName: true, dueDate: true, urgencyLevel: true },
@@ -47,6 +49,13 @@ export default async function MorningPage() {
           _count: { _all: true },
         }).catch(() => [] as Array<{ intakeChannel: string | null; _count: { _all: number } }>)
       : Promise.resolve([] as Array<{ intakeChannel: string | null; _count: { _all: number } }>),
+    prisma.caseMatter.count({ where: { status: caseNotClosed } }).catch(() => 0),
+    prisma.caseMatter.findMany({
+      where: { status: caseNotClosed, updatedAt: { lte: sevenDaysAgo } },
+      select: { id: true, title: true, caseNo: true, status: true, updatedAt: true },
+      orderBy: { updatedAt: "asc" },
+      take: 6,
+    }).catch(() => []),
   ]);
   const channelKpi = channel7d
     .map((r) => ({ channel: r.intakeChannel ?? "직접", count: r._count._all }))
@@ -65,11 +74,12 @@ export default async function MorningPage() {
         description={`${now.toLocaleDateString("ko-KR", { weekday: "long", month: "long", day: "numeric" })} · 오늘 처리할 것만.`}
       />
 
-      <div className="grid gap-4 sm:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <Stat label="오늘 신규" value={todayNew} tone="primary" />
         <Stat label="어제 신규" value={yesterdayNew} tone="muted" />
         <Stat label="미응답 24h+" value={unresponded.length} tone={unresponded.length > 0 ? "red" : "emerald"} />
         <Stat label="긴급 활성" value={urgent} tone={urgent > 0 ? "amber" : "emerald"} />
+        <Stat label="진행중 사건" value={activeCases} tone="primary" />
         <Stat label="이번 달 WON" value={wonThisMonth} tone="emerald" />
       </div>
 
@@ -135,6 +145,31 @@ export default async function MorningPage() {
                 </Link>
                 <span className="text-xs text-text-muted">{r.contactName || "—"}</span>
                 <span className="text-xs text-text-muted">{r.intakeChannel || "직접"}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card className="p-5">
+        <div className="flex items-center justify-between">
+          <p className="ui-kicker">7일+ 업데이트 없는 사건 (방치 주의)</p>
+          <Link href="/admin/cases" className="text-xs text-gold-deep hover:underline">사건 목록 →</Link>
+        </div>
+        {staleCases.length === 0 ? (
+          <p className="mt-3 text-sm text-emerald-600">모든 진행중 사건이 7일 이내 업데이트됨.</p>
+        ) : (
+          <ul className="mt-4 space-y-2">
+            {staleCases.map((c) => (
+              <li key={c.id} className="flex items-center gap-3 text-sm">
+                <span className="inline-flex h-6 w-14 shrink-0 items-center justify-center rounded bg-amber-100 text-xs font-bold text-amber-700">
+                  {Math.floor((now.getTime() - c.updatedAt.getTime()) / (1000 * 60 * 60 * 24))}일
+                </span>
+                <Link href={`/admin/cases/${c.id}`} className="flex-1 font-medium text-text-strong hover:text-gold-deep">
+                  {c.title}
+                </Link>
+                <span className="text-xs text-text-muted">{c.caseNo || "—"}</span>
+                <span className="rounded bg-surface-muted px-2 py-0.5 text-[10px] font-bold text-text-muted">{c.status}</span>
               </li>
             ))}
           </ul>

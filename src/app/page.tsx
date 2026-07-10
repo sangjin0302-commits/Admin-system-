@@ -334,7 +334,7 @@ export default async function PublicMarketingHomePage({
             <Reveal delay={2}>
               <div className="mt-7 flex flex-wrap gap-2.5">
                 {[
-                  "변호사 대비 1/3~1/5 비용",
+                  "행정 절차 전문 · 합리적 수임료",
                   "영업일 24시간 내 회신",
                   "한국어 · 영어 · 아랍어 상담"
                 ].map((benefit) => (
@@ -372,7 +372,7 @@ export default async function PublicMarketingHomePage({
             {/* 사회적 증거 에코 */}
             <Reveal delay={4}>
               <p className="mt-5 text-xs leading-5 text-text-muted">
-                이미 서울 · 경기 · 인천 등에서 검토를 신청했습니다.
+                접수 후 영업일 24시간 내 담당 행정사가 직접 회신드립니다.
               </p>
             </Reveal>
 
@@ -458,7 +458,7 @@ export default async function PublicMarketingHomePage({
 
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { title: "변호사보다 합리적", desc: "행정 전문 영역은 행정사가 더 빠르고 경제적입니다." },
+              { title: "행정 절차에 특화", desc: "소송은 변호사, 행정 절차는 행정사 — 역할이 다릅니다." },
               { title: "직접 하기엔 위험", desc: "기한 한 번 놓치면 절차 전체가 무너집니다." },
               { title: "끝까지 함께", desc: "검토 → 서면 → 제출 → 결과까지 한 창구로 관리합니다." },
               { title: "다국어 가능", desc: "외국인 의뢰인도 모국어로 안심하고 상담할 수 있습니다." }

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const TRUST_BLOCKS: readonly { eyebrow: string; title: string; desc: string }[] = [
   {
     eyebrow: "COST EFFICIENCY",
-    title: "변호사 대비 절감",
+    title: "합리적 비용 산정",
     desc: "행정 절차·인허가·불복 사안은 행정사 업무 범위 내에서 합리적인 비용으로 진행할 수 있습니다. 불필요한 절차 없이 필요한 만큼만 산정합니다.",
   },
   {

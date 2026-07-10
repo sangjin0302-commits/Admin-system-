@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { isProtectedAdminRoute, isPublicRoute } from "../../../middleware";
+import { isProtectedAdminRoute, isPublicRoute } from "../../middleware";
 
 const publicRoutes = [
   "/",
@@ -56,7 +56,7 @@ for (const route of similarButPublicRoutes) {
   assert.equal(isProtectedAdminRoute(route), false, `${route} should not match admin prefix`);
 }
 
-const middlewareSource = readFileSync(join(process.cwd(), "middleware.ts"), "utf8");
+const middlewareSource = readFileSync(join(process.cwd(), "src", "middleware.ts"), "utf8");
 assert.match(middlewareSource, /hasPathPrefix\(pathname, "\/track"\)/);
 assert.match(middlewareSource, /hasPathPrefix\(pathname, "\/api\/public\/track"\)/);
 assert.match(middlewareSource, /hasPathPrefix\(pathname, "\/admin"\)/);

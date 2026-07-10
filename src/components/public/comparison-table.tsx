@@ -8,12 +8,12 @@ type Row = {
 };
 
 const ROWS: readonly Row[] = [
-  { label: "비용", ethos: "33~200만원", lawyer: "300~800만원", self: "0원" },
-  { label: "소요 기간", ethos: "2~8주", lawyer: "4~16주", self: "2~24주" },
-  { label: "성공률", ethos: "85%", lawyer: "90%", self: "40%" },
-  { label: "서류 검토", ethos: "포함", lawyer: "별도 청구", self: "없음" },
-  { label: "사후 관리", ethos: "포함", lawyer: "별도 계약", self: "없음" },
-  { label: "재도전 지원", ethos: "무료 1회", lawyer: "유료", self: "없음" },
+  { label: "적합한 사안", ethos: "행정 절차·서류·인허가", lawyer: "소송·법률 분쟁", self: "단순 신고·접수" },
+  { label: "비용", ethos: "사안별 사전 안내", lawyer: "일반적으로 높음", self: "0원" },
+  { label: "기한 관리", ethos: "포함", lawyer: "사무소별 상이", self: "직접 확인" },
+  { label: "서류 검토", ethos: "포함", lawyer: "별도 확인 필요", self: "없음" },
+  { label: "진행상황 안내", ethos: "포털 실시간 조회", lawyer: "사무소별 상이", self: "직접 확인" },
+  { label: "보완 요청 대응", ethos: "포함", lawyer: "별도 확인 필요", self: "직접 대응" },
 ];
 
 export function ComparisonTable() {
@@ -105,7 +105,7 @@ export function ComparisonTable() {
         </div>
 
         <p className="mt-4 text-center text-[11px] leading-5 text-text-muted">
-          ※ 비용·기간·성공률은 사안 유형과 난이도에 따라 달라질 수 있으며, 결과를 보장하지 않습니다.
+          ※ 비교는 일반적인 경향이며 사안 유형과 난이도에 따라 다릅니다. 소송·법률 판단이 필요한 사안은 변호사 선임을 권합니다. 결과를 보장하지 않습니다.
         </p>
       </div>
     </section>

@@ -16,11 +16,11 @@ const CHANNEL_META = {
 
 const VARIANTS = {
   control: {
-    tagline: "비슷한 사안이 있으신가요? 변호사 선임 대비 1/3~1/5 비용으로 해결합니다.",
+    tagline: "비슷한 사안이 있으신가요? 검토 후 예상 비용을 먼저 안내드립니다.",
     primaryLabel: "무료 검토 요청",
   },
   variant_a: {
-    tagline: "같은 유형 의뢰, 평균 2주 내 해결. 검토는 무료입니다.",
+    tagline: "같은 유형 사안 다수 진행. 소요 기간은 사안별로 안내드립니다.",
     primaryLabel: "지금 무료 검토",
   },
   variant_b: {

@@ -28,7 +28,7 @@ export function BlogCta({ category }: { category: string }) {
       <p className="mt-3 text-sm leading-7 text-white/80">
         {CONSULT_TAGLINE}
         <br />
-        변호사 선임 대비 1/3 ~ 1/5 비용으로 해결합니다.
+        검토 후 예상 비용과 진행 가능 여부를 먼저 안내드립니다.
       </p>
 
       <div className="mt-7 flex flex-col items-center justify-center gap-2 sm:flex-row sm:flex-wrap">

@@ -33,7 +33,7 @@ const STEPS = [
     title: "수임 확정",
     sub: "Engagement",
     desc: "상담료 전액 본 수임료에서 차감",
-    note: "변호사 선임 대비 1/3~1/5 비용 수준"
+    note: "수임료는 사안·난이도에 따라 사전 안내"
   }
 ] as const;
 

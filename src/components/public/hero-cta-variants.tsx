@@ -27,7 +27,7 @@ export function HeroCtaSubtitleVariants({ className }: Props) {
       </AbVariant>
       <AbVariant experiment="hero_cta" variant="benefit">
         <p className={cls}>
-          <span className="font-bold text-gold-deep">변호사 대비 1/3 비용, 90% 해결율</span> —
+          <span className="font-bold text-gold-deep">합리적 수임료, 상담료는 수임 시 전액 차감</span> —
           무료 검토로 가능성과 예상 비용, 다음 절차를 먼저 확인하세요.
         </p>
       </AbVariant>
