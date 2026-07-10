@@ -13,6 +13,7 @@
 import { createAdminRequestContext } from "@/lib/http/admin-api";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { smartInvoke } from "@/lib/services/smart-ai-client";
+import { appendGuidelineToSystem } from "@/lib/services/guideline-prompt-service";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     if (!tone || !(tone in TONES)) return api.error(400, "tone 필수: friendly|formal|apology|reassuring", { code: "INVALID_TONE" });
     if (text.length > 2000) return api.error(400, "text 2000자 초과", { code: "TOO_LONG" });
 
-    const system = `당신은 행정사 사무소의 답변 톤 조정 전문가입니다.
+    const baseSystem = `당신은 행정사 사무소의 답변 톤 조정 전문가입니다.
 주어진 원문을 다음 톤으로 재작성:
 ${TONES[tone]}
 
@@ -48,6 +49,9 @@ ${TONES[tone]}
 - 길이는 원문 ±30% 이내.
 - 마크다운 금지.
 - 재작성 결과만 출력 (설명·라벨 금지).`;
+
+    // LLL8: 지침 프롬프트 자동 주입 (flag 내부 체크).
+    const system = await appendGuidelineToSystem(baseSystem);
 
     const res = await smartInvoke("drafting", text, { system, maxTokens: 600 });
     const adjusted = res.text?.trim() ?? "";

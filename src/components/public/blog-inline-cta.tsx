@@ -47,7 +47,7 @@ export function BlogInlineCta({ category }: { category: string }) {
           <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm.75 8a.75.75 0 0 1-1.5 0V4a.75.75 0 0 1 1.5 0v4Zm-.75 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
           <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM7.25 4a.75.75 0 0 1 1.5 0v4a.75.75 0 0 1-1.5 0V4ZM8 12a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
         </svg>
-        30분 이내 회신
+        영업시간 내 4시간 안에 답변
       </span>
 
       {/* CTA buttons */}

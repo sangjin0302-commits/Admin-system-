@@ -18,7 +18,7 @@ export default function AISubscriptionPage() {
         <PlanCard
           plan={PLANS.free}
           highlight={false}
-          bullets={["월 5회 무료 상담", "기본 안내", "이용약관 준수"]}
+          bullets={["월 5회 무료 검토", "기본 안내", "이용약관 준수"]}
           cta={{ label: "무료로 시작", href: "/quick-check" }}
         />
         <PlanCard

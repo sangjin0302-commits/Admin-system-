@@ -4,6 +4,18 @@ import { logger } from "@/lib/utils/logger";
 import { onBlogPublished } from "@/lib/services/pr-syndication-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { generateSeoMeta } from "@/lib/services/blog-seo-service";
+import { ensureDisclaimer } from "@/lib/services/blog-disclaimer-service";
+
+async function maybeApplyDisclaimer(body: string, published: boolean): Promise<string> {
+  if (!published) return body;
+  try {
+    if (!(await isFeatureEnabled("auto_disclaimer"))) return body;
+    return ensureDisclaimer(body);
+  } catch (err) {
+    logger.warn("[auto-disclaimer] 적용 실패", err);
+    return body;
+  }
+}
 
 async function applyBlogSeoAuto(postId: string): Promise<void> {
   try {
@@ -56,12 +68,13 @@ async function applyBlogSeoAuto(postId: string): Promise<void> {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
+    const finalBody = await maybeApplyDisclaimer(data.body ?? "", Boolean(data.published));
     const post = await prisma.blogPost.create({
       data: {
         title: data.title,
         slug: data.slug,
         excerpt: data.excerpt ?? "",
-        body: data.body,
+        body: finalBody,
         category: data.category ?? "general",
         tags: data.tags ?? "[]",
         published: data.published ?? false,
@@ -85,13 +98,14 @@ export async function PUT(request: Request) {
     if (!data.id) return NextResponse.json({ error: "ID 필요" }, { status: 400 });
 
     const existing = await prisma.blogPost.findUnique({ where: { id: data.id } });
+    const finalBody = await maybeApplyDisclaimer(data.body ?? "", Boolean(data.published));
     const post = await prisma.blogPost.update({
       where: { id: data.id },
       data: {
         title: data.title,
         slug: data.slug,
         excerpt: data.excerpt ?? "",
-        body: data.body,
+        body: finalBody,
         category: data.category ?? "general",
         tags: data.tags ?? "[]",
         published: data.published ?? false,

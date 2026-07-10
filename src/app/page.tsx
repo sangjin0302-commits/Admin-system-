@@ -295,7 +295,7 @@ export default async function PublicMarketingHomePage({
 
         <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-20 sm:px-6 sm:pb-28 sm:pt-28 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
-            {personalizationEnabled && <PersonalizedHero fallbackBadge={heroBadge} fallbackTitle={heroTitleOverride || "비자 거절, 행정처분, 인허가 —\n2주 안에 해결 방향을 드립니다"} fallbackDescription={heroDescription} />}
+            {personalizationEnabled && <PersonalizedHero fallbackBadge={heroBadge} fallbackTitle={heroTitleOverride || "비자 거절, 행정처분, 인허가 —\n방향은 빠르게, 판단은 사안별로 드립니다"} fallbackDescription={heroDescription} />}
             <Reveal>
               <span className="ethos-eyebrow inline-flex items-center gap-2 text-gold-deep">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold" />
@@ -320,7 +320,7 @@ export default async function PublicMarketingHomePage({
                   <>
                     비자 거절, 행정처분, 인허가 —
                     <br />
-                    <span className="ethos-underline-gold">2주 안에 해결 방향</span>을 드립니다
+                    <span className="ethos-underline-gold">방향은 빠르게, 판단은 사안별로</span> 드립니다
                   </>
                 )}
               </h1>

@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "이번 달 무료 상담 5회를 모두 사용하셨습니다. Pro 요금제로 업그레이드하시면 무제한 상담이 가능합니다.",
+              "이번 달 무료 검토 5회를 모두 사용하셨습니다. Pro 요금제로 업그레이드하시면 무제한 상담이 가능합니다.",
             code: "QUOTA_EXCEEDED",
             upgradeUrl: "/ai-subscription",
           },

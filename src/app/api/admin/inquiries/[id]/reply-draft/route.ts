@@ -16,6 +16,7 @@ import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { smartInvoke } from "@/lib/services/smart-ai-client";
 import { getRelatedBlogPosts } from "@/lib/services/blog-recommend-service";
 import { getPromptVariant } from "@/lib/services/prompt-ab-service";
+import { appendGuidelineToSystem } from "@/lib/services/guideline-prompt-service";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -81,6 +82,9 @@ ${inquiry.description}
     } catch (flagErr) {
       logger.warn("[reply-draft] reply_prompt_ab flag check failed", flagErr);
     }
+
+    // LLL8: 지침 프롬프트 자동 주입 (flag 내부 체크, 비활성 시 no-op).
+    systemPrompt = await appendGuidelineToSystem(systemPrompt);
 
     // BBB2: 3버전 요청 지원 — ?variants=3
     const url = new URL(_req.url);

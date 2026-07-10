@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { Card } from "@/components/ui/card";
+import { scanContent, type GuidelineViolation } from "@/lib/services/marketing-guideline-rules";
 
 type ItemType = "text" | "html" | "url" | "image";
 
@@ -191,6 +192,8 @@ export function ContentEditorClient({ sections }: { sections: Section[] }) {
                     />
                   )}
 
+                  {!isImage && <GuidelineInline text={val} />}
+
                   <div className="mt-2 flex items-center justify-between gap-3">
                     <p className="text-[11px] text-text-muted">
                       {isImage
@@ -220,6 +223,36 @@ export function ContentEditorClient({ sections }: { sections: Section[] }) {
           </div>
         </Card>
       ))}
+    </div>
+  );
+}
+
+function GuidelineInline({ text }: { text: string }) {
+  const violations: GuidelineViolation[] = useMemo(() => scanContent(text), [text]);
+  if (violations.length === 0) return null;
+  return (
+    <div className="mt-2 rounded-md border border-amber-200 bg-amber-50/60 p-2">
+      <p className="text-[11px] font-semibold text-amber-800">지침 위반 {violations.length}건 감지</p>
+      <ul className="mt-1 space-y-0.5">
+        {violations.map((v, idx) => (
+          <li key={`${v.position}-${idx}`} className="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span
+              className={`rounded px-1 py-[1px] text-[10px] font-semibold ${
+                v.severity === "error" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              {v.severity}
+            </span>
+            <code className="rounded bg-white/70 px-1">{v.phrase}</code>
+            <span className="text-text-muted">— {v.reason}</span>
+            {v.suggestion && (
+              <span className="text-text-muted">
+                → <span className="text-green-700">{v.suggestion}</span>
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

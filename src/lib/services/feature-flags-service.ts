@@ -299,6 +299,14 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "cms_preview", label: "사이트 편집 미리보기", category: "operations", default: true, description: "저장 전 오버라이드 값으로 홈페이지 섹션 미리보기 (/admin/content-editor/preview)" },
   { key: "cms_history", label: "편집 히스토리·롤백", category: "operations", default: true, description: "콘텐츠 편집 이력 최근 10건 저장 및 롤백" },
   { key: "cms_editor_role", label: "편집 권한 세분화", category: "operations", default: false, description: "cms_editor_emails 목록의 사용자에게 콘텐츠 편집 권한 위임" },
+  { key: "marketing_guideline_scanner", label: "마케팅 지침 위반 감지", category: "operations", default: true, description: "v6.4 마케팅 지침(과대광고·CTA 규정) 위반 문구 자동 감지 및 대체 제안" },
+  { key: "cta_copy_v64", label: "CTA 카피 소재별 매핑 (v6.4)", category: "marketing", default: true, description: "카테고리별 CTA 헤드라인·버튼 문구 자동 매핑 (v6.4 10-2)" },
+  { key: "urgency_badge_gate", label: "긴급 뱃지 소재 게이트 (v6.4)", category: "marketing", default: true, description: "진짜 기한이 있는 소재(비자·행정심판)에만 긴급 뱃지 노출 (v6.4 9-6)" },
+  { key: "auto_disclaimer", label: "블로그 면책 문구 자동 삽입 (v6.4)", category: "marketing", default: true, description: "블로그 발행 시 법령 정보 제공 면책 문구 자동 삽입 (v6.4 8-6)" },
+  { key: "cost_frame_check", label: "비용 3단 구조 검증 (v6.4)", category: "operations", default: true, description: "블로그에 비용·만원 언급 시 범위·조건·개별확인 3요소 존재 검증 (v6.4 8-8-2)" },
+  { key: "marketing_guideline_doc", label: "마케팅 지침 문서 관리", category: "operations", default: true, description: "마케팅 지침(v6.4~) 문서를 관리자에서 편집·버전 관리 (/admin/marketing-guideline)" },
+  { key: "ai_draft_guideline_check", label: "AI 초안 지침 검증", category: "ai", default: true, description: "AI 초안을 마케팅 지침 스캐너에 통과시켜 위반 문구 감지 (/admin/ai-draft-check)" },
+  { key: "guideline_prompt_inject", label: "지침 프롬프트 자동 주입", category: "ai", default: true, description: "AI 초안 생성 시 마케팅 지침 문서 요약을 시스템 프롬프트에 자동 첨부" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

@@ -96,7 +96,7 @@ export function QuickConsultForm() {
           접수 완료. 곧 연락드리겠습니다.
         </p>
         <p className="mt-2 text-sm text-text-muted">
-          영업시간 내 30분 이내 연락드립니다.
+          영업시간 내 4시간 안에 답변드립니다.
         </p>
       </div>
     );
@@ -206,7 +206,7 @@ export function QuickConsultForm() {
 
       {/* SLA 배지 */}
       <p className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold-soft/40 px-4 py-2 text-sm font-bold text-text-strong">
-        <span aria-hidden>⏱</span> 영업시간 내 30분 이내 연락드립니다
+        <span aria-hidden>⏱</span> 영업시간 내 4시간 안에 답변드립니다
       </p>
       <p className="mt-1 text-xs text-text-muted">
         무료 검토 후 비용이 발생하지 않습니다

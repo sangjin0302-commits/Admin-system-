@@ -75,6 +75,10 @@ const STATIC_PAGES: CommandItem[] = [
   { id: "page:fee-tracking", group: "page", label: "수임료 수금 관리", href: "/admin/fee-tracking", aliases: ["수임료", "수금", "fee"], keywords: ["재무", "tracking", "payment"] },
   { id: "page:satisfaction-survey", group: "page", label: "고객 만족도 설문", href: "/admin/satisfaction-survey", aliases: ["만족도", "설문", "survey"], keywords: ["고객", "satisfaction"] },
   { id: "page:survey-results", group: "page", label: "포털 설문 결과", href: "/admin/survey-results", aliases: ["설문결과", "survey", "NPS"], keywords: ["만족도", "포털", "results"] },
+  { id: "page:guideline-audit", group: "page", label: "마케팅 지침 감사", href: "/admin/guideline-audit", aliases: ["지침", "guideline", "규정", "감사"], keywords: ["v6.4", "과대광고", "CTA", "위반"] },
+  { id: "page:guideline-rules", group: "page", label: "마케팅 지침 규칙", href: "/admin/guideline-rules", aliases: ["규칙", "rules", "금지문구"], keywords: ["v6.4", "지침", "규정"] },
+  { id: "page:marketing-guideline", group: "page", label: "마케팅 지침 문서", href: "/admin/marketing-guideline", aliases: ["지침문서", "guideline doc", "v6.4", "v6.5"], keywords: ["편집", "버전", "지침", "문서"] },
+  { id: "page:ai-draft-check", group: "page", label: "AI 초안 지침 검증", href: "/admin/ai-draft-check", aliases: ["초안검증", "draft check", "지침검증"], keywords: ["AI", "위반", "스캐너", "guideline"] },
 ];
 
 const STATIC_ACTIONS: CommandItem[] = [

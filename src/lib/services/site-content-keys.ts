@@ -66,7 +66,7 @@ const SERVICE_PAGES: ServicePageSpec[] = [
     heroSubtitle: "국민권익위·감사원·지자체 청원까지 서식과 논리를 함께.",
     intro: "청원은 절차 하자를 지적하고 재량을 이끌어내는 도구입니다. 감정이 아닌 사실과 근거로 씁니다.",
     benefits: "• 수신기관 선택 자문\n• 청원서 초안 대필\n• 후속 민원·감사 연계",
-    ctaLabel: "청원 무료 상담",
+    ctaLabel: "청원 무료 검토",
     ctaNote: "사안 요약만 있어도 검토 가능"
   }
 ];
@@ -88,7 +88,7 @@ function serviceKeys(): ContentKeyDefinition[] {
 
 const BASE_KEYS: ContentKeyDefinition[] = [
   // 홈 히어로
-  { key: "home.hero.title", section: "홈 · 히어로", label: "히어로 제목", type: "text", default: "비자 거절, 행정처분, 인허가 —\n2주 안에 해결 방향을 드립니다", hint: "줄바꿈은 Enter" },
+  { key: "home.hero.title", section: "홈 · 히어로", label: "히어로 제목", type: "text", default: "비자 거절, 행정처분, 인허가 —\n방향은 빠르게, 판단은 사안별로 드립니다", hint: "줄바꿈은 Enter" },
   { key: "home.hero.subtitle", section: "홈 · 히어로", label: "히어로 부제", type: "text", default: "행정 문제 뒤에 있는 사람의 마음까지 함께 헤아립니다." },
   { key: "home.hero.badge", section: "홈 · 히어로", label: "히어로 배지", type: "text", default: "행정사 사무소 · Logos · Pathos · Ethos" },
   { key: "home.cta.label", section: "홈 · CTA", label: "메인 CTA 버튼 문구", type: "text", default: "무료 검토 요청" },

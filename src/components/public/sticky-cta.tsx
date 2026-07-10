@@ -88,7 +88,7 @@ export function StickyCta() {
           </Link>
         </div>
         <p className="mt-1.5 text-center text-[11px] font-medium text-text-muted">
-          30분 내 회신 · 비용 발생 없음
+          영업시간 내 4시간 안에 답변 · 비용 발생 없음
         </p>
       </div>
     </div>
