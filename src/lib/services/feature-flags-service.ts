@@ -11,7 +11,7 @@ import { logger } from "@/lib/utils/logger";
 const SITE_SETTING_KEY = "feature.flags";
 const CACHE_MS = 30_000;
 
-export type FeatureCategory = "marketing" | "operations" | "ux" | "portal" | "ai" | "platform";
+export type FeatureCategory = "marketing" | "operations" | "ux" | "portal" | "ai" | "platform" | "analytics";
 
 export type FeatureDefinition = {
   key: string;
@@ -317,6 +317,9 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "context_aware_reply_draft", label: "맥락 인식 답장 초안", category: "ai", default: true, description: "문의 언어·채널에 따라 답장 초안 톤과 언어 자동 조정" },
   { key: "lead_scoring_dashboard", label: "리드 스코링 대시보드", category: "marketing", default: false, description: "채널·카테고리별 수임률 분석 대시보드 (/admin/lead-scoring)" },
   { key: "public_trust_dashboard", label: "공개 운영 현황", category: "marketing", default: false, description: "공개 운영 현황 페이지 — 진행 사건·응답시간·완료 건 (/status)", public: true },
+  { key: "blog_category_cta", label: "블로그 카테고리별 CTA", category: "marketing", default: true, description: "블로그 글 하단에 카테고리 맞춤 CTA 카드 노출", public: true },
+  { key: "intake_funnel_tracking", label: "접수 퍼널 트래킹", category: "analytics", default: true, description: "다단계 접수 폼 단계별 완료율 추적 (/admin/intake-funnel)" },
+  { key: "case_progress_notify", label: "사건 진행 알림", category: "operations", default: false, description: "사건 상태 변경 시 의뢰인에게 이메일+포털 자동 알림" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

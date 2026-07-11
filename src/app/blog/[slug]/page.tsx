@@ -10,6 +10,7 @@ import { RelatedKeywords } from "@/components/public/related-keywords";
 import { ScrollProgress } from "@/components/public/scroll-progress";
 import { BlogScrollTracker } from "@/components/public/blog-scroll-tracker";
 import { BlogMidCta } from "@/components/public/blog-mid-cta";
+import { BlogCategoryCta } from "@/components/public/blog-category-cta";
 import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
 import { sanitizeHtml } from "@/lib/utils/sanitize-html";
 import { autoLinkKeywords, extractKeywords } from "@/lib/utils/keyword-linker";
@@ -366,6 +367,7 @@ export default async function BlogDetailPage({
 
       <RelatedKeywords category={post.category} />
       <BlogCta category={post.category} />
+      <BlogCategoryCta category={post.category} />
 
       <p className="mt-8 rounded-lg border border-gold/30 bg-surface-muted/40 px-4 py-3 text-xs italic text-text-muted">
         ※ 본 칼럼은 일반적 안내이며, 개별 사안에 대한 법률 자문이 아닙니다.

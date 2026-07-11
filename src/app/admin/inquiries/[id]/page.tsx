@@ -56,6 +56,7 @@ import {
 } from "@/types/inquiry";
 import { logger } from "@/lib/utils/logger";
 import { predictDuration } from "@/lib/services/duration-predictor-service";
+import { AutoCaseSuggestBanner } from "@/components/admin/auto-case-suggest-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -193,6 +194,7 @@ export default async function AdminInquiryDetailPage({
         ) : null}
         {replyDraftEnabled ? <ReplyDraftButton inquiryId={inquiry.id} enabled={replyDraftEnabled} variantsEnabled={await isFeatureEnabled("reply_draft_variants")} /> : null}
         {labelingEnabled ? <InquiryLabels inquiryId={inquiry.id} enabled={labelingEnabled} /> : null}
+        <AutoCaseSuggestBanner inquiryId={inquiry.id} />
         <InquiryDetailHeaderCard
           status={inquiryStatus}
           urgency={inquiryUrgency}

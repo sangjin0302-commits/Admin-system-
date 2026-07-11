@@ -28,6 +28,7 @@ import { getSiteSettings } from "@/lib/services/site-settings";
 import { getContentBatch } from "@/lib/services/site-content-service";
 import { listPublicTestimonials } from "@/lib/services/testimonials";
 import { LocalLandingGrid } from "@/components/public/local-landing-grid";
+import DynamicCtaButton from "@/components/public/dynamic-cta-button";
 
 export const revalidate = 300;
 
@@ -233,10 +234,11 @@ export default async function PublicMarketingHomePage({
   // 로고 (DB → /logo.webp fallback)
   const heroLogoRow = await prisma.siteSetting.findUnique({ where: { key: "image.logo" } }).catch(() => null);
   let heroLogo = heroLogoRow?.value || "/logo.webp";
-  const [holoLogoEnabled, personalizationEnabled, heroRotationEnabled] = await Promise.all([
+  const [holoLogoEnabled, personalizationEnabled, heroRotationEnabled, dynamicCtaEnabled] = await Promise.all([
     isFeatureEnabled("holographic_logo"),
     isFeatureEnabled("homepage_personalization"),
     isFeatureEnabled("hero_image_rotation"),
+    isFeatureEnabled("dynamic_cta_labels"),
   ]);
 
   // UX5: 히어로 이미지 일자별 로테이션 — SiteSetting "image.hero.rotation" = JSON string[]
@@ -352,14 +354,21 @@ export default async function PublicMarketingHomePage({
             {/* CTA 위계 — 지배적 primary 하나 + 보조 하나 */}
             <Reveal delay={3}>
               <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-                <Link
-                  href={intakeHref}
-                  data-tour-id="cta-consult"
-                  className="ethos-cta-shine group inline-flex h-14 items-center justify-center gap-2 rounded-lg bg-primary px-8 text-base font-bold text-white shadow-md transition-all duration-300 hover:bg-text-strong hover:shadow-lg hover:shadow-primary/25"
-                >
-                  무료 검토 신청
-                  <span className="transition-transform duration-300 group-hover:translate-x-0.5">→</span>
-                </Link>
+                {dynamicCtaEnabled ? (
+                  <DynamicCtaButton
+                    enabled
+                    className="ethos-cta-shine h-14 px-8 text-base font-bold shadow-md hover:bg-text-strong hover:shadow-lg hover:shadow-primary/25"
+                  />
+                ) : (
+                  <Link
+                    href={intakeHref}
+                    data-tour-id="cta-consult"
+                    className="ethos-cta-shine group inline-flex h-14 items-center justify-center gap-2 rounded-lg bg-primary px-8 text-base font-bold text-white shadow-md transition-all duration-300 hover:bg-text-strong hover:shadow-lg hover:shadow-primary/25"
+                  >
+                    무료 검토 신청
+                    <span className="transition-transform duration-300 group-hover:translate-x-0.5">→</span>
+                  </Link>
+                )}
                 <Link
                   href="/quick-check"
                   className="inline-flex h-14 items-center justify-center gap-2 rounded-lg border border-gold/50 bg-surface/60 px-7 text-sm font-semibold text-primary backdrop-blur transition-all duration-300 hover:border-gold hover:bg-gold-soft/30"

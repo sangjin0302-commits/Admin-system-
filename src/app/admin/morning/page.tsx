@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { prisma } from "@/lib/prisma/client";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import { getLeadScores } from "@/lib/services/lead-scoring-service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CaseMatterStatus, InquiryStatus, UrgencyLevel } from "@generated/prisma-client/client";
@@ -65,6 +66,14 @@ export default async function MorningPage() {
   const fmtDate = (d: Date) => d.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" });
   const daysUntil = (d: Date) => Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   const hoursAgo = (d: Date) => Math.round((now.getTime() - d.getTime()) / (1000 * 60 * 60));
+
+  // Lead scoring dashboard
+  const showLeadScoring = await isFeatureEnabled("lead_scoring_dashboard");
+  const topConversionChannels = showLeadScoring
+    ? await getLeadScores()
+        .then((r) => r.channels.filter((c) => c.wonCount > 0).slice(0, 3))
+        .catch(() => [])
+    : [];
 
   // Feature 1: 오늘 우선순위 자동 정렬
   const showPrioritySort = await isFeatureEnabled("morning_priority_sort");
@@ -132,6 +141,23 @@ export default async function MorningPage() {
               <div key={c.channel} className="rounded border border-gold/20 bg-surface px-3 py-2">
                 <p className="truncate text-[10px] uppercase tracking-wider text-text-muted">{c.channel}</p>
                 <p className="mt-1 text-xl font-bold text-primary">{c.count}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {showLeadScoring && topConversionChannels.length > 0 && (
+        <Card className="p-5">
+          <p className="ui-kicker">전환율 TOP 채널 (리드 스코어링)</p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {topConversionChannels.map((ch) => (
+              <div key={ch.channel} className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">{ch.channel}</p>
+                <p className="mt-1 text-2xl font-bold text-emerald-600">{ch.wonRate}%</p>
+                <p className="mt-0.5 text-[11px] text-text-muted">
+                  {ch.wonCount}/{ch.inquiries}건 전환 · 평균 {ch.avgDaysToWon}일
+                </p>
               </div>
             ))}
           </div>

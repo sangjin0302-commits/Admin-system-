@@ -31,6 +31,8 @@ import {
 } from "@/types/intake-category";
 
 import { useFormAutosave } from "@/lib/hooks/use-form-autosave";
+import type { PrescreenResult } from "@/lib/services/intake-prescreen-service";
+import PrescreenResultCard from "./prescreen-result";
 import { IntakeDraftBanner } from "./intake-draft-banner";
 import { IntakeStepCategory } from "./steps/intake-step-category";
 import { IntakeStepContact } from "./steps/intake-step-contact";
@@ -393,6 +395,8 @@ export function IntakeFormSafeV3({
   const [intakeMessage, setIntakeMessage] = useState("");
   const [completedMessage, setCompletedMessage] = useState("");
   const [completedTrackingCode, setCompletedTrackingCode] = useState("");
+  const [prescreenResult, setPrescreenResult] = useState<PrescreenResult | null>(null);
+  const prescreenEnabled = useFeatureFlag("intake_ai_prescreen") === true;
   const ga4Enabled = useFeatureFlag("ga4_conversion_tracking") !== false;
   const autosaveEnabled = useFeatureFlag("intake_form_autosave") !== false;
   const { hasDraft, clearDraft, restoreDraft, dismissDraft } = useFormAutosave(form, autosaveEnabled);
@@ -444,6 +448,31 @@ export function IntakeFormSafeV3({
 
     return () => controller.abort();
   }, [form.email, form.category, form.description, form.categoryDetails, form.phone, form.contactName]);
+
+  // Funnel step tracking — fire on each step change
+  useEffect(() => {
+    let step = 1; // page loaded = step 1
+    if (form.category) step = 2;
+    if (form.category && (form.contactName || form.email)) step = 2;
+    if (Object.keys(form.categoryDetails).length > 0) step = 3;
+    if (form.description) step = 4;
+    if (form.consentToPrivacy) step = 5;
+
+    const w = typeof window !== "undefined" ? (window as unknown as Record<string, unknown>) : null;
+    const sessionId = w
+      ? (w.__intakeFunnelSession as string) ?? (w.__intakeFunnelSession = crypto.randomUUID()) as string
+      : "ssr";
+
+    const funnelController = new AbortController();
+    fetch("/api/public/intake-funnel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: funnelController.signal,
+      body: JSON.stringify({ sessionId, step, totalSteps: 5 }),
+    }).catch(() => {});
+
+    return () => funnelController.abort();
+  }, [form.category, form.contactName, form.email, form.categoryDetails, form.description, form.consentToPrivacy]);
 
   useEffect(() => {
     let cancelled = false;
@@ -623,6 +652,24 @@ export function IntakeFormSafeV3({
         setNotice(copy.deduplicated);
       }
 
+      // AI prescreen — fire-and-forget after successful submit
+      if (prescreenEnabled && payload.category && payload.description) {
+        fetch("/api/public/prescreen", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            category: payload.category,
+            description: payload.description,
+            urgencyHint: payload.declaredUrgency,
+          }),
+        })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data: PrescreenResult | null) => {
+            if (data) setPrescreenResult(data);
+          })
+          .catch(() => {});
+      }
+
       clearDraft();
       setForm({
         ...initialState,
@@ -757,6 +804,10 @@ export function IntakeFormSafeV3({
         completedMessage={completedMessage}
         completedTrackingCode={completedTrackingCode}
       />
+
+      {prescreenResult && (
+        <PrescreenResultCard result={prescreenResult} />
+      )}
     </div>
   );
 }
