@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { logger } from "@/lib/utils/logger";
 import { getUsage, incrementUsage } from "@/lib/services/ai-subscription-service";
+import { buildRagContext } from "@/lib/services/ai-knowledge-base-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-4-5-20251001";
@@ -62,6 +64,18 @@ export async function POST(request: NextRequest) {
       content: String(m.content).slice(0, MAX_INPUT_LENGTH),
     }));
 
+    // RAG 지식베이스 컨텍스트 주입
+    let systemPrompt = SYSTEM_PROMPT;
+    if (await isFeatureEnabled("ai_chatbot_rag")) {
+      const lastUserMsg = [...trimmed].reverse().find((m) => m.role === "user");
+      if (lastUserMsg) {
+        const ragContext = buildRagContext(lastUserMsg.content);
+        if (ragContext) {
+          systemPrompt += `\n\n## 참고 지식베이스:\n${ragContext}`;
+        }
+      }
+    }
+
     const res = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
       headers: {
@@ -72,7 +86,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 600,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt,
         stream: true,
         messages: trimmed,
       }),

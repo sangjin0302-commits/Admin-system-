@@ -42,4 +42,14 @@ export function withOrgFilter<T extends Record<string, unknown>>(
   return { ...base, orgId } as T & { orgId: string };
 }
 
+/** SiteSetting에 등록된 모든 org ID 목록 반환 */
+export async function getAvailableOrgs(): Promise<string[]> {
+  const { prisma } = await import("@/lib/prisma/client");
+  const rows = await prisma.siteSetting.findMany({
+    where: { key: { startsWith: "org." } },
+    select: { key: true },
+  });
+  return rows.map((r) => r.key.slice("org.".length));
+}
+
 export const ORG_DEFAULT_ID = DEFAULT_ORG_ID;

@@ -7,6 +7,7 @@ import { InquiryDashboardSummary } from "@/components/admin/inquiry-dashboard-su
 import { InquiryFilters } from "@/components/admin/inquiry-filters";
 import { InquiryQuickPresets } from "@/components/admin/inquiry-quick-presets";
 import { InquiryTable } from "@/components/admin/inquiry-table";
+import { InquiryTanstackWrapper } from "@/components/admin/inquiry-tanstack-wrapper";
 import { InquiryWorkQueuesSafeV2 } from "@/components/admin/inquiry-work-queues";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
@@ -20,6 +21,7 @@ import { readMarketingSnapshot } from "@/lib/services/marketing-sync-service";
 import { parseAdminInquiryQuery } from "@/lib/validation/admin-safe-v2";
 import { listInquiries } from "@/lib/services/inquiry-service";
 import { getScoresForInquiries } from "@/lib/services/priority-scoring-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +65,7 @@ export default async function AdminInquiryListPage({
     logger.error("Failed to load priority scores", error);
     return {};
   });
+  const useTanstack = await isFeatureEnabled("admin_tanstack_table");
   const {
     activeInquiries,
     prioritizedInquiries,
@@ -333,7 +336,11 @@ export default async function AdminInquiryListPage({
           ) : (
             <>
               <InquiryCardList inquiries={prioritizedInquiries} />
-              <InquiryTable inquiries={prioritizedInquiries} scores={priorityScores} />
+              {useTanstack ? (
+                <InquiryTanstackWrapper inquiries={prioritizedInquiries} />
+              ) : (
+                <InquiryTable inquiries={prioritizedInquiries} scores={priorityScores} />
+              )}
             </>
           )
         ) : (

@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
 
+import { RichMemoEditor } from "@/components/admin/rich-memo-editor";
 import { Card } from "@/components/ui/card";
 import { parseClientApiError } from "@/lib/http/client-api";
 import { formatDate, stringifyDateForInput } from "@/lib/utils";
@@ -111,6 +112,14 @@ export function CaseAccountingMemoPanel({
   const [draft, setDraft] = useState<Draft>(() => draftFromMemo(accountingMemo));
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [useRichEditor, setUseRichEditor] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/feature-flags?key=admin_rich_memo_editor")
+      .then((r) => r.json())
+      .then((d) => setUseRichEditor(d.enabled))
+      .catch(() => {});
+  }, []);
 
   function setField(next: Partial<Draft>) {
     setDraft((current) => ({ ...current, ...next }));
@@ -284,33 +293,54 @@ export function CaseAccountingMemoPanel({
         </label>
 
         <div className="grid gap-3 lg:grid-cols-3">
-          <label className="space-y-1 text-sm font-medium text-text">
+          <div className="space-y-1 text-sm font-medium text-text">
             입금 메모
-            <textarea
-              value={draft.paymentMemo}
-              onChange={(event) => setField({ paymentMemo: event.target.value })}
-              rows={4}
-              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-text-strong outline-none focus:border-line-strong"
-            />
-          </label>
-          <label className="space-y-1 text-sm font-medium text-text">
+            {useRichEditor ? (
+              <RichMemoEditor
+                content={draft.paymentMemo}
+                onChange={(html) => setField({ paymentMemo: html })}
+              />
+            ) : (
+              <textarea
+                value={draft.paymentMemo}
+                onChange={(event) => setField({ paymentMemo: event.target.value })}
+                rows={4}
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-text-strong outline-none focus:border-line-strong"
+              />
+            )}
+          </div>
+          <div className="space-y-1 text-sm font-medium text-text">
             증빙/영수 메모
-            <textarea
-              value={draft.invoiceMemo}
-              onChange={(event) => setField({ invoiceMemo: event.target.value })}
-              rows={4}
-              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-text-strong outline-none focus:border-line-strong"
-            />
-          </label>
-          <label className="space-y-1 text-sm font-medium text-text">
+            {useRichEditor ? (
+              <RichMemoEditor
+                content={draft.invoiceMemo}
+                onChange={(html) => setField({ invoiceMemo: html })}
+              />
+            ) : (
+              <textarea
+                value={draft.invoiceMemo}
+                onChange={(event) => setField({ invoiceMemo: event.target.value })}
+                rows={4}
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-text-strong outline-none focus:border-line-strong"
+              />
+            )}
+          </div>
+          <div className="space-y-1 text-sm font-medium text-text">
             장부 비고
-            <textarea
-              value={draft.ledgerMemo}
-              onChange={(event) => setField({ ledgerMemo: event.target.value })}
-              rows={4}
-              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-text-strong outline-none focus:border-line-strong"
-            />
-          </label>
+            {useRichEditor ? (
+              <RichMemoEditor
+                content={draft.ledgerMemo}
+                onChange={(html) => setField({ ledgerMemo: html })}
+              />
+            ) : (
+              <textarea
+                value={draft.ledgerMemo}
+                onChange={(event) => setField({ ledgerMemo: event.target.value })}
+                rows={4}
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-text-strong outline-none focus:border-line-strong"
+              />
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
