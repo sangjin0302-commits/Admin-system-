@@ -19,6 +19,10 @@ import { prisma } from "@/lib/prisma/client";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { getRelatedBlogPosts } from "@/lib/services/blog-recommend-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import { BlogSummaryCard } from "@/components/public/blog-summary-card";
+import { BlogRelatedPosts } from "@/components/public/blog-related-posts";
+import { generateBlogSummary } from "@/lib/services/blog-summary-service";
+import { getRelatedPosts } from "@/lib/services/blog-related-service";
 
 export const dynamic = "force-dynamic";
 
@@ -255,6 +259,11 @@ export default async function BlogDetailPage({
         </div>
       </div>
 
+      {await isFeatureEnabled("blog_ai_summary") && await (async () => {
+        const summaryData = await generateBlogSummary(post.contentHtml);
+        return <BlogSummaryCard summary={summaryData.summary} readingTimeMin={summaryData.readingTimeMin} />;
+      })()}
+
       <article className="mt-8">
         <span className="rounded-full bg-gold-soft/60 px-3 py-1 font-serif text-xs font-bold text-gold-deep">
           {PUBLIC_CATEGORY_LABEL[toPublicCategory(post.category)]}
@@ -364,6 +373,11 @@ export default async function BlogDetailPage({
           </div>
         </section>
       )}
+
+      {await isFeatureEnabled("blog_related_posts") && await (async () => {
+        const relatedPosts = await getRelatedPosts(post.slug, post.category);
+        return <BlogRelatedPosts posts={relatedPosts} />;
+      })()}
 
       <RelatedKeywords category={post.category} />
       <BlogCta category={post.category} />

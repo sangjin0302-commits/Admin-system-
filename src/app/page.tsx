@@ -342,7 +342,7 @@ export default async function PublicMarketingHomePage({
                 ].map((benefit) => (
                   <span
                     key={benefit}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold-soft/40 px-3.5 py-1.5 text-[13px] font-semibold text-primary"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold-soft/40 px-3.5 py-1.5 text-sm font-semibold text-primary"
                   >
                     <span className="text-gold-deep">✓</span>
                     {benefit}
@@ -380,13 +380,13 @@ export default async function PublicMarketingHomePage({
 
             {/* 사회적 증거 에코 */}
             <Reveal delay={4}>
-              <p className="mt-5 text-xs leading-5 text-text-muted">
+              <p className="mt-5 text-sm leading-5 text-text">
                 접수 후 영업일 24시간 내 담당 행정사가 직접 회신드립니다.
               </p>
             </Reveal>
 
             <Reveal delay={4}>
-              <p className="mt-3 text-xs leading-5 text-text-muted">{t.safetyNote}</p>
+              <p className="mt-3 text-sm leading-5 text-text-muted">{t.safetyNote}</p>
             </Reveal>
           </div>
 
@@ -475,7 +475,7 @@ export default async function PublicMarketingHomePage({
               <Reveal key={card.title} delay={((i % 4) + 1) as 1 | 2 | 3 | 4}>
                 <div className="ethos-card ethos-card-hover ethos-card-topline flex h-full flex-col p-7">
                   <h3 className="ethos-display text-xl leading-snug">{card.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-text-muted">{card.desc}</p>
+                  <p className="mt-3 text-sm leading-7 text-text">{card.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -624,7 +624,7 @@ export default async function PublicMarketingHomePage({
                         <span className="font-serif text-xs text-white/60">{p.korean}</span>
                       </div>
                       <p className="mt-2 text-sm leading-7 text-white/70">{p.description}</p>
-                      <p className="mt-2.5 font-serif text-xs leading-6 text-gold-soft">{p.benefit}</p>
+                      <p className="mt-2.5 font-serif text-sm leading-6 text-gold-soft">{p.benefit}</p>
                     </div>
                   </div>
                 </Reveal>
@@ -735,7 +735,7 @@ export default async function PublicMarketingHomePage({
                       {step.step}
                     </div>
                     <h3 className="ethos-display mt-5 text-lg">{step.title}</h3>
-                    <p className="mt-2 text-xs leading-6 text-text-muted">{step.desc}</p>
+                    <p className="mt-2 text-sm leading-6 text-text-muted">{step.desc}</p>
                   </div>
                 </Reveal>
               ))}
@@ -777,7 +777,7 @@ export default async function PublicMarketingHomePage({
                   <br />
                   다음 단계 확인
                 </h2>
-                <p className="relative mt-4 text-sm leading-7 text-text-muted">
+                <p className="relative mt-4 text-sm leading-7 text-text">
                   접수 후 받은 접수번호로 자료요청, 검토 중 상태, 다음 안내를 한곳에서 확인하실 수 있습니다.
                 </p>
                 <div className="relative mt-8">
@@ -802,7 +802,7 @@ export default async function PublicMarketingHomePage({
                       className="rounded-xl border-l-2 border-gold/50 bg-surface-muted/40 px-5 py-4 transition-colors hover:bg-surface-muted/70"
                     >
                       <p className="font-serif text-sm font-bold text-primary">{p.title}</p>
-                      <p className="mt-1.5 text-xs leading-6 text-text-muted">{p.desc}</p>
+                      <p className="mt-1.5 text-sm leading-6 text-text-muted">{p.desc}</p>
                     </div>
                   ))}
                 </div>

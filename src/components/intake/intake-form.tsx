@@ -31,6 +31,7 @@ import {
 } from "@/types/intake-category";
 
 import { useFormAutosave } from "@/lib/hooks/use-form-autosave";
+import { useExitGuard } from "@/lib/hooks/use-exit-guard";
 import type { PrescreenResult } from "@/lib/services/intake-prescreen-service";
 import PrescreenResultCard from "./prescreen-result";
 import { IntakeDraftBanner } from "./intake-draft-banner";
@@ -400,6 +401,9 @@ export function IntakeFormSafeV3({
   const ga4Enabled = useFeatureFlag("ga4_conversion_tracking") !== false;
   const autosaveEnabled = useFeatureFlag("intake_form_autosave") !== false;
   const { hasDraft, clearDraft, restoreDraft, dismissDraft } = useFormAutosave(form, autosaveEnabled);
+  const exitGuardEnabled = useFeatureFlag("intake_exit_guard") !== false;
+  const hasUnsavedData = Boolean(form.contactName || form.phone || form.email || form.description);
+  useExitGuard(exitGuardEnabled && hasUnsavedData && !completedMessage);
 
   const selectedCategory = form.category || null;
   const selectedCategoryFields = useMemo(

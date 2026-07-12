@@ -11,7 +11,7 @@ import { logger } from "@/lib/utils/logger";
 const SITE_SETTING_KEY = "feature.flags";
 const CACHE_MS = 30_000;
 
-export type FeatureCategory = "marketing" | "operations" | "ux" | "portal" | "ai" | "platform" | "analytics";
+export type FeatureCategory = "marketing" | "operations" | "ux" | "portal" | "ai" | "platform" | "analytics" | "intake" | "content" | "admin";
 
 export type FeatureDefinition = {
   key: string;
@@ -320,6 +320,14 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "blog_category_cta", label: "블로그 카테고리별 CTA", category: "marketing", default: true, description: "블로그 글 하단에 카테고리 맞춤 CTA 카드 노출", public: true },
   { key: "intake_funnel_tracking", label: "접수 퍼널 트래킹", category: "analytics", default: true, description: "다단계 접수 폼 단계별 완료율 추적 (/admin/intake-funnel)" },
   { key: "case_progress_notify", label: "사건 진행 알림", category: "operations", default: false, description: "사건 상태 변경 시 의뢰인에게 이메일+포털 자동 알림" },
+  { key: "intake_language_detect", label: "접수 언어 자동 감지", category: "intake", default: false, description: "접수 폼 텍스트 입력에서 언어를 자동 감지하여 UI 언어 전환" },
+  { key: "intake_kakao_share", label: "카카오톡 공유 버튼", category: "intake", default: true, description: "접수 완료 후 카카오톡 공유 버튼 노출", public: true },
+  { key: "blog_ai_summary", label: "블로그 AI 요약", category: "content", default: false, description: "블로그 글 상단에 AI 생성 3줄 요약 + 읽기 시간 카드" },
+  { key: "admin_smart_search", label: "관리자 통합 검색", category: "admin", default: true, description: "문의 이름·이메일·전화·설명 전문 검색" },
+  { key: "intake_exit_guard", label: "접수 이탈 방지", category: "intake", default: true, description: "접수 폼 작성 중 브라우저 나가기 방지", public: true },
+  { key: "admin_memo_templates", label: "메모 템플릿", category: "admin", default: true, description: "자주 쓰는 메모 템플릿 저장 및 빠른 삽입" },
+  { key: "client_satisfaction_survey", label: "고객 만족도 설문", category: "operations", default: false, description: "사건 종결 후 자동 설문 이메일 발송 및 평가 수집" },
+  { key: "blog_related_posts", label: "관련 글 추천", category: "content", default: true, description: "블로그 글 하단에 같은 카테고리 관련 글 3개 추천", public: true },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));
