@@ -1091,3 +1091,16 @@ a {
     transition: none !important;
   }
 }
+
+/* Tiptap editor */
+.ProseMirror { min-height: 120px; }
+.ProseMirror p { margin: 0.25em 0; }
+.ProseMirror ul, .ProseMirror ol { padding-left: 1.5em; }
+.ProseMirror:focus { outline: none; }
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}

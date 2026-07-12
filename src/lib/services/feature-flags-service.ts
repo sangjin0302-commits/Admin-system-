@@ -328,6 +328,9 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "admin_memo_templates", label: "메모 템플릿", category: "admin", default: true, description: "자주 쓰는 메모 템플릿 저장 및 빠른 삽입" },
   { key: "client_satisfaction_survey", label: "고객 만족도 설문", category: "operations", default: false, description: "사건 종결 후 자동 설문 이메일 발송 및 평가 수집" },
   { key: "blog_related_posts", label: "관련 글 추천", category: "content", default: true, description: "블로그 글 하단에 같은 카테고리 관련 글 3개 추천", public: true },
+  { key: "admin_rich_memo_editor", label: "리치 메모 에디터", category: "admin" as FeatureCategory, default: false, description: "관리자 메모를 Tiptap 리치텍스트 에디터로 전환 (볼드/리스트/이탤릭)" },
+  { key: "admin_korean_date_picker", label: "한국어 달력 선택기", description: "기한 설정 시 한국어 인라인 달력 (react-day-picker)", category: "admin" as FeatureCategory, default: true },
+  { key: "admin_tanstack_table", label: "관리자 TanStack 테이블", description: "문의 목록을 @tanstack/react-table로 교체 (정렬/필터/페이지네이션/CSV)", category: "admin" as FeatureCategory, default: false },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

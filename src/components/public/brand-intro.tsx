@@ -30,7 +30,7 @@ export function BrandIntro() {
       }
       window.sessionStorage.setItem(STORAGE_KEY, "1");
       setShow(true);
-      const t = window.setTimeout(() => setShow(false), 2100);
+      const t = window.setTimeout(() => setShow(false), 1500);
       return () => window.clearTimeout(t);
     } catch {
       /* sessionStorage 접근 실패 시 인트로 비활성 */
