@@ -9,6 +9,9 @@
  * feature flag `smart_model_routing` 이 꺼져있으면 fallback: 항상 Sonnet.
  */
 
+import { createHash } from "crypto";
+
+import { cacheGet, cacheSet } from "@/lib/services/cache-service";
 import {
   estimateCostUsd,
   recordMetric,
@@ -41,6 +44,7 @@ export type Invoker = (args: {
 }) => Promise<{ text: string; input_tokens: number; output_tokens: number }>;
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+const AI_CACHE_TTL = 3600; // 1 hour
 
 async function defaultAnthropicInvoker(args: {
   model: string;
@@ -93,7 +97,18 @@ export async function smartInvoke(
   options: SmartInvokeOptions = {}
 ): Promise<InvokeResult> {
   const routingEnabled = await isFeatureEnabled("smart_model_routing").catch(() => true);
+  const cachingEnabled = await isFeatureEnabled("ai_response_cache").catch(() => false);
   const invoker = options.invoker ?? defaultAnthropicInvoker;
+
+  // --- cache lookup ---
+  const cacheKey = `ai:${taskType}:${createHash("md5").update(prompt + (options.system || "")).digest("hex").slice(0, 16)}`;
+  if (cachingEnabled) {
+    const cached = cacheGet<InvokeResult>(cacheKey);
+    if (cached) {
+      logger.debug("[smart-ai] cache hit");
+      return cached;
+    }
+  }
 
   let chosen: string;
   let reasoning: string;
@@ -156,13 +171,17 @@ export async function smartInvoke(
           success: true,
         }).catch((e) => logger.warn("[smart-ai] metric failed", e));
       }
-      return {
+      const result: InvokeResult = {
         text: res.text,
         model,
         inputTokens: res.input_tokens,
         outputTokens: res.output_tokens,
         reasoning: finalReasoning,
       };
+      if (cachingEnabled) {
+        cacheSet(cacheKey, result, AI_CACHE_TTL);
+      }
+      return result;
     } catch (err) {
       lastErr = err;
       logger.warn(`[smart-ai] model ${model} failed`, err);

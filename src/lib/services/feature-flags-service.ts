@@ -334,6 +334,9 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "admin_tanstack_table", label: "관리자 TanStack 테이블", description: "문의 목록을 @tanstack/react-table로 교체 (정렬/필터/페이지네이션/CSV)", category: "admin" as FeatureCategory, default: true },
   { key: "ai_chatbot_rag", label: "AI 챗봇 RAG 지식베이스", category: "operations" as FeatureCategory, default: true, description: "AI 챗봇에 사무소 지식베이스(RAG) 컨텍스트 주입" },
   { key: "e2e_test_mode", label: "E2E 테스트 모드", category: "operations" as FeatureCategory, default: false, description: "Playwright E2E 테스트 실행 시 테스트 전용 모드 활성화" },
+  { key: "ai_response_cache", label: "AI 응답 캐시 (비용 절감)", default: true, category: "operations" as FeatureCategory },
+  { key: "cron_batch_dispatcher", label: "Cron 배치 디스패처 (41→8 통합)", default: true, category: "operations" as FeatureCategory },
+  { key: "api_deprecation_warnings", label: "API 사용중단 경고", default: true, category: "operations" as FeatureCategory, description: "사용중단 예정 API 라우트 호출 시 경고 로깅 및 응답 헤더 추가" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

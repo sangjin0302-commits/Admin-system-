@@ -2,164 +2,36 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
-      "path": "/api/cron/deadline-scan",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/cleanup",
-      "schedule": "0 3 * * 0"
-    },
-    {
-      "path": "/api/cron/google-calendar-sync",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/lawbot-batch-analyze",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/auto-conversion-proposals",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/audit-cleanup",
-      "schedule": "0 4 * * 0"
-    },
-    {
-      "path": "/api/cron/naver-rss-sync",
-      "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/stale-inquiries-alert",
+      "path": "/api/cron/batch/morning-ops",
       "schedule": "0 8 * * *"
     },
     {
-      "path": "/api/cron/weekly-report",
+      "path": "/api/cron/batch/night-analytics",
+      "schedule": "0 22 * * *"
+    },
+    {
+      "path": "/api/cron/batch/content-sync",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/batch/infra-maintenance",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/batch/calendar-sync",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/batch/weekly-batch",
       "schedule": "0 12 * * 0"
     },
     {
-      "path": "/api/cron/follow-up-reminder",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/blog-translate",
-      "schedule": "0 4 * * *"
-    },
-    {
-      "path": "/api/cron/intake-retarget",
-      "schedule": "0 10 * * *"
-    },
-    {
-      "path": "/api/cron/nps-survey",
-      "schedule": "0 10 * * 0"
-    },
-    {
-      "path": "/api/cron/daily-briefing",
-      "schedule": "0 23 * * *"
-    },
-    {
-      "path": "/api/cron/legal-info-daily",
-      "schedule": "0 22 * * *"
-    },
-    {
-      "path": "/api/cron/case-delay-scan",
-      "schedule": "0 23 * * 1"
-    },
-    {
-      "path": "/api/cron/gsc-rank-drop",
-      "schedule": "30 22 * * 2"
-    },
-    {
-      "path": "/api/cron/newsletter-digest",
-      "schedule": "0 0 * * 1"
-    },
-    {
-      "path": "/api/cron/deadline-calendar-sync",
-      "schedule": "0 5 * * *"
-    },
-    {
-      "path": "/api/cron/finance-monthly-summary",
+      "path": "/api/cron/batch/monthly-batch",
       "schedule": "0 1 1 * *"
     },
     {
-      "path": "/api/cron/review-request",
-      "schedule": "0 10 * * *"
-    },
-    {
-      "path": "/api/cron/priority-scoring",
-      "schedule": "0 21 * * *"
-    },
-    {
-      "path": "/api/cron/ad-optimizer-digest",
-      "schedule": "0 1 * * 1"
-    },
-    {
-      "path": "/api/cron/audio-briefing",
-      "schedule": "0 22 * * *"
-    },
-    {
-      "path": "/api/cron/legal-news-fetch",
-      "schedule": "0 23 * * *"
-    },
-    {
-      "path": "/api/cron/naver-kin-scan",
-      "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/podcast-generate",
-      "schedule": "0 21 * * 2"
-    },
-    {
-      "path": "/api/cron/ab-auto-promote",
-      "schedule": "0 13 * * 0"
-    },
-    {
-      "path": "/api/cron/deadline-autopilot",
-      "schedule": "0 20 * * *"
-    },
-    {
-      "path": "/api/cron/audit-anomaly-scan",
-      "schedule": "0 19 * * *"
-    },
-    {
-      "path": "/api/cron/tax-report-autopilot",
-      "schedule": "0 3 1 * *"
-    },
-    {
-      "path": "/api/cron/backup-mirror",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/queue-worker",
-      "schedule": "30 0 * * *"
-    },
-    {
-      "path": "/api/cron/ai-regression-run",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/auto-rollback-check",
-      "schedule": "30 1 * * *"
-    },
-    {
-      "path": "/api/cron/self-healing-scan",
-      "schedule": "30 2 * * *"
-    },
-    {
-      "path": "/api/cron/auto-marketing",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/deploy-status-check",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/kakao-retry",
-      "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/cron/daily-kpi-email",
-      "schedule": "30 23 * * *"
+      "path": "/api/cron/batch/bi-weekly",
+      "schedule": "0 22 * * 1"
     }
   ]
 }
