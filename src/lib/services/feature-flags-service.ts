@@ -337,6 +337,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "ai_response_cache", label: "AI 응답 캐시 (비용 절감)", default: true, category: "operations" as FeatureCategory },
   { key: "cron_batch_dispatcher", label: "Cron 배치 디스패처 (41→8 통합)", default: true, category: "operations" as FeatureCategory },
   { key: "api_deprecation_warnings", label: "API 사용중단 경고", default: true, category: "operations" as FeatureCategory, description: "사용중단 예정 API 라우트 호출 시 경고 로깅 및 응답 헤더 추가" },
+  { key: "ai_faq_fast_path", label: "AI FAQ 빠른 응답 (API 절감)", default: true, category: "operations" as FeatureCategory, description: "자주 묻는 질문에 사전 작성 답변을 즉시 반환하여 Anthropic API 호출 절감" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { logger } from "@/lib/utils/logger";
 import { getUsage, incrementUsage } from "@/lib/services/ai-subscription-service";
 import { buildRagContext } from "@/lib/services/ai-knowledge-base-service";
+import { findFaqMatch } from "@/lib/services/ai-faq-cache-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
@@ -57,6 +58,17 @@ export async function POST(request: NextRequest) {
       }
       // Consume one credit for tracking (best-effort, non-blocking on failure)
       await incrementUsage(userId).catch(() => null);
+    }
+
+    // FAQ fast-path: 사전 작성 답변으로 API 호출 절감
+    if (await isFeatureEnabled("ai_faq_fast_path")) {
+      const lastMsg = [...messages].reverse().find((m) => m.role === "user");
+      if (lastMsg) {
+        const faqResponse = findFaqMatch(String(lastMsg.content));
+        if (faqResponse) {
+          return NextResponse.json({ type: "faq", content: faqResponse });
+        }
+      }
     }
 
     const trimmed = messages.slice(-MAX_MESSAGES).map((m) => ({
