@@ -21,8 +21,8 @@ export function HeroCtaSubtitleVariants({ className }: Props) {
       </AbVariant>
       <AbVariant experiment="hero_cta" variant="urgency">
         <p className={cls}>
-          <span className="font-bold text-gold-deep">지금 시작하면 이번 주 안에 접수 가능</span> —
-          무료 검토로 가능성과 예상 비용, 다음 절차를 먼저 확인하세요.
+          <span className="font-bold text-gold-deep">AI 사전 진단으로 필요 서류와 절차를 먼저 확인하세요</span> —
+          무료 검토로 가능성과 예상 비용, 다음 절차를 함께 안내합니다.
         </p>
       </AbVariant>
       <AbVariant experiment="hero_cta" variant="benefit">

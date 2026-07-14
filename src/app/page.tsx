@@ -336,8 +336,8 @@ export default async function PublicMarketingHomePage({
             <Reveal delay={2}>
               <div className="mt-7 flex flex-wrap gap-2.5">
                 {[
-                  "행정 절차 전문 · 합리적 수임료",
-                  "영업일 24시간 내 회신",
+                  "주한 대사관 실무 2.5년+",
+                  "영업일 24시간 내 회신 안내",
                   "한국어 · 영어 · 아랍어 상담"
                 ].map((benefit) => (
                   <span
@@ -467,10 +467,10 @@ export default async function PublicMarketingHomePage({
 
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { title: "행정 절차에 특화", desc: "소송은 변호사, 행정 절차는 행정사 — 역할이 다릅니다." },
-              { title: "직접 하기엔 위험", desc: "기한 한 번 놓치면 절차 전체가 무너집니다." },
-              { title: "끝까지 함께", desc: "검토 → 서면 → 제출 → 결과까지 한 창구로 관리합니다." },
-              { title: "다국어 가능", desc: "외국인 의뢰인도 모국어로 안심하고 상담할 수 있습니다." }
+              { title: "행정 절차 근거 명확", desc: "행정사법 제2조 업무 범위 내에서 사안별로 견적하고 착수 전 서면으로 확인합니다." },
+              { title: "대사관 실무 2.5년+", desc: "주한 대사관 비자·출입국 실무 경험을 바탕으로 서식·기한·근거를 짚어드립니다." },
+              { title: "끝까지 한 창구", desc: "검토 → 서면 → 제출 → 결과까지 담당 행정사가 직접 관리합니다." },
+              { title: "3언어 대응", desc: "한국어 · 영어 · 아랍어로 외국인 의뢰인도 모국어 상담이 가능합니다." }
             ].map((card, i) => (
               <Reveal key={card.title} delay={((i % 4) + 1) as 1 | 2 | 3 | 4}>
                 <div className="ethos-card ethos-card-hover ethos-card-topline flex h-full flex-col p-7">

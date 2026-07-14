@@ -159,7 +159,7 @@ const COPY = {
       { question: "Is the review really free?", answer: "Yes. Feasibility, an estimate range, and answers to 1-2 key questions are provided free of charge — the same across all channels (Naver TalkTalk, KakaoTalk, email, Telegram)." },
       { question: "How much does the paid consultation cost?", answer: "Depending on complexity, it ranges from KRW 33,000 to 55,000. The full amount is deducted from the final fee if you proceed with engagement." },
       { question: "What is the difference between a review and a consultation?", answer: "A review is a brief check of feasibility and estimate range. In-depth strategy, document design, and risk analysis are handled in a paid consultation." },
-      { question: "How does the cost compare to hiring an attorney?", answer: "Within an administrative attorney's scope of work, matters can often be resolved at roughly one-third to one-fifth of the cost of hiring an attorney." },
+      { question: "How are fees determined?", answer: "The administrative scrivener handles procedures within the scope of the Administrative Scrivener Act Article 2. Fees are transparent and quoted per matter." },
       { question: "Is consultation available in other languages?", answer: "Consultations are available in Korean, English, and Arabic. Multilingual document review and translation can also be arranged." }
     ]
   }

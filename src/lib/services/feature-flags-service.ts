@@ -310,6 +310,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "guideline_prompt_inject", label: "지침 프롬프트 자동 주입", category: "ai", default: true, description: "AI 초안 생성 시 마케팅 지침 문서 요약을 시스템 프롬프트에 자동 첨부" },
   { key: "admin_hide_mode", label: "감춤 모드 (사이드바 티어 필터)", category: "operations", default: true, description: "관리자 사이드바를 tier(핵심/자주/가끔/드묾)로 필터링하여 인지 부하 감소" },
   { key: "admin_show_advanced", label: "고급 페이지 표시", category: "operations", default: false, description: "감춤 모드에서 advanced tier 페이지까지 노출 (기본은 core만)" },
+  { key: "admin_top_nav_layout", label: "Admin 상단 2단 네비", category: "admin", default: true, description: "사이드바 대신 상단 2단 가로 네비게이션으로 콘텐츠 가로 공간 최대화" },
   { key: "intake_form_autosave", label: "접수 폼 자동저장", category: "ux", default: true, description: "접수 폼 작성 중 자동 저장 및 복구 (localStorage)", public: true },
   { key: "dynamic_cta_labels", label: "동적 CTA 문구", category: "ux", default: false, description: "시간대·디바이스에 따라 CTA 버튼 문구 자동 변경", public: true },
   { key: "intake_ai_prescreen", label: "AI 사전 심사", category: "ai", default: false, description: "문의 접수 후 AI가 긴급도·예상 회신시간·추천 채널 자동 판정" },
