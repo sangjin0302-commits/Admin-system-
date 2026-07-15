@@ -112,6 +112,7 @@ export function PublicFooter() {
               <li><Link href="/cases" className="transition-colors duration-200 hover:text-gold-soft">강연 · 활동</Link></li>
               <li><Link href="/blog" className="transition-colors duration-200 hover:text-gold-soft">법률 칼럼</Link></li>
               <li><Link href="/keyword" className="transition-colors duration-200 hover:text-gold-soft">키워드 가이드</Link></li>
+              <li><Link href="/law-lookup" className="transition-colors duration-200 hover:text-gold-soft">법령 참고</Link></li>
               <li><Link href="/portal" className="transition-colors duration-200 hover:text-gold-soft">포털 · 진행조회</Link></li>
             </ul>
           </div>
