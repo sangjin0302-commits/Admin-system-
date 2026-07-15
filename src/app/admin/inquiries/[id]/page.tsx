@@ -36,6 +36,7 @@ import { QuoteWorkspacePanel } from "@/components/admin/quote-workspace";
 import { WorkflowProgressPanelSafeV3 } from "@/components/admin/workflow-progress-panel";
 import { Card } from "@/components/ui/card";
 import { ReviewTemplateCopy } from "@/components/admin/review-template-copy";
+import { LawResearchPanel } from "@/components/admin/law-research-panel";
 import { ClientProfileEnrichmentCard } from "@/components/admin/client-profile-enrichment-card";
 import { AcceptanceAdvisorCard } from "@/components/admin/acceptance-advisor-card";
 import { EmotionTrendChart } from "@/components/admin/emotion-trend-chart";
@@ -436,6 +437,20 @@ export default async function AdminInquiryDetailPage({
         <ClientProfileEnrichmentCard email={inquiry.email} />
         <AcceptanceAdvisorCard inquiryId={inquiry.id} status={String(inquiry.status)} />
         <EmotionTrendChart inquiryId={inquiry.id} />
+
+        {(await isFeatureEnabled("admin_law_copilot")) && (
+          <Card className="p-5">
+            <p className="ui-kicker">관련 법령·판례 조회</p>
+            <p className="mt-1 text-sm text-text-muted">
+              문의 내용을 키워드로 국가법령정보센터에서 검색합니다.
+            </p>
+            <div className="mt-4">
+              <LawResearchPanel
+                initialKeyword={(intakeCategorySummary.cleanedDescription ?? "").slice(0, 40)}
+              />
+            </div>
+          </Card>
+        )}
 
         <Card className="p-5">
           <p className="ui-kicker">v4.8 검토 응답 템플릿 (Quick Copy)</p>
