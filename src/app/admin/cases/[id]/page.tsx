@@ -28,6 +28,7 @@ import { OneClickCloseButton } from "@/components/admin/one-click-close-button";
 import { CaseDocGenButton } from "@/components/admin/case-doc-gen-button";
 import { ClientContextSidebar } from "@/components/admin/client-context-sidebar";
 import { CasePrecedentCard } from "@/components/admin/case-precedent-card";
+import { CaseResearchPanel } from "@/components/admin/case-research-panel";
 import { CaseTaxPartnerButton } from "@/components/admin/case-tax-partner-button";
 import { PortalUploadedFilesPanel } from "@/components/admin/portal-uploaded-files-panel";
 import { ClientMessageBox } from "@/components/admin/client-message-box";
@@ -311,6 +312,20 @@ export default async function AdminCaseMatterDetailPage({
       />
       <CaseMatterSummaryCards caseMatter={caseMatter} status={currentStatus} locale={locale} />
       <LawbotAnalysisPanel caseId={caseMatter.id} />
+      {(await isFeatureEnabled("case_auto_research")) && (
+        <Card className="p-5">
+          <p className="ui-kicker">사건 자동 리서치</p>
+          <p className="mt-1 text-sm text-text-muted">
+            AI가 사건 설명에서 키워드를 추출해 법령·판례·해석례를 한 번에 조회합니다.
+          </p>
+          <div className="mt-4">
+            <CaseResearchPanel
+              initialDescription={`${caseMatter.title ?? ""}\n\n${caseMatter.summary ?? ""}`.trim()}
+              autoRun={false}
+            />
+          </div>
+        </Card>
+      )}
       <CasePrecedentCard category={caseMatter.category ?? null} keywords={[caseMatter.title, caseMatter.summary ?? ""].filter(Boolean) as string[]} />
       <div className="flex flex-wrap gap-2"><CaseTaxPartnerButton category={caseMatter.category ?? null} text={`${caseMatter.title ?? ""} ${caseMatter.summary ?? ""}`} /></div>
       <CaseFinancePanel caseId={caseMatter.id} />

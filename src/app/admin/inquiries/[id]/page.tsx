@@ -37,6 +37,7 @@ import { WorkflowProgressPanelSafeV3 } from "@/components/admin/workflow-progres
 import { Card } from "@/components/ui/card";
 import { ReviewTemplateCopy } from "@/components/admin/review-template-copy";
 import { LawResearchPanel } from "@/components/admin/law-research-panel";
+import { CaseResearchPanel } from "@/components/admin/case-research-panel";
 import { ClientProfileEnrichmentCard } from "@/components/admin/client-profile-enrichment-card";
 import { AcceptanceAdvisorCard } from "@/components/admin/acceptance-advisor-card";
 import { EmotionTrendChart } from "@/components/admin/emotion-trend-chart";
@@ -437,6 +438,21 @@ export default async function AdminInquiryDetailPage({
         <ClientProfileEnrichmentCard email={inquiry.email} />
         <AcceptanceAdvisorCard inquiryId={inquiry.id} status={String(inquiry.status)} />
         <EmotionTrendChart inquiryId={inquiry.id} />
+
+        {(await isFeatureEnabled("case_auto_research")) && (
+          <Card className="p-5">
+            <p className="ui-kicker">사건 자동 리서치</p>
+            <p className="mt-1 text-sm text-text-muted">
+              AI가 사건 설명에서 키워드를 추출해 법령·판례·해석례를 한 번에 조회합니다.
+            </p>
+            <div className="mt-4">
+              <CaseResearchPanel
+                initialDescription={intakeCategorySummary.cleanedDescription ?? ""}
+                autoRun={false}
+              />
+            </div>
+          </Card>
+        )}
 
         {(await isFeatureEnabled("admin_law_copilot")) && (
           <Card className="p-5">

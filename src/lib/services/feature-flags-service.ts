@@ -341,6 +341,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "ai_faq_fast_path", label: "AI FAQ 빠른 응답 (API 절감)", default: true, category: "operations" as FeatureCategory, description: "자주 묻는 질문에 사전 작성 답변을 즉시 반환하여 Anthropic API 호출 절감" },
   { key: "admin_law_copilot", label: "법령·판례 리서치 코파일럿", default: true, category: "admin" as FeatureCategory, description: "국가법령정보센터(법제처) API로 법령·판례·해석례 검색 (Lightsail 프록시 경유)" },
   { key: "admin_strict_rbac", label: "Admin 엄격 RBAC (백도어 차단)", default: true, category: "admin" as FeatureCategory, description: "X-Admin-User 헤더 스푸핑 및 미등록 Basic Auth 사용자 SUPER 자동 승격 차단" },
+  { key: "case_auto_research", label: "사건 자동 리서치 (AI+법제처)", default: true, category: "admin" as FeatureCategory, description: "AI 키워드 추출 + 법제처 병렬 조회 + AI 종합 요약 (Haiku+Sonnet, 1시간 캐시)" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));
