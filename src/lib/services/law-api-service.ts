@@ -80,7 +80,7 @@ export async function searchLaw(
   const key = `law:searchLaw:${JSON.stringify({ keyword, limit })}`;
   return withCache<LawSearchItem[]>(key, CACHE_TTL_DAY, async () => {
     try {
-      const raw = (await callProxy("lawsearch", {
+      const raw = (await callProxy("lawSearch.do", {
         query: keyword,
         display: limit
       })) as any;
@@ -115,7 +115,7 @@ export async function getLawArticle(lawId: string): Promise<LawArticleResult> {
   const key = `law:getLawArticle:${JSON.stringify({ lawId })}`;
   return withCache<LawArticleResult>(key, CACHE_TTL_DAY, async () => {
     try {
-      const raw = (await callProxy("lawservice", { ID: lawId })) as any;
+      const raw = (await callProxy("lawService.do", { ID: lawId })) as any;
       const root = raw?.법령 ?? raw?.Law ?? raw;
       const basic = root?.기본정보 ?? root?.basic ?? {};
       const arts = toArray<any>(
