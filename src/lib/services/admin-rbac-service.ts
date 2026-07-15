@@ -71,7 +71,28 @@ async function resolveActor(req: Request): Promise<{
   email: string;
   role: AdminRoleName | null;
 } | null> {
-  const explicit = req.headers.get("x-admin-user")?.trim();
+  // Strict RBAC 플래그 — default true. false로 토글 시 예전(취약) 동작 복구.
+  let strictRbac = true;
+  try {
+    const { isFeatureEnabled } = await import("@/lib/services/feature-flags-service");
+    strictRbac = await isFeatureEnabled("admin_strict_rbac");
+  } catch {
+    // 플래그 조회 실패 시 안전한 기본값(strict) 유지
+    strictRbac = true;
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+  const allowUnknownSuper = process.env.ADMIN_ALLOW_UNKNOWN_SUPER === "true";
+
+  const explicitRaw = req.headers.get("x-admin-user")?.trim();
+  // X-Admin-User: strict + production 조합에서는 완전 무시 (헤더 스푸핑 차단)
+  if (explicitRaw && strictRbac && isProduction) {
+    logger.warn("[rbac] X-Admin-User header ignored in production", {
+      attempted: explicitRaw,
+    });
+  }
+  const explicit =
+    explicitRaw && !(strictRbac && isProduction) ? explicitRaw : undefined;
   if (explicit) {
     const user = await prisma.adminUser
       .findUnique({ where: { email: explicit } })
@@ -94,8 +115,20 @@ async function resolveActor(req: Request): Promise<{
         if (user && user.active) {
           return { email: user.email, role: user.role as AdminRoleName };
         }
-        // 단일사무소 fallback
-        return { email: username, role: "SUPER" };
+        // 미등록 사용자 → 예전엔 무조건 SUPER 부여(백도어). 이제는 명시적 opt-in만 허용.
+        if (!strictRbac || allowUnknownSuper) {
+          if (strictRbac && allowUnknownSuper) {
+            logger.warn(
+              "[rbac] unknown Basic Auth user granted SUPER via ADMIN_ALLOW_UNKNOWN_SUPER",
+              { username }
+            );
+          }
+          return { email: username, role: "SUPER" };
+        }
+        logger.warn("[rbac] unknown Basic Auth user denied (strict RBAC)", {
+          username,
+        });
+        return null;
       }
     } catch {
       // ignore

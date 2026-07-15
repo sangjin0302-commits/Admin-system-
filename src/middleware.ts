@@ -1,4 +1,5 @@
 ﻿import { NextResponse, type NextRequest } from "next/server";
+import { checkAdminAuthLimit, isUpstashConfigured } from "@/lib/security/upstash-ratelimit";
 
 const ADMIN_AUTH_USER_ENV = "ADMIN_BASIC_AUTH_USER";
 const ADMIN_AUTH_PASSWORD_ENV = "ADMIN_BASIC_AUTH_PASSWORD";
@@ -313,7 +314,7 @@ function getTooManyAttemptsResponse(request: NextRequest, retryAfterSec: number)
   return response;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (shouldForceHttps(request)) {
@@ -408,6 +409,20 @@ export function middleware(request: NextRequest) {
 
     failEntry.count += 1;
     failMap.set(clientIp, failEntry);
+
+    // 분산 rate limit — Upstash Redis 있으면 인스턴스 간 실패 카운트 공유.
+    // 미설정 시 위 in-memory failMap만 동작 (단일 인스턴스만 보호).
+    // TODO: Upstash 환경변수 미설정 시 다중 인스턴스(Vercel serverless) 브루트포스 방어 취약.
+    if (isUpstashConfigured()) {
+      try {
+        const distributed = await checkAdminAuthLimit(clientIp);
+        if (!distributed.ok) {
+          return getTooManyAttemptsResponse(request, 60);
+        }
+      } catch {
+        // Upstash 장애 시 in-memory로 진행
+      }
+    }
 
     if (failEntry.count >= maxFailures) {
       const retryAfterSec = Math.max(1, Math.ceil((failEntry.resetAt - now) / 1000));
