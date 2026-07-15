@@ -2,30 +2,7 @@
 
 import { useCallback, useState } from "react";
 
-type Tab = "law" | "prec" | "expc";
-
-type LawItem = {
-  lawId: string;
-  name: string;
-  lawType: string;
-  effectiveDate: string;
-  promulgationNo: string;
-};
-type PrecItem = {
-  caseId: string;
-  caseName: string;
-  courtName: string;
-  caseNumber: string;
-  judgmentDate: string;
-  summary: string;
-};
-type ExpcItem = {
-  interpId: string;
-  title: string;
-  agency: string;
-  date: string;
-  summary: string;
-};
+type Tab = "law" | "prec" | "expc" | "admrul" | "form" | "ordin" | "trty";
 
 async function callApi(action: string, params: Record<string, unknown>) {
   const res = await fetch("/api/admin/law-research", {
@@ -37,6 +14,16 @@ async function callApi(action: string, params: Record<string, unknown>) {
   if (!json?.ok) throw new Error(json?.error || "요청 실패");
   return json.data;
 }
+
+const SEARCH_ACTION: Record<Tab, string> = {
+  law: "searchLaw",
+  prec: "searchPrecedent",
+  expc: "searchInterpretation",
+  admrul: "searchAdminRule",
+  form: "searchForm",
+  ordin: "searchOrdinance",
+  trty: "searchTreaty"
+};
 
 export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: string }) {
   const [tab, setTab] = useState<Tab>("law");
@@ -53,9 +40,7 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
     setError(null);
     setDetail(null);
     try {
-      const action =
-        tab === "law" ? "searchLaw" : tab === "prec" ? "searchPrecedent" : "searchInterpretation";
-      const data = await callApi(action, { keyword, limit: 15 });
+      const data = await callApi(SEARCH_ACTION[tab], { keyword, limit: 15 });
       setResults(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "검색 실패");
@@ -65,25 +50,38 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
     }
   }, [tab, keyword]);
 
-  const openDetail = useCallback(async (item: any) => {
-    setDetailLoading(true);
-    setDetail(null);
-    try {
-      if (tab === "law") {
-        const d = await callApi("getLawArticle", { lawId: item.lawId });
-        setDetail({ kind: "law", data: d });
-      } else if (tab === "prec") {
-        const d = await callApi("getPrecedentDetail", { caseId: item.caseId });
-        setDetail({ kind: "prec", data: d });
-      } else {
-        setDetail({ kind: "expc", data: item });
+  const openDetail = useCallback(
+    async (item: any) => {
+      setDetailLoading(true);
+      setDetail(null);
+      try {
+        if (tab === "law") {
+          const d = await callApi("getLawArticle", { lawId: item.lawId });
+          setDetail({ kind: "law", data: d });
+        } else if (tab === "prec") {
+          const d = await callApi("getPrecedentDetail", { caseId: item.caseId });
+          setDetail({ kind: "prec", data: d });
+        } else if (tab === "expc") {
+          const d = await callApi("getInterpretationDetail", { interpId: item.interpId });
+          setDetail({ kind: "expc", data: d ?? item });
+        } else if (tab === "admrul") {
+          const d = await callApi("getAdminRuleDetail", { ruleId: item.ruleId });
+          setDetail({ kind: "admrul", data: d });
+        } else if (tab === "form") {
+          setDetail({ kind: "form", data: item });
+        } else if (tab === "ordin") {
+          setDetail({ kind: "ordin", data: item });
+        } else if (tab === "trty") {
+          setDetail({ kind: "trty", data: item });
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "상세 조회 실패");
+      } finally {
+        setDetailLoading(false);
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "상세 조회 실패");
-    } finally {
-      setDetailLoading(false);
-    }
-  }, [tab]);
+    },
+    [tab]
+  );
 
   const tabButton = (id: Tab, label: string) => (
     <button
@@ -103,10 +101,14 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
 
   return (
     <div className="admin-card p-4 space-y-4">
-      <div className="flex gap-2">
-        {tabButton("law", "법령 검색")}
-        {tabButton("prec", "판례 검색")}
-        {tabButton("expc", "해석례 검색")}
+      <div className="flex gap-2 flex-wrap">
+        {tabButton("law", "법령")}
+        {tabButton("prec", "판례")}
+        {tabButton("expc", "해석례")}
+        {tabButton("admrul", "행정규칙")}
+        {tabButton("form", "서식")}
+        {tabButton("ordin", "자치법규")}
+        {tabButton("trty", "조약")}
       </div>
 
       <div className="flex gap-2">
@@ -143,31 +145,58 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
             >
               {tab === "law" && (
                 <>
-                  <div className="font-medium text-sm">{(it as LawItem).name}</div>
+                  <div className="font-medium text-sm">{it.name}</div>
                   <div className="text-xs text-gray-500 mt-1">
-                    {(it as LawItem).lawType} · 시행 {(it as LawItem).effectiveDate}
+                    {it.lawType} · 시행 {it.effectiveDate}
                   </div>
                 </>
               )}
               {tab === "prec" && (
                 <>
-                  <div className="font-medium text-sm">{(it as PrecItem).caseName}</div>
+                  <div className="font-medium text-sm">{it.caseName}</div>
                   <div className="text-xs text-gray-500 mt-1">
-                    {(it as PrecItem).courtName} · {(it as PrecItem).caseNumber} ·{" "}
-                    {(it as PrecItem).judgmentDate}
+                    {it.courtName} · {it.caseNumber} · {it.judgmentDate}
                   </div>
-                  {(it as PrecItem).summary && (
-                    <div className="text-xs text-gray-600 mt-1 line-clamp-2">
-                      {(it as PrecItem).summary}
-                    </div>
+                  {it.summary && (
+                    <div className="text-xs text-gray-600 mt-1 line-clamp-2">{it.summary}</div>
                   )}
                 </>
               )}
               {tab === "expc" && (
                 <>
-                  <div className="font-medium text-sm">{(it as ExpcItem).title}</div>
+                  <div className="font-medium text-sm">{it.title}</div>
                   <div className="text-xs text-gray-500 mt-1">
-                    {(it as ExpcItem).agency} · {(it as ExpcItem).date}
+                    {it.agency} · {it.date}
+                  </div>
+                </>
+              )}
+              {tab === "admrul" && (
+                <>
+                  <div className="font-medium text-sm">{it.name}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {it.agency} · {it.date}
+                  </div>
+                </>
+              )}
+              {tab === "form" && (
+                <>
+                  <div className="font-medium text-sm">{it.formName}</div>
+                  <div className="text-xs text-gray-500 mt-1">{it.lawName}</div>
+                </>
+              )}
+              {tab === "ordin" && (
+                <>
+                  <div className="font-medium text-sm">{it.name}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {it.region} · {it.date}
+                  </div>
+                </>
+              )}
+              {tab === "trty" && (
+                <>
+                  <div className="font-medium text-sm">{it.name}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {it.counterpart} · {it.date}
                   </div>
                 </>
               )}
@@ -188,9 +217,7 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
                   <div className="text-xs font-medium text-blue-700">
                     제{a.article}조 {a.title}
                   </div>
-                  <div className="text-xs text-gray-700 mt-1 whitespace-pre-wrap">
-                    {a.content}
-                  </div>
+                  <div className="text-xs text-gray-700 mt-1 whitespace-pre-wrap">{a.content}</div>
                 </div>
               ))}
             </div>
@@ -213,10 +240,70 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
             <div className="space-y-2">
               <div className="font-semibold">{detail.data.title}</div>
               <div className="text-xs text-gray-500">
-                {detail.data.agency} · {detail.data.date}
+                {detail.data.agency}
+                {detail.data.date ? ` · ${detail.data.date}` : ""}
               </div>
+              {detail.data.question && (
+                <div>
+                  <div className="text-xs font-medium text-blue-700 mt-2">질의요지</div>
+                  <div className="text-xs whitespace-pre-wrap text-gray-700">
+                    {detail.data.question}
+                  </div>
+                </div>
+              )}
+              {detail.data.answer && (
+                <div>
+                  <div className="text-xs font-medium text-blue-700 mt-2">회신내용</div>
+                  <div className="text-xs whitespace-pre-wrap text-gray-700">
+                    {detail.data.answer}
+                  </div>
+                </div>
+              )}
+              {!detail.data.question && detail.data.summary && (
+                <div className="text-xs whitespace-pre-wrap text-gray-700">
+                  {detail.data.summary}
+                </div>
+              )}
+            </div>
+          )}
+          {detail?.kind === "admrul" && detail.data && (
+            <div className="space-y-2">
+              <div className="font-semibold">{detail.data.name}</div>
+              <div className="text-xs text-gray-500">{detail.data.agency}</div>
               <div className="text-xs whitespace-pre-wrap text-gray-700">
-                {detail.data.summary}
+                {detail.data.content?.slice(0, 8000)}
+              </div>
+            </div>
+          )}
+          {detail?.kind === "form" && detail.data && (
+            <div className="space-y-2">
+              <div className="font-semibold">{detail.data.formName}</div>
+              <div className="text-xs text-gray-500">{detail.data.lawName}</div>
+              {detail.data.downloadUrl && (
+                <a
+                  href={detail.data.downloadUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block text-xs text-blue-600 underline"
+                >
+                  서식 다운로드
+                </a>
+              )}
+            </div>
+          )}
+          {detail?.kind === "ordin" && detail.data && (
+            <div className="space-y-2">
+              <div className="font-semibold">{detail.data.name}</div>
+              <div className="text-xs text-gray-500">
+                {detail.data.region} · 시행 {detail.data.date}
+              </div>
+            </div>
+          )}
+          {detail?.kind === "trty" && detail.data && (
+            <div className="space-y-2">
+              <div className="font-semibold">{detail.data.name}</div>
+              <div className="text-xs text-gray-500">
+                {detail.data.counterpart} · {detail.data.date}
               </div>
             </div>
           )}

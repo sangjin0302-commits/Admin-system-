@@ -158,7 +158,7 @@ export async function searchPrecedent(
   const key = `law:searchPrecedent:${JSON.stringify({ keyword, limit })}`;
   return withCache<PrecedentSearchItem[]>(key, CACHE_TTL_DAY, async () => {
     try {
-      const raw = (await callProxy("prec", {
+      const raw = (await callProxy("prec.do", {
         query: keyword,
         display: limit
       })) as any;
@@ -194,7 +194,7 @@ export async function getPrecedentDetail(
   const key = `law:getPrecedentDetail:${JSON.stringify({ caseId })}`;
   return withCache<PrecedentDetail>(key, CACHE_TTL_DAY, async () => {
     try {
-      const raw = (await callProxy("precService", { ID: caseId })) as any;
+      const raw = (await callProxy("precInfoP.do", { ID: caseId })) as any;
       const root = raw?.PrecService ?? raw?.판례 ?? raw;
       const kw = str(root?.판시사항 ?? root?.판결요지 ?? "")
         .split(/[,、·\n]/)
@@ -235,7 +235,7 @@ export async function searchInterpretation(
   const key = `law:searchInterpretation:${JSON.stringify({ keyword, limit })}`;
   return withCache<InterpretationItem[]>(key, CACHE_TTL_DAY, async () => {
     try {
-      const raw = (await callProxy("expc", {
+      const raw = (await callProxy("expc.do", {
         query: keyword,
         display: limit
       })) as any;
@@ -249,6 +249,232 @@ export async function searchInterpretation(
       }));
     } catch (err) {
       logger.warn("law-api searchInterpretation failed", { keyword, err: String(err) });
+      return [];
+    }
+  });
+}
+
+// ---------- 해석례 상세 ----------
+export type InterpretationDetail = {
+  interpId: string;
+  title: string;
+  agency: string;
+  question: string;
+  answer: string;
+} | null;
+
+export async function getInterpretationDetail(
+  interpId: string
+): Promise<InterpretationDetail> {
+  if (!envReady()) return null;
+  const key = `law:getInterpretationDetail:${JSON.stringify({ interpId })}`;
+  return withCache<InterpretationDetail>(key, CACHE_TTL_DAY, async () => {
+    try {
+      const raw = (await callProxy("expcInfoP.do", { ID: interpId })) as any;
+      const root = raw?.Expc ?? raw?.법령해석례 ?? raw?.해석례 ?? raw;
+      return {
+        interpId,
+        title: str(root?.안건명 ?? ""),
+        agency: str(root?.회신기관명 ?? ""),
+        question: str(root?.질의요지 ?? ""),
+        answer: str(root?.회신내용 ?? "")
+      };
+    } catch (err) {
+      logger.warn("law-api getInterpretationDetail failed", { interpId, err: String(err) });
+      return null;
+    }
+  });
+}
+
+// ---------- 행정규칙 검색 ----------
+export type AdminRuleItem = {
+  ruleId: string;
+  name: string;
+  agency: string;
+  date: string;
+};
+
+export async function searchAdminRule(
+  keyword: string,
+  limit = 10
+): Promise<AdminRuleItem[]> {
+  if (!envReady()) return [];
+  const key = `law:searchAdminRule:${JSON.stringify({ keyword, limit })}`;
+  return withCache<AdminRuleItem[]>(key, CACHE_TTL_DAY, async () => {
+    try {
+      const raw = (await callProxy("admRul.do", {
+        query: keyword,
+        display: limit
+      })) as any;
+      const list = toArray<any>(raw?.AdmRulSearch?.admrul ?? raw?.admrul ?? raw?.행정규칙);
+      return list.map((it) => ({
+        ruleId: str(it?.행정규칙일련번호 ?? it?.id),
+        name: str(it?.행정규칙명 ?? it?.name),
+        agency: str(it?.소관부처명 ?? it?.agency),
+        date: str(it?.발령일자 ?? it?.date)
+      }));
+    } catch (err) {
+      logger.warn("law-api searchAdminRule failed", { keyword, err: String(err) });
+      return [];
+    }
+  });
+}
+
+// ---------- 행정규칙 상세 ----------
+export type AdminRuleDetail = {
+  ruleId: string;
+  name: string;
+  agency: string;
+  content: string;
+} | null;
+
+export async function getAdminRuleDetail(ruleId: string): Promise<AdminRuleDetail> {
+  if (!envReady()) return null;
+  const key = `law:getAdminRuleDetail:${JSON.stringify({ ruleId })}`;
+  return withCache<AdminRuleDetail>(key, CACHE_TTL_DAY, async () => {
+    try {
+      const raw = (await callProxy("admRulInfoP.do", { ID: ruleId })) as any;
+      const root = raw?.AdmRulService ?? raw?.행정규칙 ?? raw;
+      return {
+        ruleId,
+        name: str(root?.행정규칙명 ?? ""),
+        agency: str(root?.소관부처명 ?? ""),
+        content: str(root?.조문내용 ?? root?.내용 ?? root?.본문 ?? "")
+      };
+    } catch (err) {
+      logger.warn("law-api getAdminRuleDetail failed", { ruleId, err: String(err) });
+      return null;
+    }
+  });
+}
+
+// ---------- 별표·서식 검색 ----------
+export type FormItem = {
+  formId: string;
+  formName: string;
+  lawName: string;
+  downloadUrl: string;
+};
+
+export async function searchForm(keyword: string, limit = 10): Promise<FormItem[]> {
+  if (!envReady()) return [];
+  const key = `law:searchForm:${JSON.stringify({ keyword, limit })}`;
+  return withCache<FormItem[]>(key, CACHE_TTL_DAY, async () => {
+    try {
+      const raw = (await callProxy("lsBylSearch.do", {
+        query: keyword,
+        display: limit
+      })) as any;
+      const list = toArray<any>(
+        raw?.LsBylSearch?.lsbyl ?? raw?.lsbyl ?? raw?.별표별지
+      );
+      return list.map((it) => {
+        const formId = str(it?.별표번호 ?? it?.id);
+        const lawId = str(it?.법령ID ?? "");
+        return {
+          formId,
+          formName: str(it?.별표명 ?? it?.name),
+          lawName: str(it?.법령명한글 ?? it?.법령명 ?? ""),
+          downloadUrl: lawId
+            ? `https://www.law.go.kr/DRF/lawService.do?OC=&target=byl&MST=${lawId}&num=${formId}`
+            : ""
+        };
+      });
+    } catch (err) {
+      logger.warn("law-api searchForm failed", { keyword, err: String(err) });
+      return [];
+    }
+  });
+}
+
+// ---------- 특정 조문 ----------
+export async function getLawArticleByJo(
+  lawId: string,
+  jo: string | number
+): Promise<LawArticle | null> {
+  if (!envReady()) return null;
+  const key = `law:getLawArticleByJo:${JSON.stringify({ lawId, jo })}`;
+  return withCache<LawArticle | null>(key, CACHE_TTL_DAY, async () => {
+    try {
+      const raw = (await callProxy("lsJoService.do", { ID: lawId, JO: jo })) as any;
+      const root = raw?.법령 ?? raw?.Law ?? raw;
+      const a =
+        toArray<any>(root?.조문?.조문단위 ?? root?.조문 ?? root?.articles)[0] ?? root;
+      return {
+        article: str(a?.조문번호 ?? jo),
+        title: str(a?.조문제목 ?? ""),
+        content: str(a?.조문내용 ?? a?.내용 ?? "")
+      };
+    } catch (err) {
+      logger.warn("law-api getLawArticleByJo failed", { lawId, jo, err: String(err) });
+      return null;
+    }
+  });
+}
+
+// ---------- 자치법규 ----------
+export type OrdinanceItem = {
+  ordinanceId: string;
+  name: string;
+  region: string;
+  date: string;
+};
+
+export async function searchOrdinance(
+  keyword: string,
+  limit = 10
+): Promise<OrdinanceItem[]> {
+  if (!envReady()) return [];
+  const key = `law:searchOrdinance:${JSON.stringify({ keyword, limit })}`;
+  return withCache<OrdinanceItem[]>(key, CACHE_TTL_DAY, async () => {
+    try {
+      const raw = (await callProxy("ordin.do", {
+        query: keyword,
+        display: limit
+      })) as any;
+      const list = toArray<any>(raw?.OrdinSearch?.ordin ?? raw?.ordin ?? raw?.자치법규);
+      return list.map((it) => ({
+        ordinanceId: str(it?.자치법규ID ?? it?.id),
+        name: str(it?.자치법규명 ?? it?.name),
+        region: str(it?.지자체기관명 ?? it?.region),
+        date: str(it?.시행일자 ?? it?.date)
+      }));
+    } catch (err) {
+      logger.warn("law-api searchOrdinance failed", { keyword, err: String(err) });
+      return [];
+    }
+  });
+}
+
+// ---------- 조약 ----------
+export type TreatyItem = {
+  treatyId: string;
+  name: string;
+  counterpart: string;
+  date: string;
+};
+
+export async function searchTreaty(
+  keyword: string,
+  limit = 10
+): Promise<TreatyItem[]> {
+  if (!envReady()) return [];
+  const key = `law:searchTreaty:${JSON.stringify({ keyword, limit })}`;
+  return withCache<TreatyItem[]>(key, CACHE_TTL_DAY, async () => {
+    try {
+      const raw = (await callProxy("trty.do", {
+        query: keyword,
+        display: limit
+      })) as any;
+      const list = toArray<any>(raw?.TrtySearch?.trty ?? raw?.trty ?? raw?.조약);
+      return list.map((it) => ({
+        treatyId: str(it?.조약일련번호 ?? it?.조약ID ?? it?.id),
+        name: str(it?.조약명 ?? it?.name),
+        counterpart: str(it?.체결상대국 ?? it?.상대국 ?? ""),
+        date: str(it?.발효일자 ?? it?.체결일자 ?? it?.date)
+      }));
+    } catch (err) {
+      logger.warn("law-api searchTreaty failed", { keyword, err: String(err) });
       return [];
     }
   });

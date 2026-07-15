@@ -6,7 +6,14 @@ import {
   getLawArticle,
   searchPrecedent,
   getPrecedentDetail,
-  searchInterpretation
+  searchInterpretation,
+  getInterpretationDetail,
+  searchAdminRule,
+  getAdminRuleDetail,
+  searchForm,
+  getLawArticleByJo,
+  searchOrdinance,
+  searchTreaty
 } from "@/lib/services/law-api-service";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +24,14 @@ type Action =
   | "getLawArticle"
   | "searchPrecedent"
   | "getPrecedentDetail"
-  | "searchInterpretation";
+  | "searchInterpretation"
+  | "getInterpretationDetail"
+  | "searchAdminRule"
+  | "getAdminRuleDetail"
+  | "searchForm"
+  | "getLawArticleByJo"
+  | "searchOrdinance"
+  | "searchTreaty";
 
 export async function POST(req: Request) {
   const api = createAdminRequestContext("admin.law-research");
@@ -58,6 +72,27 @@ export async function POST(req: Request) {
         break;
       case "searchInterpretation":
         data = await searchInterpretation(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "getInterpretationDetail":
+        data = await getInterpretationDetail(String(p.interpId ?? ""));
+        break;
+      case "searchAdminRule":
+        data = await searchAdminRule(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "getAdminRuleDetail":
+        data = await getAdminRuleDetail(String(p.ruleId ?? ""));
+        break;
+      case "searchForm":
+        data = await searchForm(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "getLawArticleByJo":
+        data = await getLawArticleByJo(String(p.lawId ?? ""), String(p.jo ?? ""));
+        break;
+      case "searchOrdinance":
+        data = await searchOrdinance(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "searchTreaty":
+        data = await searchTreaty(String(p.keyword ?? ""), Number(p.limit ?? 10));
         break;
       default:
         return api.error(400, "지원하지 않는 action입니다.", { code: "UNKNOWN_ACTION" });
