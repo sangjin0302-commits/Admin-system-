@@ -1,9 +1,15 @@
 /**
- * 국가법령정보센터(법제처) DRF API 클라이언트 — 행정사 업무 특화
+ * 국가법령정보센터(법제처) DRF API 클라이언트 — 레지스트리 기반.
  *
  * DRF는 엔드포인트가 lawSearch.do / lawService.do 2개뿐이며,
- * target 파라미터로 도메인을 구분한다. wrapper key는 target마다 다르다.
+ * target 파라미터로 도메인을 구분한다. wrapper key / item key는 target마다 다르다.
  * Vercel IP 화이트리스트 불가 → Lightsail 프록시(3.36.175.81:8080) 경유.
+ *
+ * TARGET_REGISTRY의 verified: true 항목(18개)은 OC=sangjin_api로 실제 호출해 확인한 실측값이다.
+ * supported: false 항목(6개)은 현재 LAW_OC 계정에 target별 조회 권한이 없어 빈 응답만 오며,
+ * 스펙은 production bot(_lib.py) 기준 추정값이다. 호출 없이 즉시 []/null을 반환한다.
+ *
+ * 주의: 검색 응답에는 본문/요지(판시사항·질의요지 등)가 없다. 요지는 상세 호출로만 얻는다.
  */
 
 import { logger } from "@/lib/utils/logger";
@@ -24,10 +30,6 @@ function toArray<T>(v: unknown): T[] {
   if (Array.isArray(v)) return v as T[];
   if (v && typeof v === "object") return [v as T];
   return [];
-}
-
-function str(v: unknown): string {
-  return v == null ? "" : String(v);
 }
 
 // ---------- DRF 호출 ----------
@@ -117,7 +119,523 @@ function toAbsoluteUrl(path: string): string {
   return path.startsWith("/") ? `${LAW_BASE_URL}${path}` : path;
 }
 
-// ---------- 부처별 유권해석 target ----------
+// ---------- 일반 헬퍼 ----------
+
+/** 별표명 등에 섞여 오는 HTML(<strong> 등) 제거 */
+function stripHtml(s: string): string {
+  return s.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+function firstField(it: any, fields: string[]): string {
+  for (const f of fields) {
+    const v = it?.[f];
+    if (v != null && String(v).trim()) return String(v).trim();
+  }
+  return "";
+}
+
+function pickWrapper(raw: any, wrappers: string[]): any {
+  for (const w of wrappers) if (raw?.[w]) return raw[w];
+  return raw ?? {};
+}
+
+function pickItems(payload: any, raw: any, itemKeys: string[]): any[] {
+  for (const k of itemKeys) {
+    if (payload?.[k]) return toArray<any>(payload[k]);
+    if (raw?.[k]) return toArray<any>(raw[k]);
+  }
+  return [];
+}
+
+// ---------- 레지스트리 ----------
+
+export type TargetKey =
+  | "law" | "eflaw" | "elaw"
+  | "prec" | "ccourt"
+  | "expc" | "decc"
+  | "molitCgmExpc" | "moelCgmExpc" | "ntsCgmExpc"
+  | "admrul" | "ordin" | "trty"
+  | "licbyl" | "admbyl" | "ordinbyl"
+  | "nodong" | "audit" | "acrc" | "empins"
+  | "ftc" | "fsc" | "ppc" | "bill";
+
+export type TargetSpec = {
+  key: TargetKey;
+  label: string;
+  group: "법령" | "판례·심판" | "해석" | "서식" | "위원회" | "기타";
+  wrappers: string[];
+  itemKeys: string[];
+  idFields: string[];
+  titleFields: string[];
+  agencyFields?: string[];
+  dateFields?: string[];
+  numberFields?: string[];
+  linkFields?: string[];
+  detailIdParam: "ID" | "MST";
+  searchParams?: Record<string, string | number>;
+  hasFiles?: boolean;
+  /** 라이브 응답으로 wrapper/itemKey/필드명을 실측 검증했는지 */
+  verified: boolean;
+  /**
+   * 현재 LAW_OC 계정으로 조회 가능한지.
+   * false = 법제처가 빈 응답 반환 (target별 별도 신청 필요).
+   * 조회는 시도하지 않고 즉시 [] 반환한다.
+   */
+  supported: boolean;
+};
+
+export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
+  // ===== 실측 검증 =====
+  law: {
+    key: "law",
+    label: "현행법령",
+    group: "법령",
+    wrappers: ["LawSearch"],
+    itemKeys: ["law"],
+    idFields: ["법령일련번호"],
+    titleFields: ["법령명한글", "법령약칭명"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["공포번호"],
+    linkFields: ["법령상세링크"],
+    detailIdParam: "MST",
+    verified: true,
+    supported: true
+  },
+  prec: {
+    key: "prec",
+    label: "판례",
+    group: "판례·심판",
+    wrappers: ["PrecSearch"],
+    itemKeys: ["prec"],
+    idFields: ["판례일련번호"],
+    titleFields: ["사건명"],
+    agencyFields: ["법원명"],
+    dateFields: ["선고일자"],
+    numberFields: ["사건번호"],
+    linkFields: ["판례상세링크"],
+    detailIdParam: "ID",
+    searchParams: { search: 2, sort: 1 },
+    verified: true,
+    supported: true
+  },
+  expc: {
+    key: "expc",
+    label: "법령해석례",
+    group: "해석",
+    wrappers: ["Expc"],
+    itemKeys: ["expc"],
+    idFields: ["법령해석례일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["회신기관명", "질의기관명"],
+    dateFields: ["회신일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석례상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  decc: {
+    key: "decc",
+    label: "행정심판재결례",
+    group: "판례·심판",
+    wrappers: ["Decc"],
+    itemKeys: ["decc"],
+    idFields: ["행정심판재결례일련번호"],
+    titleFields: ["사건명"],
+    agencyFields: ["재결청", "처분청"],
+    dateFields: ["의결일자", "처분일자"],
+    numberFields: ["사건번호"],
+    linkFields: ["행정심판례상세링크"],
+    detailIdParam: "ID",
+    searchParams: { search: 2, sort: 1 },
+    verified: true,
+    supported: true
+  },
+  admrul: {
+    key: "admrul",
+    label: "행정규칙",
+    group: "법령",
+    wrappers: ["AdmRulSearch"],
+    itemKeys: ["admrul"],
+    idFields: ["행정규칙일련번호"],
+    titleFields: ["행정규칙명"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["발령일자", "시행일자"],
+    numberFields: ["발령번호"],
+    linkFields: ["행정규칙상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  ordin: {
+    key: "ordin",
+    label: "자치법규",
+    group: "법령",
+    // itemKey는 "ordin"이 아니라 "law" (실측 확인됨)
+    wrappers: ["OrdinSearch"],
+    itemKeys: ["law"],
+    idFields: ["자치법규일련번호"],
+    titleFields: ["자치법규명"],
+    agencyFields: ["지자체기관명"],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["자치법규ID"],
+    linkFields: ["자치법규상세링크"],
+    detailIdParam: "MST",
+    searchParams: { search: 2, sort: 1 },
+    verified: true,
+    supported: true
+  },
+  trty: {
+    key: "trty",
+    label: "조약",
+    group: "법령",
+    wrappers: ["TrtySearch"],
+    itemKeys: ["Trty"],
+    idFields: ["조약일련번호"],
+    titleFields: ["조약명"],
+    agencyFields: ["조약구분명"],
+    dateFields: ["발효일자", "서명일자"],
+    numberFields: ["조약번호"],
+    linkFields: ["조약상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  licbyl: {
+    key: "licbyl",
+    label: "법령 별표·서식",
+    group: "서식",
+    wrappers: ["licBylSearch"],
+    itemKeys: ["licbyl"],
+    idFields: ["별표일련번호"],
+    titleFields: ["별표명"],
+    agencyFields: ["소관부처명"],
+    dateFields: [],
+    numberFields: ["별표번호"],
+    linkFields: ["별표법령상세링크"],
+    detailIdParam: "ID",
+    searchParams: { sort: 1 },
+    hasFiles: true,
+    verified: true,
+    supported: true
+  },
+  admbyl: {
+    key: "admbyl",
+    label: "행정규칙 별표·서식",
+    group: "서식",
+    // PDF 링크 필드 없음 (HWP만)
+    wrappers: ["admRulBylSearch"],
+    itemKeys: ["admrulbyl"],
+    idFields: ["별표일련번호"],
+    titleFields: ["별표명"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["발령일자"],
+    numberFields: ["별표번호", "발령번호"],
+    linkFields: ["별표행정규칙상세링크"],
+    detailIdParam: "ID",
+    searchParams: { sort: 1 },
+    hasFiles: true,
+    verified: true,
+    supported: true
+  },
+  ordinbyl: {
+    key: "ordinbyl",
+    label: "자치법규 별표·서식",
+    group: "서식",
+    // wrapper는 licbyl과 동일한 licBylSearch, PDF 링크 없음
+    wrappers: ["licBylSearch"],
+    itemKeys: ["ordinbyl"],
+    idFields: ["별표일련번호"],
+    titleFields: ["별표명"],
+    agencyFields: ["지자체기관명", "전체기관명"],
+    dateFields: ["자치법규시행일자", "공포일자"],
+    numberFields: ["별표번호", "공포번호"],
+    linkFields: ["별표자치법규상세링크"],
+    detailIdParam: "ID",
+    searchParams: { sort: 1 },
+    hasFiles: true,
+    verified: true,
+    supported: true
+  },
+  molitCgmExpc: {
+    key: "molitCgmExpc",
+    label: "국토교통부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  moelCgmExpc: {
+    key: "moelCgmExpc",
+    label: "고용노동부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  ntsCgmExpc: {
+    key: "ntsCgmExpc",
+    label: "국세청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  eflaw: {
+    key: "eflaw",
+    label: "시행일법령",
+    group: "법령",
+    // 실측: wrapper는 LawSearch로 반환됨 (EflawSearch 아님)
+    wrappers: ["LawSearch", "EflawSearch"],
+    itemKeys: ["law"],
+    idFields: ["법령일련번호"],
+    titleFields: ["법령명한글"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["공포번호"],
+    linkFields: ["법령상세링크"],
+    detailIdParam: "MST",
+    searchParams: { search: 1, sort: 1 },
+    verified: true,
+    supported: true
+  },
+  elaw: {
+    key: "elaw",
+    label: "영문법령",
+    group: "법령",
+    wrappers: ["LawSearch"],
+    itemKeys: ["law"],
+    idFields: ["법령일련번호"],
+    titleFields: ["법령명영문", "법령명한글"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["공포번호"],
+    linkFields: ["법령상세링크"],
+    detailIdParam: "MST",
+    verified: true,
+    supported: true
+  },
+  ftc: {
+    key: "ftc",
+    label: "공정거래위 결정례",
+    group: "위원회",
+    wrappers: ["Ftc"],
+    itemKeys: ["ftc"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["사건명"],
+    agencyFields: ["회의종류"],
+    dateFields: ["결정일자"],
+    numberFields: ["사건번호", "결정번호"],
+    linkFields: ["결정문상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  fsc: {
+    key: "fsc",
+    label: "금융위 결정례",
+    group: "위원회",
+    // 실측: 날짜 필드가 응답에 없음
+    wrappers: ["Fsc"],
+    itemKeys: ["fsc"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["기관명"],
+    dateFields: [],
+    numberFields: ["의결번호"],
+    linkFields: ["결정문상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  ppc: {
+    key: "ppc",
+    label: "개인정보위 결정례",
+    group: "위원회",
+    wrappers: ["Ppc"],
+    itemKeys: ["ppc"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["회의종류"],
+    dateFields: ["의결일"],
+    numberFields: ["의안번호"],
+    linkFields: ["결정문상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+
+  // ===== 미지원: 현재 LAW_OC 계정에 target별 조회 권한 없음 =====
+  // JSON/XML 모두 빈 응답 확인. 법제처에 target별 추가 신청 시 supported: true 로 전환.
+  ccourt: {
+    key: "ccourt",
+    label: "헌재결정례",
+    group: "판례·심판",
+    wrappers: ["CcourtSearch", "LawSearch"],
+    itemKeys: ["ccourt", "prec"],
+    idFields: ["헌재결정례일련번호", "판례일련번호"],
+    titleFields: ["사건명"],
+    agencyFields: ["법원명", "재판기관"],
+    dateFields: ["종국일자", "선고일자"],
+    numberFields: ["사건번호"],
+    linkFields: ["헌재결정례상세링크", "판례상세링크"],
+    detailIdParam: "ID",
+    verified: false,
+    supported: false
+  },
+  nodong: {
+    key: "nodong",
+    label: "노동위원회 결정례",
+    group: "위원회",
+    wrappers: ["NodongSearch", "LawSearch"],
+    itemKeys: ["nodong"],
+    idFields: ["노동위원회결정문일련번호", "일련번호"],
+    titleFields: ["사건명", "안건명", "건명"],
+    agencyFields: ["처분청", "회신기관명"],
+    dateFields: ["의결일자", "회신일자"],
+    numberFields: ["사건번호", "안건번호"],
+    linkFields: ["노동위원회결정문상세링크"],
+    detailIdParam: "ID",
+    verified: false,
+    supported: false
+  },
+  audit: {
+    key: "audit",
+    label: "감사원 심사결정례",
+    group: "위원회",
+    wrappers: ["AuditSearch", "LawSearch"],
+    itemKeys: ["audit"],
+    idFields: ["감사원심사결정일련번호", "일련번호"],
+    titleFields: ["처분명", "사건명", "안건명"],
+    agencyFields: ["처분청", "회신기관명"],
+    dateFields: ["의결일자", "결정일자"],
+    numberFields: ["사건번호", "안건번호"],
+    linkFields: ["감사원심사결정상세링크"],
+    detailIdParam: "ID",
+    verified: false,
+    supported: false
+  },
+  acrc: {
+    key: "acrc",
+    label: "국민권익위 결정례",
+    group: "위원회",
+    wrappers: ["AcrcSearch", "LawSearch"],
+    itemKeys: ["acrc"],
+    idFields: ["국민권익위결정문일련번호", "일련번호"],
+    titleFields: ["사건명", "안건명"],
+    agencyFields: ["처분청", "회신기관명"],
+    dateFields: ["의결일자", "회신일자"],
+    numberFields: ["사건번호", "안건번호"],
+    linkFields: ["국민권익위결정문상세링크"],
+    detailIdParam: "ID",
+    verified: false,
+    supported: false
+  },
+  empins: {
+    key: "empins",
+    label: "고용보험 심사결정례",
+    group: "위원회",
+    wrappers: ["EmpinsSearch", "LawSearch"],
+    itemKeys: ["empins"],
+    idFields: ["고용보험심사결정일련번호", "일련번호"],
+    titleFields: ["사건명", "안건명"],
+    agencyFields: ["처분청", "회신기관명"],
+    dateFields: ["의결일자", "결정일자"],
+    numberFields: ["사건번호", "안건번호"],
+    linkFields: ["고용보험심사결정례상세링크"],
+    detailIdParam: "ID",
+    verified: false,
+    supported: false
+  },
+  bill: {
+    key: "bill",
+    label: "법령안",
+    group: "법령",
+    wrappers: ["BillSearch", "LawSearch"],
+    itemKeys: ["bill"],
+    idFields: ["법령안일련번호", "일련번호"],
+    titleFields: ["법령안명", "법안명", "명칭"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["입법예고일자", "공포일자"],
+    numberFields: ["의안번호"],
+    linkFields: ["법령안상세링크"],
+    detailIdParam: "ID",
+    verified: false,
+    supported: false
+  }
+};
+
+/** 기본은 조회 가능한 target만. 전체가 필요하면 includeUnsupported: true. */
+export function listTargets(opts?: { includeUnsupported?: boolean }): TargetSpec[] {
+  const all = Object.values(TARGET_REGISTRY);
+  return opts?.includeUnsupported ? all : all.filter((s) => s.supported);
+}
+
+/** 그룹별로 묶은 사용 가능한 target 목록 (admin UI 탭 구성용) */
+export function listTargetsByGroup(): Record<TargetSpec["group"], TargetSpec[]> {
+  const out = {} as Record<TargetSpec["group"], TargetSpec[]>;
+  for (const spec of listTargets()) {
+    (out[spec.group] ??= []).push(spec);
+  }
+  return out;
+}
+
+export function getTargetSpec(target: TargetKey): TargetSpec | null {
+  return TARGET_REGISTRY[target] ?? null;
+}
+
+// ---------- 통합 결과 타입 ----------
+
+export type LawResultItem = {
+  target: TargetKey;
+  id: string;
+  title: string;
+  agency: string;
+  date: string;
+  number: string;
+  detailUrl: string;
+  hwpUrl?: string;
+  pdfUrl?: string;
+  extra: Record<string, string>;
+};
+
+// 구 도메인별 타입 — 통합 타입 별칭으로 유지 (기존 import 호환)
+export type LawSearchItem = LawResultItem;
+export type PrecedentSearchItem = LawResultItem;
+export type InterpretationItem = LawResultItem;
+export type AdminJudgmentItem = LawResultItem;
+export type AdminRuleItem = LawResultItem;
+export type OrdinanceItem = LawResultItem;
+export type FormItem = LawResultItem;
+export type MinistryInterpItem = LawResultItem;
+export type TreatyItem = LawResultItem;
+
+// ---------- 부처별 유권해석 target (back-compat) ----------
 
 export const MINISTRY_TARGETS = {
   molit: { target: "molitCgmExpc", label: "국토교통부" },
@@ -126,452 +644,82 @@ export const MINISTRY_TARGETS = {
 } as const;
 export type MinistryKey = keyof typeof MINISTRY_TARGETS;
 
-// ---------- 결과 타입 ----------
+// ---------- 매핑 ----------
 
-export type LawSearchItem = {
-  mst: string;
-  lawId: string;
-  name: string;
-  lawType: string;
-  effectiveDate: string;
-  promulgationNo: string;
-  ministry: string;
-};
+function mapItem(target: TargetKey, spec: TargetSpec, it: any): LawResultItem {
+  const extra: Record<string, string> = {};
+  if (it && typeof it === "object") {
+    for (const [k, v] of Object.entries(it)) {
+      if (v == null) continue;
+      if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+        extra[k] = String(v);
+      }
+    }
+  }
 
-export type PrecedentSearchItem = {
-  caseId: string;
-  caseName: string;
-  courtName: string;
-  caseNumber: string;
-  judgmentDate: string;
-  summary: string;
-};
-
-export type InterpretationItem = {
-  interpId: string;
-  title: string;
-  agency: string;
-  date: string;
-  summary: string;
-};
-
-export type AdminJudgmentItem = {
-  deccId: string;
-  caseName: string;
-  caseNumber: string;
-  agency: string;
-  date: string;
-};
-
-export type AdminRuleItem = {
-  ruleId: string;
-  name: string;
-  agency: string;
-  date: string;
-  ruleType: string;
-};
-
-export type OrdinanceItem = {
-  ordinanceId: string;
-  name: string;
-  region: string;
-  date: string;
-};
-
-export type FormItem = {
-  formId: string;
-  formName: string;
-  formType: string;
-  lawName: string;
-  mst: string;
-};
-
-export type MinistryInterpItem = {
-  interpId: string;
-  title: string;
-  agency: string;
-  date: string;
-  question: string;
-};
-
-export type TreatyItem = {
-  treatyId: string;
-  name: string;
-  counterpart: string;
-  date: string;
-};
-
-// ---------- 매핑 헬퍼 ----------
-
-function mapLaw(it: any): LawSearchItem {
-  return {
-    mst: str(it?.법령일련번호 ?? it?.법령MST ?? it?.MST ?? ""),
-    lawId: str(it?.법령ID ?? ""),
-    name: str(it?.법령명한글 ?? it?.법령명 ?? ""),
-    lawType: str(it?.법령구분명 ?? ""),
-    effectiveDate: str(it?.시행일자 ?? ""),
-    promulgationNo: str(it?.공포번호 ?? ""),
-    ministry: str(it?.소관부처명 ?? "")
+  const out: LawResultItem = {
+    target,
+    id: firstField(it, spec.idFields),
+    title: stripHtml(firstField(it, spec.titleFields)),
+    agency: firstField(it, spec.agencyFields ?? []),
+    date: firstField(it, spec.dateFields ?? []),
+    number: firstField(it, spec.numberFields ?? []),
+    detailUrl: toAbsoluteUrl(firstField(it, spec.linkFields ?? [])),
+    extra
   };
+
+  if (spec.hasFiles) {
+    const hwp = firstField(it, ["별표서식파일링크"]);
+    const pdf = firstField(it, ["별표서식PDF파일링크"]);
+    if (hwp) out.hwpUrl = toAbsoluteUrl(hwp);
+    if (pdf) out.pdfUrl = toAbsoluteUrl(pdf);
+  }
+
+  return out;
 }
 
-function mapPrec(it: any): PrecedentSearchItem {
-  return {
-    caseId: str(it?.판례일련번호 ?? ""),
-    caseName: str(it?.사건명 ?? ""),
-    courtName: str(it?.법원명 ?? ""),
-    caseNumber: str(it?.사건번호 ?? ""),
-    judgmentDate: str(it?.선고일자 ?? ""),
-    summary: str(it?.판시사항 ?? "")
-  };
-}
+// ---------- 코어: 검색 ----------
 
-function mapForm(it: any): FormItem {
-  return {
-    formId: str(it?.별표키 ?? it?.별표일련번호 ?? ""),
-    formName: str(it?.별표명 ?? ""),
-    formType: str(it?.별표종류 ?? it?.별표구분 ?? ""),
-    lawName: str(it?.법령명 ?? it?.법령명한글 ?? ""),
-    mst: str(it?.법령일련번호 ?? it?.법령MST ?? "")
-  };
-}
-
-// ---------- 검색 ----------
-
-export async function searchLaw(q: string, limit = 5): Promise<LawSearchItem[]> {
+export async function searchTarget(
+  target: TargetKey,
+  query: string,
+  limit = 5
+): Promise<LawResultItem[]> {
   if (!envReady()) {
     logger.warn("law-api: env missing (LAW_OC/LAW_PROXY_TOKEN) — returning []");
     return [];
   }
-  const key = `law:searchLaw:${JSON.stringify({ q, limit })}`;
-  return withCache<LawSearchItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target: "law",
-        query: q,
-        display: limit,
-        page: 1
-      });
-      const payload = raw?.LawSearch ?? raw?.lawSearch ?? {};
-      const list = toArray<any>(payload?.law ?? raw?.law ?? []);
-      return list.map(mapLaw);
-    } catch (err) {
-      logger.warn("law-api searchLaw failed", { q, err: String(err) });
-      return [];
-    }
-  });
-}
-
-export async function searchEffectiveLaw(
-  q: string,
-  limit = 5
-): Promise<LawSearchItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning []");
+  const spec = TARGET_REGISTRY[target];
+  if (!spec) {
+    logger.warn("law-api: unknown target", { target });
     return [];
   }
-  const key = `law:searchEffectiveLaw:${JSON.stringify({ q, limit })}`;
-  return withCache<LawSearchItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target: "eflaw",
-        query: q,
-        display: limit,
-        page: 1
-      });
-      const payload = raw?.EflawSearch ?? raw?.LawSearch ?? raw?.eflawSearch ?? {};
-      const list = toArray<any>(payload?.law ?? raw?.law ?? []);
-      return list.map((it) => ({
-        ...mapLaw(it),
-        name: str(it?.법령명 ?? it?.법령명한글 ?? "")
-      }));
-    } catch (err) {
-      logger.warn("law-api searchEffectiveLaw failed", { q, err: String(err) });
-      return [];
-    }
-  });
-}
-
-export async function searchPrecedent(
-  q: string,
-  limit = 5
-): Promise<PrecedentSearchItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning []");
+  if (!spec.supported) {
+    logger.warn("law-api: target not permitted for current LAW_OC — returning []", {
+      target,
+      label: spec.label
+    });
     return [];
   }
-  const key = `law:searchPrecedent:${JSON.stringify({ q, limit })}`;
-  return withCache<PrecedentSearchItem[]>(key, CACHE_TTL_DAY, async () => {
+  const key = `law:searchTarget:${target}:${query}:${limit}`;
+  return withCache<LawResultItem[]>(key, CACHE_TTL_DAY, async () => {
     try {
       const raw = await callDrf("lawSearch.do", {
-        target: "prec",
-        query: q,
+        target,
+        query,
         display: limit,
         page: 1,
-        search: 2,
-        sort: 1
+        ...(spec.searchParams ?? {})
       });
-      const payload = raw?.PrecSearch ?? raw?.LawSearch ?? raw?.precSearch ?? {};
-      const list = toArray<any>(payload?.prec ?? raw?.prec ?? []);
-      return list.map(mapPrec);
+      const payload = pickWrapper(raw, spec.wrappers);
+      const list = pickItems(payload, raw, spec.itemKeys);
+      return list
+        .map((it) => mapItem(target, spec, it))
+        .filter((it) => Boolean(it.title));
     } catch (err) {
-      logger.warn("law-api searchPrecedent failed", { q, err: String(err) });
-      return [];
-    }
-  });
-}
-
-export async function searchInterpretation(
-  q: string,
-  limit = 5
-): Promise<InterpretationItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning []");
-    return [];
-  }
-  const key = `law:searchInterpretation:${JSON.stringify({ q, limit })}`;
-  return withCache<InterpretationItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target: "expc",
-        query: q,
-        display: limit,
-        page: 1
-      });
-      const payload = raw?.ExpcSearch ?? raw?.expcSearch ?? {};
-      const list = toArray<any>(payload?.expc ?? raw?.expc ?? []);
-      return list.map((it) => ({
-        interpId: str(it?.법령해석례일련번호 ?? it?.안건번호 ?? ""),
-        title: str(it?.안건명 ?? ""),
-        agency: str(it?.회신기관명 ?? ""),
-        date: str(it?.회신일자 ?? ""),
-        summary: str(it?.질의요지 ?? "")
-      }));
-    } catch (err) {
-      logger.warn("law-api searchInterpretation failed", { q, err: String(err) });
-      return [];
-    }
-  });
-}
-
-export async function searchAdminJudgment(
-  q: string,
-  limit = 5
-): Promise<AdminJudgmentItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning []");
-    return [];
-  }
-  const key = `law:searchAdminJudgment:${JSON.stringify({ q, limit })}`;
-  return withCache<AdminJudgmentItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target: "decc",
-        query: q,
-        display: limit,
-        page: 1,
-        search: 2,
-        sort: 1
-      });
-      const payload = raw?.DeccSearch ?? raw?.deccSearch ?? {};
-      const list = toArray<any>(payload?.decc ?? raw?.decc ?? []);
-      return list.map((it) => ({
-        deccId: str(it?.재결례일련번호 ?? ""),
-        caseName: str(it?.사건명 ?? ""),
-        caseNumber: str(it?.사건번호 ?? ""),
-        agency: str(it?.처분청 ?? ""),
-        date: str(it?.의결일자 ?? "")
-      }));
-    } catch (err) {
-      logger.warn("law-api searchAdminJudgment failed", { q, err: String(err) });
-      return [];
-    }
-  });
-}
-
-export async function searchAdminRule(
-  q: string,
-  limit = 5
-): Promise<AdminRuleItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning []");
-    return [];
-  }
-  const key = `law:searchAdminRule:${JSON.stringify({ q, limit })}`;
-  return withCache<AdminRuleItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target: "admrul",
-        query: q,
-        display: limit,
-        page: 1
-      });
-      const payload = raw?.AdmRulSearch ?? raw?.admRulSearch ?? {};
-      const list = toArray<any>(payload?.admrul ?? raw?.admrul ?? []);
-      return list.map((it) => ({
-        ruleId: str(it?.행정규칙일련번호 ?? ""),
-        name: str(it?.행정규칙명 ?? ""),
-        agency: str(it?.소관부처명 ?? ""),
-        date: str(it?.발령일자 ?? ""),
-        ruleType: str(it?.행정규칙종류 ?? "")
-      }));
-    } catch (err) {
-      logger.warn("law-api searchAdminRule failed", { q, err: String(err) });
-      return [];
-    }
-  });
-}
-
-export async function searchOrdinance(
-  q: string,
-  limit = 5
-): Promise<OrdinanceItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning []");
-    return [];
-  }
-  const key = `law:searchOrdinance:${JSON.stringify({ q, limit })}`;
-  return withCache<OrdinanceItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target: "ordin",
-        query: q,
-        display: limit,
-        page: 1,
-        search: 2,
-        sort: 1
-      });
-      const payload = raw?.OrdinSearch ?? raw?.LawSearch ?? raw?.ordinSearch ?? {};
-      const list = toArray<any>(payload?.ordin ?? raw?.ordin ?? []);
-      return list.map((it) => ({
-        ordinanceId: str(it?.자치법규일련번호 ?? it?.자치법규ID ?? ""),
-        name: str(it?.자치법규명 ?? ""),
-        region: str(it?.지자체기관명 ?? ""),
-        date: str(it?.시행일자 ?? "")
-      }));
-    } catch (err) {
-      logger.warn("law-api searchOrdinance failed", { q, err: String(err) });
-      return [];
-    }
-  });
-}
-
-export async function searchForm(q: string, limit = 5): Promise<FormItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning []");
-    return [];
-  }
-  const key = `law:searchForm:${JSON.stringify({ q, limit })}`;
-  return withCache<FormItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target: "licbyl",
-        query: q,
-        display: limit,
-        page: 1,
-        sort: 1
-      });
-      const payload = raw?.licBylSearch ?? raw?.LicBylSearch ?? {};
-      const list = toArray<any>(payload?.licbyl ?? raw?.licbyl ?? []);
-      return list.map(mapForm);
-    } catch (err) {
-      logger.warn("law-api searchForm failed", { q, err: String(err) });
-      return [];
-    }
-  });
-}
-
-export async function searchAdminRuleForm(
-  q: string,
-  limit = 5
-): Promise<FormItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning []");
-    return [];
-  }
-  const key = `law:searchAdminRuleForm:${JSON.stringify({ q, limit })}`;
-  return withCache<FormItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target: "admbyl",
-        query: q,
-        display: limit,
-        page: 1,
-        sort: 1
-      });
-      const payload = raw?.admRulBylSearch ?? raw?.AdmRulBylSearch ?? {};
-      const list = toArray<any>(payload?.admrulbyl ?? raw?.admrulbyl ?? []);
-      return list.map(mapForm);
-    } catch (err) {
-      logger.warn("law-api searchAdminRuleForm failed", { q, err: String(err) });
-      return [];
-    }
-  });
-}
-
-export async function searchOrdinanceForm(
-  q: string,
-  limit = 5
-): Promise<FormItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning []");
-    return [];
-  }
-  const key = `law:searchOrdinanceForm:${JSON.stringify({ q, limit })}`;
-  return withCache<FormItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target: "ordinbyl",
-        query: q,
-        display: limit,
-        page: 1,
-        sort: 1
-      });
-      const payload = raw?.licBylSearch ?? raw?.LicBylSearch ?? {};
-      const list = toArray<any>(payload?.ordinbyl ?? raw?.ordinbyl ?? []);
-      return list.map(mapForm);
-    } catch (err) {
-      logger.warn("law-api searchOrdinanceForm failed", { q, err: String(err) });
-      return [];
-    }
-  });
-}
-
-export async function searchMinistryInterpretation(
-  ministry: MinistryKey,
-  q: string,
-  limit = 5
-): Promise<MinistryInterpItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning []");
-    return [];
-  }
-  const key = `law:searchMinistryInterpretation:${JSON.stringify({
-    ministry,
-    q,
-    limit
-  })}`;
-  return withCache<MinistryInterpItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target: MINISTRY_TARGETS[ministry].target,
-        query: q,
-        display: limit,
-        page: 1
-      });
-      const payload = raw?.CgmExpc ?? raw?.cgmExpc ?? {};
-      const list = toArray<any>(payload?.cgmExpc ?? raw?.cgmExpc ?? []);
-      return list.map((it) => ({
-        interpId: str(it?.안건번호 ?? ""),
-        title: str(it?.안건명 ?? ""),
-        agency: str(it?.회신기관명 ?? it?.소관부처 ?? ""),
-        date: str(it?.회신일자 ?? ""),
-        question: str(it?.질의요지 ?? "")
-      }));
-    } catch (err) {
-      logger.warn("law-api searchMinistryInterpretation failed", {
-        ministry,
-        q,
+      logger.warn("law-api searchTarget failed", {
+        target,
+        query,
         err: String(err)
       });
       return [];
@@ -579,160 +727,170 @@ export async function searchMinistryInterpretation(
   });
 }
 
-export async function searchTreaty(q: string, limit = 5): Promise<TreatyItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning []");
-    return [];
-  }
-  const key = `law:searchTreaty:${JSON.stringify({ q, limit })}`;
-  return withCache<TreatyItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target: "trty",
-        query: q,
-        display: limit,
-        page: 1
-      });
-      const payload = raw?.TrtySearch ?? raw?.trtySearch ?? {};
-      const list = toArray<any>(payload?.Trty ?? payload?.trty ?? raw?.Trty ?? []);
-      return list.map((it) => ({
-        treatyId: str(it?.조약일련번호 ?? ""),
-        name: str(it?.조약명 ?? ""),
-        counterpart: str(it?.체결대상국 ?? it?.상대국 ?? ""),
-        date: str(it?.발효일자 ?? "")
-      }));
-    } catch (err) {
-      logger.warn("law-api searchTreaty failed", { q, err: String(err) });
-      return [];
-    }
-  });
+export async function searchMany(
+  targets: TargetKey[],
+  query: string,
+  limitEach = 3
+): Promise<Record<string, LawResultItem[]>> {
+  const pairs = await Promise.all(
+    targets.map(async (t) => {
+      try {
+        return [t, await searchTarget(t, query, limitEach)] as const;
+      } catch (err) {
+        logger.warn("law-api searchMany target failed", {
+          target: t,
+          err: String(err)
+        });
+        return [t, [] as LawResultItem[]] as const;
+      }
+    })
+  );
+  return Object.fromEntries(pairs);
 }
 
-// ---------- 상세 ----------
+// ---------- 코어: 상세 ----------
 
-export async function getLawDetail(mst: string): Promise<any | null> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning null");
-    return null;
-  }
-  const key = `law:getLawDetail:${JSON.stringify({ mst })}`;
-  return withCache<any | null>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawService.do", { target: "law", MST: mst });
-      return raw?.법령 ?? raw?.Law ?? raw ?? null;
-    } catch (err) {
-      logger.warn("law-api getLawDetail failed", { mst, err: String(err) });
-      return null;
+/**
+ * 상세 응답의 wrapper/구조는 target마다 크게 다르고 미검증이므로,
+ * 중첩 객체를 재귀 순회하여 문자열/숫자 leaf만 평탄화한다 (최대 depth 3).
+ */
+function flattenFields(
+  node: any,
+  out: Record<string, string>,
+  depth = 0
+): void {
+  if (depth > 3 || node == null || typeof node !== "object") return;
+  for (const [k, v] of Object.entries(node)) {
+    if (v == null) continue;
+    if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+      if (!(k in out) && String(v).trim()) out[k] = String(v);
+    } else if (Array.isArray(v)) {
+      const objs = v.filter((x) => x && typeof x === "object");
+      if (objs.length > 20) continue;
+      if (objs.length === 0) {
+        const joined = v.filter((x) => x != null).map(String).join(", ");
+        if (joined.trim() && !(k in out)) out[k] = joined;
+      } else {
+        for (const el of objs) flattenFields(el, out, depth + 1);
+      }
+    } else {
+      flattenFields(v, out, depth + 1);
     }
-  });
+  }
 }
 
-export async function getPrecedentDetail(id: string): Promise<any | null> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning null");
-    return null;
-  }
-  const key = `law:getPrecedentDetail:${JSON.stringify({ id })}`;
-  return withCache<any | null>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawService.do", { target: "prec", ID: id });
-      return raw?.PrecService ?? raw?.precService ?? raw ?? null;
-    } catch (err) {
-      logger.warn("law-api getPrecedentDetail failed", { id, err: String(err) });
-      return null;
-    }
-  });
-}
-
-export async function getInterpretationDetail(id: string): Promise<any | null> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning null");
-    return null;
-  }
-  const key = `law:getInterpretationDetail:${JSON.stringify({ id })}`;
-  return withCache<any | null>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawService.do", { target: "expc", ID: id });
-      return raw?.ExpcService ?? raw?.expcService ?? raw ?? null;
-    } catch (err) {
-      logger.warn("law-api getInterpretationDetail failed", {
-        id,
-        err: String(err)
-      });
-      return null;
-    }
-  });
-}
-
-export async function getAdminJudgmentDetail(id: string): Promise<any | null> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning null");
-    return null;
-  }
-  const key = `law:getAdminJudgmentDetail:${JSON.stringify({ id })}`;
-  return withCache<any | null>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawService.do", { target: "decc", ID: id });
-      return raw?.DeccService ?? raw?.deccService ?? raw ?? null;
-    } catch (err) {
-      logger.warn("law-api getAdminJudgmentDetail failed", {
-        id,
-        err: String(err)
-      });
-      return null;
-    }
-  });
-}
-
-export async function getAdminRuleDetail(id: string): Promise<any | null> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning null");
-    return null;
-  }
-  const key = `law:getAdminRuleDetail:${JSON.stringify({ id })}`;
-  return withCache<any | null>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawService.do", { target: "admrul", ID: id });
-      return raw?.AdmRulService ?? raw?.admRulService ?? raw ?? null;
-    } catch (err) {
-      logger.warn("law-api getAdminRuleDetail failed", { id, err: String(err) });
-      return null;
-    }
-  });
-}
-
-export async function getMinistryInterpretationDetail(
-  ministry: MinistryKey,
+export async function getDetail(
+  target: TargetKey,
   id: string
-): Promise<any | null> {
+): Promise<{
+  target: TargetKey;
+  id: string;
+  fields: Record<string, string>;
+  detailUrl: string;
+} | null> {
   if (!envReady()) {
     logger.warn("law-api: env missing — returning null");
     return null;
   }
-  const key = `law:getMinistryInterpretationDetail:${JSON.stringify({
-    ministry,
-    id
-  })}`;
-  return withCache<any | null>(key, CACHE_TTL_DAY, async () => {
+  const spec = TARGET_REGISTRY[target];
+  if (!spec) {
+    logger.warn("law-api: unknown target", { target });
+    return null;
+  }
+  if (!spec.supported) {
+    logger.warn("law-api: target not permitted for current LAW_OC — returning null", {
+      target,
+      label: spec.label
+    });
+    return null;
+  }
+  const key = `law:getDetail:${target}:${id}`;
+  return withCache<{
+    target: TargetKey;
+    id: string;
+    fields: Record<string, string>;
+    detailUrl: string;
+  } | null>(key, CACHE_TTL_DAY, async () => {
     try {
       const raw = await callDrf("lawService.do", {
-        target: MINISTRY_TARGETS[ministry].target,
-        ID: id
+        target,
+        [spec.detailIdParam]: id
       });
-      return raw?.CgmExpcService ?? raw?.cgmExpcService ?? raw ?? null;
-    } catch (err) {
-      logger.warn("law-api getMinistryInterpretationDetail failed", {
-        ministry,
+      if (!raw || typeof raw !== "object") return null;
+
+      // 최상위에 중첩 객체가 있으면 그것이 실제 payload
+      let node: any = raw;
+      for (const v of Object.values(raw)) {
+        if (v && typeof v === "object" && !Array.isArray(v)) {
+          node = v;
+          break;
+        }
+      }
+
+      const fields: Record<string, string> = {};
+      flattenFields(node, fields);
+      if (Object.keys(fields).length === 0) return null;
+
+      return {
+        target,
         id,
-        err: String(err)
-      });
+        fields,
+        detailUrl: toAbsoluteUrl(firstField(fields, spec.linkFields ?? []))
+      };
+    } catch (err) {
+      logger.warn("law-api getDetail failed", { target, id, err: String(err) });
       return null;
     }
   });
 }
+
+// ---------- 하위 호환 래퍼 ----------
+
+export const searchLaw = (q: string, limit = 5) => searchTarget("law", q, limit);
+export const searchEffectiveLaw = (q: string, limit = 5) =>
+  searchTarget("eflaw", q, limit);
+export const searchPrecedent = (q: string, limit = 5) =>
+  searchTarget("prec", q, limit);
+export const searchInterpretation = (q: string, limit = 5) =>
+  searchTarget("expc", q, limit);
+export const searchAdminJudgment = (q: string, limit = 5) =>
+  searchTarget("decc", q, limit);
+export const searchAdminRule = (q: string, limit = 5) =>
+  searchTarget("admrul", q, limit);
+export const searchOrdinance = (q: string, limit = 5) =>
+  searchTarget("ordin", q, limit);
+export const searchForm = (q: string, limit = 5) =>
+  searchTarget("licbyl", q, limit);
+export const searchAdminRuleForm = (q: string, limit = 5) =>
+  searchTarget("admbyl", q, limit);
+export const searchOrdinanceForm = (q: string, limit = 5) =>
+  searchTarget("ordinbyl", q, limit);
+export const searchTreaty = (q: string, limit = 5) =>
+  searchTarget("trty", q, limit);
+
+export const searchMinistryInterpretation = (
+  ministry: MinistryKey,
+  q: string,
+  limit = 5
+) => searchTarget(MINISTRY_TARGETS[ministry].target, q, limit);
+
+export const getLawDetail = (mst: string) => getDetail("law", mst);
+export const getPrecedentDetail = (id: string) => getDetail("prec", id);
+export const getInterpretationDetail = (id: string) => getDetail("expc", id);
+export const getAdminJudgmentDetail = (id: string) => getDetail("decc", id);
+export const getAdminRuleDetail = (id: string) => getDetail("admrul", id);
+export const getMinistryInterpretationDetail = (
+  ministry: MinistryKey,
+  id: string
+) => getDetail(MINISTRY_TARGETS[ministry].target, id);
 
 // ---------- 별표서식 파일 링크 ----------
 
+/**
+ * NOTE: searchForm / searchAdminRuleForm / searchOrdinanceForm은 이제 검색 결과에서
+ * 다운로드 링크(hwpUrl/pdfUrl)를 직접 반환한다. 이 함수는 "특정 법령 하나의 별표 전체를
+ * 열거"하는 용도로만 남겨둔다 (XML 경로).
+ */
 export type LawFormFile = {
   formNo: string; // 별표번호
   formType: string; // 별표구분 (별표/서식/별지)

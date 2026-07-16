@@ -107,23 +107,23 @@ async function summarize(
   const prompt = `사건: ${caseDescription.slice(0, 1500)}
 
 검색된 자료:
-[법령] ${laws.slice(0, 5).map((l) => `${l.name} (${l.lawType})`).join(", ") || "없음"}
+[법령] ${laws.slice(0, 5).map((l) => `${l.title} (${l.extra["법령구분명"] ?? ""})`).join(", ") || "없음"}
 [판례] ${
     precedents
       .slice(0, 5)
-      .map((p) => `${p.caseName} ${p.caseNumber} - ${p.summary.slice(0, 100)}`)
+      .map((p) => `${p.title} ${p.number} (${p.agency} ${p.date})`)
       .join("\n") || "없음"
   }
 [행정심판 재결례] ${
     adminJudgments
       .slice(0, 3)
-      .map((d) => `${d.caseName} ${d.caseNumber} (${d.agency})`)
+      .map((d) => `${d.title} ${d.number} (${d.agency})`)
       .join("\n") || "없음"
   }
 [법령해석례] ${interpretations.slice(0, 3).map((i) => `${i.title} (${i.agency})`).join(", ") || "없음"}
-[행정규칙] ${adminRules.slice(0, 3).map((a) => a.name).join(", ") || "없음"}
-[자치법규] ${ordinances.slice(0, 3).map((o) => `${o.name} (${o.region})`).join(", ") || "없음"}
-[별표·서식] ${forms.slice(0, 3).map((f) => `${f.formName} (${f.lawName})`).join(", ") || "없음"}
+[행정규칙] ${adminRules.slice(0, 3).map((a) => a.title).join(", ") || "없음"}
+[자치법규] ${ordinances.slice(0, 3).map((o) => `${o.title} (${o.agency})`).join(", ") || "없음"}
+[별표·서식] ${forms.slice(0, 3).map((f) => `${f.title} (${f.extra["관련법령명"] ?? ""})`).join(", ") || "없음"}
 
 위 자료를 바탕으로:
 1. 관련 법령·조문 후보
