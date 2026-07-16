@@ -5,9 +5,12 @@
  * target 파라미터로 도메인을 구분한다. wrapper key / item key는 target마다 다르다.
  * Vercel IP 화이트리스트 불가 → Lightsail 프록시(3.36.175.81:8080) 경유.
  *
- * TARGET_REGISTRY의 verified: true 항목(18개)은 OC=sangjin_api로 실제 호출해 확인한 실측값이다.
- * supported: false 항목(6개)은 현재 LAW_OC 계정에 target별 조회 권한이 없어 빈 응답만 오며,
+ * TARGET_REGISTRY는 총 47개 target으로, verified: true / supported: true 항목(40개)은
+ * OC=sangjin_api로 실제 호출해 확인한 실측값이다.
+ * supported: false 항목(7개)은 현재 LAW_OC 계정에 target별 조회 권한이 없어 빈 응답만 오며,
  * 스펙은 production bot(_lib.py) 기준 추정값이다. 호출 없이 즉시 []/null을 반환한다.
+ *
+ * 헌재결정례: ccourt는 조회 권한 없음(supported: false). 실제 동작하는 target은 detc이다.
  *
  * 주의: 검색 응답에는 본문/요지(판시사항·질의요지 등)가 없다. 요지는 상세 호출로만 얻는다.
  */
@@ -154,6 +157,14 @@ export type TargetKey =
   | "prec" | "ccourt"
   | "expc" | "decc"
   | "molitCgmExpc" | "moelCgmExpc" | "ntsCgmExpc"
+  | "mojCgmExpc" | "mofCgmExpc" | "mssCgmExpc" | "kcsCgmExpc" | "mpvaCgmExpc"
+  | "mowCgmExpc"
+  | "ttSpecialDecc" | "kmstSpecialDecc" | "acrSpecialDecc" | "adapSpecialDecc"
+  | "detc"
+  | "lstrm" | "lstrmAI" | "dlytrm"
+  | "thdCmp" | "oldAndNew" | "admrulOldAndNew"
+  | "lsRlt" | "lnkLs" | "lnkOrd" | "lsStmd" | "oneview"
+  | "nhrck"
   | "admrul" | "ordin" | "trty"
   | "licbyl" | "admbyl" | "ordinbyl"
   | "nodong" | "audit" | "acrc" | "empins"
@@ -406,6 +417,380 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
     verified: true,
     supported: true
   },
+  // moj/mof는 CgmExpc wrapper를 반환했으나 프로브 질의 결과 item 0건.
+  // target 자체는 유효하며 shape는 다른 CgmExpc target과 동일함을 확인.
+  mojCgmExpc: {
+    key: "mojCgmExpc",
+    label: "법무부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mofCgmExpc: {
+    key: "mofCgmExpc",
+    label: "기획재정부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mssCgmExpc: {
+    key: "mssCgmExpc",
+    label: "중소벤처기업부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  kcsCgmExpc: {
+    key: "kcsCgmExpc",
+    label: "관세청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mpvaCgmExpc: {
+    key: "mpvaCgmExpc",
+    label: "국가보훈부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+
+  // ===== 특별행정심판 =====
+  ttSpecialDecc: {
+    key: "ttSpecialDecc",
+    label: "조세심판원 재결례",
+    group: "판례·심판",
+    wrappers: ["Decc"],
+    itemKeys: ["decc"],
+    idFields: ["특별행정심판재결례일련번호"],
+    titleFields: ["사건명"],
+    agencyFields: ["재결청", "처분청"],
+    dateFields: ["의결일자", "처분일자"],
+    numberFields: ["청구번호"],
+    linkFields: ["행정심판재결례상세링크"],
+    detailIdParam: "ID",
+    searchParams: { search: 2, sort: 1 },
+    verified: true,
+    supported: true
+  },
+  kmstSpecialDecc: {
+    key: "kmstSpecialDecc",
+    label: "해양안전심판원 재결례",
+    group: "판례·심판",
+    wrappers: ["Decc"],
+    itemKeys: ["decc"],
+    idFields: ["특별행정심판재결례일련번호"],
+    titleFields: ["사건명"],
+    agencyFields: ["재결청", "처분청"],
+    dateFields: ["의결일자", "처분일자"],
+    numberFields: ["재결번호"],
+    linkFields: ["행정심판재결례상세링크"],
+    detailIdParam: "ID",
+    searchParams: { search: 2, sort: 1 },
+    verified: true,
+    supported: true
+  },
+  // 프로브 질의에서 Decc wrapper는 반환됐으나 item 0건 — target 유효, shape는 형제 target과 동일 가정.
+  acrSpecialDecc: {
+    key: "acrSpecialDecc",
+    label: "국민권익위 특별행정심판",
+    group: "판례·심판",
+    wrappers: ["Decc"],
+    itemKeys: ["decc"],
+    idFields: ["특별행정심판재결례일련번호"],
+    titleFields: ["사건명"],
+    agencyFields: ["재결청", "처분청"],
+    dateFields: ["의결일자", "처분일자"],
+    numberFields: ["사건번호"],
+    linkFields: ["행정심판재결례상세링크"],
+    detailIdParam: "ID",
+    searchParams: { search: 2, sort: 1 },
+    verified: true,
+    supported: true
+  },
+  adapSpecialDecc: {
+    key: "adapSpecialDecc",
+    label: "소청심사 재결례",
+    group: "판례·심판",
+    wrappers: ["Decc"],
+    itemKeys: ["decc"],
+    idFields: ["특별행정심판재결례일련번호"],
+    titleFields: ["사건명"],
+    agencyFields: ["재결청", "처분청"],
+    dateFields: ["의결일자", "처분일자"],
+    numberFields: ["사건번호"],
+    linkFields: ["행정심판재결례상세링크"],
+    detailIdParam: "ID",
+    searchParams: { search: 2, sort: 1 },
+    verified: true,
+    supported: true
+  },
+
+  // 헌재결정례의 실동작 target (ccourt는 권한 없음)
+  detc: {
+    key: "detc",
+    label: "헌재결정례",
+    group: "판례·심판",
+    wrappers: ["DetcSearch"],
+    itemKeys: ["Detc"],
+    idFields: ["헌재결정례일련번호"],
+    titleFields: ["사건명"],
+    agencyFields: [],
+    dateFields: ["종국일자"],
+    numberFields: ["사건번호"],
+    linkFields: ["헌재결정례상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+
+  // ===== 법령용어 =====
+  lstrm: {
+    key: "lstrm",
+    label: "법령용어",
+    group: "기타",
+    wrappers: ["LsTrmSearch"],
+    itemKeys: ["lstrm"],
+    idFields: ["법령용어ID"],
+    titleFields: ["법령용어명"],
+    agencyFields: [],
+    dateFields: [],
+    numberFields: [],
+    linkFields: ["법령용어상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  lstrmAI: {
+    key: "lstrmAI",
+    label: "법령용어(AI 연계)",
+    group: "기타",
+    // itemKey가 한글("법령용어")
+    wrappers: ["lstrmAISearch"],
+    itemKeys: ["법령용어"],
+    idFields: ["id"],
+    titleFields: ["법령용어명"],
+    agencyFields: [],
+    dateFields: [],
+    numberFields: [],
+    linkFields: ["용어간관계링크", "조문간관계링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  dlytrm: {
+    key: "dlytrm",
+    label: "일상용어",
+    group: "기타",
+    // itemKey가 한글("일상용어")
+    wrappers: ["dlytrmSearch"],
+    itemKeys: ["일상용어"],
+    idFields: ["id"],
+    titleFields: ["일상용어명"],
+    agencyFields: ["출처"],
+    dateFields: [],
+    numberFields: [],
+    linkFields: ["용어간관계링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+
+  // ===== 비교 도구 =====
+  thdCmp: {
+    key: "thdCmp",
+    label: "3단 비교(법률-시행령-시행규칙)",
+    group: "법령",
+    wrappers: ["thdCmpLawSearch"],
+    itemKeys: ["thdCmp"],
+    idFields: ["삼단비교일련번호"],
+    titleFields: ["법령명한글"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["공포번호"],
+    linkFields: ["위임조문_삼단비교상세링크", "인용조문_삼단비교상세링크"],
+    detailIdParam: "MST",
+    verified: true,
+    supported: true
+  },
+  oldAndNew: {
+    key: "oldAndNew",
+    label: "신구조문 대조표",
+    group: "법령",
+    wrappers: ["OldAndNewLawSearch"],
+    itemKeys: ["oldAndNew"],
+    idFields: ["신구법일련번호"],
+    titleFields: ["신구법명"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["공포번호"],
+    linkFields: ["신구법상세링크"],
+    detailIdParam: "MST",
+    verified: true,
+    supported: true
+  },
+  admrulOldAndNew: {
+    key: "admrulOldAndNew",
+    label: "행정규칙 신구조문 대조표",
+    group: "법령",
+    wrappers: ["OldAndNewLawSearch"],
+    itemKeys: ["oldAndNew"],
+    idFields: ["신구법일련번호"],
+    titleFields: ["신구법명"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["발령일자", "시행일자"],
+    numberFields: ["발령번호"],
+    linkFields: ["신구법상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+
+  // ===== 연계·체계 =====
+  lsRlt: {
+    key: "lsRlt",
+    label: "관련법령 연계",
+    group: "법령",
+    // itemKey가 한글("법령")
+    wrappers: ["lsRltSearch"],
+    itemKeys: ["법령"],
+    idFields: ["기준법령ID"],
+    titleFields: ["기준법령명"],
+    agencyFields: [],
+    dateFields: [],
+    numberFields: [],
+    linkFields: ["기준법령본문조회"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  lnkLs: {
+    key: "lnkLs",
+    label: "연계 법령",
+    group: "법령",
+    wrappers: ["LawSearch"],
+    itemKeys: ["law"],
+    idFields: ["법령일련번호"],
+    titleFields: ["법령명한글"],
+    agencyFields: [],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["공포번호"],
+    linkFields: [],
+    detailIdParam: "MST",
+    verified: true,
+    supported: true
+  },
+  lnkOrd: {
+    key: "lnkOrd",
+    label: "연계 자치법규",
+    group: "법령",
+    wrappers: ["OrdinSearch"],
+    itemKeys: ["law"],
+    idFields: ["자치법규일련번호"],
+    titleFields: ["자치법규명"],
+    agencyFields: [],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["공포번호"],
+    linkFields: [],
+    detailIdParam: "MST",
+    verified: true,
+    supported: true
+  },
+  lsStmd: {
+    key: "lsStmd",
+    label: "법령체계도",
+    group: "법령",
+    wrappers: ["LsStmdSearch"],
+    itemKeys: ["law"],
+    idFields: ["법령일련번호"],
+    titleFields: ["법령명"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["공포번호"],
+    linkFields: ["본문상세링크"],
+    detailIdParam: "MST",
+    verified: true,
+    supported: true
+  },
+  oneview: {
+    key: "oneview",
+    label: "법령 통합조회",
+    group: "법령",
+    wrappers: ["items"],
+    itemKeys: ["item"],
+    idFields: ["법령일련번호"],
+    titleFields: ["법령명"],
+    agencyFields: [],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["공포번호"],
+    linkFields: [],
+    detailIdParam: "MST",
+    verified: true,
+    supported: true
+  },
+
+  nhrck: {
+    key: "nhrck",
+    label: "국가인권위 결정례",
+    group: "위원회",
+    wrappers: ["Nhrck"],
+    itemKeys: ["nhrck"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["사건명"],
+    agencyFields: ["위원회명"],
+    dateFields: ["의결일자"],
+    numberFields: ["사건번호"],
+    linkFields: ["결정문상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+
   eflaw: {
     key: "eflaw",
     label: "시행일법령",
@@ -492,6 +877,7 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
 
   // ===== 미지원: 현재 LAW_OC 계정에 target별 조회 권한 없음 =====
   // JSON/XML 모두 빈 응답 확인. 법제처에 target별 추가 신청 시 supported: true 로 전환.
+  // ccourt는 조회 권한 없음. 헌재결정례는 detc target을 사용할 것 (실측 동작 확인).
   ccourt: {
     key: "ccourt",
     label: "헌재결정례",
@@ -587,6 +973,23 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
     detailIdParam: "ID",
     verified: false,
     supported: false
+  },
+  // 프로브 결과 빈 응답(JSON). shape는 다른 CgmExpc target 기준 추정값.
+  mowCgmExpc: {
+    key: "mowCgmExpc",
+    label: "여성가족부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: false,
+    supported: false
   }
 };
 
@@ -640,9 +1043,24 @@ export type TreatyItem = LawResultItem;
 export const MINISTRY_TARGETS = {
   molit: { target: "molitCgmExpc", label: "국토교통부" },
   moel: { target: "moelCgmExpc", label: "고용노동부" },
-  nts: { target: "ntsCgmExpc", label: "국세청" }
+  nts: { target: "ntsCgmExpc", label: "국세청" },
+  moj: { target: "mojCgmExpc", label: "법무부" },
+  mof: { target: "mofCgmExpc", label: "기획재정부" },
+  mss: { target: "mssCgmExpc", label: "중소벤처기업부" },
+  kcs: { target: "kcsCgmExpc", label: "관세청" },
+  mpva: { target: "mpvaCgmExpc", label: "국가보훈부" }
 } as const;
 export type MinistryKey = keyof typeof MINISTRY_TARGETS;
+
+// ---------- 특별행정심판 target (back-compat) ----------
+
+export const SPECIAL_DECC_TARGETS = {
+  tt: { target: "ttSpecialDecc", label: "조세심판원" },
+  kmst: { target: "kmstSpecialDecc", label: "해양안전심판원" },
+  acr: { target: "acrSpecialDecc", label: "국민권익위" },
+  adap: { target: "adapSpecialDecc", label: "소청심사" }
+} as const;
+export type SpecialDeccKind = keyof typeof SPECIAL_DECC_TARGETS;
 
 // ---------- 매핑 ----------
 
@@ -867,6 +1285,24 @@ export const searchOrdinanceForm = (q: string, limit = 5) =>
   searchTarget("ordinbyl", q, limit);
 export const searchTreaty = (q: string, limit = 5) =>
   searchTarget("trty", q, limit);
+
+export const searchSpecialAdminJudgment = (
+  kind: SpecialDeccKind,
+  q: string,
+  limit = 5
+) => searchTarget(SPECIAL_DECC_TARGETS[kind].target, q, limit);
+export const searchConstitutionalDecision = (q: string, limit = 5) =>
+  searchTarget("detc", q, limit);
+export const searchLegalTerm = (q: string, limit = 5) =>
+  searchTarget("lstrm", q, limit);
+export const searchThreeWayCompare = (q: string, limit = 5) =>
+  searchTarget("thdCmp", q, limit);
+export const searchOldAndNew = (q: string, limit = 5) =>
+  searchTarget("oldAndNew", q, limit);
+export const searchRelatedLaw = (q: string, limit = 5) =>
+  searchTarget("lsRlt", q, limit);
+export const searchLawSystemMap = (q: string, limit = 5) =>
+  searchTarget("lsStmd", q, limit);
 
 export const searchMinistryInterpretation = (
   ministry: MinistryKey,
