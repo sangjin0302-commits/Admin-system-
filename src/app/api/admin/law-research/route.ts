@@ -3,17 +3,27 @@ import { requireRole } from "@/lib/services/admin-rbac-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import {
   searchLaw,
-  getLawArticle,
+  searchEffectiveLaw,
+  getLawDetail,
   searchPrecedent,
   getPrecedentDetail,
   searchInterpretation,
   getInterpretationDetail,
+  searchAdminJudgment,
+  getAdminJudgmentDetail,
   searchAdminRule,
   getAdminRuleDetail,
   searchForm,
+  searchAdminRuleForm,
+  searchOrdinanceForm,
+  searchMinistryInterpretation,
+  getMinistryInterpretationDetail,
+  getLawFormFiles,
   getLawArticleByJo,
   searchOrdinance,
-  searchTreaty
+  searchTreaty,
+  MINISTRY_TARGETS,
+  type MinistryKey
 } from "@/lib/services/law-api-service";
 
 export const dynamic = "force-dynamic";
@@ -21,17 +31,30 @@ export const runtime = "nodejs";
 
 type Action =
   | "searchLaw"
-  | "getLawArticle"
+  | "searchEffectiveLaw"
+  | "getLawDetail"
   | "searchPrecedent"
   | "getPrecedentDetail"
   | "searchInterpretation"
   | "getInterpretationDetail"
+  | "searchAdminJudgment"
+  | "getAdminJudgmentDetail"
   | "searchAdminRule"
   | "getAdminRuleDetail"
   | "searchForm"
+  | "searchAdminRuleForm"
+  | "searchOrdinanceForm"
+  | "searchMinistryInterpretation"
+  | "getMinistryInterpretationDetail"
+  | "getLawFormFiles"
   | "getLawArticleByJo"
   | "searchOrdinance"
   | "searchTreaty";
+
+function toMinistryKey(v: unknown): MinistryKey | null {
+  const k = String(v ?? "");
+  return k in MINISTRY_TARGETS ? (k as MinistryKey) : null;
+}
 
 export async function POST(req: Request) {
   const api = createAdminRequestContext("admin.law-research");
@@ -61,8 +84,14 @@ export async function POST(req: Request) {
       case "searchLaw":
         data = await searchLaw(String(p.keyword ?? ""), Number(p.limit ?? 10));
         break;
-      case "getLawArticle":
-        data = await getLawArticle(String(p.lawId ?? ""));
+      case "searchEffectiveLaw":
+        data = await searchEffectiveLaw(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "getLawDetail":
+        data = await getLawDetail(String(p.mst ?? p.lawId ?? ""));
+        break;
+      case "getLawFormFiles":
+        data = await getLawFormFiles(String(p.mst ?? ""));
         break;
       case "searchPrecedent":
         data = await searchPrecedent(String(p.keyword ?? ""), Number(p.limit ?? 10));
@@ -76,6 +105,35 @@ export async function POST(req: Request) {
       case "getInterpretationDetail":
         data = await getInterpretationDetail(String(p.interpId ?? ""));
         break;
+      case "searchAdminJudgment":
+        data = await searchAdminJudgment(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "getAdminJudgmentDetail":
+        data = await getAdminJudgmentDetail(String(p.deccId ?? p.id ?? ""));
+        break;
+      case "searchMinistryInterpretation": {
+        const ministry = toMinistryKey(p.ministry);
+        if (!ministry) {
+          return api.error(400, "지원하지 않는 부처입니다.", { code: "UNKNOWN_MINISTRY" });
+        }
+        data = await searchMinistryInterpretation(
+          ministry,
+          String(p.keyword ?? ""),
+          Number(p.limit ?? 10)
+        );
+        break;
+      }
+      case "getMinistryInterpretationDetail": {
+        const ministry = toMinistryKey(p.ministry);
+        if (!ministry) {
+          return api.error(400, "지원하지 않는 부처입니다.", { code: "UNKNOWN_MINISTRY" });
+        }
+        data = await getMinistryInterpretationDetail(
+          ministry,
+          String(p.interpId ?? p.id ?? "")
+        );
+        break;
+      }
       case "searchAdminRule":
         data = await searchAdminRule(String(p.keyword ?? ""), Number(p.limit ?? 10));
         break;
@@ -85,8 +143,17 @@ export async function POST(req: Request) {
       case "searchForm":
         data = await searchForm(String(p.keyword ?? ""), Number(p.limit ?? 10));
         break;
+      case "searchAdminRuleForm":
+        data = await searchAdminRuleForm(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "searchOrdinanceForm":
+        data = await searchOrdinanceForm(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
       case "getLawArticleByJo":
-        data = await getLawArticleByJo(String(p.lawId ?? ""), String(p.jo ?? ""));
+        data = await getLawArticleByJo(
+          String(p.mst ?? p.lawId ?? ""),
+          String(p.article ?? p.jo ?? "")
+        );
         break;
       case "searchOrdinance":
         data = await searchOrdinance(String(p.keyword ?? ""), Number(p.limit ?? 10));

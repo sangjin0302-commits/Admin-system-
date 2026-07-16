@@ -3,7 +3,7 @@
  *
  * 흐름:
  *   1) AI 키워드 추출 (Haiku, cheap)
- *   2) 병렬 법제처 API 조회 (법령/판례/해석례/행정규칙/서식/자치법규)
+ *   2) 병렬 법제처 API 조회 (법령/판례/행정심판 재결례/법령해석례/행정규칙/자치법규/별표서식)
  *   3) AI 종합 요약 (Sonnet, drafting)
  *   4) 결과 1시간 캐시 (동일 사건 재요청 무료)
  *
@@ -14,12 +14,14 @@ import { createHash } from "crypto";
 
 import { withCache } from "@/lib/services/cache-service";
 import {
+  searchAdminJudgment,
   searchAdminRule,
   searchForm,
   searchInterpretation,
   searchLaw,
   searchOrdinance,
   searchPrecedent,
+  type AdminJudgmentItem,
   type AdminRuleItem,
   type FormItem,
   type InterpretationItem,
@@ -35,6 +37,7 @@ export type CaseResearchResult = {
   keywords: string[];
   laws: LawSearchItem[];
   precedents: PrecedentSearchItem[];
+  adminJudgments: AdminJudgmentItem[];
   interpretations: InterpretationItem[];
   adminRules: AdminRuleItem[];
   forms: FormItem[];
@@ -85,11 +88,22 @@ async function summarize(
   data: {
     laws: LawSearchItem[];
     precedents: PrecedentSearchItem[];
+    adminJudgments: AdminJudgmentItem[];
     interpretations: InterpretationItem[];
     adminRules: AdminRuleItem[];
+    ordinances: OrdinanceItem[];
+    forms: FormItem[];
   }
 ): Promise<string> {
-  const { laws, precedents, interpretations, adminRules } = data;
+  const {
+    laws,
+    precedents,
+    adminJudgments,
+    interpretations,
+    adminRules,
+    ordinances,
+    forms,
+  } = data;
   const prompt = `사건: ${caseDescription.slice(0, 1500)}
 
 검색된 자료:
@@ -100,14 +114,22 @@ async function summarize(
       .map((p) => `${p.caseName} ${p.caseNumber} - ${p.summary.slice(0, 100)}`)
       .join("\n") || "없음"
   }
-[해석례] ${interpretations.slice(0, 3).map((i) => `${i.title} (${i.agency})`).join(", ") || "없음"}
+[행정심판 재결례] ${
+    adminJudgments
+      .slice(0, 3)
+      .map((d) => `${d.caseName} ${d.caseNumber} (${d.agency})`)
+      .join("\n") || "없음"
+  }
+[법령해석례] ${interpretations.slice(0, 3).map((i) => `${i.title} (${i.agency})`).join(", ") || "없음"}
 [행정규칙] ${adminRules.slice(0, 3).map((a) => a.name).join(", ") || "없음"}
+[자치법규] ${ordinances.slice(0, 3).map((o) => `${o.name} (${o.region})`).join(", ") || "없음"}
+[별표·서식] ${forms.slice(0, 3).map((f) => `${f.formName} (${f.lawName})`).join(", ") || "없음"}
 
 위 자료를 바탕으로:
-1. 이 사건과 가장 관련 높은 법령·조문 후보
-2. 참고할 만한 판례 요약
-3. 행정 절차 상 확인 포인트
-4. 필요한 서식/증빙
+1. 관련 법령·조문 후보
+2. 참고 판례 및 행정심판 재결례
+3. 인허가·행정 절차 확인 포인트 (자치법규 포함)
+4. 필요 서식·별표
 한국어 3-5문단으로 정리.`;
   try {
     const res = await smartInvoke("drafting" as TaskType, prompt, {
@@ -130,29 +152,39 @@ export async function researchCase(
     const keywords = await extractKeywords(trimmed);
     const primaryKw = keywords[0] ?? trimmed.slice(0, 40);
 
-    const [laws, precedents, interpretations, adminRules, forms, ordinances] =
-      await Promise.all([
-        searchLaw(primaryKw, 5).catch(() => [] as LawSearchItem[]),
-        searchPrecedent(primaryKw, 5).catch(() => [] as PrecedentSearchItem[]),
-        searchInterpretation(primaryKw, 3).catch(
-          () => [] as InterpretationItem[]
-        ),
-        searchAdminRule(primaryKw, 3).catch(() => [] as AdminRuleItem[]),
-        searchForm(primaryKw, 3).catch(() => [] as FormItem[]),
-        searchOrdinance(primaryKw, 3).catch(() => [] as OrdinanceItem[]),
-      ]);
+    const [
+      laws,
+      precedents,
+      adminJudgments,
+      interpretations,
+      adminRules,
+      ordinances,
+      forms,
+    ] = await Promise.all([
+      searchLaw(primaryKw, 5).catch(() => [] as LawSearchItem[]),
+      searchPrecedent(primaryKw, 5).catch(() => [] as PrecedentSearchItem[]),
+      searchAdminJudgment(primaryKw, 3).catch(() => [] as AdminJudgmentItem[]),
+      searchInterpretation(primaryKw, 3).catch(() => [] as InterpretationItem[]),
+      searchAdminRule(primaryKw, 3).catch(() => [] as AdminRuleItem[]),
+      searchOrdinance(primaryKw, 3).catch(() => [] as OrdinanceItem[]),
+      searchForm(primaryKw, 3).catch(() => [] as FormItem[]),
+    ]);
 
     const summary = await summarize(trimmed, {
       laws,
       precedents,
+      adminJudgments,
       interpretations,
       adminRules,
+      ordinances,
+      forms,
     });
 
     return {
       keywords,
       laws,
       precedents,
+      adminJudgments,
       interpretations,
       adminRules,
       forms,

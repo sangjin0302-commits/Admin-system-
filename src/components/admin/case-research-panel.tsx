@@ -13,9 +13,16 @@ type CaseResearchResult = {
     judgmentDate: string;
     summary: string;
   }>;
+  adminJudgments: Array<{
+    deccId: string;
+    caseName: string;
+    caseNumber: string;
+    agency: string;
+    date: string;
+  }>;
   interpretations: Array<{ interpId: string; title: string; agency: string; date: string }>;
   adminRules: Array<{ ruleId: string; name: string; agency: string; date: string }>;
-  forms: Array<{ formId: string; formName: string; lawName: string; downloadUrl: string }>;
+  forms: Array<{ formId: string; formName: string; lawName: string; mst: string }>;
   ordinances: Array<{ ordinanceId: string; name: string; region: string; date: string }>;
   summary: string;
   generatedAt: string;
@@ -152,7 +159,24 @@ export function CaseResearchPanel({ initialDescription = "", autoRun = false }: 
             ))}
           </Section>
 
-          <Section title={`해석례 (${result.interpretations.length})`}>
+          <Section title={`행정심판 재결례 (${result.adminJudgments.length})`}>
+            {result.adminJudgments.map((it) => (
+              <a
+                key={it.deccId}
+                href={`/admin/law-research?tab=decc&id=${encodeURIComponent(it.deccId)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="block border rounded p-2 hover:bg-gray-50"
+              >
+                <div className="text-sm font-medium">{it.caseName}</div>
+                <div className="text-xs text-gray-500">
+                  {it.agency} · {it.caseNumber} · {it.date}
+                </div>
+              </a>
+            ))}
+          </Section>
+
+          <Section title={`법령해석례 (${result.interpretations.length})`}>
             {result.interpretations.map((it) => (
               <a
                 key={it.interpId}
@@ -186,11 +210,11 @@ export function CaseResearchPanel({ initialDescription = "", autoRun = false }: 
             ))}
           </Section>
 
-          <Section title={`서식 (${result.forms.length})`}>
+          <Section title={`별표·서식 (${result.forms.length})`}>
             {result.forms.map((it) => (
               <a
                 key={it.formId}
-                href={it.downloadUrl || "#"}
+                href={`/admin/law-research?tab=form&keyword=${encodeURIComponent(it.formName)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="block border rounded p-2 hover:bg-gray-50"
