@@ -16,6 +16,12 @@ import {
   getLifeMovies,
   getLifeEbooks,
   getLifeCaseBundle,
+  listEnglishAreas,
+  listEnglishRuleClasses,
+  getEnglishContent,
+  listMqnaClasses,
+  listMqnaQa,
+  getMqnaDetail,
   type LifeKeys
 } from "@/lib/services/easylaw-service";
 
@@ -36,7 +42,13 @@ type Action =
   | "getLifeRuleAreaClasses"
   | "getLifeMovies"
   | "getLifeEbooks"
-  | "getLifeCaseBundle";
+  | "getLifeCaseBundle"
+  | "listEnglishAreas"
+  | "listEnglishRuleClasses"
+  | "getEnglishContent"
+  | "listMqnaClasses"
+  | "listMqnaQa"
+  | "getMqnaDetail";
 
 function toKeys(p: Record<string, unknown>): LifeKeys {
   return {
@@ -117,6 +129,24 @@ export async function POST(req: Request) {
         break;
       case "getLifeCaseBundle":
         data = await getLifeCaseBundle(toKeys(p));
+        break;
+      case "listEnglishAreas":
+        data = await listEnglishAreas();
+        break;
+      case "listEnglishRuleClasses":
+        data = await listEnglishRuleClasses(String(p.csmSeq ?? ""));
+        break;
+      case "getEnglishContent":
+        data = await getEnglishContent(toKeys(p));
+        break;
+      case "listMqnaClasses":
+        data = await listMqnaClasses();
+        break;
+      case "listMqnaQa":
+        data = await listMqnaQa(String(p.onhunqnaAstSeq ?? ""), String(p.onhunqueAstSeq ?? ""));
+        break;
+      case "getMqnaDetail":
+        data = await getMqnaDetail(String(p.onhunqnaAstSeq ?? ""), String(p.onhunqueSeq ?? ""));
         break;
       default:
         return api.error(400, "지원하지 않는 action입니다.", { code: "UNKNOWN_ACTION" });

@@ -25,6 +25,9 @@ const SOAP_TIMEOUT_MS = 15_000;
 
 const SERVICE_SEARCH = "LifeLawSearchService";
 const SERVICE_INFO = "LifeLawInfoService";
+const SERVICE_ENG = "EnglishLifeLawInfoService";
+const SERVICE_MQNA = "ManyAskManyAnswerService";
+const EASYLAW_SITE = "https://www.easylaw.go.kr";
 
 export type LifeKeys = {
   csmSeq: string;
@@ -522,4 +525,299 @@ export async function getLifeCaseBundle(keys: LifeKeys): Promise<LifeCaseBundle>
     safe(() => getLifeConstitutional(keys))
   ]);
   return { precedents, adminReferees, interpretations, constitutional };
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Service A — EnglishLifeLawInfoService (영문 생활법령)
+ * 외국인 고객 상담 시 영문 자료로 활용.
+ * 라이브 실측 (2026-07): 3개 오퍼레이션 모두 페이징 파라미터 없음
+ * (nowPageNo/pageMg 를 넣으면 이 API 계열은 HTTP 500).
+ * ───────────────────────────────────────────────────────────── */
+
+export type EngAreaItem = {
+  csmSeq: string;
+  title: string;
+  description: string;
+  iconUrl: string;
+};
+
+export type EngRuleClassItem = {
+  csmSeq: string;
+  ccfNo: string;
+  cciNo: string;
+  cnpClsNo: string;
+  name: string;
+  linkUrl: string;
+  fields: Record<string, string>;
+};
+
+export type EngContentItem = {
+  body: string;
+  ruleDesc: string;
+  fields: Record<string, string>;
+};
+
+/** 상대경로면 easylaw 도메인 기준으로 절대화. 절대 URL 은 그대로 둔다. */
+function absolutizeUrl(u: string): string {
+  const s = String(u ?? "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  return `${EASYLAW_SITE}${s.startsWith("/") ? "" : "/"}${s}`;
+}
+
+/** 지정 컨테이너로 우선 파싱, 없으면 itemTag 전체 스캔으로 폴백 */
+function xmlItemsInOrScan(
+  xml: string,
+  containerTag: string,
+  itemTag: string
+): Record<string, string>[] {
+  const scoped = xmlItemsIn(xml, containerTag, itemTag);
+  if (scoped.length > 0) return scoped;
+  return xmlItems(xml, itemTag);
+}
+
+async function engCall<T>(
+  cacheKey: string,
+  operation: string,
+  inner: string,
+  parse: (xml: string) => T,
+  empty: T
+): Promise<T> {
+  if (!envReady()) {
+    logger.warn("easylaw: env missing (EASYLAW_KEY) — returning empty");
+    return empty;
+  }
+  return withCache(cacheKey, CACHE_TTL_DAY, async () => {
+    try {
+      const xml = await soapCall(SERVICE_ENG, inner);
+      checkReturnCode(xml);
+      return parse(xml);
+    } catch (err) {
+      logger.warn("easylaw call failed", { operation, err: String(err) });
+      return empty;
+    }
+  });
+}
+
+/** A-1. 영문 생활법령 분야 목록 (파라미터 없음) */
+export async function listEnglishAreas(): Promise<EngAreaItem[]> {
+  return engCall<EngAreaItem[]>(
+    "easylaw:eng:areas",
+    "getEngAreaList",
+    `<open:getEngAreaList><EngAreaListRequest></EngAreaListRequest></open:getEngAreaList>`,
+    (xml) =>
+      xmlItemsInOrScan(xml, "EngAreaListItems", "EngAreaListItem").map((r) => ({
+        csmSeq: r.csmSeq ?? "",
+        title: stripTags(r.csmTtl ?? ""),
+        description: normalizeLongText(r.csmNt ?? ""),
+        iconUrl: absolutizeUrl(r.iconUrl ?? "")
+      })),
+    []
+  );
+}
+
+/** A-2. 영문 관심규정 분류 목록 */
+export async function listEnglishRuleClasses(csmSeq: string): Promise<EngRuleClassItem[]> {
+  return engCall<EngRuleClassItem[]>(
+    `easylaw:eng:ruleClasses:${csmSeq}`,
+    "getEngAreaInterrestRuleClassList",
+    `<open:getEngAreaInterrestRuleClassList><EngAreaInterrestRuleClassListRequest>` +
+      `<csmSeq>${escapeXml(csmSeq)}</csmSeq>` +
+      `</EngAreaInterrestRuleClassListRequest></open:getEngAreaInterrestRuleClassList>`,
+    (xml) =>
+      xmlItemsInOrScan(
+        xml,
+        "EngAreaInterrestRuleClassListItems",
+        "EngAreaInterrestRuleClassListItem"
+      ).map((fields) => ({
+        csmSeq: fields.csmSeq ?? "",
+        ccfNo: fields.ccfNo ?? "",
+        cciNo: fields.cciNo ?? "",
+        cnpClsNo: fields.cnpClsNo ?? "",
+        name: stripTags(fields.nm ?? ""),
+        linkUrl: absolutizeUrl(fields.linkUrl ?? ""),
+        fields
+      })),
+    []
+  );
+}
+
+/** A-3. 영문 콘텐츠 본문 */
+export async function getEnglishContent(keys: LifeKeys): Promise<EngContentItem[]> {
+  return engCall<EngContentItem[]>(
+    `easylaw:eng:content:${keys.csmSeq}:${keys.ccfNo}:${keys.cciNo}:${keys.cnpClsNo}`,
+    "getEngAreaContentItem",
+    `<open:getEngAreaContentItem><EngAreaContentItemRequest>` +
+      `${keysXml(keys)}` +
+      `</EngAreaContentItemRequest></open:getEngAreaContentItem>`,
+    (xml) =>
+      // 미검증: 컨테이너 태그명 추정 (형제 서비스 관례 기준) — 없으면 item 전체 스캔 폴백
+      xmlItemsInOrScan(xml, "EngAreaContentItemItems", "EngAreaContentItemItem").map(
+        (fields) => ({
+          body: normalizeLongText(fields.cnpClsNt ?? ""),
+          ruleDesc: normalizeLongText(fields.ruledesc ?? ""),
+          fields
+        })
+      ),
+    []
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Service B — ManyAskManyAnswerService (백문백답)
+ *
+ * 주의: lawbot(_easylaw.py:123 search_mqna)은 getMaskMAnswerSearchContentList 를 호출하나
+ *       WSDL에 존재하지 않는 오퍼레이션이라 HTTP 500이 난다. 키워드 검색은 없고
+ *       분류 → 분야 → 상세 계층 조회만 가능하다. (라이브 WSDL 실측 2026-07)
+ *
+ * getMaskMAnswerAreaItem 응답에는 파일/법령/생활법령 3개 목록이 공존하므로
+ * 반드시 xmlItemsIn 으로 컨테이너를 지정해 파싱한다 (판례 Lk 목록과 동일 사유).
+ * ───────────────────────────────────────────────────────────── */
+
+export type MqnaClassItem = {
+  onhunqnaAstSeq: string;
+  onhunqueAstSeq: string;
+  areaName: string;
+  categoryName: string;
+  fields: Record<string, string>;
+};
+
+export type MqnaQaItem = {
+  onhunqueSeq: string;
+  onhunqnaAstSeq: string;
+  question: string;
+  answer: string;
+  areaName: string;
+  categoryName: string;
+  subject: string;
+  date: string;
+};
+
+export type MqnaDetail = {
+  files: Array<{ name: string; url: string; ext: string; fields: Record<string, string> }>;
+  laws: Array<{ name: string; seq: string }>;
+  related: Array<{
+    title: string;
+    className: string;
+    linkUrl: string;
+    fields: Record<string, string>;
+  }>;
+};
+
+async function mqnaCall<T>(
+  cacheKey: string,
+  operation: string,
+  inner: string,
+  parse: (xml: string) => T,
+  empty: T
+): Promise<T> {
+  if (!envReady()) {
+    logger.warn("easylaw: env missing (EASYLAW_KEY) — returning empty");
+    return empty;
+  }
+  return withCache(cacheKey, CACHE_TTL_DAY, async () => {
+    try {
+      const xml = await soapCall(SERVICE_MQNA, inner);
+      checkReturnCode(xml);
+      return parse(xml);
+    } catch (err) {
+      logger.warn("easylaw call failed", { operation, err: String(err) });
+      return empty;
+    }
+  });
+}
+
+/** B-1. 백문백답 분류 목록 (파라미터 없음) */
+export async function listMqnaClasses(): Promise<MqnaClassItem[]> {
+  return mqnaCall<MqnaClassItem[]>(
+    "easylaw:mqna:classes",
+    "getMaskMAnswerClassList",
+    `<open:getMaskMAnswerClassList/>`,
+    (xml) =>
+      xmlItems(xml, "MaskMAnswerClassListItem").map((fields) => ({
+        onhunqnaAstSeq: fields.onhunqnaAstSeq ?? "",
+        onhunqueAstSeq: fields.onhunqueAstSeq ?? "",
+        areaName: stripTags(fields.onhunqnaAstNm ?? ""),
+        categoryName: stripTags(fields.onhunqueCatNm ?? ""),
+        fields
+      })),
+    []
+  );
+}
+
+/** B-2. 백문백답 분야별 Q/A 목록 */
+export async function listMqnaQa(
+  onhunqnaAstSeq: string,
+  onhunqueAstSeq: string
+): Promise<MqnaQaItem[]> {
+  return mqnaCall<MqnaQaItem[]>(
+    `easylaw:mqna:qa:${onhunqnaAstSeq}:${onhunqueAstSeq}`,
+    "getMaskMAnswerAreaList",
+    `<open:getMaskMAnswerAreaList><MaskMAnswerAreaListRequest>` +
+      `<onhunqnaAstSeq>${escapeXml(onhunqnaAstSeq)}</onhunqnaAstSeq>` +
+      `<onhunqueAstSeq>${escapeXml(onhunqueAstSeq)}</onhunqueAstSeq>` +
+      `</MaskMAnswerAreaListRequest></open:getMaskMAnswerAreaList>`,
+    (xml) =>
+      xmlItems(xml, "MaskMAnswerAreaListItem").map((r) => ({
+        onhunqueSeq: r.onhunqueSeq ?? "",
+        onhunqnaAstSeq: r.onhunqnaAstSeq ?? "",
+        question: normalizeLongText(r.onhunqueCts ?? ""),
+        answer: normalizeLongText(r.onhunansCts ?? ""),
+        areaName: stripTags(r.onhunqnaAstNm ?? ""),
+        categoryName: stripTags(r.onhunqueCatNm ?? ""),
+        subject: stripTags(r.onhunqueSubjNm ?? ""),
+        date: r.onhunansServiceDt ?? ""
+      })),
+    []
+  );
+}
+
+/** B-3. 백문백답 상세 — 첨부파일 / 관련 법령 / 관련 생활법령 3개 병렬 목록 */
+export async function getMqnaDetail(
+  onhunqnaAstSeq: string,
+  onhunqueSeq: string
+): Promise<MqnaDetail> {
+  const empty: MqnaDetail = { files: [], laws: [], related: [] };
+  return mqnaCall<MqnaDetail>(
+    `easylaw:mqna:detail:${onhunqnaAstSeq}:${onhunqueSeq}`,
+    "getMaskMAnswerAreaItem",
+    `<open:getMaskMAnswerAreaItem><MaskMAnswerAreaItemRequest>` +
+      `<onhunqnaAstSeq>${escapeXml(onhunqnaAstSeq)}</onhunqnaAstSeq>` +
+      `<onhunqueSeq>${escapeXml(onhunqueSeq)}</onhunqueSeq>` +
+      `</MaskMAnswerAreaItemRequest></open:getMaskMAnswerAreaItem>`,
+    (xml) => ({
+      files: xmlItemsIn(
+        xml,
+        "MaskMAnswerAreaFileListItems",
+        "MaskMAnswerAreaFileListItem"
+      ).map((fields) => {
+        const composed = fields.flPth
+          ? `${fields.flPth}${fields.flPth.endsWith("/") ? "" : "/"}${fields.flNm ?? ""}`
+          : "";
+        return {
+          name: stripTags(fields.flNm ?? ""),
+          url: absolutizeUrl(fields.linkUrl || composed),
+          ext: fields.flExt ?? "",
+          fields
+        };
+      }),
+      laws: xmlItemsIn(xml, "MaskMAnswerAreaLawListItems", "MaskMAnswerAreaLawListItem").map(
+        (r) => ({
+          name: stripTags(r.onhunqueConLsiNm ?? ""),
+          seq: r.onhunqueConLsiSeq ?? ""
+        })
+      ),
+      related: xmlItemsIn(
+        xml,
+        "MaskMAnswerAreaInfoListItems",
+        "MaskMAnswerAreaInfoListItem"
+      ).map((fields) => ({
+        title: stripTags(fields.csmTtl || fields.ccfTtl || ""),
+        className: stripTags(fields.cnpClsNm ?? ""),
+        linkUrl: absolutizeUrl(fields.linkUrl ?? ""),
+        fields
+      }))
+    }),
+    empty
+  );
 }

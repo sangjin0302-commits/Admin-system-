@@ -7,10 +7,16 @@ import type {
   LifeAreaItem,
   LifeGenericItem,
   LifeCaseItem,
-  LifeCaseBundle
+  LifeCaseBundle,
+  EngAreaItem,
+  EngRuleClassItem,
+  EngContentItem,
+  MqnaClassItem,
+  MqnaQaItem,
+  MqnaDetail
 } from "@/lib/services/easylaw-service";
 
-type Tab = "search" | "browse";
+type Tab = "search" | "browse" | "english" | "mqna";
 
 async function callApi(action: string, params: Record<string, unknown> = {}) {
   const res = await fetch("/api/admin/easylaw", {
@@ -130,6 +136,22 @@ export function EasylawPanel() {
   const [lawsSystem, setLawsSystem] = useState<LifeGenericItem[]>([]);
   const [areaDetailLoading, setAreaDetailLoading] = useState(false);
 
+  // Tab 3 — 영문 생활법령
+  const [engAreas, setEngAreas] = useState<EngAreaItem[]>([]);
+  const [engActiveArea, setEngActiveArea] = useState<string | null>(null);
+  const [engClasses, setEngClasses] = useState<EngRuleClassItem[]>([]);
+  const [engClassesLoading, setEngClassesLoading] = useState(false);
+  const [engContent, setEngContent] = useState<EngContentItem[]>([]);
+  const [engContentLoading, setEngContentLoading] = useState(false);
+
+  // Tab 4 — 백문백답
+  const [mqnaClasses, setMqnaClasses] = useState<MqnaClassItem[]>([]);
+  const [mqnaActive, setMqnaActive] = useState<string | null>(null);
+  const [mqnaQa, setMqnaQa] = useState<MqnaQaItem[]>([]);
+  const [mqnaQaLoading, setMqnaQaLoading] = useState(false);
+  const [mqnaDetail, setMqnaDetail] = useState<MqnaDetail | null>(null);
+  const [mqnaDetailLoading, setMqnaDetailLoading] = useState(false);
+
   const search = useCallback(async () => {
     if (!query.trim()) return;
     setSearching(true);
@@ -210,6 +232,101 @@ export function EasylawPanel() {
     }
   }, []);
 
+  useEffect(() => {
+    if (tab !== "english" || engAreas.length > 0) return;
+    (async () => {
+      try {
+        setEngAreas((await callApi("listEnglishAreas")) ?? []);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "영문 분야 조회 실패");
+      }
+    })();
+  }, [tab, engAreas.length]);
+
+  const openEngArea = useCallback(async (csmSeq: string) => {
+    setEngActiveArea(csmSeq);
+    setEngClassesLoading(true);
+    setEngClasses([]);
+    setEngContent([]);
+    setError(null);
+    try {
+      setEngClasses((await callApi("listEnglishRuleClasses", { csmSeq })) ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "영문 분류 조회 실패");
+    } finally {
+      setEngClassesLoading(false);
+    }
+  }, []);
+
+  const openEngContent = useCallback(async (c: EngRuleClassItem) => {
+    setEngContentLoading(true);
+    setEngContent([]);
+    setError(null);
+    try {
+      setEngContent(
+        (await callApi("getEnglishContent", {
+          csmSeq: c.csmSeq,
+          ccfNo: c.ccfNo,
+          cciNo: c.cciNo,
+          cnpClsNo: c.cnpClsNo
+        })) ?? []
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "영문 본문 조회 실패");
+    } finally {
+      setEngContentLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tab !== "mqna" || mqnaClasses.length > 0) return;
+    (async () => {
+      try {
+        setMqnaClasses((await callApi("listMqnaClasses")) ?? []);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "백문백답 분류 조회 실패");
+      }
+    })();
+  }, [tab, mqnaClasses.length]);
+
+  const openMqnaClass = useCallback(async (c: MqnaClassItem) => {
+    setMqnaActive(`${c.onhunqnaAstSeq}:${c.onhunqueAstSeq}`);
+    setMqnaQaLoading(true);
+    setMqnaQa([]);
+    setMqnaDetail(null);
+    setError(null);
+    try {
+      setMqnaQa(
+        (await callApi("listMqnaQa", {
+          onhunqnaAstSeq: c.onhunqnaAstSeq,
+          onhunqueAstSeq: c.onhunqueAstSeq
+        })) ?? []
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "백문백답 목록 조회 실패");
+    } finally {
+      setMqnaQaLoading(false);
+    }
+  }, []);
+
+  const openMqnaDetail = useCallback(async (q: MqnaQaItem) => {
+    setMqnaDetailLoading(true);
+    setMqnaDetail(null);
+    setError(null);
+    try {
+      setMqnaDetail(
+        (await callApi("getMqnaDetail", {
+          onhunqnaAstSeq: q.onhunqnaAstSeq,
+          onhunqueSeq: q.onhunqueSeq
+        })) ?? null
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "상세 조회 실패");
+    } finally {
+      setMqnaDetailLoading(false);
+    }
+  }, []);
+
   const tabButton = (id: Tab, label: string) => (
     <button
       key={id}
@@ -230,6 +347,8 @@ export function EasylawPanel() {
       <div className="flex gap-2 flex-wrap">
         {tabButton("search", "통합검색")}
         {tabButton("browse", "생활분야 탐색")}
+        {tabButton("english", "영문 생활법령")}
+        {tabButton("mqna", "백문백답")}
       </div>
 
       <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
@@ -347,6 +466,194 @@ export function EasylawPanel() {
                 <>
                   <CaseSection title="주요 궁금사항" items={notices} />
                   <CaseSection title="법령체계도" items={lawsSystem} />
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {tab === "english" && (
+        <>
+          <div className="text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded px-2 py-1">
+            외국인 고객 상담 시 영문 자료로 활용
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              {engAreas.length === 0 && (
+                <div className="text-sm text-gray-500">영문 분야를 불러오는 중...</div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {engAreas.map((a) => (
+                  <button
+                    key={a.csmSeq}
+                    onClick={() => openEngArea(a.csmSeq)}
+                    className={`text-left border rounded p-3 hover:bg-gray-50 ${
+                      engActiveArea === a.csmSeq ? "border-blue-600 bg-blue-50" : ""
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{a.title}</div>
+                    {a.description && (
+                      <div className="text-xs text-gray-600 mt-0.5 line-clamp-3">
+                        {a.description}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              {engClassesLoading && <div className="text-sm text-gray-500">불러오는 중...</div>}
+              {!engClassesLoading && engClasses.length === 0 && (
+                <div className="text-sm text-gray-500">분야를 선택해 주세요.</div>
+              )}
+              <div className="flex gap-1.5 flex-wrap">
+                {engClasses.map((c, idx) => (
+                  <button
+                    key={`${c.cnpClsNo}-${idx}`}
+                    onClick={() => openEngContent(c)}
+                    className="px-2.5 py-1 text-xs rounded border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  >
+                    {c.name || "(no name)"}
+                  </button>
+                ))}
+              </div>
+
+              {engContentLoading && <div className="text-sm text-gray-500">본문 조회 중...</div>}
+              {engContent.map((c, idx) => (
+                <article key={idx} className="border rounded p-2.5 space-y-1.5">
+                  <LongText label="Content" text={c.body} />
+                  <LongText label="Rule" text={c.ruleDesc} />
+                </article>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {tab === "mqna" && (
+        <>
+          <div className="flex gap-1.5 flex-wrap">
+            {mqnaClasses.length === 0 && (
+              <div className="text-sm text-gray-500">분류를 불러오는 중...</div>
+            )}
+            {mqnaClasses.map((c, idx) => {
+              const id = `${c.onhunqnaAstSeq}:${c.onhunqueAstSeq}`;
+              return (
+                <button
+                  key={`${id}-${idx}`}
+                  onClick={() => openMqnaClass(c)}
+                  className={`px-2.5 py-1 text-xs rounded border ${
+                    mqnaActive === id
+                      ? "border-blue-600 text-blue-700 bg-blue-50"
+                      : "border-gray-200 text-gray-600"
+                  }`}
+                >
+                  {c.categoryName || c.areaName || "(분류)"}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              {mqnaQaLoading && <div className="text-sm text-gray-500">불러오는 중...</div>}
+              {!mqnaQaLoading && mqnaQa.length === 0 && (
+                <div className="text-sm text-gray-500">분류를 선택해 주세요.</div>
+              )}
+              {mqnaQa.map((q, idx) => (
+                <article key={`${q.onhunqueSeq}-${idx}`} className="border rounded p-3 space-y-1.5">
+                  <div className="font-medium text-sm break-words">
+                    {q.question || "(질문 없음)"}
+                  </div>
+                  {q.subject && <div className="text-xs text-gray-400">{q.subject}</div>}
+                  <LongText label="답변" text={q.answer} />
+                  <button
+                    onClick={() => openMqnaDetail(q)}
+                    className="mt-1 px-2 py-1 text-xs rounded border border-blue-600 text-blue-700"
+                  >
+                    상세
+                  </button>
+                </article>
+              ))}
+            </div>
+
+            <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              {mqnaDetailLoading && <div className="text-sm text-gray-500">불러오는 중...</div>}
+              {!mqnaDetailLoading && !mqnaDetail && (
+                <div className="text-sm text-gray-500">&quot;상세&quot;를 눌러 주세요.</div>
+              )}
+              {mqnaDetail && (
+                <>
+                  <section className="space-y-1">
+                    <h3 className="text-sm font-semibold">
+                      첨부파일{" "}
+                      <span className="text-xs text-gray-400">({mqnaDetail.files.length})</span>
+                    </h3>
+                    {mqnaDetail.files.length === 0 && (
+                      <div className="text-xs text-gray-500">결과가 없습니다.</div>
+                    )}
+                    {mqnaDetail.files.map((f, idx) => (
+                      <div key={idx} className="text-xs">
+                        {f.url ? (
+                          <a
+                            href={f.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 hover:underline break-all"
+                          >
+                            {f.name || f.url} {f.ext && `(${f.ext})`}
+                          </a>
+                        ) : (
+                          <span className="text-gray-600">{f.name}</span>
+                        )}
+                      </div>
+                    ))}
+                  </section>
+
+                  <section className="space-y-1">
+                    <h3 className="text-sm font-semibold">
+                      관련 법령{" "}
+                      <span className="text-xs text-gray-400">({mqnaDetail.laws.length})</span>
+                    </h3>
+                    {mqnaDetail.laws.length === 0 && (
+                      <div className="text-xs text-gray-500">결과가 없습니다.</div>
+                    )}
+                    {mqnaDetail.laws.map((l, idx) => (
+                      <div key={idx} className="text-xs text-gray-800">
+                        {l.name}
+                      </div>
+                    ))}
+                  </section>
+
+                  <section className="space-y-1">
+                    <h3 className="text-sm font-semibold">
+                      관련 생활법령{" "}
+                      <span className="text-xs text-gray-400">({mqnaDetail.related.length})</span>
+                    </h3>
+                    {mqnaDetail.related.length === 0 && (
+                      <div className="text-xs text-gray-500">결과가 없습니다.</div>
+                    )}
+                    {mqnaDetail.related.map((r, idx) => (
+                      <div key={idx} className="text-xs">
+                        {r.linkUrl ? (
+                          <a
+                            href={r.linkUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 hover:underline break-all"
+                          >
+                            {r.title || r.linkUrl}
+                          </a>
+                        ) : (
+                          <span className="text-gray-800">{r.title}</span>
+                        )}
+                        {r.className && <span className="text-gray-400"> · {r.className}</span>}
+                      </div>
+                    ))}
+                  </section>
                 </>
               )}
             </div>

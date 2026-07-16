@@ -5,14 +5,16 @@
  * target 파라미터로 도메인을 구분한다. wrapper key / item key는 target마다 다르다.
  * Vercel IP 화이트리스트 불가 → Lightsail 프록시(3.36.175.81:8080) 경유.
  *
- * TARGET_REGISTRY는 총 47개 target으로, verified: true / supported: true 항목(40개)은
- * OC=sangjin_api로 실제 호출해 확인한 실측값이다.
- * supported: false 항목(7개)은 현재 LAW_OC 계정에 target별 조회 권한이 없어 빈 응답만 오며,
+ * TARGET_REGISTRY는 총 60개 target으로, supported: true 항목(51개)은
+ * OC=sangjin_api로 실제 호출해 확인한 실측값이다(그 중 verified: false 2개는
+ * 프로브 질의 결과가 0건이라 필드명을 형제 target 기준으로 추정했다).
+ * supported: false 항목(9개)은 현재 LAW_OC 계정에 target별 조회 권한이 없어 빈 응답만 오며,
  * 스펙은 production bot(_lib.py) 기준 추정값이다. 호출 없이 즉시 []/null을 반환한다.
  *
  * 헌재결정례: ccourt는 조회 권한 없음(supported: false). 실제 동작하는 target은 detc이다.
  *
  * 주의: 검색 응답에는 본문/요지(판시사항·질의요지 등)가 없다. 요지는 상세 호출로만 얻는다.
+ * 예외: aiSearch는 검색 응답에 조문내용(본문)을 포함하는 유일한 target이다.
  */
 
 import { logger } from "@/lib/utils/logger";
@@ -166,9 +168,13 @@ export type TargetKey =
   | "lsRlt" | "lnkLs" | "lnkOrd" | "lsStmd" | "oneview"
   | "nhrck"
   | "admrul" | "ordin" | "trty"
+  | "school" | "public" | "pi"
+  | "aiSearch" | "aiRltLs"
   | "licbyl" | "admbyl" | "ordinbyl"
   | "nodong" | "audit" | "acrc" | "empins"
-  | "ftc" | "fsc" | "ppc" | "bill";
+  | "ftc" | "fsc" | "ppc" | "bill"
+  | "kcc" | "sfc" | "eiac" | "oclt" | "iaciac" | "ecc"
+  | "lstrmRlt" | "dlytrmRlt";
 
 export type TargetSpec = {
   key: TargetKey;
@@ -874,6 +880,192 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
     verified: true,
     supported: true
   },
+  kcc: {
+    key: "kcc",
+    label: "방송통신위원회 결정례",
+    group: "위원회",
+    wrappers: ["Kcc"],
+    itemKeys: ["kcc"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: [],
+    dateFields: ["의결일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["결정문상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  sfc: {
+    key: "sfc",
+    label: "증권선물위원회 결정례",
+    group: "위원회",
+    // 실측: 날짜 필드가 응답에 없음
+    wrappers: ["Sfc"],
+    itemKeys: ["sfc"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["기관명"],
+    dateFields: [],
+    numberFields: ["의결번호"],
+    linkFields: ["결정문상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  eiac: {
+    key: "eiac",
+    label: "고용보험심사위원회 결정례",
+    group: "위원회",
+    wrappers: ["Eiac"],
+    itemKeys: ["eiac"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["사건명"],
+    agencyFields: [],
+    dateFields: ["의결일자"],
+    numberFields: ["사건번호"],
+    linkFields: ["결정문상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  oclt: {
+    key: "oclt",
+    label: "중앙토지수용위원회 결정례",
+    group: "위원회",
+    // 실측: 제목/링크/일련번호만 반환 (기관·날짜·번호 필드 없음)
+    wrappers: ["Oclt"],
+    itemKeys: ["oclt"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["제목"],
+    agencyFields: [],
+    dateFields: [],
+    numberFields: [],
+    linkFields: ["결정문상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  // 프로브 질의 결과 0건 — wrapper는 확인됨, 필드는 형제 위원회 target 기준 추정값.
+  iaciac: {
+    key: "iaciac",
+    label: "산업재해보상보험재심사위원회 결정례",
+    group: "위원회",
+    wrappers: ["Iaciac"],
+    itemKeys: ["iaciac"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["사건명", "안건명"],
+    agencyFields: [],
+    dateFields: ["의결일자"],
+    numberFields: ["사건번호"],
+    linkFields: ["결정문상세링크"],
+    detailIdParam: "ID",
+    verified: false,
+    supported: true
+  },
+  ecc: {
+    key: "ecc",
+    label: "환경분쟁조정위원회 결정례",
+    group: "위원회",
+    wrappers: ["Ecc"],
+    itemKeys: ["ecc"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["사건명", "안건명"],
+    agencyFields: [],
+    dateFields: ["의결일자"],
+    numberFields: ["사건번호"],
+    linkFields: ["결정문상세링크"],
+    detailIdParam: "ID",
+    verified: false,
+    supported: true
+  },
+
+  // ===== 행정규칙 유형별 (AdmRulSearch.admrul + 법령분류코드/법령분류명) =====
+  school: {
+    key: "school",
+    label: "학교 행정규칙",
+    group: "법령",
+    wrappers: ["AdmRulSearch"],
+    itemKeys: ["admrul"],
+    idFields: ["행정규칙일련번호"],
+    titleFields: ["행정규칙명"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["발령일자", "시행일자"],
+    numberFields: ["발령번호"],
+    linkFields: ["행정규칙상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  public: {
+    key: "public",
+    label: "공공기관 행정규칙",
+    group: "법령",
+    wrappers: ["AdmRulSearch"],
+    itemKeys: ["admrul"],
+    idFields: ["행정규칙일련번호"],
+    titleFields: ["행정규칙명"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["발령일자", "시행일자"],
+    numberFields: ["발령번호"],
+    linkFields: ["행정규칙상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  pi: {
+    key: "pi",
+    label: "개인정보 행정규칙",
+    group: "법령",
+    wrappers: ["AdmRulSearch"],
+    itemKeys: ["admrul"],
+    idFields: ["행정규칙일련번호"],
+    titleFields: ["행정규칙명"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["발령일자", "시행일자"],
+    numberFields: ["발령번호"],
+    linkFields: ["행정규칙상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+
+  // ===== AI 조문 검색 =====
+  aiSearch: {
+    key: "aiSearch",
+    label: "AI 조문 검색(본문 포함)",
+    group: "법령",
+    // itemKey가 한글("법령조문")
+    // 실측: 검색 응답에 조문내용(본문)이 포함되는 유일한 target
+    wrappers: ["aiSearch"],
+    itemKeys: ["법령조문"],
+    idFields: ["조문일련번호", "법령일련번호"],
+    titleFields: ["조문제목", "법령명"],
+    agencyFields: ["소관부처명"],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["조문번호", "공포번호"],
+    linkFields: [],
+    detailIdParam: "MST",
+    verified: true,
+    supported: true
+  },
+  aiRltLs: {
+    key: "aiRltLs",
+    label: "AI 연관 법령조문",
+    group: "법령",
+    // itemKey가 한글("법령조문")
+    wrappers: ["aiRltLsSearch"],
+    itemKeys: ["법령조문"],
+    idFields: ["법령ID"],
+    titleFields: ["조문제목", "법령명"],
+    agencyFields: [],
+    dateFields: ["시행일자", "공포일자"],
+    numberFields: ["조문번호", "공포번호"],
+    linkFields: [],
+    detailIdParam: "MST",
+    verified: true,
+    supported: true
+  },
 
   // ===== 미지원: 현재 LAW_OC 계정에 target별 조회 권한 없음 =====
   // JSON/XML 모두 빈 응답 확인. 법제처에 target별 추가 신청 시 supported: true 로 전환.
@@ -990,6 +1182,39 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
     detailIdParam: "ID",
     verified: false,
     supported: false
+  },
+  // 프로브 결과 빈 응답. shape는 lstrm/dlytrm 기준 추정값.
+  lstrmRlt: {
+    key: "lstrmRlt",
+    label: "법령용어 연계",
+    group: "기타",
+    wrappers: ["lstrmRltSearch"],
+    itemKeys: ["법령용어"],
+    idFields: ["법령용어ID", "id"],
+    titleFields: ["법령용어명"],
+    agencyFields: [],
+    dateFields: [],
+    numberFields: [],
+    linkFields: ["용어간관계링크", "조문간관계링크"],
+    detailIdParam: "ID",
+    verified: false,
+    supported: false
+  },
+  dlytrmRlt: {
+    key: "dlytrmRlt",
+    label: "일상용어 연계",
+    group: "기타",
+    wrappers: ["dlytrmRltSearch"],
+    itemKeys: ["일상용어"],
+    idFields: ["일상용어ID", "id"],
+    titleFields: ["일상용어명"],
+    agencyFields: ["출처"],
+    dateFields: [],
+    numberFields: [],
+    linkFields: ["용어간관계링크"],
+    detailIdParam: "ID",
+    verified: false,
+    supported: false
   }
 };
 
@@ -1061,6 +1286,15 @@ export const SPECIAL_DECC_TARGETS = {
   adap: { target: "adapSpecialDecc", label: "소청심사" }
 } as const;
 export type SpecialDeccKind = keyof typeof SPECIAL_DECC_TARGETS;
+
+// ---------- 행정규칙 유형별 target ----------
+
+export const ADMRUL_TYPE_TARGETS = {
+  school: { target: "school", label: "학교" },
+  public: { target: "public", label: "공공기관" },
+  pi: { target: "pi", label: "개인정보" }
+} as const;
+export type AdmRulTypeKey = keyof typeof ADMRUL_TYPE_TARGETS;
 
 // ---------- 매핑 ----------
 
@@ -1309,6 +1543,70 @@ export const searchMinistryInterpretation = (
   q: string,
   limit = 5
 ) => searchTarget(MINISTRY_TARGETS[ministry].target, q, limit);
+
+/** 조문 본문 검색 — 검색 응답에 조문내용(본문)이 포함된다 */
+export const searchArticleFullText = (q: string, limit = 5) =>
+  searchTarget("aiSearch", q, limit);
+export const searchRelatedArticles = (q: string, limit = 5) =>
+  searchTarget("aiRltLs", q, limit);
+
+export const searchAdminRuleByType = (
+  kind: AdmRulTypeKey,
+  q: string,
+  limit = 5
+) => searchTarget(ADMRUL_TYPE_TARGETS[kind].target, q, limit);
+
+// ---------- 정확 매칭 검색 ----------
+
+/** 사건번호 정확 매칭 (예: "2013다51674") — search=1 */
+export async function searchPrecedentByNumber(
+  caseNumber: string,
+  limit = 5
+): Promise<LawResultItem[]> {
+  if (!envReady()) {
+    logger.warn("law-api: env missing — returning []");
+    return [];
+  }
+  const spec = TARGET_REGISTRY.prec;
+  const key = `law:searchPrecedentByNumber:${caseNumber}:${limit}`;
+  return withCache<LawResultItem[]>(key, CACHE_TTL_DAY, async () => {
+    try {
+      const raw = await callDrf("lawSearch.do", {
+        target: "prec",
+        query: caseNumber,
+        display: limit,
+        page: 1,
+        search: 1
+      });
+      const payload = pickWrapper(raw, spec.wrappers);
+      const list = pickItems(payload, raw, spec.itemKeys);
+      return list
+        .map((it) => mapItem("prec", spec, it))
+        .filter((it) => Boolean(it.title));
+    } catch (err) {
+      logger.warn("law-api searchPrecedentByNumber failed", {
+        caseNumber,
+        err: String(err)
+      });
+      return [];
+    }
+  });
+}
+
+/** 법령명 정확 일치 필터 — searchLaw 결과에서 제목이 정확히 일치하는 것만 */
+export async function searchLawExact(
+  name: string,
+  limit = 5
+): Promise<LawResultItem[]> {
+  const norm = (s: string) => s.trim().replace(/\s+/g, " ");
+  const wanted = norm(name);
+  const items = await searchTarget("law", name, Math.max(limit, 10));
+  const exact = items.filter((it) => norm(it.title) === wanted);
+  const matched = exact.length
+    ? exact
+    : items.filter((it) => norm(it.title).startsWith(wanted));
+  return matched.slice(0, limit);
+}
 
 export const getLawDetail = (mst: string) => getDetail("law", mst);
 export const getPrecedentDetail = (id: string) => getDetail("prec", id);
