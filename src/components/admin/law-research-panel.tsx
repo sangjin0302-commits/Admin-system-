@@ -1,18 +1,39 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-type Tab =
-  | "law"
-  | "prec"
-  | "decc"
-  | "expc"
-  | "cgm"
-  | "admrul"
-  | "ordin"
-  | "form";
+type Group = "법령" | "판례·심판" | "해석" | "서식" | "위원회" | "기타";
 
-type FormScope = "form" | "admbyl" | "ordinbyl";
+const GROUP_ORDER: Group[] = ["법령", "판례·심판", "해석", "서식", "위원회", "기타"];
+
+type TargetSpec = {
+  key: string;
+  label: string;
+  group: Group;
+  hasFiles?: boolean;
+  verified: boolean;
+  supported: boolean;
+};
+
+type LawResultItem = {
+  target: string;
+  id: string;
+  title: string;
+  agency: string;
+  date: string;
+  number: string;
+  detailUrl: string;
+  hwpUrl?: string;
+  pdfUrl?: string;
+  extra: Record<string, string>;
+};
+
+type DetailData = {
+  target: string;
+  id: string;
+  fields: Record<string, string>;
+  detailUrl: string;
+};
 
 type LawFormFile = {
   formNo: string;
@@ -22,28 +43,12 @@ type LawFormFile = {
   pdfUrl: string;
 };
 
-const MINISTRIES = [
-  { key: "molit", label: "국토교통부" },
-  { key: "moel", label: "고용노동부" },
-  { key: "nts", label: "국세청" }
-] as const;
+type DetailPane =
+  | { kind: "fields"; data: DetailData; item: LawResultItem }
+  | { kind: "formFiles"; files: LawFormFile[]; item: LawResultItem }
+  | null;
 
-type MinistryKey = (typeof MINISTRIES)[number]["key"];
-
-const FORM_SCOPE_ACTION: Record<FormScope, string> = {
-  form: "searchForm",
-  admbyl: "searchAdminRuleForm",
-  ordinbyl: "searchOrdinanceForm"
-};
-
-const SEARCH_ACTION: Record<Exclude<Tab, "cgm" | "form">, string> = {
-  law: "searchLaw",
-  prec: "searchPrecedent",
-  decc: "searchAdminJudgment",
-  expc: "searchInterpretation",
-  admrul: "searchAdminRule",
-  ordin: "searchOrdinance"
-};
+const LONG_TEXT_THRESHOLD = 200;
 
 async function callApi(action: string, params: Record<string, unknown>) {
   const res = await fetch("/api/admin/law-research", {
@@ -56,16 +61,81 @@ async function callApi(action: string, params: Record<string, unknown>) {
   return json.data;
 }
 
+function LongText({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const isLong = text.length > LONG_TEXT_THRESHOLD;
+  return (
+    <div>
+      <div className="text-xs text-gray-700 whitespace-pre-wrap">
+        {isLong && !open ? `${text.slice(0, LONG_TEXT_THRESHOLD)}…` : text}
+      </div>
+      {isLong && (
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="mt-1 text-[11px] text-blue-700 hover:underline"
+        >
+          {open ? "접기" : "더보기"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: string }) {
-  const [tab, setTab] = useState<Tab>("law");
-  const [formScope, setFormScope] = useState<FormScope>("form");
-  const [ministry, setMinistry] = useState<MinistryKey>("molit");
+  const [byGroup, setByGroup] = useState<Record<string, TargetSpec[]>>({});
+  const [group, setGroup] = useState<Group>("법령");
+  const [target, setTarget] = useState<string>("law");
   const [keyword, setKeyword] = useState(initialKeyword);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<any[]>([]);
-  const [detail, setDetail] = useState<any>(null);
+  const [results, setResults] = useState<LawResultItem[]>([]);
+  const [detail, setDetail] = useState<DetailPane>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  // prec: 사건번호 정확 검색 / law: 법령명 정확일치
+  const [byCaseNumber, setByCaseNumber] = useState(false);
+  const [lawExact, setLawExact] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const data = (await callApi("listTargetsByGroup", {})) as Record<string, TargetSpec[]>;
+        if (!alive) return;
+        setByGroup(data ?? {});
+      } catch (e) {
+        if (alive) setError(e instanceof Error ? e.message : "target 목록 조회 실패");
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // initialKeyword가 있으면 law target 자동 선택 + 검색어 프리필 (자동 검색은 하지 않음)
+  useEffect(() => {
+    if (initialKeyword.trim()) {
+      setGroup("법령");
+      setTarget("law");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const groups = useMemo(
+    () => GROUP_ORDER.filter((g) => (byGroup[g]?.length ?? 0) > 0),
+    [byGroup]
+  );
+  const chips = byGroup[group] ?? [];
+  const activeSpec = useMemo(
+    () => Object.values(byGroup).flat().find((s) => s.key === target) ?? null,
+    [byGroup, target]
+  );
+
+  const resetPanes = () => {
+    setResults([]);
+    setDetail(null);
+    setError(null);
+  };
 
   const search = useCallback(async () => {
     if (!keyword.trim()) return;
@@ -74,73 +144,53 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
     setDetail(null);
     try {
       let data: unknown;
-      if (tab === "cgm") {
-        data = await callApi("searchMinistryInterpretation", {
-          ministry,
-          keyword,
-          limit: 15
-        });
-      } else if (tab === "form") {
-        data = await callApi(FORM_SCOPE_ACTION[formScope], { keyword, limit: 15 });
+      if (target === "prec" && byCaseNumber) {
+        data = await callApi("searchPrecedentByNumber", { caseNumber: keyword, limit: 15 });
+      } else if (target === "law" && lawExact) {
+        data = await callApi("searchLawExact", { name: keyword, limit: 15 });
       } else {
-        data = await callApi(SEARCH_ACTION[tab], { keyword, limit: 15 });
+        data = await callApi("searchTarget", { target, keyword, limit: 15 });
       }
-      setResults(Array.isArray(data) ? data : []);
+      setResults(Array.isArray(data) ? (data as LawResultItem[]) : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "검색 실패");
       setResults([]);
     } finally {
       setLoading(false);
     }
-  }, [tab, keyword, ministry, formScope]);
+  }, [target, keyword, byCaseNumber, lawExact]);
 
   const openDetail = useCallback(
-    async (item: any) => {
+    async (item: LawResultItem) => {
+      if (!item.id) {
+        setError("이 항목은 상세 조회용 일련번호가 없습니다.");
+        return;
+      }
       setDetailLoading(true);
       setDetail(null);
       setError(null);
       try {
-        if (tab === "law") {
-          const d = await callApi("getLawDetail", { mst: item.mst });
-          setDetail({ kind: "law", data: d, item });
-        } else if (tab === "prec") {
-          const d = await callApi("getPrecedentDetail", { caseId: item.caseId });
-          setDetail({ kind: "prec", data: d ?? item });
-        } else if (tab === "decc") {
-          const d = await callApi("getAdminJudgmentDetail", { deccId: item.deccId });
-          setDetail({ kind: "decc", data: d ?? item, item });
-        } else if (tab === "expc") {
-          const d = await callApi("getInterpretationDetail", { interpId: item.interpId });
-          setDetail({ kind: "expc", data: d ?? item });
-        } else if (tab === "cgm") {
-          const d = await callApi("getMinistryInterpretationDetail", {
-            ministry,
-            interpId: item.interpId
-          });
-          setDetail({ kind: "expc", data: d ?? item });
-        } else if (tab === "admrul") {
-          const d = await callApi("getAdminRuleDetail", { ruleId: item.ruleId });
-          setDetail({ kind: "admrul", data: d ?? item });
-        } else if (tab === "ordin") {
-          setDetail({ kind: "ordin", data: item });
-        } else if (tab === "form") {
-          setDetail({ kind: "form", data: item });
+        const d = (await callApi("getDetail", { target, id: item.id })) as DetailData | null;
+        if (!d) {
+          setError("상세 내용을 불러오지 못했습니다.");
+          return;
         }
+        setDetail({ kind: "fields", data: d, item });
       } catch (e) {
         setError(e instanceof Error ? e.message : "상세 조회 실패");
       } finally {
         setDetailLoading(false);
       }
     },
-    [tab, ministry]
+    [target]
   );
 
-  const openFormFiles = useCallback(async (item: any) => {
+  const openFormFiles = useCallback(async (item: LawResultItem) => {
     setDetailLoading(true);
     setDetail(null);
     setError(null);
     try {
-      const files = (await callApi("getLawFormFiles", { mst: item.mst })) as LawFormFile[];
+      const files = (await callApi("getLawFormFiles", { mst: item.id })) as LawFormFile[];
       setDetail({ kind: "formFiles", files: files ?? [], item });
     } catch (e) {
       setError(e instanceof Error ? e.message : "서식 파일 조회 실패");
@@ -149,82 +199,90 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
     }
   }, []);
 
-  const tabButton = (id: Tab, label: string) => (
-    <button
-      key={id}
-      onClick={() => {
-        setTab(id);
-        setResults([]);
-        setDetail(null);
-      }}
-      className={`px-3 py-1.5 text-sm rounded ${
-        tab === id ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
-      }`}
-    >
-      {label}
-    </button>
-  );
-
   return (
     <div className="admin-card p-4 space-y-4">
+      {/* Row 1 — 그룹 탭 */}
       <div className="flex gap-2 flex-wrap">
-        {tabButton("law", "법령")}
-        {tabButton("prec", "판례")}
-        {tabButton("decc", "행정심판 재결례")}
-        {tabButton("expc", "법령해석례")}
-        {tabButton("cgm", "부처 유권해석")}
-        {tabButton("admrul", "행정규칙")}
-        {tabButton("ordin", "자치법규")}
-        {tabButton("form", "별표·서식")}
+        {groups.map((g) => (
+          <button
+            key={g}
+            onClick={() => {
+              setGroup(g);
+              const first = byGroup[g]?.[0];
+              if (first) setTarget(first.key);
+              resetPanes();
+            }}
+            className={`px-3 py-1.5 text-sm rounded ${
+              group === g ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            {g}
+          </button>
+        ))}
       </div>
 
-      {tab === "cgm" && (
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-gray-500">부처</label>
-          <select
-            value={ministry}
-            onChange={(e) => {
-              setMinistry(e.target.value as MinistryKey);
-              setResults([]);
-              setDetail(null);
+      {/* Row 2 — target 칩 */}
+      <div className="flex gap-2 flex-wrap">
+        {chips.map((s) => (
+          <button
+            key={s.key}
+            onClick={() => {
+              setTarget(s.key);
+              resetPanes();
             }}
-            className="border rounded px-2 py-1.5 text-sm"
+            className={`px-2.5 py-1 text-xs rounded border ${
+              target === s.key
+                ? "border-blue-600 text-blue-700 bg-blue-50"
+                : "border-gray-200 text-gray-600"
+            }`}
           >
-            {MINISTRIES.map((m) => (
-              <option key={m.key} value={m.key}>
-                {m.label}
-              </option>
-            ))}
-          </select>
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 활성 target 표시 */}
+      {activeSpec && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-800">{activeSpec.label}</span>
+          <span
+            className={`px-1.5 py-0.5 text-[10px] rounded ${
+              activeSpec.verified
+                ? "bg-green-100 text-green-700"
+                : "bg-amber-100 text-amber-700"
+            }`}
+          >
+            {activeSpec.verified ? "실측 검증" : "추정"}
+          </span>
         </div>
       )}
 
-      {tab === "form" && (
-        <div className="flex gap-2 flex-wrap">
-          {(
-            [
-              ["form", "법령 별표"],
-              ["admbyl", "행정규칙 별표"],
-              ["ordinbyl", "자치법규 별표"]
-            ] as const
-          ).map(([scope, label]) => (
-            <button
-              key={scope}
-              onClick={() => {
-                setFormScope(scope);
-                setResults([]);
-                setDetail(null);
-              }}
-              className={`px-2.5 py-1 text-xs rounded border ${
-                formScope === scope
-                  ? "border-blue-600 text-blue-700 bg-blue-50"
-                  : "border-gray-200 text-gray-600"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+      {/* target별 부가 컨트롤 */}
+      {target === "prec" && (
+        <label className="flex items-center gap-2 text-xs text-gray-600">
+          <input
+            type="checkbox"
+            checked={byCaseNumber}
+            onChange={(e) => {
+              setByCaseNumber(e.target.checked);
+              resetPanes();
+            }}
+          />
+          사건번호로 정확 검색 (예: 2013다51674)
+        </label>
+      )}
+      {target === "law" && (
+        <label className="flex items-center gap-2 text-xs text-gray-600">
+          <input
+            type="checkbox"
+            checked={lawExact}
+            onChange={(e) => {
+              setLawExact(e.target.checked);
+              resetPanes();
+            }}
+          />
+          법령명 정확일치
+        </label>
       )}
 
       <div className="flex gap-2">
@@ -246,100 +304,84 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
         </button>
       </div>
 
+      {target === "aiSearch" && (
+        <div className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+          조문 본문까지 검색됩니다
+        </div>
+      )}
+
       {error && <div className="text-sm text-red-600">{error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* 결과 목록 */}
         <div className="space-y-2 max-h-[600px] overflow-y-auto">
           {results.length === 0 && !loading && (
             <div className="text-sm text-gray-500">결과가 없습니다.</div>
           )}
           {results.map((it, idx) => (
-            <div key={idx} className="border rounded p-3 hover:bg-gray-50">
-              <button onClick={() => openDetail(it)} className="w-full text-left">
-                {tab === "law" && (
-                  <>
-                    <div className="font-medium text-sm">{it.name}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {it.lawType} · 시행 {it.effectiveDate}
-                      {it.ministry ? ` · ${it.ministry}` : ""}
-                    </div>
-                  </>
-                )}
-                {tab === "prec" && (
-                  <>
-                    <div className="font-medium text-sm">{it.caseName}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {it.courtName} · {it.caseNumber} · {it.judgmentDate}
-                    </div>
-                    {it.summary && (
-                      <div className="text-xs text-gray-600 mt-1 line-clamp-2">{it.summary}</div>
-                    )}
-                  </>
-                )}
-                {tab === "decc" && (
-                  <>
-                    <div className="font-medium text-sm">{it.caseName}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {it.agency} · {it.caseNumber} · {it.date}
-                    </div>
-                  </>
-                )}
-                {(tab === "expc" || tab === "cgm") && (
-                  <>
-                    <div className="font-medium text-sm">{it.title}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {it.agency} · {it.date}
-                    </div>
-                  </>
-                )}
-                {tab === "admrul" && (
-                  <>
-                    <div className="font-medium text-sm">{it.name}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {it.agency} · {it.date}
-                      {it.ruleType ? ` · ${it.ruleType}` : ""}
-                    </div>
-                  </>
-                )}
-                {tab === "ordin" && (
-                  <>
-                    <div className="font-medium text-sm">{it.name}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {it.region} · 시행 {it.date}
-                    </div>
-                  </>
-                )}
-                {tab === "form" && (
-                  <>
-                    <div className="font-medium text-sm">{it.formName}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {it.lawName}
-                      {it.formType ? ` · ${it.formType}` : ""}
-                    </div>
-                  </>
-                )}
-              </button>
+            <div key={`${it.id}-${idx}`} className="border rounded p-3 hover:bg-gray-50">
+              <div className="font-medium text-sm">{it.title}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {[it.agency, it.date, it.number].filter(Boolean).join(" · ")}
+              </div>
 
-              {tab === "law" && it.mst && (
-                <button
-                  onClick={() => openFormFiles(it)}
-                  className="mt-2 px-2 py-1 text-xs rounded border border-blue-600 text-blue-700 hover:bg-blue-50"
-                >
-                  📎 서식·별표 보기
-                </button>
+              {target === "aiSearch" && it.extra["조문내용"] && (
+                <div className="mt-2">
+                  <LongText text={it.extra["조문내용"]} />
+                </div>
               )}
-              {tab === "form" && it.mst && (
+
+              <div className="mt-2 flex gap-2 flex-wrap">
                 <button
-                  onClick={() => openFormFiles(it)}
-                  className="mt-2 px-2 py-1 text-xs rounded border border-blue-600 text-blue-700 hover:bg-blue-50"
+                  onClick={() => openDetail(it)}
+                  className="px-2 py-1 text-xs rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
-                  📎 파일 받기
+                  상세
                 </button>
-              )}
+                {it.detailUrl && (
+                  <a
+                    href={it.detailUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2 py-1 text-xs rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+                  >
+                    원문
+                  </a>
+                )}
+                {it.hwpUrl && (
+                  <a
+                    href={it.hwpUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2 py-1 text-xs rounded bg-blue-600 text-white"
+                  >
+                    ⬇ HWP
+                  </a>
+                )}
+                {it.pdfUrl && (
+                  <a
+                    href={it.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2 py-1 text-xs rounded bg-red-600 text-white"
+                  >
+                    ⬇ PDF
+                  </a>
+                )}
+                {target === "law" && it.id && (
+                  <button
+                    onClick={() => openFormFiles(it)}
+                    className="px-2 py-1 text-xs rounded border border-blue-600 text-blue-700 hover:bg-blue-50"
+                  >
+                    📎 서식·별표 보기
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
 
+        {/* 상세 패널 */}
         <div className="border rounded p-3 max-h-[600px] overflow-y-auto bg-gray-50">
           {detailLoading && <div className="text-sm text-gray-500">불러오는 중...</div>}
           {!detailLoading && !detail && (
@@ -348,15 +390,11 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
 
           {detail?.kind === "formFiles" && (
             <div className="space-y-3">
-              <div className="font-semibold">
-                {detail.item?.name || detail.item?.formName || "별표·서식"}
-              </div>
+              <div className="font-semibold">{detail.item.title || "별표·서식"}</div>
               {detail.files.length === 0 && (
-                <div className="text-xs text-gray-500">
-                  등록된 별표·서식 파일이 없습니다.
-                </div>
+                <div className="text-xs text-gray-500">등록된 별표·서식 파일이 없습니다.</div>
               )}
-              {detail.files.map((f: LawFormFile, i: number) => (
+              {detail.files.map((f, i) => (
                 <div key={i} className="border rounded bg-white p-2">
                   <div className="text-xs font-medium text-gray-800">
                     {f.formType} {f.formNo} {f.title}
@@ -388,143 +426,33 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
             </div>
           )}
 
-          {detail?.kind === "law" && detail.data && (
+          {detail?.kind === "fields" && (
             <div className="space-y-3">
-              <div className="font-semibold">
-                {detail.data.법령명_한글 ?? detail.data.기본정보?.법령명_한글 ?? detail.item?.name}
-              </div>
-              {(() => {
-                const raw = detail.data?.조문?.조문단위 ?? detail.data?.조문단위 ?? [];
-                const articles = Array.isArray(raw) ? raw : [raw];
-                return articles.slice(0, 30).map((a: any, i: number) => (
-                  <div key={i} className="border-b pb-2">
-                    <div className="text-xs font-medium text-blue-700">
-                      {a?.조문번호 ? `제${a.조문번호}조` : ""} {a?.조문제목 ?? ""}
-                    </div>
-                    <div className="text-xs text-gray-700 mt-1 whitespace-pre-wrap">
-                      {typeof a?.조문내용 === "string" ? a.조문내용 : ""}
-                    </div>
-                  </div>
-                ));
-              })()}
-            </div>
-          )}
-
-          {detail?.kind === "prec" && detail.data && (
-            <div className="space-y-2">
-              <div className="font-semibold">
-                {detail.data.사건명 ?? detail.data.caseName}
-              </div>
-              <div className="text-xs text-gray-500">
-                {detail.data.법원명 ?? detail.data.courtName} ·{" "}
-                {detail.data.사건번호 ?? detail.data.caseNumber}
-              </div>
-              <div className="text-xs whitespace-pre-wrap text-gray-700">
-                {String(
-                  detail.data.판례내용 ?? detail.data.판결요지 ?? detail.data.summary ?? ""
-                ).slice(0, 8000)}
-              </div>
-            </div>
-          )}
-
-          {detail?.kind === "decc" && detail.data && (
-            <div className="space-y-2">
-              <div className="font-semibold">
-                {detail.data.사건명 ?? detail.data.caseName ?? detail.item?.caseName}
-              </div>
-              <div className="text-xs text-gray-500">
-                {detail.data.처분청 ?? detail.item?.agency} ·{" "}
-                {detail.data.사건번호 ?? detail.item?.caseNumber} ·{" "}
-                {detail.data.의결일자 ?? detail.item?.date}
-              </div>
-              <div className="text-xs whitespace-pre-wrap text-gray-700">
-                {String(
-                  detail.data.주문 ?? detail.data.재결요지 ?? detail.data.이유 ?? ""
-                ).slice(0, 8000)}
-              </div>
-            </div>
-          )}
-
-          {detail?.kind === "expc" && detail.data && (
-            <div className="space-y-2">
-              <div className="font-semibold">
-                {detail.data.안건명 ?? detail.data.title}
-              </div>
-              <div className="text-xs text-gray-500">
-                {detail.data.회신기관명 ?? detail.data.agency}
-                {detail.data.회신일자 || detail.data.date
-                  ? ` · ${detail.data.회신일자 ?? detail.data.date}`
-                  : ""}
-              </div>
-              {(detail.data.질의요지 || detail.data.question) && (
-                <div>
-                  <div className="text-xs font-medium text-blue-700 mt-2">질의요지</div>
-                  <div className="text-xs whitespace-pre-wrap text-gray-700">
-                    {detail.data.질의요지 ?? detail.data.question}
-                  </div>
-                </div>
-              )}
-              {(detail.data.회답 || detail.data.answer) && (
-                <div>
-                  <div className="text-xs font-medium text-blue-700 mt-2">회답</div>
-                  <div className="text-xs whitespace-pre-wrap text-gray-700">
-                    {detail.data.회답 ?? detail.data.answer}
-                  </div>
-                </div>
-              )}
-              {detail.data.이유 && (
-                <div>
-                  <div className="text-xs font-medium text-blue-700 mt-2">이유</div>
-                  <div className="text-xs whitespace-pre-wrap text-gray-700">
-                    {String(detail.data.이유).slice(0, 8000)}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {detail?.kind === "admrul" && detail.data && (
-            <div className="space-y-2">
-              <div className="font-semibold">
-                {detail.data.행정규칙명 ?? detail.data.name}
-              </div>
-              <div className="text-xs text-gray-500">
-                {detail.data.소관부처명 ?? detail.data.agency}
-              </div>
-              <div className="text-xs whitespace-pre-wrap text-gray-700">
-                {String(detail.data.조문내용 ?? detail.data.내용 ?? "").slice(0, 8000)}
-              </div>
-            </div>
-          )}
-
-          {detail?.kind === "ordin" && detail.data && (
-            <div className="space-y-2">
-              <div className="font-semibold">{detail.data.name}</div>
-              <div className="text-xs text-gray-500">
-                {detail.data.region} · 시행 {detail.data.date}
-              </div>
-            </div>
-          )}
-
-          {detail?.kind === "form" && detail.data && (
-            <div className="space-y-2">
-              <div className="font-semibold">{detail.data.formName}</div>
-              <div className="text-xs text-gray-500">
-                {detail.data.lawName}
-                {detail.data.formType ? ` · ${detail.data.formType}` : ""}
-              </div>
-              {detail.data.mst ? (
-                <button
-                  onClick={() => openFormFiles(detail.data)}
-                  className="px-2 py-1 text-xs rounded border border-blue-600 text-blue-700 hover:bg-blue-50"
+              <div className="font-semibold">{detail.item.title}</div>
+              {detail.data.detailUrl && (
+                <a
+                  href={detail.data.detailUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block text-xs text-blue-700 hover:underline"
                 >
-                  📎 파일 받기 (HWP/PDF)
-                </button>
-              ) : (
-                <div className="text-xs text-gray-500">
-                  이 별표는 연결된 법령 일련번호가 없어 파일을 조회할 수 없습니다.
-                </div>
+                  원문 보기
+                </a>
               )}
+              <dl className="space-y-2">
+                {Object.entries(detail.data.fields).map(([k, v]) => (
+                  <div key={k} className="border-b pb-2">
+                    <dt className="text-[11px] font-medium text-blue-700">{k}</dt>
+                    <dd className="mt-0.5">
+                      {v.length > LONG_TEXT_THRESHOLD ? (
+                        <LongText text={v} />
+                      ) : (
+                        <span className="text-xs text-gray-700">{v}</span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           )}
         </div>

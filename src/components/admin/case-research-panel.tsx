@@ -2,31 +2,56 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+type LawResultItem = {
+  target: string;
+  id: string;
+  title: string;
+  agency: string;
+  date: string;
+  number: string;
+  detailUrl: string;
+  hwpUrl?: string;
+  pdfUrl?: string;
+  extra: Record<string, string>;
+};
+
 type CaseResearchResult = {
   keywords: string[];
-  laws: Array<{ lawId: string; name: string; lawType: string; effectiveDate: string }>;
-  precedents: Array<{
-    caseId: string;
-    caseName: string;
-    courtName: string;
-    caseNumber: string;
-    judgmentDate: string;
-    summary: string;
-  }>;
-  adminJudgments: Array<{
-    deccId: string;
-    caseName: string;
-    caseNumber: string;
-    agency: string;
-    date: string;
-  }>;
-  interpretations: Array<{ interpId: string; title: string; agency: string; date: string }>;
-  adminRules: Array<{ ruleId: string; name: string; agency: string; date: string }>;
-  forms: Array<{ formId: string; formName: string; lawName: string; mst: string }>;
-  ordinances: Array<{ ordinanceId: string; name: string; region: string; date: string }>;
+  laws: LawResultItem[];
+  articles: LawResultItem[];
+  precedents: LawResultItem[];
+  adminJudgments: LawResultItem[];
+  specialJudgments: LawResultItem[];
+  interpretations: LawResultItem[];
+  ministryInterps: LawResultItem[];
+  adminRules: LawResultItem[];
+  forms: LawResultItem[];
+  ordinances: LawResultItem[];
   summary: string;
   generatedAt: string;
 };
+
+function ResultRow({ it }: { it: LawResultItem }) {
+  const meta = [it.agency, it.date, it.number].filter(Boolean).join(" · ");
+  const inner = (
+    <>
+      <div className="text-sm font-medium">{it.title}</div>
+      {meta && <div className="text-xs text-gray-500">{meta}</div>}
+    </>
+  );
+  return it.detailUrl ? (
+    <a
+      href={it.detailUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block border rounded p-2 hover:bg-gray-50"
+    >
+      {inner}
+    </a>
+  ) : (
+    <div className="border rounded p-2">{inner}</div>
+  );
+}
 
 async function callResearch(caseDescription: string, bypassCache = false) {
   const res = await fetch("/api/admin/case-research", {
@@ -123,122 +148,75 @@ export function CaseResearchPanel({ initialDescription = "", autoRun = false }: 
           </div>
 
           <Section title={`관련 법령 (${result.laws.length})`}>
-            {result.laws.map((it) => (
-              <a
-                key={it.lawId}
-                href={`/admin/law-research?tab=law&id=${encodeURIComponent(it.lawId)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="block border rounded p-2 hover:bg-gray-50"
-              >
-                <div className="text-sm font-medium">{it.name}</div>
-                <div className="text-xs text-gray-500">
-                  {it.lawType} · 시행 {it.effectiveDate}
+            {result.laws.map((it, i) => (
+              <ResultRow key={`${it.id}-${i}`} it={it} />
+            ))}
+          </Section>
+
+          <Section title={`조문 본문 (${result.articles.length})`}>
+            {result.articles.map((it, i) => (
+              <div key={`${it.id}-${i}`} className="border rounded p-2">
+                <div className="text-sm font-medium">
+                  {it.extra["법령명"] ? `${it.extra["법령명"]} ` : ""}
+                  {it.title}
                 </div>
-              </a>
+                <div className="text-xs text-gray-500">
+                  {[it.agency, it.date, it.number].filter(Boolean).join(" · ")}
+                </div>
+                {it.extra["조문내용"] && (
+                  <div className="text-xs text-gray-700 mt-1 whitespace-pre-wrap">
+                    {it.extra["조문내용"]}
+                  </div>
+                )}
+              </div>
             ))}
           </Section>
 
           <Section title={`판례 (${result.precedents.length})`}>
-            {result.precedents.map((it) => (
-              <a
-                key={it.caseId}
-                href={`/admin/law-research?tab=prec&id=${encodeURIComponent(it.caseId)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="block border rounded p-2 hover:bg-gray-50"
-              >
-                <div className="text-sm font-medium">{it.caseName}</div>
-                <div className="text-xs text-gray-500">
-                  {it.courtName} · {it.caseNumber} · {it.judgmentDate}
-                </div>
-                {it.summary && (
-                  <div className="text-xs text-gray-600 mt-1 line-clamp-2">{it.summary}</div>
-                )}
-              </a>
+            {result.precedents.map((it, i) => (
+              <ResultRow key={`${it.id}-${i}`} it={it} />
             ))}
           </Section>
 
           <Section title={`행정심판 재결례 (${result.adminJudgments.length})`}>
-            {result.adminJudgments.map((it) => (
-              <a
-                key={it.deccId}
-                href={`/admin/law-research?tab=decc&id=${encodeURIComponent(it.deccId)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="block border rounded p-2 hover:bg-gray-50"
-              >
-                <div className="text-sm font-medium">{it.caseName}</div>
-                <div className="text-xs text-gray-500">
-                  {it.agency} · {it.caseNumber} · {it.date}
-                </div>
-              </a>
+            {result.adminJudgments.map((it, i) => (
+              <ResultRow key={`${it.id}-${i}`} it={it} />
+            ))}
+          </Section>
+
+          <Section title={`조세심판원 재결례 (${result.specialJudgments.length})`}>
+            {result.specialJudgments.map((it, i) => (
+              <ResultRow key={`${it.id}-${i}`} it={it} />
             ))}
           </Section>
 
           <Section title={`법령해석례 (${result.interpretations.length})`}>
-            {result.interpretations.map((it) => (
-              <a
-                key={it.interpId}
-                href={`/admin/law-research?tab=expc&id=${encodeURIComponent(it.interpId)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="block border rounded p-2 hover:bg-gray-50"
-              >
-                <div className="text-sm font-medium">{it.title}</div>
-                <div className="text-xs text-gray-500">
-                  {it.agency} · {it.date}
-                </div>
-              </a>
+            {result.interpretations.map((it, i) => (
+              <ResultRow key={`${it.id}-${i}`} it={it} />
+            ))}
+          </Section>
+
+          <Section title={`법무부 유권해석 (${result.ministryInterps.length})`}>
+            {result.ministryInterps.map((it, i) => (
+              <ResultRow key={`${it.id}-${i}`} it={it} />
             ))}
           </Section>
 
           <Section title={`행정규칙 (${result.adminRules.length})`}>
-            {result.adminRules.map((it) => (
-              <a
-                key={it.ruleId}
-                href={`/admin/law-research?tab=admrul&id=${encodeURIComponent(it.ruleId)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="block border rounded p-2 hover:bg-gray-50"
-              >
-                <div className="text-sm font-medium">{it.name}</div>
-                <div className="text-xs text-gray-500">
-                  {it.agency} · {it.date}
-                </div>
-              </a>
+            {result.adminRules.map((it, i) => (
+              <ResultRow key={`${it.id}-${i}`} it={it} />
             ))}
           </Section>
 
           <Section title={`별표·서식 (${result.forms.length})`}>
-            {result.forms.map((it) => (
-              <a
-                key={it.formId}
-                href={`/admin/law-research?tab=form&keyword=${encodeURIComponent(it.formName)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="block border rounded p-2 hover:bg-gray-50"
-              >
-                <div className="text-sm font-medium">{it.formName}</div>
-                <div className="text-xs text-gray-500">{it.lawName}</div>
-              </a>
+            {result.forms.map((it, i) => (
+              <ResultRow key={`${it.id}-${i}`} it={it} />
             ))}
           </Section>
 
           <Section title={`자치법규 (${result.ordinances.length})`}>
-            {result.ordinances.map((it) => (
-              <a
-                key={it.ordinanceId}
-                href={`/admin/law-research?tab=ordin&id=${encodeURIComponent(it.ordinanceId)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="block border rounded p-2 hover:bg-gray-50"
-              >
-                <div className="text-sm font-medium">{it.name}</div>
-                <div className="text-xs text-gray-500">
-                  {it.region} · 시행 {it.date}
-                </div>
-              </a>
+            {result.ordinances.map((it, i) => (
+              <ResultRow key={`${it.id}-${i}`} it={it} />
             ))}
           </Section>
         </div>

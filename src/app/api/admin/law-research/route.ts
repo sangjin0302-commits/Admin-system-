@@ -22,8 +22,31 @@ import {
   getLawArticleByJo,
   searchOrdinance,
   searchTreaty,
+  searchTarget,
+  getDetail,
+  searchMany,
+  listTargets,
+  listTargetsByGroup,
+  searchSpecialAdminJudgment,
+  searchConstitutionalDecision,
+  searchLegalTerm,
+  searchThreeWayCompare,
+  searchOldAndNew,
+  searchRelatedLaw,
+  searchLawSystemMap,
+  searchArticleFullText,
+  searchRelatedArticles,
+  searchPrecedentByNumber,
+  searchLawExact,
+  searchAdminRuleByType,
+  TARGET_REGISTRY,
   MINISTRY_TARGETS,
-  type MinistryKey
+  SPECIAL_DECC_TARGETS,
+  ADMRUL_TYPE_TARGETS,
+  type MinistryKey,
+  type TargetKey,
+  type SpecialDeccKind,
+  type AdmRulTypeKey
 } from "@/lib/services/law-api-service";
 
 export const dynamic = "force-dynamic";
@@ -49,11 +72,45 @@ type Action =
   | "getLawFormFiles"
   | "getLawArticleByJo"
   | "searchOrdinance"
-  | "searchTreaty";
+  | "searchTreaty"
+  // 제네릭 (51개 target 전체 접근)
+  | "searchTarget"
+  | "getDetail"
+  | "searchMany"
+  | "listTargets"
+  | "listTargetsByGroup"
+  // 명명 래퍼
+  | "searchSpecialAdminJudgment"
+  | "searchConstitutionalDecision"
+  | "searchLegalTerm"
+  | "searchThreeWayCompare"
+  | "searchOldAndNew"
+  | "searchRelatedLaw"
+  | "searchLawSystemMap"
+  | "searchArticleFullText"
+  | "searchRelatedArticles"
+  | "searchPrecedentByNumber"
+  | "searchLawExact"
+  | "searchAdminRuleByType";
 
 function toMinistryKey(v: unknown): MinistryKey | null {
   const k = String(v ?? "");
   return k in MINISTRY_TARGETS ? (k as MinistryKey) : null;
+}
+
+function toTargetKey(v: unknown): TargetKey | null {
+  const k = String(v ?? "");
+  return k in TARGET_REGISTRY ? (k as TargetKey) : null;
+}
+
+function toSpecialDeccKind(v: unknown): SpecialDeccKind | null {
+  const k = String(v ?? "");
+  return k in SPECIAL_DECC_TARGETS ? (k as SpecialDeccKind) : null;
+}
+
+function toAdmRulTypeKey(v: unknown): AdmRulTypeKey | null {
+  const k = String(v ?? "");
+  return k in ADMRUL_TYPE_TARGETS ? (k as AdmRulTypeKey) : null;
 }
 
 export async function POST(req: Request) {
@@ -161,6 +218,100 @@ export async function POST(req: Request) {
       case "searchTreaty":
         data = await searchTreaty(String(p.keyword ?? ""), Number(p.limit ?? 10));
         break;
+
+      // ---------- 제네릭 ----------
+      case "searchTarget": {
+        const target = toTargetKey(p.target);
+        if (!target) {
+          return api.error(400, "지원하지 않는 target입니다.", { code: "UNKNOWN_TARGET" });
+        }
+        data = await searchTarget(target, String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      }
+      case "getDetail": {
+        const target = toTargetKey(p.target);
+        if (!target) {
+          return api.error(400, "지원하지 않는 target입니다.", { code: "UNKNOWN_TARGET" });
+        }
+        data = await getDetail(target, String(p.id ?? ""));
+        break;
+      }
+      case "searchMany": {
+        const raw = Array.isArray(p.targets) ? p.targets : [];
+        const targets: TargetKey[] = [];
+        for (const t of raw) {
+          const key = toTargetKey(t);
+          if (!key) {
+            return api.error(400, "지원하지 않는 target입니다.", { code: "UNKNOWN_TARGET" });
+          }
+          targets.push(key);
+        }
+        data = await searchMany(targets, String(p.keyword ?? ""), Number(p.limitEach ?? 3));
+        break;
+      }
+      case "listTargets":
+        data = listTargets({ includeUnsupported: Boolean(p.includeUnsupported) });
+        break;
+      case "listTargetsByGroup":
+        data = listTargetsByGroup();
+        break;
+
+      // ---------- 명명 래퍼 ----------
+      case "searchSpecialAdminJudgment": {
+        const kind = toSpecialDeccKind(p.kind);
+        if (!kind) {
+          return api.error(400, "지원하지 않는 특별행정심판 유형입니다.", {
+            code: "UNKNOWN_SPECIAL_DECC_KIND"
+          });
+        }
+        data = await searchSpecialAdminJudgment(
+          kind,
+          String(p.keyword ?? ""),
+          Number(p.limit ?? 10)
+        );
+        break;
+      }
+      case "searchAdminRuleByType": {
+        const kind = toAdmRulTypeKey(p.kind);
+        if (!kind) {
+          return api.error(400, "지원하지 않는 행정규칙 유형입니다.", {
+            code: "UNKNOWN_ADMRUL_TYPE"
+          });
+        }
+        data = await searchAdminRuleByType(kind, String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      }
+      case "searchConstitutionalDecision":
+        data = await searchConstitutionalDecision(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "searchLegalTerm":
+        data = await searchLegalTerm(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "searchThreeWayCompare":
+        data = await searchThreeWayCompare(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "searchOldAndNew":
+        data = await searchOldAndNew(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "searchRelatedLaw":
+        data = await searchRelatedLaw(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "searchLawSystemMap":
+        data = await searchLawSystemMap(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "searchArticleFullText":
+        data = await searchArticleFullText(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "searchRelatedArticles":
+        data = await searchRelatedArticles(String(p.keyword ?? ""), Number(p.limit ?? 10));
+        break;
+      case "searchPrecedentByNumber":
+        data = await searchPrecedentByNumber(String(p.caseNumber ?? ""), Number(p.limit ?? 10));
+        break;
+      case "searchLawExact":
+        data = await searchLawExact(String(p.name ?? ""), Number(p.limit ?? 10));
+        break;
+
       default:
         return api.error(400, "지원하지 않는 action입니다.", { code: "UNKNOWN_ACTION" });
     }

@@ -16,16 +16,21 @@ import { withCache } from "@/lib/services/cache-service";
 import {
   searchAdminJudgment,
   searchAdminRule,
+  searchArticleFullText,
   searchForm,
   searchInterpretation,
   searchLaw,
+  searchMinistryInterpretation,
   searchOrdinance,
   searchPrecedent,
+  searchSpecialAdminJudgment,
   type AdminJudgmentItem,
   type AdminRuleItem,
   type FormItem,
   type InterpretationItem,
+  type LawResultItem,
   type LawSearchItem,
+  type MinistryInterpItem,
   type OrdinanceItem,
   type PrecedentSearchItem,
 } from "@/lib/services/law-api-service";
@@ -36,9 +41,15 @@ import { logger } from "@/lib/utils/logger";
 export type CaseResearchResult = {
   keywords: string[];
   laws: LawSearchItem[];
+  /** 조문 본문 포함 (aiSearch) */
+  articles: LawResultItem[];
   precedents: PrecedentSearchItem[];
   adminJudgments: AdminJudgmentItem[];
+  /** 조세심판원 재결례 */
+  specialJudgments: AdminJudgmentItem[];
   interpretations: InterpretationItem[];
+  /** 법무부(비자·체류) 유권해석 */
+  ministryInterps: MinistryInterpItem[];
   adminRules: AdminRuleItem[];
   forms: FormItem[];
   ordinances: OrdinanceItem[];
@@ -87,9 +98,12 @@ async function summarize(
   caseDescription: string,
   data: {
     laws: LawSearchItem[];
+    articles: LawResultItem[];
     precedents: PrecedentSearchItem[];
     adminJudgments: AdminJudgmentItem[];
+    specialJudgments: AdminJudgmentItem[];
     interpretations: InterpretationItem[];
+    ministryInterps: MinistryInterpItem[];
     adminRules: AdminRuleItem[];
     ordinances: OrdinanceItem[];
     forms: FormItem[];
@@ -97,9 +111,12 @@ async function summarize(
 ): Promise<string> {
   const {
     laws,
+    articles,
     precedents,
     adminJudgments,
+    specialJudgments,
     interpretations,
+    ministryInterps,
     adminRules,
     ordinances,
     forms,
@@ -108,6 +125,15 @@ async function summarize(
 
 검색된 자료:
 [법령] ${laws.slice(0, 5).map((l) => `${l.title} (${l.extra["법령구분명"] ?? ""})`).join(", ") || "없음"}
+[조문 본문] ${
+    articles
+      .slice(0, 3)
+      .map(
+        (a) =>
+          `${a.extra["법령명"] ?? ""} ${a.title} ${a.number}\n${(a.extra["조문내용"] ?? "").slice(0, 600)}`
+      )
+      .join("\n---\n") || "없음"
+  }
 [판례] ${
     precedents
       .slice(0, 5)
@@ -120,16 +146,23 @@ async function summarize(
       .map((d) => `${d.title} ${d.number} (${d.agency})`)
       .join("\n") || "없음"
   }
-[법령해석례] ${interpretations.slice(0, 3).map((i) => `${i.title} (${i.agency})`).join(", ") || "없음"}
+[조세심판원 재결례] ${
+    specialJudgments
+      .slice(0, 2)
+      .map((d) => `${d.title} ${d.number} (${d.agency})`)
+      .join("\n") || "없음"
+  }
+[법령해석례(법제처)] ${interpretations.slice(0, 3).map((i) => `${i.title} (${i.agency})`).join(", ") || "없음"}
+[법무부 유권해석] ${ministryInterps.slice(0, 3).map((i) => `${i.title} (${i.agency})`).join(", ") || "없음"}
 [행정규칙] ${adminRules.slice(0, 3).map((a) => a.title).join(", ") || "없음"}
 [자치법규] ${ordinances.slice(0, 3).map((o) => `${o.title} (${o.agency})`).join(", ") || "없음"}
 [별표·서식] ${forms.slice(0, 3).map((f) => `${f.title} (${f.extra["관련법령명"] ?? ""})`).join(", ") || "없음"}
 
 위 자료를 바탕으로:
-1. 관련 법령·조문 후보
-2. 참고 판례 및 행정심판 재결례
-3. 인허가·행정 절차 확인 포인트 (자치법규 포함)
-4. 필요 서식·별표
+1. 관련 법령·조문 후보 (조문 본문 포함)
+2. 참고 판례 · 행정심판 재결례
+3. 유권해석 (법무부·법제처)
+4. 인허가·행정 절차 확인 포인트 + 필요 서식
 한국어 3-5문단으로 정리.`;
   try {
     const res = await smartInvoke("drafting" as TaskType, prompt, {
@@ -154,17 +187,26 @@ export async function researchCase(
 
     const [
       laws,
+      articles,
       precedents,
       adminJudgments,
+      specialJudgments,
       interpretations,
+      ministryInterps,
       adminRules,
       ordinances,
       forms,
     ] = await Promise.all([
       searchLaw(primaryKw, 5).catch(() => [] as LawSearchItem[]),
+      // 조문 본문 (aiSearch — 검색 응답에 본문 포함)
+      searchArticleFullText(primaryKw, 3).catch(() => [] as LawResultItem[]),
       searchPrecedent(primaryKw, 5).catch(() => [] as PrecedentSearchItem[]),
       searchAdminJudgment(primaryKw, 3).catch(() => [] as AdminJudgmentItem[]),
+      // 조세심판원
+      searchSpecialAdminJudgment("tt", primaryKw, 2).catch(() => [] as AdminJudgmentItem[]),
       searchInterpretation(primaryKw, 3).catch(() => [] as InterpretationItem[]),
+      // 법무부 (비자·체류)
+      searchMinistryInterpretation("moj", primaryKw, 3).catch(() => [] as MinistryInterpItem[]),
       searchAdminRule(primaryKw, 3).catch(() => [] as AdminRuleItem[]),
       searchOrdinance(primaryKw, 3).catch(() => [] as OrdinanceItem[]),
       searchForm(primaryKw, 3).catch(() => [] as FormItem[]),
@@ -172,9 +214,12 @@ export async function researchCase(
 
     const summary = await summarize(trimmed, {
       laws,
+      articles,
       precedents,
       adminJudgments,
+      specialJudgments,
       interpretations,
+      ministryInterps,
       adminRules,
       ordinances,
       forms,
@@ -183,9 +228,12 @@ export async function researchCase(
     return {
       keywords,
       laws,
+      articles,
       precedents,
       adminJudgments,
+      specialJudgments,
       interpretations,
+      ministryInterps,
       adminRules,
       forms,
       ordinances,
