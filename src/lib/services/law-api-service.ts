@@ -5,14 +5,19 @@
  * target 파라미터로 도메인을 구분한다. wrapper key / item key는 target마다 다르다.
  * Vercel IP 화이트리스트 불가 → Lightsail 프록시(3.36.175.81:8080) 경유.
  *
- * TARGET_REGISTRY는 총 59개 target으로, supported: true 항목(53개)은
+ * TARGET_REGISTRY는 총 56개 target으로, supported: true 항목(53개)은
  * OC=sangjin_api로 실제 호출해 확인한 실측값이다(그 중 verified: false 2개는
  * 프로브 질의 결과가 0건이라 필드명을 형제 target 기준으로 추정했다).
- * supported: false 항목(6개)은 DRF target 파라미터 이름이 확인되지 않아 빈 응답만 오며,
+ * supported: false 항목(3개)은 DRF target 파라미터 이름이 확인되지 않아 빈 응답만 오며,
  * 호출 없이 즉시 []/null을 반환한다.
  *
- * 헌재결정례는 detc, 노동위원회는 nlrc, 국민권익위는 acr target을 쓴다
- * (ccourt/nodong/acrc는 실재하지 않는 target이라 제거했다).
+ * 권한 문제가 아니다: 법제처 OPEN API 신청 화면의 공동활용 법령종류 20종은
+ * 전부 신청 완료 상태다. 미지원 3건은 순전히 target 이름 미확인 때문이다.
+ *
+ * 헌재결정례는 detc, 노동위원회는 nlrc, 국민권익위는 acr,
+ * 고용보험심사위원회는 eiac target을 쓴다
+ * (ccourt/nodong/acrc/empins는 실재하지 않는 target이라 제거했다).
+ * 감사원·법령안(입법예고)은 법제처 공동활용 대상이 아니라 아예 제거했다.
  *
  * 실패 원인 구분이 필요하면 searchTarget 대신 searchTargetDetailed를 쓸 것.
  * 법제처는 없는 target에도 빈 200을 주므로, 빈 결과와 오류는 스스로 구분해야 한다.
@@ -188,8 +193,8 @@ export type TargetKey =
   | "school" | "public" | "pi"
   | "aiSearch" | "aiRltLs"
   | "licbyl" | "admbyl" | "ordinbyl"
-  | "nlrc" | "audit" | "acr" | "empins"
-  | "ftc" | "fsc" | "ppc" | "bill"
+  | "nlrc" | "acr"
+  | "ftc" | "fsc" | "ppc"
   | "kcc" | "sfc" | "eiac" | "oclt" | "iaciac" | "ecc"
   | "lstrmRlt" | "dlytrmRlt";
 
@@ -1120,70 +1125,24 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
     supported: true
   },
 
-  // ===== 미지원: OPEN API 신청에서 해당 "법령종류" 미체크 =====
+  // ===== 미지원: target 이름 미확인 =====
   //
-  // 법제처 웹 UI는 이 상태에서 아래 안내를 띄운다:
-  //   "미신청된 목록/본문에 대한 접근입니다.
-  //    OPEN API 로그인 후 [OPEN API] → [OPEN API 신청] → 등록된 API 선택 후
-  //    법령종류를 체크해 주세요."
+  // 법제처 OPEN API 신청 화면의 "공동활용 법령종류" 20종은 전부 신청·체크된 상태다.
+  // 따라서 이들이 안 되는 것은 권한 문제가 아니라 target 이름 문제다.
   //
-  // ⚠️ 함정: 프록시(Lightsail) 경유로는 이 안내가 오지 않고 완전히 빈 200만 온다.
-  //    JSON·XML·HTML 전부 raw_len=0 — 실측 확인. 없는 target의 응답과 구분이 안 된다.
-  //    그래서 "target 이름이 틀렸다"로 오판했었다. 실제 원인은 미신청이다.
-  //    (ccourt→detc, nodong→nlrc, acrc→acr 은 별개로 진짜 이름이 틀렸던 경우)
+  // - mowCgmExpc: 부처별 유권해석(*CgmExpc)은 위 20종 목록과 별개 체계다.
+  //               molit/moel/nts/moj/mof/mss/kcs/mpva 는 실측으로 동작하나 mow만 빈 응답.
+  //               여성가족부가 해당 API를 제공하지 않거나 target명이 다른 것으로 보인다.
+  // - lstrmRlt / dlytrmRlt: 법령용어 자체(lstrm/dlytrm)는 신청·동작 확인됨.
+  //               연계(Rlt) 하위 기능의 target명이 확인되지 않는다.
   //
-  // 해결: 법제처 OPEN API 신청 화면에서 해당 법령종류 체크 → 즉시 열림.
-  //    이후 supported: true 로 전환하고 실측으로 wrapper/itemKey/필드 확정할 것
-  //    (아래 스펙은 미검증 추정값이다).
-  //    문의: 법제처 공동활용 유지보수팀 02-2109-6446
-  audit: {
-    key: "audit",
-    label: "감사원 심사결정례",
-    group: "위원회",
-    wrappers: ["AuditSearch", "LawSearch"],
-    itemKeys: ["audit"],
-    idFields: ["감사원심사결정일련번호", "일련번호"],
-    titleFields: ["처분명", "사건명", "안건명"],
-    agencyFields: ["처분청", "회신기관명"],
-    dateFields: ["의결일자", "결정일자"],
-    numberFields: ["사건번호", "안건번호"],
-    linkFields: ["감사원심사결정상세링크"],
-    detailIdParam: "ID",
-    verified: false,
-    supported: false
-  },
-  empins: {
-    key: "empins",
-    label: "고용보험 심사결정례",
-    group: "위원회",
-    wrappers: ["EmpinsSearch", "LawSearch"],
-    itemKeys: ["empins"],
-    idFields: ["고용보험심사결정일련번호", "일련번호"],
-    titleFields: ["사건명", "안건명"],
-    agencyFields: ["처분청", "회신기관명"],
-    dateFields: ["의결일자", "결정일자"],
-    numberFields: ["사건번호", "안건번호"],
-    linkFields: ["고용보험심사결정례상세링크"],
-    detailIdParam: "ID",
-    verified: false,
-    supported: false
-  },
-  bill: {
-    key: "bill",
-    label: "법령안",
-    group: "법령",
-    wrappers: ["BillSearch", "LawSearch"],
-    itemKeys: ["bill"],
-    idFields: ["법령안일련번호", "일련번호"],
-    titleFields: ["법령안명", "법안명", "명칭"],
-    agencyFields: ["소관부처명"],
-    dateFields: ["입법예고일자", "공포일자"],
-    numberFields: ["의안번호"],
-    linkFields: ["법령안상세링크"],
-    detailIdParam: "ID",
-    verified: false,
-    supported: false
-  },
+  // ⚠️ 프록시 경유로는 이 셋 모두 완전히 빈 200만 온다(JSON·XML·HTML 전부 raw_len=0).
+  //    없는 target과 미신청 target의 응답이 구분되지 않으므로, 빈 응답만으로
+  //    원인을 단정하지 말 것. 실제로 이 파일에서만 4번 오판했다:
+  //      ccourt→detc / nodong→nlrc / acrc→acr / empins→eiac
+  //    전부 lawbot(_lib.py)에서 가져온 미검증 이름이었다.
+  //
+  // 확인 경로: 법제처 공동활용 유지보수팀 02-2109-6446
   // 프로브 결과 빈 응답(JSON). shape는 다른 CgmExpc target 기준 추정값.
   mowCgmExpc: {
     key: "mowCgmExpc",
