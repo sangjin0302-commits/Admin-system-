@@ -2,7 +2,7 @@
 generator client {
   provider      = "prisma-client"
   output        = "../generated/prisma-client-next"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  binaryTargets = ["rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -1609,4 +1609,72 @@ model SatisfactionSurvey {
   @@index([token])
   @@index([status])
   @@index([inquiryId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// 시장·경쟁사 분석 (market-analyze 포팅)
+// 배열/Json 필드는 JSON 문자열(String)로 저장 — 이 스키마의 기존 관례를 따름
+// (schema datasource는 sqlite, 런타임은 postgresql. String[]/Json은 sqlite에서 미지원)
+// ─────────────────────────────────────────────────────────────
+
+model MarketDocument {
+  id                String    @id @default(cuid())
+  orgId             String    @default("default")
+  sourceType        String    // blog | news | cafearticle
+  sourceQuery       String
+  title             String
+  snippet           String
+  url               String    @unique
+  publisherName     String?
+  publisherBlogName String?
+  publishedAt       DateTime?
+  collectedAt       DateTime  @default(now())
+  dedupeHash        String
+  isExamRelated     Boolean   @default(false)
+  isRelevant        Boolean   @default(true)
+  rawMetadata       String    @default("{}") // JSON
+
+  // 분류 결과
+  docType         String @default("업무 설명 글")
+  sentiment       String @default("neutral")
+  topics          String @default("[]") // JSON string[]
+  regions         String @default("[]") // JSON string[]
+  riskFlags       String @default("[]") // JSON string[]
+  popularityScore Float  @default(0)
+
+  @@index([dedupeHash])
+  @@index([orgId, collectedAt])
+  @@index([publisherBlogName])
+  @@index([sourceType, isRelevant])
+  @@index([sentiment])
+}
+
+model MarketCompetitor {
+  id              String   @id @default(cuid())
+  orgId           String   @default("default")
+  competitorKey   String   @unique
+  displayName     String
+  blogNames       String   @default("[]") // JSON string[]
+  mainTopics      String   @default("[]") // JSON string[]
+  postingFreq7d   Int      @default(0)
+  postingFreq30d  Int      @default(0)
+  visibilityScore Float    @default(0)
+  engagementScore Float    @default(0)
+  regionTags      String   @default("[]") // JSON string[]
+  serviceTags     String   @default("[]") // JSON string[]
+  updatedAt       DateTime @updatedAt
+
+  @@index([orgId, visibilityScore])
+}
+
+model MarketTrendSnapshot {
+  id         String   @id @default(cuid())
+  orgId      String   @default("default")
+  keyword    String
+  period     String   // YYYY-MM-DD
+  ratio      Float    @default(0)
+  capturedAt DateTime @default(now())
+
+  @@unique([keyword, period])
+  @@index([orgId, keyword])
 }
