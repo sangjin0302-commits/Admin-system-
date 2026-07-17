@@ -273,7 +273,7 @@ export async function generateAndSendForSignature(opts: BuildOptions): Promise<{
     const generated = await generateDelegationPDF(opts);
     if (!generated) return { ok: false, error: "case 또는 party 없음" };
 
-    const signEmail = generated.signerEmail ?? "no-reply@ethos.kr";
+    const signEmail = generated.signerEmail ?? "no-reply@ethosattorney.com";
     const result = await createSignatureRequest({
       caseId: generated.caseId,
       documentTitle: generated.title,

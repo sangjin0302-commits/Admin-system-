@@ -135,7 +135,7 @@ export async function GET(request: Request) {
 
   try {
     const resend = new Resend(apiKey);
-    const fromEmail = process.env.NOTIFICATION_FROM_EMAIL ?? "noreply@ethos.kr";
+    const fromEmail = process.env.NOTIFICATION_FROM_EMAIL ?? "noreply@ethosattorney.com";
     const { error } = await resend.emails.send({
       from: `ETHOS KPI <${fromEmail}>`,
       to,

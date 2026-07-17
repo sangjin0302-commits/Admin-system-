@@ -6,7 +6,7 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const FROM_EMAIL = process.env.NOTIFICATION_FROM_EMAIL ?? "noreply@ethos.kr";
+const FROM_EMAIL = process.env.NOTIFICATION_FROM_EMAIL ?? "noreply@ethosattorney.com";
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL ?? "";
 
 export async function sendNewInquiryNotification(inquiry: {

@@ -2,7 +2,7 @@
 
 ## 1. 사전 준비
 
-- 도메인 (예: ethos.kr) — 가비아 / 후이즈 / 카페24 등
+- 도메인 (예: ethosattorney.com) — 가비아 / 후이즈 / 카페24 등
 - GitHub 저장소 (이미 있음)
 - 이메일 발송 계정 (Resend 권장)
 
@@ -81,10 +81,10 @@ Vercel은 서버리스라 로컬 디스크가 휘발됨 → 외부 스토리지 
 | `ADMIN_BASIC_AUTH_USER` | admin | 관리자 인증 |
 | `ADMIN_BASIC_AUTH_PASSWORD` | 14자 이상 강력한 패스워드 | |
 | `ADMIN_MARKETING_SYNC_TOKEN` | 24자 이상 랜덤 | |
-| `NEXT_PUBLIC_SITE_URL` | https://ethos.kr | sitemap/canonical |
+| `NEXT_PUBLIC_SITE_URL` | https://ethosattorney.com | sitemap/canonical |
 | `NOTIFICATION_PROVIDER` | `resend` 또는 `none` | |
 | `RESEND_API_KEY` | re_xxx | Resend 가입 후 |
-| `RESEND_FROM` | noreply@ethos.kr | 도메인 검증 필요 |
+| `RESEND_FROM` | noreply@ethosattorney.com | 도메인 검증 필요 |
 
 ### Vercel 환경 변수 (선택)
 
@@ -97,7 +97,7 @@ Vercel은 서버리스라 로컬 디스크가 휘발됨 → 외부 스토리지 
 ## 4. 도메인 연결
 
 ```
-1. Vercel 프로젝트 → Settings → Domains → ethos.kr 추가
+1. Vercel 프로젝트 → Settings → Domains → ethosattorney.com 추가
 2. 도메인 등록기관 DNS 설정:
    - A 레코드: @ → 76.76.21.21
    - CNAME: www → cname.vercel-dns.com
@@ -119,7 +119,7 @@ Vercel은 서버리스라 로컬 디스크가 휘발됨 → 외부 스토리지 
 
 ```
 1. resend.com 가입
-2. Domains → ethos.kr 추가
+2. Domains → ethosattorney.com 추가
 3. DNS TXT/MX 레코드 등록 (안내대로)
 4. API Keys → 새 키 발급 → RESEND_API_KEY 에 저장
 5. NOTIFICATION_PROVIDER=resend
@@ -130,9 +130,9 @@ Vercel은 서버리스라 로컬 디스크가 휘발됨 → 외부 스토리지 
 ```
 Google Search Console:
 1. search.google.com/search-console
-2. 속성 추가 → ethos.kr
+2. 속성 추가 → ethosattorney.com
 3. DNS TXT 검증
-4. 사이트맵 제출: https://ethos.kr/sitemap.xml
+4. 사이트맵 제출: https://ethosattorney.com/sitemap.xml
 
 네이버 서치어드바이저:
 1. searchadvisor.naver.com

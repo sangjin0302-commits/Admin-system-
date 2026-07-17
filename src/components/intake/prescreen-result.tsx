@@ -45,7 +45,7 @@ export default function PrescreenResultCard({ result }: PrescreenResultCardProps
               카카오톡으로 빠른 상담
             </a>
             <a
-              href="mailto:contact@ethos.kr"
+              href="mailto:contact@ethosattorney.com"
               className="inline-flex items-center justify-center h-11 px-6 rounded-lg border border-amber-300 text-amber-700 font-semibold text-sm hover:bg-amber-50 transition-colors"
             >
               이메일로 상세 검토 요청
@@ -54,7 +54,7 @@ export default function PrescreenResultCard({ result }: PrescreenResultCardProps
         ) : (
           <>
             <a
-              href="mailto:contact@ethos.kr"
+              href="mailto:contact@ethosattorney.com"
               className="inline-flex items-center justify-center h-11 px-6 rounded-lg bg-amber-600 text-white font-bold text-sm hover:opacity-90 transition-colors"
             >
               이메일로 상세 검토 요청

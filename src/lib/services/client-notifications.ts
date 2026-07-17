@@ -117,7 +117,7 @@ async function sendViaResend({
   body: string;
 }): Promise<{ ok: boolean; reason?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM ?? "noreply@ethos.kr";
+  const from = process.env.RESEND_FROM ?? "noreply@ethosattorney.com";
   if (!apiKey) return { ok: false, reason: "MISSING_RESEND_API_KEY" };
   if (!to) return { ok: false, reason: "MISSING_TO_EMAIL" };
 

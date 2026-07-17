@@ -27,7 +27,7 @@ export const DEFAULT_TENANT: Tenant = {
   id: DEFAULT_TENANT_ID,
   name: process.env.TENANT_DEFAULT_NAME?.trim() || "ETHOS 행정사사무소",
   subdomain: process.env.TENANT_DEFAULT_SUBDOMAIN?.trim() || "ethos",
-  ownerEmail: process.env.TENANT_DEFAULT_OWNER?.trim() || "admin@ethos.kr",
+  ownerEmail: process.env.TENANT_DEFAULT_OWNER?.trim() || "admin@ethosattorney.com",
   plan: (process.env.TENANT_DEFAULT_PLAN?.trim() as TenantPlan) || "enterprise",
   createdAt: new Date(),
   active: true,

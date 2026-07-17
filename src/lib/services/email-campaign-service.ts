@@ -96,7 +96,7 @@ export async function sendCampaign(
   const apiKey = process.env.RESEND_API_KEY;
 
   if (apiKey) {
-    const from = process.env.RESEND_FROM ?? "noreply@example.com";
+    const from = process.env.RESEND_FROM ?? "noreply@ethosattorney.com";
     for (const r of recipients) {
       try {
         const res = await fetch("https://api.resend.com/emails", {

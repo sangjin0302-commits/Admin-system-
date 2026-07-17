@@ -86,7 +86,7 @@ async function sendResendEmail(
   caseId?: string
 ): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.RESEND_FROM?.trim() || "noreply@ethos.kr";
+  const from = process.env.RESEND_FROM?.trim() || "noreply@ethosattorney.com";
   if (!apiKey) {
     await logEmail(to, subject, html, "SKIPPED", caseId, "RESEND_API_KEY 미설정");
     return false;

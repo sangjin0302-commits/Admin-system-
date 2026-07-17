@@ -282,7 +282,7 @@ async function executeSendEmail(
     if (!apiKey) return { ok: false, reason: "email_not_configured" };
     const resend = new Resend(apiKey);
     const fromEmail =
-      process.env.NOTIFICATION_FROM_EMAIL ?? "noreply@ethos.kr";
+      process.env.NOTIFICATION_FROM_EMAIL ?? "noreply@ethosattorney.com";
     const bodyText =
       (action.params.body as string | undefined) ??
       `안녕하세요.\n\n${subject} 관련 안내드립니다.\n\n감사합니다.`;
