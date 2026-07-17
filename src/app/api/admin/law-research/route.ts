@@ -53,6 +53,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 type Action =
+  | "diagnose"
   | "searchLaw"
   | "searchEffectiveLaw"
   | "getLawDetail"
@@ -255,6 +256,56 @@ export async function POST(req: Request) {
       case "listTargetsByGroup":
         data = listTargetsByGroup();
         break;
+
+      /**
+       * 진단용 — env 주입 여부와 Lightsail 프록시 도달 가능 여부를 확인한다.
+       * 토큰/OC 값 자체는 반환하지 않고 존재 여부만 노출한다.
+       */
+      case "diagnose": {
+        const url = process.env.LAW_PROXY_URL || "(unset)";
+        const token = process.env.LAW_PROXY_TOKEN || "";
+        const oc = process.env.LAW_OC || "";
+        let health = "not attempted";
+        let drf = "not attempted";
+        try {
+          const r = await fetch(`${url}/health`, {
+            signal: AbortSignal.timeout(8000),
+            cache: "no-store"
+          });
+          health = `HTTP ${r.status} ${(await r.text()).slice(0, 60)}`;
+        } catch (e) {
+          health = `ERROR ${String(e).slice(0, 160)}`;
+        }
+        try {
+          const q = new URLSearchParams({
+            OC: oc,
+            type: "JSON",
+            target: "law",
+            query: "출입국관리법",
+            display: "1",
+            page: "1"
+          });
+          const r = await fetch(`${url}/drf/lawSearch.do?${q}`, {
+            headers: { "X-Proxy-Token": token },
+            signal: AbortSignal.timeout(8000),
+            cache: "no-store"
+          });
+          drf = `HTTP ${r.status} ${(await r.text()).slice(0, 120)}`;
+        } catch (e) {
+          drf = `ERROR ${String(e).slice(0, 160)}`;
+        }
+        data = {
+          hasProxyUrl: url !== "(unset)",
+          proxyUrl: url,
+          hasToken: Boolean(token),
+          tokenLen: token.length,
+          hasOc: Boolean(oc),
+          ocValue: oc,
+          health,
+          drf
+        };
+        break;
+      }
 
       // ---------- 명명 래퍼 ----------
       case "searchSpecialAdminJudgment": {
