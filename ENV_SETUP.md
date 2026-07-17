@@ -17,7 +17,7 @@
 | `DATABASE_URL` | PostgreSQL 연결 | Railway → PostgreSQL → Connect → `DATABASE_URL` |
 | `ADMIN_PASSWORD` | 관리자 Basic Auth | 직접 강력한 비밀번호 생성 |
 | `NEXTAUTH_SECRET` | 세션 암호화 | `openssl rand -base64 32` |
-| `NEXTAUTH_URL` | 콜백 URL | `https://adminofficemvp2.vercel.app` |
+| `NEXTAUTH_URL` | 콜백 URL | `https://ethosattorney.com` |
 
 ---
 
@@ -124,7 +124,7 @@
    from fastapi.middleware.cors import CORSMiddleware
    app.add_middleware(
        CORSMiddleware,
-       allow_origins=["https://adminofficemvp2.vercel.app"],
+       allow_origins=["https://ethosattorney.com"],
        allow_methods=["POST"],
        allow_headers=["*"],
    )
@@ -187,7 +187,7 @@ Railway 쪽에서는 `ADMIN_API_TOKEN`으로 설정되어 있어도 됨. 양쪽 
 
 ### 3. 헬스체크
 ```
-GET https://adminofficemvp2.vercel.app/api/health
+GET https://ethosattorney.com/api/health
 ```
 JSON으로 어떤 서비스가 연결됐는지 표시 (선택: 헬스체크 엔드포인트 추가 권장).
 

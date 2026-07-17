@@ -143,7 +143,8 @@ type PracticeAreaKey = "VISA_STAY" | "ADMIN_APPEAL" | "CONTRACT_INVESTIGATION" |
 
 - **Vercel**: GitHub `main` push → 자동 빌드·배포. Cron jobs (deadline-scan, cleanup) 설정됨.
 - **Railway**: PostgreSQL DB만 운영. 외부 프록시 URL 사용 (`.internal` 주소는 Railway 내부 전용).
-- **도메인**: `adminofficemvp2.vercel.app` (커스텀 도메인 미설정)
+- **도메인**: `ethosattorney.com` (프로덕션). `adminofficemvp2.vercel.app`은 구 프리뷰 배포 — 하드코딩 금지.
+- **사이트 URL**: `getSiteUrl()` (`src/lib/utils/site-url.ts`) 단일 소스. `NEXT_PUBLIC_SITE_URL` 읽고 `ethosattorney.com`으로 폴백. **env는 호출 시점에 읽을 것** — 모듈 레벨 const는 Vercel 빌드 캐시가 빈 값을 고정시킴.
 
 ## Git 상태 (2026-06-17)
 

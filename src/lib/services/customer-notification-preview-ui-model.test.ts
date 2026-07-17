@@ -27,7 +27,7 @@ const viewModel = buildCustomerNotificationPreviewViewModel({
   trackingCode: "20260504-FC-0002-7D",
   channel: "sms",
   recipientPreview: "***-****-5678",
-  messageText: "접수번호: 20260504-FC-0002-7D\nhttps://adminofficemvp2.vercel.app/track",
+  messageText: "접수번호: 20260504-FC-0002-7D\nhttps://ethosattorney.com/track",
   canSend: false,
   dryRunOnly: true,
   externalActionAllowed: false,

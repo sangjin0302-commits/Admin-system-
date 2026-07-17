@@ -1,4 +1,8 @@
-export const CUSTOMER_TRACKING_NOTICE_TRACK_URL = "https://adminofficemvp2.vercel.app/track";
+import { getSiteUrl } from "@/lib/utils/site-url";
+
+export function getCustomerTrackingNoticeTrackUrl(): string {
+  return `${getSiteUrl()}/track`;
+}
 
 export const CUSTOMER_TRACKING_NOTICE_EMPTY_MESSAGE =
   "고객용 접수번호가 있는 접수에서만 진행상황 안내문을 만들 수 있습니다.";
@@ -17,7 +21,7 @@ export function buildCustomerTrackingNoticeTemplate(input: CustomerTrackingNotic
   const trackingCode = normalizeCustomerTrackingCode(input.trackingCode);
   if (!trackingCode) return null;
 
-  const trackUrl = input.trackUrl?.trim() || CUSTOMER_TRACKING_NOTICE_TRACK_URL;
+  const trackUrl = input.trackUrl?.trim() || getCustomerTrackingNoticeTrackUrl();
 
   return [
     "접수가 완료되었습니다. 담당자가 확인 후 연락드리겠습니다.",

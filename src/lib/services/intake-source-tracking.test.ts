@@ -47,7 +47,7 @@ assert.equal(sanitizeIntakeTrackingText(" <img src=x onerror=alert(1)>\r\n "), "
 
 const normalized = normalizeIntakeSourceTrackingPayload({
   ...tracking,
-  landing_url: "https://adminofficemvp2.vercel.app/intake?source=autosns"
+  landing_url: "https://ethosattorney.com/intake?source=autosns"
 });
 assert.equal(normalized.intakeSource, "autosns");
 assert.equal(normalized.intakeChannel, "naver");
@@ -106,7 +106,7 @@ const viewModel = buildIntakeSourceTrackingViewModel({
   intakeContentId: "mic_46900181d72c",
   intakePackageId: "mdri_7cc2f3c6648f_claude_v1",
   intakeCampaignId: "<script>alert(1)</script>",
-  intakeLandingUrl: "https://adminofficemvp2.vercel.app/intake?source=autosns",
+  intakeLandingUrl: "https://ethosattorney.com/intake?source=autosns",
   intakeTrackingCapturedAt: captured
 });
 assert.equal(viewModel.hasTracking, true);

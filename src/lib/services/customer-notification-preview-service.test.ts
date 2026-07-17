@@ -63,7 +63,7 @@ async function testManualPreview() {
   assert.equal(result.recipientPreview, "수동 전달");
   assert.equal(result.trackingCode, baseInquiry.publicTrackingCode);
   assert.equal(result.messageText?.includes(baseTrackingCode), true);
-  assert.equal(result.messageText?.includes("https://adminofficemvp2.vercel.app/track"), true);
+  assert.equal(result.messageText?.includes("https://ethosattorney.com/track"), true);
   assert.equal(result.canSend, false);
   assert.equal(result.dryRunOnly, true);
   assert.equal(result.externalActionAllowed, false);

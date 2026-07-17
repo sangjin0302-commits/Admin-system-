@@ -1,4 +1,4 @@
-import { CUSTOMER_TRACKING_NOTICE_TRACK_URL } from "@/lib/services/customer-tracking-notice-template";
+import { getCustomerTrackingNoticeTrackUrl } from "@/lib/services/customer-tracking-notice-template";
 import {
   parseCustomerEmailProviderConfig,
   type CustomerEmailProviderConfigEnv
@@ -140,7 +140,7 @@ export function buildCustomerTrackingEmailMessage(
     );
   }
 
-  const trackUrl = input.trackUrl?.trim() || CUSTOMER_TRACKING_NOTICE_TRACK_URL;
+  const trackUrl = input.trackUrl?.trim() || getCustomerTrackingNoticeTrackUrl();
   const officeName = input.officeName?.trim() || "행정사 사무소";
   const subject = "접수 진행상황 확인 안내";
   const text = [

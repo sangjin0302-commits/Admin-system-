@@ -5,7 +5,7 @@ import { join } from "node:path";
 import {
   buildCustomerTrackingNoticeTemplate,
   CUSTOMER_TRACKING_NOTICE_EMPTY_MESSAGE,
-  CUSTOMER_TRACKING_NOTICE_TRACK_URL,
+  getCustomerTrackingNoticeTrackUrl,
   normalizeCustomerTrackingCode
 } from "@/lib/services/customer-tracking-notice-template";
 
@@ -20,7 +20,8 @@ assert.equal(CUSTOMER_TRACKING_NOTICE_EMPTY_MESSAGE.includes("고객용 접수�
 assert.equal(CUSTOMER_TRACKING_NOTICE_EMPTY_MESSAGE.includes("진행상황 안내문"), true);
 assert.ok(notice);
 assert.equal(notice?.includes(trackingCode), true);
-assert.equal(notice?.includes(CUSTOMER_TRACKING_NOTICE_TRACK_URL), true);
+assert.equal(notice?.includes(getCustomerTrackingNoticeTrackUrl()), true);
+assert.equal(getCustomerTrackingNoticeTrackUrl(), "https://ethosattorney.com/track");
 assert.equal(notice?.includes("휴대폰 번호 뒤 4자리"), true);
 assert.equal(notice?.includes("홈 화면에 추가"), true);
 assert.equal(notice?.includes("담당자가 확인 후 연락드리겠습니다."), true);

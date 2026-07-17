@@ -15,7 +15,7 @@ import {
 } from "@/lib/services/customer-email-provider";
 
 const trackingCode = "20260505-FC-0003-NM";
-const trackUrl = "https://adminofficemvp2.vercel.app/track";
+const trackUrl = "https://ethosattorney.com/track";
 
 function createValidInput(overrides?: Partial<Parameters<typeof validateCustomerEmailProviderInput>[0]>) {
   return {

@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { logger } from "@/lib/utils/logger";
+import { getSiteUrl } from "@/lib/utils/site-url";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -52,7 +53,7 @@ export async function sendNewInquiryNotification(inquiry: {
               <p style="margin: 0; font-size: 14px; color: #374151; white-space: pre-wrap;">${inquiry.message}</p>
             </div>
             <div style="margin-top: 24px; text-align: center;">
-              <a href="https://adminofficemvp2.vercel.app/admin/inquiries" style="display: inline-block; background: #1a3c5f; color: #faf6ef; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+              <a href="${getSiteUrl()}/admin/inquiries" style="display: inline-block; background: #1a3c5f; color: #faf6ef; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
                 관리자 페이지에서 확인
               </a>
             </div>
