@@ -720,8 +720,10 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
     label: "관련법령 연계",
     group: "법령",
     // itemKey가 한글("법령")
-    wrappers: ["lsRltSearch"],
-    itemKeys: ["법령"],
+    // 실측: 질의에 따라 wrapper가 lsRltSearch / Law 로 갈린다 (법제처 비일관성).
+    // 헬스체크 parse_error 로 "실제 최상위 키: Law" 를 확인해 fallback 추가.
+    wrappers: ["lsRltSearch", "Law", "LawSearch"],
+    itemKeys: ["법령", "law"],
     idFields: ["기준법령ID"],
     titleFields: ["기준법령명"],
     agencyFields: [],
