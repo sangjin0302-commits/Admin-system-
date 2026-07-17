@@ -10,6 +10,7 @@ import { getPublicIntakeControlSnapshot } from "@/lib/services/public-intake-con
 import { createInquiry } from "@/lib/services/inquiry-service";
 import { getPublicTrackingCodeFromInquiry } from "@/lib/services/public-tracking-code-service";
 import { logger } from "@/lib/utils/logger";
+import { getSiteUrl } from "@/lib/utils/site-url";
 
 const KO_INVALID_JSON_SAFE =
   "\uC694\uCCAD \uBCF8\uBB38\uC774 \uC62C\uBC14\uB978 JSON \uD615\uC2DD\uC774 \uC544\uB2D9\uB2C8\uB2E4. \uC785\uB825 \uB0B4\uC6A9\uC744 \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.";
@@ -380,23 +381,25 @@ export async function POST(request: Request) {
         mod.maybeTriggerFullAutoFlow(inquiry.id).catch((err) => logger.warn("[intake] full-auto trigger failed", err));
       }).catch(() => undefined);
       // 텔레그램 알림 (Jean 개인 봇)
-      import("@/lib/services/telegram-notify").then((mod) => {
-        const lines = [
-          `이름: ${String(payload.name ?? "—")}`,
-          `이메일: ${String(payload.email ?? "—")}`,
-          `전화: ${String(payload.phone ?? "—")}`,
-          `분야: ${String(payload.inquiryType ?? "—")}`,
-          `내용: ${String(payload.message ?? "").slice(0, 200)}`
-        ];
-        return mod.sendTelegramAlert({
-          kind: "inquiry",
-          title: "신규 문의 접수",
-          lines,
-          url: process.env.NEXT_PUBLIC_SITE_URL
-            ? `${process.env.NEXT_PUBLIC_SITE_URL}/admin/inquiries/${inquiry.id}`
-            : undefined
-        }).catch(() => undefined);
-      }).catch(() => undefined);
+      // await 필수 — 서버리스는 응답 반환 후 람다를 얼리므로 미await 시 발송이 유실됨.
+      // 필드는 저장된 inquiry 레코드에서 읽는다 (요청 바디 키와 스키마 키가 다름).
+      await import("@/lib/services/telegram-notify")
+        .then((mod) => {
+          const lines = [
+            `이름: ${inquiry.contactName || "—"}`,
+            `이메일: ${inquiry.email || "—"}`,
+            `전화: ${inquiry.phone || "—"}`,
+            `분야: ${inquiry.inquiryType || "—"}`,
+            `내용: ${(inquiry.description || "").slice(0, 200)}`
+          ];
+          return mod.sendTelegramAlert({
+            kind: "inquiry",
+            title: "신규 문의 접수",
+            lines,
+            url: `${getSiteUrl()}/admin/inquiries/${inquiry.id}`
+          });
+        })
+        .catch((err) => logger.warn("[intake] telegram alert failed", err));
     }
     return jsonWithRequestId(
       { inquiry: toPublicInquiryResponse(inquiry), deduplicated },

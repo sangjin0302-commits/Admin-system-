@@ -130,7 +130,8 @@ export async function POST(req: Request) {
     }
 
     // Best-effort internal Telegram alert.
-    void sendTelegramAlert({
+    // await 필수 — 서버리스는 응답 반환 후 람다를 얼리므로 미await 시 발송이 유실됨.
+    await sendTelegramAlert({
       kind: "inquiry",
       title: `새 무료 검토 리드: ${hasValidEmail ? email : phone}`,
       lines: [
