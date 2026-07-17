@@ -222,6 +222,12 @@ type TargetHealth = {
   checkedAt: string;
 };
 
+type RegistryDrift = {
+  target: string;
+  kind: string;
+  detail: string;
+};
+
 type LawHealthReport = {
   checkedAt: string;
   total: number;
@@ -230,6 +236,9 @@ type LawHealthReport = {
   failed: number;
   skipped: number;
   results: TargetHealth[];
+  /** 잠금 도입 이전에 저장된 리포트에는 없다 — optional로 둔다. */
+  drift?: RegistryDrift[];
+  lockedAt?: string;
 };
 
 function isFailureStatus(s: LawFetchStatus): boolean {
@@ -277,9 +286,32 @@ function HealthStrip() {
   }, []);
 
   const failed = report?.results.filter((r) => isFailureStatus(r.status)) ?? [];
+  const drift = report?.drift ?? [];
 
   return (
     <div className="admin-card px-4 py-2.5 space-y-2">
+      {report?.lockedAt &&
+        (drift.length > 0 ? (
+          <div className="rounded border border-red-300 bg-red-50 px-2.5 py-2 space-y-1">
+            <div className="text-[11px] font-medium text-red-800">
+              ⚠️ registry가 검증 기준선에서 벗어났습니다 ({drift.length}건) — 실호출 검증 없이
+              수정된 것일 수 있습니다
+            </div>
+            <ul className="space-y-0.5">
+              {drift.map((d, i) => (
+                <li key={`${d.target}-${i}`} className="text-[11px] text-red-700">
+                  <span className="font-medium">{d.target}</span>
+                  <span className="text-red-500"> [{d.kind}]</span> — {d.detail}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="text-[11px] text-gray-400">
+            🔒 검증 기준선 일치 ({report.lockedAt})
+          </div>
+        ))}
+
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-gray-700">
           {report ? (

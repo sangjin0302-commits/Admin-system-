@@ -54,6 +54,11 @@ import {
   runLawHealthCheck,
   getLastHealthReport
 } from "@/lib/services/law-health-service";
+import {
+  checkRegistryDrift,
+  LOCKED_AT,
+  LOCKED_TARGET_COUNT
+} from "@/lib/services/law-registry-lock";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -103,6 +108,7 @@ type Action =
   // 헬스체크
   | "runLawHealthCheck"
   | "getLawHealthReport"
+  | "checkRegistryLock"
   // 인용 검증
   | "verifyCitations";
 
@@ -259,6 +265,25 @@ export async function POST(req: Request) {
       case "getLawHealthReport":
         data = await getLastHealthReport();
         break;
+      /**
+       * registry 잠금 점검 — 실호출 없이 baseline 대비 코드 상태만 본다.
+       * drift가 비어 있지 않으면, 재검증 없이 registry가 수정된 것이다.
+       */
+      case "checkRegistryLock": {
+        const all = Object.values(TARGET_REGISTRY);
+        const supported = all.filter((s) => s.supported).length;
+        data = {
+          lockedAt: LOCKED_AT,
+          expected: LOCKED_TARGET_COUNT,
+          actual: {
+            total: all.length,
+            supported,
+            unsupported: all.length - supported
+          },
+          drift: checkRegistryDrift()
+        };
+        break;
+      }
       case "getDetail": {
         const target = toTargetKey(p.target);
         if (!target) {

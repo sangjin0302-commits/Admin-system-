@@ -16,6 +16,11 @@ import {
   type TargetKey,
   type TargetSpec
 } from "@/lib/services/law-api-service";
+import {
+  checkRegistryDrift,
+  LOCKED_AT,
+  type RegistryDrift
+} from "@/lib/services/law-registry-lock";
 import { logger } from "@/lib/utils/logger";
 
 const REPORT_KEY = "law.health.lastReport";
@@ -39,6 +44,8 @@ export type LawHealthReport = {
   failed: number; // upstream_error + parse_error
   skipped: number; // not_permitted
   results: TargetHealth[];
+  drift: RegistryDrift[]; // baseline 이탈 (있으면 코드가 바뀐 것)
+  lockedAt: string; // LOCKED_AT
 };
 
 /** 그룹마다 결과가 나올 법한 프로브 질의를 쓴다 — 0건이면 헬스체크 신호가 약해진다. */
@@ -98,6 +105,18 @@ export async function runLawHealthCheck(): Promise<LawHealthReport> {
     results.push(...settled);
   }
 
+  // registry가 baseline에서 벗어났다면, 아무도 재검증하지 않은 채 코드가 바뀐 것이다.
+  // 프로브가 전부 통과해도 이건 별도로 시끄러워야 한다.
+  const drift = checkRegistryDrift();
+  for (const d of drift) {
+    logger.warn("law-health: registry 검증 기준선 이탈", {
+      target: d.target,
+      kind: d.kind,
+      detail: d.detail,
+      lockedAt: LOCKED_AT
+    });
+  }
+
   const report: LawHealthReport = {
     checkedAt: new Date().toISOString(),
     total: results.length,
@@ -107,7 +126,9 @@ export async function runLawHealthCheck(): Promise<LawHealthReport> {
       (r) => r.status === "upstream_error" || r.status === "parse_error"
     ).length,
     skipped: results.filter((r) => r.status === "not_permitted").length,
-    results
+    results,
+    drift,
+    lockedAt: LOCKED_AT
   };
 
   try {

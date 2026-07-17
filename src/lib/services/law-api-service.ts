@@ -233,6 +233,19 @@ export type TargetSpec = {
   supported: boolean;
 };
 
+/**
+ * 🔒 실측 검증 완료 — 함부로 수정하지 말 것
+ *
+ * supported: true 항목의 wrappers/itemKeys/필드명은 전부 라이브 응답으로 확인한 값이다.
+ * 법제처는 없는 target에도 빈 200을 주므로, 이름이 틀려도 "결과 없음"처럼 보인다.
+ * 추측으로 바꾸면 조용히 죽고 아무도 모른다 (이 세션에서만 그렇게 5건이 숨어 있었다).
+ *
+ * 수정 절차:
+ *   1) 프록시로 실호출: /drf/lawSearch.do?OC=...&target=<key>&type=JSON&query=<질의>
+ *   2) 응답의 최상위 키 = wrappers, 그 안의 배열/객체 키 = itemKeys
+ *   3) law-registry-lock.ts 의 LOCKED_SPECS 와 LOCKED_AT 갱신
+ *   4) 헬스체크 실행해 실패 0 확인 (/admin/law-research 상단 "지금 점검")
+ */
 export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
   // ===== 실측 검증 =====
   law: {
