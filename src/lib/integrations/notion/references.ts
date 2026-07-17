@@ -143,6 +143,117 @@ async function queryAllPages(
   return rows;
 }
 
+/** 아카이브 행 1건 → NotionReferenceMaterial. 점수는 keywords/domains 기준. */
+function mapArchiveRow(page: any, keywords: string[], domains: string[]): NotionReferenceMaterial {
+  const properties = page.properties ?? {};
+  const title = readTitle(properties, "자료 제목");
+  const category = readPlainTextProperty(properties["분야"]);
+  const resourceType = readPlainTextProperty(properties["종류"]);
+  const summary = readPlainTextProperty(properties["주요내용 요약"]);
+  const source = readPlainTextProperty(properties["출처"]);
+  const citationUrl = readPlainTextProperty(properties["PDF/Citation"]);
+  const status = readStatusName(properties["요약여부"]);
+  const yearValue = readPlainTextProperty(properties["출판연도"]);
+  const publishedYear = yearValue ? Number(yearValue) : null;
+
+  const usageStatus = readPlainTextProperty(properties["자료 활용 상태"]);
+  const sourceGrade = readPlainTextProperty(properties["출처 등급"]);
+  const trustLevel = readPlainTextProperty(properties["자료 신뢰도"]);
+  const lawReferences = readPlainTextProperty(properties["관련 법령/조문"]);
+  const materialKeywords = splitKeywordText(readPlainTextProperty(properties["핵심 키워드"]));
+  const materialDomains = readMultiSelectNames(properties["적용 도메인"]);
+  const subTypes = readMultiSelectNames(properties["세부 유형"]);
+  const usageSites = readMultiSelectNames(properties["사용 위치"]);
+  const reviewedAt = readDateStart(properties["최신성 검토일"]);
+  const mustVerify = sourceGrade === "must_verify" || usageSites.includes("must_verify");
+  const clientVisible = readCheckbox(properties["고객 노출 가능"]);
+
+  // 노션에 직접 적어둔 키워드·법령·도메인을 가장 높게 칩니다.
+  const domainScore = materialDomains.reduce(
+    (sum, domain) => sum + (domains.includes(domain) ? 10 : 0),
+    0
+  );
+  const curatedKeywordScore =
+    scoreTextAgainstKeywords(materialKeywords.join(" "), keywords) * 4 +
+    scoreTextAgainstKeywords(lawReferences ?? "", keywords) * 4 +
+    scoreTextAgainstKeywords(subTypes.join(" "), keywords) * 3;
+  const trustScore = trustLevel === "공식" ? 3 : trustLevel === "준공식" ? 2 : 0;
+  const score =
+    domainScore +
+    curatedKeywordScore +
+    trustScore +
+    (category && keywords.includes(category) ? 8 : 0) +
+    (status === "완료" ? 4 : 0) +
+    scoreTextAgainstKeywords([title, summary, source, category, resourceType].filter(Boolean).join(" "), keywords) * 2;
+
+  return {
+    id: page.id,
+    title,
+    category,
+    resourceType,
+    summary,
+    source,
+    citationUrl,
+    publishedYear: Number.isFinite(publishedYear) ? publishedYear : null,
+    status,
+    usageStatus,
+    sourceGrade,
+    trustLevel,
+    lawReferences,
+    keywords: materialKeywords,
+    domains: materialDomains,
+    usageSites,
+    reviewedAt,
+    mustVerify,
+    clientVisible,
+    score,
+  } satisfies NotionReferenceMaterial;
+}
+
+/** 큐레이션 끝난 아카이브만 조회하는 공통 필터. */
+const ARCHIVE_READY_FILTER = {
+  property: "자료 활용 상태",
+  select: { equals: ARCHIVE_USAGE_STATUS_READY },
+} as const;
+
+/**
+ * 키워드로 노션 아카이브를 검색합니다. ("Lawbot 연결 가능" 자료만)
+ * 노션이 꺼져 있거나 실패하면 빈 배열 — 호출부는 자료 없음으로 degrade됩니다.
+ */
+export async function searchNotionArchive(input: {
+  keywords: string[];
+  domains?: string[];
+  limit?: number;
+  /** 지정 시 "사용 위치"에 이 값 중 하나라도 있는 자료만 남깁니다. */
+  usageSites?: string[];
+  /** true면 must_verify 자료를 제외합니다. */
+  excludeMustVerify?: boolean;
+}): Promise<NotionReferenceMaterial[]> {
+  const token = getNotionToken();
+  const archiveDatabaseId = getReferenceArchiveDatabaseId();
+  if (!token || !archiveDatabaseId) return [];
+
+  const allowedSites = input.usageSites ?? [];
+
+  try {
+    const rows = await queryAllPages(archiveDatabaseId, token, { filter: ARCHIVE_READY_FILTER });
+    return rows
+      .map((page) => mapArchiveRow(page, input.keywords, input.domains ?? []))
+      .filter((item) => item.score > 0)
+      // 적격 조건은 limit 자르기 전에 걸러야 합니다. 뒤에서 거르면
+      // 상위 N칸을 부적격 자료가 차지해 결과가 통째로 비어버립니다.
+      .filter((item) => !(input.excludeMustVerify && item.mustVerify))
+      .filter((item) =>
+        allowedSites.length ? item.usageSites.some((site) => allowedSites.includes(site)) : true
+      )
+      .sort((left, right) => right.score - left.score || (right.publishedYear ?? 0) - (left.publishedYear ?? 0))
+      .slice(0, input.limit ?? 4);
+  } catch (error) {
+    logger.error("[notion] 아카이브 키워드 검색 실패", error);
+    return [];
+  }
+}
+
 export async function getNotionReferenceRecommendations(input: {
   inquiryType: InquiryType;
   serviceTags?: string[];
@@ -171,12 +282,7 @@ export async function getNotionReferenceRecommendations(input: {
     [archiveRows, websiteRows] = await Promise.all([
       archiveDatabaseId
         ? // 큐레이션이 끝난 자료만 조회합니다. 미검토·검증 필요·사용 보류는 서버에서 걸러집니다.
-          queryAllPages(archiveDatabaseId, token, {
-            filter: {
-              property: "자료 활용 상태",
-              select: { equals: ARCHIVE_USAGE_STATUS_READY },
-            },
-          })
+          queryAllPages(archiveDatabaseId, token, { filter: ARCHIVE_READY_FILTER })
         : Promise.resolve([]),
       websiteDatabaseId ? queryAllPages(websiteDatabaseId, token) : Promise.resolve([]),
     ]);
@@ -190,71 +296,7 @@ export async function getNotionReferenceRecommendations(input: {
   }
 
   const materials = archiveRows
-    .map((page: any) => {
-      const properties = page.properties ?? {};
-      const title = readTitle(properties, "자료 제목");
-      const category = readPlainTextProperty(properties["분야"]);
-      const resourceType = readPlainTextProperty(properties["종류"]);
-      const summary = readPlainTextProperty(properties["주요내용 요약"]);
-      const source = readPlainTextProperty(properties["출처"]);
-      const citationUrl = readPlainTextProperty(properties["PDF/Citation"]);
-      const status = readStatusName(properties["요약여부"]);
-      const yearValue = readPlainTextProperty(properties["출판연도"]);
-      const publishedYear = yearValue ? Number(yearValue) : null;
-
-      const usageStatus = readPlainTextProperty(properties["자료 활용 상태"]);
-      const sourceGrade = readPlainTextProperty(properties["출처 등급"]);
-      const trustLevel = readPlainTextProperty(properties["자료 신뢰도"]);
-      const lawReferences = readPlainTextProperty(properties["관련 법령/조문"]);
-      const materialKeywords = splitKeywordText(readPlainTextProperty(properties["핵심 키워드"]));
-      const materialDomains = readMultiSelectNames(properties["적용 도메인"]);
-      const subTypes = readMultiSelectNames(properties["세부 유형"]);
-      const usageSites = readMultiSelectNames(properties["사용 위치"]);
-      const reviewedAt = readDateStart(properties["최신성 검토일"]);
-      const mustVerify = sourceGrade === "must_verify" || usageSites.includes("must_verify");
-      const clientVisible = readCheckbox(properties["고객 노출 가능"]);
-
-      // 노션에 직접 적어둔 키워드·법령·도메인을 가장 높게 칩니다.
-      const domainScore = materialDomains.reduce(
-        (sum, domain) => sum + (domains.includes(domain) ? 10 : 0),
-        0
-      );
-      const curatedKeywordScore =
-        scoreTextAgainstKeywords(materialKeywords.join(" "), keywords) * 4 +
-        scoreTextAgainstKeywords(lawReferences ?? "", keywords) * 4 +
-        scoreTextAgainstKeywords(subTypes.join(" "), keywords) * 3;
-      const trustScore = trustLevel === "공식" ? 3 : trustLevel === "준공식" ? 2 : 0;
-      const score =
-        domainScore +
-        curatedKeywordScore +
-        trustScore +
-        (category && keywords.includes(category) ? 8 : 0) +
-        (status === "완료" ? 4 : 0) +
-        scoreTextAgainstKeywords([title, summary, source, category, resourceType].filter(Boolean).join(" "), keywords) * 2;
-
-      return {
-        id: page.id,
-        title,
-        category,
-        resourceType,
-        summary,
-        source,
-        citationUrl,
-        publishedYear: Number.isFinite(publishedYear) ? publishedYear : null,
-        status,
-        usageStatus,
-        sourceGrade,
-        trustLevel,
-        lawReferences,
-        keywords: materialKeywords,
-        domains: materialDomains,
-        usageSites,
-        reviewedAt,
-        mustVerify,
-        clientVisible,
-        score,
-      } satisfies NotionReferenceMaterial;
-    })
+    .map((page: any) => mapArchiveRow(page, keywords, domains))
     .filter((item: NotionReferenceMaterial) => item.score > 0)
     .sort((left: NotionReferenceMaterial, right: NotionReferenceMaterial) => right.score - left.score || (right.publishedYear ?? 0) - (left.publishedYear ?? 0))
     .slice(0, 4);

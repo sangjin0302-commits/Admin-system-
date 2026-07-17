@@ -356,10 +356,16 @@ const REGISTRY_MAP = new Map<string, FeatureDefinition>(FEATURE_REGISTRY.map((f)
 
 let _cache: { at: number; data: Record<string, boolean> } | null = null;
 let _inflight: Promise<Record<string, boolean>> | null = null;
+/**
+ * 무효화 세대. 진행 중인 DB 읽기는 취소할 수 없으므로,
+ * 읽기 시작 후 무효화가 일어났으면 그 결과를 캐시에 쓰지 않도록 세대로 판별합니다.
+ */
+let _generation = 0;
 
 export function invalidateFeatureFlagsCache() {
   _cache = null;
   _inflight = null;
+  _generation += 1;
 }
 
 function defaultsMap(): Record<string, boolean> {
@@ -390,16 +396,25 @@ export async function getAllFlags(): Promise<Record<string, boolean>> {
   if (_cache && Date.now() - _cache.at < CACHE_MS) return _cache.data;
   // 캐시가 비었을 때 동시 호출이 각자 DB를 조회하지 않도록 진행 중인 조회를 공유합니다.
   if (_inflight) return _inflight;
-  _inflight = (async () => {
+
+  const generation = _generation;
+  const pending = (async () => {
     const stored = await readRawFlags();
     const merged = { ...defaultsMap(), ...stored };
-    _cache = { at: Date.now(), data: merged };
+    // 읽는 사이에 무효화가 있었으면 낡은 값이므로 캐시에 쓰지 않습니다.
+    // (안 그러면 플래그를 껐다 켜도 최대 30초간 옛 값이 남습니다.)
+    if (generation === _generation) {
+      _cache = { at: Date.now(), data: merged };
+    }
     return merged;
   })();
+  _inflight = pending;
+
   try {
-    return await _inflight;
+    return await pending;
   } finally {
-    _inflight = null;
+    // 내가 건 것만 치웁니다. 무효화 후 다른 호출이 새로 건 것을 지우면 안 됩니다.
+    if (_inflight === pending) _inflight = null;
   }
 }
 
