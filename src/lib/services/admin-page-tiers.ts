@@ -55,6 +55,7 @@ export const PAGE_TIERS: Record<string, PageTier> = {
   "advisor": "frequent",
 
   // occasional (가끔)
+  "market": "occasional",
   "ai-accuracy": "occasional",
   "survey-results": "occasional",
   "ab-experiments": "occasional",

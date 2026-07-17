@@ -32,6 +32,7 @@ export const CRON_GROUPS: Record<string, string[]> = {
     "/api/cron/naver-kin-scan",
     "/api/cron/blog-translate",
     "/api/cron/auto-marketing",
+    "/api/cron/market-collect",
   ],
   "infra-maintenance": [
     "/api/cron/backup-mirror",
