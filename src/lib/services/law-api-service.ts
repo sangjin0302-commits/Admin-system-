@@ -20,15 +20,28 @@
 import { logger } from "@/lib/utils/logger";
 import { withCache } from "@/lib/services/cache-service";
 
-const LAW_PROXY_URL = process.env.LAW_PROXY_URL || "http://3.36.175.81:8080";
-const LAW_PROXY_TOKEN = process.env.LAW_PROXY_TOKEN || "";
-const LAW_OC = process.env.LAW_OC || "";
+/**
+ * env는 모듈 top-level 상수로 잡지 않고 호출 시점에 읽는다.
+ * Vercel은 빌드 캐시를 재사용하므로, 이 파일이 바뀌지 않은 채로
+ * 나중에 환경변수를 추가하면 top-level 상수에는 빌드 당시의 빈 값이
+ * 그대로 박혀 있게 된다(실제로 그렇게 전 기능이 []를 반환했다).
+ */
+function lawProxyUrl(): string {
+  return process.env.LAW_PROXY_URL || "http://3.36.175.81:8080";
+}
+function lawProxyToken(): string {
+  return process.env.LAW_PROXY_TOKEN || "";
+}
+function lawOc(): string {
+  return process.env.LAW_OC || "";
+}
+
 const CACHE_TTL_DAY = 86400;
 const PROXY_TIMEOUT_MS = 10_000;
 const LAW_BASE_URL = "https://www.law.go.kr";
 
 function envReady(): boolean {
-  return Boolean(LAW_PROXY_TOKEN && LAW_OC);
+  return Boolean(lawProxyToken() && lawOc());
 }
 
 function toArray<T>(v: unknown): T[] {
@@ -45,13 +58,13 @@ function buildUrl(
   type: "JSON" | "XML"
 ): string {
   const qs = new URLSearchParams({
-    OC: LAW_OC,
+    OC: lawOc(),
     type,
     ...Object.fromEntries(
       Object.entries(params).map(([k, v]) => [k, String(v)])
     )
   });
-  return `${LAW_PROXY_URL}/drf/${endpoint}?${qs.toString()}`;
+  return `${lawProxyUrl()}/drf/${endpoint}?${qs.toString()}`;
 }
 
 async function fetchProxy(url: string, endpoint: string): Promise<any> {
@@ -60,7 +73,7 @@ async function fetchProxy(url: string, endpoint: string): Promise<any> {
   try {
     const res = await fetch(url, {
       method: "GET",
-      headers: { "X-Proxy-Token": LAW_PROXY_TOKEN },
+      headers: { "X-Proxy-Token": lawProxyToken() },
       signal: controller.signal,
       cache: "no-store"
     });
