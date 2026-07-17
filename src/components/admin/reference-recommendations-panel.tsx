@@ -25,7 +25,8 @@ export function ReferenceRecommendationsPanel({
         <div>
           <h3 className="ui-section-title">참고 추천 자료</h3>
           <p className="mt-2 text-sm text-text-muted">
-            사건 유형, 제목, 서비스 태그를 기준으로 내부 자료와 참고 홈페이지를 함께 추천합니다.
+            노션 아카이브에서 <strong>&ldquo;Lawbot 연결 가능&rdquo;</strong>으로 정리해 둔 자료만 추천합니다.
+            사건 유형·적용 도메인·핵심 키워드·관련 법령을 기준으로 정렬합니다.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -83,9 +84,12 @@ function ReferenceMaterialCard({ item }: { item: NotionReferenceMaterial }) {
         <div>
           <p className="text-sm font-semibold text-text-strong">{item.title}</p>
           <div className="mt-2 flex flex-wrap gap-2">
+            {item.trustLevel ? <Badge>{item.trustLevel}</Badge> : null}
             {item.category ? <Badge>{item.category}</Badge> : null}
             {item.resourceType ? <Badge>{item.resourceType}</Badge> : null}
-            {item.status ? <Badge>{item.status}</Badge> : null}
+            {item.domains.map((domain) => (
+              <Badge key={`${item.id}-${domain}`}>{domain}</Badge>
+            ))}
             {item.publishedYear ? <Badge>{String(item.publishedYear)}</Badge> : null}
           </div>
         </div>
@@ -100,11 +104,22 @@ function ReferenceMaterialCard({ item }: { item: NotionReferenceMaterial }) {
           </a>
         ) : null}
       </div>
+      {item.mustVerify ? (
+        <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+          ⚠️ 원문 확인 필요 — 이 자료는 그대로 인용하지 마세요.
+        </p>
+      ) : null}
       <p className="mt-4 text-sm text-text">
         {item.summary || "요약이 아직 없습니다."}
       </p>
+      {item.lawReferences ? (
+        <p className="mt-3 text-xs text-text-muted">관련 법령/조문: {item.lawReferences}</p>
+      ) : null}
       {item.source ? (
         <p className="mt-3 text-xs text-text-muted">출처: {item.source}</p>
+      ) : null}
+      {item.reviewedAt ? (
+        <p className="mt-1 text-xs text-text-muted">최신성 검토: {item.reviewedAt}</p>
       ) : null}
     </Card>
   );
