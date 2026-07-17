@@ -36,14 +36,26 @@ export type LifeKeys = {
   cnpClsNo: string;
 };
 
+export type LifeSearchCategory =
+  | "qa" // 백문백답
+  | "precedent" // 대법원판례
+  | "interpretation" // 법령해석
+  | "lifeArea" // 생활분야
+  | "groupArea" // 그룹분야
+  | "interestRule"; // 관심규정
+
 export type LifeLawSearchItem = {
-  title: string; // stripped
-  summary: string; // ov
-  tree: string; // 분류 경로
-  csmSeq: string;
-  ccfNo: string;
-  cciNo: string;
-  cnpClsNo: string;
+  category: LifeSearchCategory;
+  categoryLabel: string; // 한국어 표시명
+  title: string; // stripTags 적용
+  summary: string; // judItm(판례) / onhunqueSubjNm(백문백답) / 없으면 ""
+  tree: string; // 분류 경로 — &gt; 디코드 후 " > " 로 정규화
+  /** LifeLawInfoService 조회용 4키 — 없는 카테고리도 있음 */
+  keys: LifeKeys | null;
+  /** 백문백답 상세용 (onhunqnaAstSeq/onhunqueSeq) */
+  mqnaKeys: { onhunqnaAstSeq: string; onhunqueSeq: string } | null;
+  link: string; // titleLink / moblieTitleLink, 절대화
+  fields: Record<string, string>; // 원본 전체
 };
 
 export type LifeClassItem = { id: string; name: string; linkUrl: string; order: string };
@@ -308,7 +320,33 @@ async function caseList(
   });
 }
 
-/** 1. 키워드 통합검색 */
+/** 분류 경로 정규화 — `&gt;` 디코드는 decodeXml 이 이미 수행, 구분자만 " > " 로 통일 */
+function normalizeTree(s: string): string {
+  return stripTags(s)
+    .split(">")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" > ");
+}
+
+/** 4키가 모두 있을 때만 keys 를 만든다 (일부 카테고리는 csmSeq 뿐) */
+function keysOrNull(r: Record<string, string>): LifeKeys | null {
+  const { csmSeq, ccfNo, cciNo, cnpClsNo } = r;
+  if (!csmSeq || !ccfNo || !cciNo || !cnpClsNo) return null;
+  return { csmSeq, ccfNo, cciNo, cnpClsNo };
+}
+
+/**
+ * 1. 키워드 통합검색
+ *
+ * ⚠️ 라이브 실측 (2026-07, query="체류자격", wrapper=SearchAllKeywordListResponse):
+ * getSearchAllKeywordList 는 결과 컨테이너를 **6개** 병렬로 반환한다
+ * (백문백답/대법원판례/법령해석/생활분야/그룹분야/관심규정).
+ * 이전 구현은 SearchInterrestRuleListItems 하나만 돌아온 단일 카테고리 probe 를
+ * 근거로 작성되어, "체류자격" 등 핵심 키워드에서 6종 중 5종을 통째로 놓치고
+ * []를 반환했다. 반드시 6개 컨테이너를 모두 파싱할 것.
+ * 컨테이너별로 필드명이 다르므로 xmlItemsIn 으로 스코프를 고정해 형제 오염을 막는다.
+ */
 export async function searchLifeLaw(
   query: string,
   page = 1,
@@ -327,15 +365,104 @@ export async function searchLifeLaw(
         `</SearchAllKeywordListRequest></open:getSearchAllKeywordList>`;
       const xml = await soapCall(SERVICE_SEARCH, inner);
       checkReturnCode(xml);
-      return xmlItems(xml).map((r) => ({
-        title: stripTags(r.title ?? ""),
-        summary: stripTags(r.ov ?? ""),
-        tree: stripTags(r.tree ?? ""),
-        csmSeq: r.csmSeq ?? "",
-        ccfNo: r.ccfNo ?? "",
-        cciNo: r.cciNo ?? "",
-        cnpClsNo: r.cnpClsNo ?? ""
+
+      const items = (container: string, itemTag: string) => xmlItemsIn(xml, container, itemTag);
+
+      const qa: LifeLawSearchItem[] = items(
+        "MaskMAnswerSearchContentListItems",
+        "MaskMAnswerSearchContentListItem"
+      ).map((r) => ({
+        category: "qa" as const,
+        categoryLabel: "백문백답",
+        title: stripTags(r.onhunqueCts ?? ""),
+        summary: stripTags(r.onhunqueSubjNm ?? ""),
+        tree: normalizeTree(r.onhunqnaAstNm ?? ""),
+        keys: null,
+        mqnaKeys:
+          r.onhunqnaAstSeq && r.onhunqueSeq
+            ? { onhunqnaAstSeq: r.onhunqnaAstSeq, onhunqueSeq: r.onhunqueSeq }
+            : null,
+        link: absolutizeUrl(r.moblieTitleLink ?? ""),
+        fields: r
       }));
+
+      const precedent: LifeLawSearchItem[] = items(
+        "SearchSuperMePrecedentListItems",
+        "SearchSuperMePrecedentListItem"
+      ).map((r) => ({
+        category: "precedent" as const,
+        categoryLabel: "대법원판례",
+        title: stripTags(r.title ?? ""),
+        summary: stripTags(r.judItm ?? ""),
+        tree: normalizeTree(r.tree ?? ""),
+        keys: keysOrNull(r),
+        mqnaKeys: null,
+        link: absolutizeUrl(r.titleLink ?? ""),
+        fields: r
+      }));
+
+      const interpretation: LifeLawSearchItem[] = items(
+        "SearchLawInterListItems",
+        "SearchLawInterListItem"
+      ).map((r) => ({
+        category: "interpretation" as const,
+        categoryLabel: "법령해석",
+        title: stripTags(r.title ?? ""),
+        summary: "",
+        tree: normalizeTree(r.csmTree ?? ""),
+        keys: keysOrNull(r),
+        mqnaKeys: null,
+        link: absolutizeUrl(r.titleLink ?? ""),
+        fields: r
+      }));
+
+      const interestRule: LifeLawSearchItem[] = items(
+        "SearchInterrestRuleListItems",
+        "SearchInterrestRuleListItem"
+      ).map((r) => ({
+        category: "interestRule" as const,
+        categoryLabel: "관심규정",
+        title: stripTags(r.title ?? ""),
+        summary: "",
+        tree: normalizeTree(r.tree ?? ""),
+        keys: keysOrNull(r),
+        mqnaKeys: null,
+        link: absolutizeUrl(r.cnpClsNmLink || r.titleLink || ""),
+        fields: r
+      }));
+
+      const groupArea: LifeLawSearchItem[] = items(
+        "SearchGroupAreaListItems",
+        "SearchGroupAreaListItem"
+      ).map((r) => ({
+        category: "groupArea" as const,
+        categoryLabel: "그룹분야",
+        title: stripTags(r.title ?? ""),
+        summary: "",
+        tree: normalizeTree(r.allTree || r.tree || ""),
+        keys: keysOrNull(r),
+        mqnaKeys: null,
+        link: absolutizeUrl(r.titleLink ?? ""),
+        fields: r
+      }));
+
+      const lifeArea: LifeLawSearchItem[] = items(
+        "SearchLifeAreaListItems",
+        "SearchLifeAreaListItem"
+      ).map((r) => ({
+        category: "lifeArea" as const,
+        categoryLabel: "생활분야",
+        title: stripTags(r.csmTtl ?? ""),
+        summary: "",
+        tree: normalizeTree(r.tree ?? ""),
+        keys: keysOrNull(r), // 보통 csmSeq 만 존재 → null
+        mqnaKeys: null,
+        link: absolutizeUrl(r.titleLink ?? ""),
+        fields: r
+      }));
+
+      // pageMg 로 API 측에서 이미 건수 제한 — 파싱된 전부를 반환한다.
+      return [...qa, ...precedent, ...interpretation, ...interestRule, ...groupArea, ...lifeArea];
     } catch (err) {
       logger.warn("easylaw searchLifeLaw failed", { query, err: String(err) });
       return [];
