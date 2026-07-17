@@ -25,6 +25,7 @@
     "verify:safe": "npm run preflight:spawn && npm run preflight:locks && npm run text:check && npm run typecheck && npm run build:prepare",
     "verify:safe:strict": "npm run preflight:spawn && npm run preflight:locks && npm run text:check && npm run typecheck && npm run build:prepare:strict",
     "test:case-phase1": "tsx scripts/tests/case-matter-phase1-check.ts",
+    "test:flag-cache": "tsx scripts/tests/feature-flags-cache-race-check.ts",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "clean": "node scripts/clean-build.mjs",

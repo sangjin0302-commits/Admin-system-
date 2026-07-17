@@ -25,9 +25,13 @@ export function getReferenceWebsiteDatabaseId() {
   return process.env.NOTION_REFERENCE_WEBSITE_DATABASE_ID?.trim() || null;
 }
 
+/** 노션 응답 대기 상한. fetch는 기본 타임아웃이 없어 명시하지 않으면 무한 대기합니다. */
+const NOTION_TIMEOUT_MS = 8000;
+
 export async function notionRequest(path: string, init: RequestInit, token: string) {
   const response = await fetch(`https://api.notion.com/v1${path}`, {
     ...init,
+    signal: init.signal ?? AbortSignal.timeout(NOTION_TIMEOUT_MS),
     headers: {
       Authorization: `Bearer ${token}`,
       "Notion-Version": NOTION_VERSION,

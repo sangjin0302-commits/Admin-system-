@@ -5,4 +5,4 @@ export type {
 } from "./types";
 export { syncConsultationToNotion } from "./consultation";
 export { syncCaseAnalysisToNotion, syncCaseToNotion } from "./case-analysis";
-export { getNotionReferenceRecommendations } from "./references";
+export { getNotionReferenceRecommendations, searchNotionArchive } from "./references";
