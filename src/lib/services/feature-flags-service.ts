@@ -355,9 +355,11 @@ const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => 
 const REGISTRY_MAP = new Map<string, FeatureDefinition>(FEATURE_REGISTRY.map((f) => [f.key, f]));
 
 let _cache: { at: number; data: Record<string, boolean> } | null = null;
+let _inflight: Promise<Record<string, boolean>> | null = null;
 
 export function invalidateFeatureFlagsCache() {
   _cache = null;
+  _inflight = null;
 }
 
 function defaultsMap(): Record<string, boolean> {
@@ -386,10 +388,19 @@ async function readRawFlags(): Promise<Record<string, boolean>> {
 /** 전체 플래그 조회 (DB + 레지스트리 기본값 병합, 30초 캐시). */
 export async function getAllFlags(): Promise<Record<string, boolean>> {
   if (_cache && Date.now() - _cache.at < CACHE_MS) return _cache.data;
-  const stored = await readRawFlags();
-  const merged = { ...defaultsMap(), ...stored };
-  _cache = { at: Date.now(), data: merged };
-  return merged;
+  // 캐시가 비었을 때 동시 호출이 각자 DB를 조회하지 않도록 진행 중인 조회를 공유합니다.
+  if (_inflight) return _inflight;
+  _inflight = (async () => {
+    const stored = await readRawFlags();
+    const merged = { ...defaultsMap(), ...stored };
+    _cache = { at: Date.now(), data: merged };
+    return merged;
+  })();
+  try {
+    return await _inflight;
+  } finally {
+    _inflight = null;
+  }
 }
 
 /** 단일 플래그 조회. */

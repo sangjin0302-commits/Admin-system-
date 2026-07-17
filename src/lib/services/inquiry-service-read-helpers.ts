@@ -42,6 +42,12 @@ export async function listInquiries(filters: InquiryListFilters = {}) {
   return inquiries;
 }
 
+export async function countInquiries(filters: InquiryListFilters = {}) {
+  return prisma.inquiry.count({
+    where: buildInquiryListWhere(filters)
+  });
+}
+
 export async function getInquiryById(id: string) {
   return prisma.inquiry.findUnique({
     where: { id }
