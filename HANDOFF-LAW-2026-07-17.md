@@ -129,28 +129,50 @@ Vercel 빌드 캐시가 파일 미변경 시 재사용 → **빈 값 고착** �
 
 ## 4. 진행 중 / 남은 일
 
-### 🔄 market-analyze 흡수 (진행 중)
-Railway(Python FastAPI+Celery+PG) 대신 **admin이 네이버 API 직접 호출 → 비용 $0**.
+### ✅ market-analyze 흡수 — 코드 완료, **배포 전 2단계 남음**
 
-**범위 (사용자 확정)**: 핵심(수집+분류+경쟁사+대시보드) + AI 리포트. **경쟁사 분석이 주력.**
-제외: 콘텐츠 브리프 / 일일 브리핑 / 캐러셀 / Notion·Telegram — admin에 유사 기능 있음.
+Railway(Python FastAPI+Celery+PG) 종료하고 admin이 네이버 API 직접 호출. **IP 제한 없어 프록시조차 불필요 → 비용 $0.**
 
-원본 소스 (레포 `sangjin0302-commits/market-analyze`, Python 1.5MB 중 핵심만 발췌해 둠):
+#### 🔴 반드시 먼저 할 것 (안 하면 화면이 빈 상태)
+```bash
+# 1. 프로덕션 DB에 테이블 생성
+npm run db:push:postgres
 ```
-scratchpad/ma_naver.py                     Search/DataLab 클라이언트
-scratchpad/ma_classifier.py                SERVICE_TOPICS·RISK_PATTERNS 등 키워드 테이블
-scratchpad/ma_filters.py                   시험글 제외
-scratchpad/ma_competitor_autodiscovery.py
-scratchpad/ma_collector_v2.py
-scratchpad/ma_models.py                    Document / CompetitorProfile 스키마
-```
-> scratchpad = `C:\Users\sangj\AppData\Local\Temp\claude\C--Users-sangj-Documents-Codex-2026-05-05-caveman-rtk\0637a5b2-0a35-47ae-bc3a-776f288913de\scratchpad\`
-> **세션 종료 시 사라짐** — 필요하면 레포에서 다시 받을 것
+> ⚠️ `npx prisma migrate dev` 아님! 이 프로젝트는 **듀얼 스키마**:
+> `schema.prisma`(마스터, sqlite provider) → `scripts/render-prisma-schema.mjs` → `schema.sqlite.prisma` / `schema.postgresql.prisma`
+> 렌더 확인 완료 — 3개 모델이 postgresql 버전에 반영됨.
 
-- 네이버 API: `https://openapi.naver.com/v1/search/{channel}.json`, 헤더 `X-Naver-Client-Id/Secret`. **IP 제한 없음**
+```
+# 2. Vercel env 추가 (Production 체크) 후 재배포
+NAVER_CLIENT_ID / NAVER_CLIENT_SECRET     ← market-analyze .env 에 있음, 옮길 것
+NAVER_DATALAB_CLIENT_ID / _SECRET         ← 없으면 위 값으로 fallback
+```
+
+#### 만든 것
+```
+market-naver-client.ts        Search + DataLab, <b> 태그 제거, env는 호출 시점 읽기
+market-classifier-service.ts  키워드 테이블 원본 그대로. 순수함수 (테스트 가능)
+market-collect-service.ts     수집 / 경쟁사 프로파일 / 트렌드 / 대시보드, 동시성 4
+market-report-service.ts      AI 리포트 — 버튼 클릭 시만, 1h 캐시, v6.4 가드레일
+api/cron/market-collect       content-sync 그룹 편입 (vercel.json 추가 없음)
+api/admin/market              7 액션
+admin/market + market-panel   경쟁사 탭 주력
+Prisma: MarketDocument / MarketCompetitor / MarketTrendSnapshot
+Flags: market_collect / admin_market_analysis / market_ai_report
+```
+
+#### 알아둘 것
+- **배열은 `String`(JSON 문자열)** — 마스터 schema가 sqlite provider라 `String[]`/`Json`이 검증 실패. 파일 기존 컨벤션과 동일
+- **경쟁사 식별은 `docType`이 아니라 `competitorName`(발행자 기반)** — 원본 Python이 `QUESTION_HINTS`를 먼저 검사해서 "상담" 포함 글은 상담글로 분류됨. 내 최초 설계가 틀렸고 self-test가 잡음
 - `kiwipiepy`(형태소) → 정규식 토큰 추출로 대체
-- cron은 기존 **`content-sync` 그룹**에 편입 (vercel.json 추가 금지 — Hobby 제한)
-- **Prisma 마이그레이션 필요**: `MarketDocument` / `MarketCompetitor` / `MarketTrendSnapshot`
+- **기존에 수동 큐레이션 경쟁사 트래커가 `SiteSetting`에 따로 있음** — 자동 수집분과 데이터·메커니즘이 달라 충돌은 없으나 나중에 통합 검토할 것
+- **UI 미검증** — 테이블 생성 전이라 렌더 못 해봄. 쿼리는 try/catch→empty라 빈 화면으로 degrade됨. 마이그레이션 후 "지금 수집" 눌러서 확인할 것
+
+원본 소스 발췌본 (세션 종료 시 사라짐 — 필요하면 레포 `sangjin0302-commits/market-analyze`에서 재취득):
+```
+scratchpad/ma_naver.py / ma_classifier.py / ma_filters.py
+scratchpad/ma_competitor_autodiscovery.py / ma_collector_v2.py / ma_models.py
+```
 
 ### ⏸️ Phase 3 — lawbot 코어 제거 (보류)
 ~85 파일: bridge client / case-workflow / review / case-analysis / **견적 엔진 연동** / inquiry-detail 12개 / Notion 동기화 / API 10개 / `CaseAnalysisRun` 모델.
