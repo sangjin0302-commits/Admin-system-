@@ -87,16 +87,7 @@ type PracticeAreaKey = "VISA_STAY" | "ADMIN_APPEAL" | "CONTRACT_INVESTIGATION" |
 
 새 분야 추가 시 이 파일에 항목 추가 → 내보내기 함수들(PRACTICE_AREA_KEYS, PRACTICE_AREA_LABELS 등)이 자동 확장.
 
-### 아직 practice-areas.ts를 import하지 않는 파일들 (리팩토링 대상)
-
-다음 8개 파일에 카테고리 배열이 하드코딩되어 있음:
-- `src/app/api/admin/case-studies/route.ts` + `[id]/route.ts`
-- `src/app/api/admin/testimonials/route.ts` + `[id]/route.ts`
-- `src/app/api/admin/fees/route.ts` + `[id]/route.ts`
-- `src/app/api/admin/case-matters/[id]/category/route.ts`
-- `src/lib/public-cases.ts`
-
-이들을 `import { PRACTICE_AREA_KEYS } from "@/lib/practice-areas"` 로 교체하면 향후 분야 추가 시 1파일만 수정하면 됨.
+위 8개 파일 모두 이미 `import { PRACTICE_AREA_KEYS } from "@/lib/practice-areas"` 로 리팩토링 완료됨. 새 분야 추가 시 `practice-areas.ts` 1파일만 수정하면 전체 반영.
 
 ## 디자인 시스템
 
@@ -155,25 +146,11 @@ type PracticeAreaKey = "VISA_STAY" | "ADMIN_APPEAL" | "CONTRACT_INVESTIGATION" |
 - **워킹트리**: 클린 (미커밋 변경 없음)
 - **⚠️ 미푸시**: `cb34a1b` 커밋이 아직 `git push origin main` 안 됨
 
-## 즉시 해야 할 일
-
-1. **`git push origin main`** — 법인설립 확장 커밋 푸시
-2. **Vercel 배포 확인** — 푸시 후 빌드 성공 + `/services/corporate` 페이지 200 확인
-3. **Railway DB 스키마 동기화** — 아직 `npx prisma db push` 미실행 시:
-   ```bash
-   node scripts/render-prisma-schema.mjs postgresql
-   npx prisma generate
-   $env:DATABASE_URL="<Railway외부URL>" ; npx prisma db push
-   ```
-
 ## 추천 고도화 (우선순위순)
 
-1. **practice-areas.ts 리팩토링** — 8개 하드코딩 파일을 중앙 config에서 import하도록 전환
-2. **Cloudflare R2 키 설정** — 파일 업로드 실제 동작
-3. **Resend 키 설정** — 이메일 알림 실제 발송
-4. **Lawbot 연동** — AI 사전 분석 실제 동작
-5. **커스텀 도메인** — Vercel에 도메인 연결
-6. **PWA 오프라인** — 서비스 워커 추가
+1. **Resend 키 설정** — 이메일 알림 실제 발송 (무료 월 3,000통, 코드 준비 완료)
+2. **Lawbot 연동** — AI 사전 분석 실제 동작
+3. **PWA 오프라인** — 서비스 워커 추가
 
 ## 빌드 & 개발
 
