@@ -1,4 +1,5 @@
 import { logger } from "@/lib/utils/logger";
+import { getSiteUrl } from "@/lib/utils/site-url";
 import { smartInvoke } from "./smart-ai-client";
 
 export type BlogSEOMeta = {
@@ -140,7 +141,6 @@ export type BlogSeoMeta = {
   schemaOrg: Record<string, unknown>;
 };
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethos.kr";
 const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 
 function stripHtml(html: string): string {
@@ -205,7 +205,8 @@ function buildBlogPostingSchema(
   post: BlogPostSeoInput,
   description: string
 ): Record<string, unknown> {
-  const url = `${SITE_URL}/blog/${post.slug}`;
+  const siteUrl = getSiteUrl();
+  const url = `${siteUrl}/blog/${post.slug}`;
   const datePublished = post.publishedAt
     ? new Date(post.publishedAt).toISOString()
     : post.createdAt
@@ -226,7 +227,7 @@ function buildBlogPostingSchema(
     publisher: {
       "@type": "Organization",
       name: "ETHOS 행정사사무소",
-      logo: { "@type": "ImageObject", url: `${SITE_URL}/logo.png` },
+      logo: { "@type": "ImageObject", url: `${siteUrl}/logo.png` },
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     url,
@@ -234,7 +235,7 @@ function buildBlogPostingSchema(
   if (post.coverImage) {
     schema.image = post.coverImage.startsWith("http")
       ? post.coverImage
-      : `${SITE_URL}${post.coverImage.startsWith("/") ? "" : "/"}${post.coverImage}`;
+      : `${siteUrl}${post.coverImage.startsWith("/") ? "" : "/"}${post.coverImage}`;
   }
   return schema;
 }

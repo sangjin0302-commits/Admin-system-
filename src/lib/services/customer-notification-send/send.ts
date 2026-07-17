@@ -180,7 +180,7 @@ export async function sendManualCustomerNotificationAudit(
     });
     const providerResult = await emailProvider.sendEmail({
       to: inquiry.email ?? "",
-      from: "notice@adminofficemvp2.vercel.app",
+      from: process.env.EMAIL_FROM?.trim() || "notice@ethosattorney.com",
       subject: message.subject,
       text: message.text,
       html: message.html,

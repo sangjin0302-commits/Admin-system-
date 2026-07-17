@@ -6,10 +6,10 @@ import { Card } from "@/components/ui/card";
 import { listBlogPosts } from "@/lib/blog-posts";
 import { prisma } from "@/lib/prisma/client";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { getSiteUrl } from "@/lib/utils/site-url";
 
 export const dynamic = "force-dynamic";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethos.kr";
 
 type Item = {
   slug: string;
@@ -89,7 +89,7 @@ export default async function BlogCategoryPage({
     itemListElement: posts.map((p, idx) => ({
       "@type": "ListItem",
       position: idx + 1,
-      url: `${SITE_URL}/blog/${p.slug}`,
+      url: `${getSiteUrl()}/blog/${p.slug}`,
       name: p.title,
     })),
   };
