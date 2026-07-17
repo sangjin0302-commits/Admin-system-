@@ -54,6 +54,7 @@ export const CRON_GROUPS: Record<string, string[]> = {
     "/api/cron/ab-auto-promote",
     "/api/cron/ad-optimizer-digest",
     "/api/cron/newsletter-digest",
+    "/api/cron/law-health",
   ],
   "monthly-batch": [
     "/api/cron/finance-monthly-summary",

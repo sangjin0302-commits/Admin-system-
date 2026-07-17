@@ -196,6 +196,140 @@ function CitationVerifyBlock() {
   );
 }
 
+type LawFetchStatus =
+  | "ok"
+  | "empty"
+  | "not_permitted"
+  | "unknown_target"
+  | "env_missing"
+  | "upstream_error"
+  | "parse_error";
+
+type LawSearchOutcome = {
+  status: LawFetchStatus;
+  items: LawResultItem[];
+  message: string;
+  target: string;
+};
+
+type TargetHealth = {
+  target: string;
+  label: string;
+  group: string;
+  status: LawFetchStatus;
+  itemCount: number;
+  message: string;
+  checkedAt: string;
+};
+
+type LawHealthReport = {
+  checkedAt: string;
+  total: number;
+  ok: number;
+  empty: number;
+  failed: number;
+  skipped: number;
+  results: TargetHealth[];
+};
+
+function isFailureStatus(s: LawFetchStatus): boolean {
+  return s !== "ok" && s !== "empty";
+}
+
+/**
+ * target 상태 스트립 — 법제처는 없는 target에도 빈 200을 주므로,
+ * "결과 없음"이 실은 파서 불일치인 경우를 여기서 드러낸다.
+ * 기본 접힘 — 패널 본 목적(검색)을 가리지 않도록.
+ */
+function HealthStrip() {
+  const [report, setReport] = useState<LawHealthReport | null>(null);
+  const [open, setOpen] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const data = (await callApi("getLawHealthReport", {})) as LawHealthReport | null;
+        if (alive) setReport(data);
+      } catch {
+        // 리포트가 아직 없을 수 있다 — 조용히 넘어간다.
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const run = useCallback(async () => {
+    setRunning(true);
+    setError(null);
+    try {
+      const data = (await callApi("runLawHealthCheck", {})) as LawHealthReport;
+      setReport(data);
+      setOpen(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "헬스체크 실패");
+    } finally {
+      setRunning(false);
+    }
+  }, []);
+
+  const failed = report?.results.filter((r) => isFailureStatus(r.status)) ?? [];
+
+  return (
+    <div className="admin-card px-4 py-2.5 space-y-2">
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-xs text-gray-700">
+          {report ? (
+            <>
+              target 상태: ✅ {report.ok}정상 · ⚪ {report.empty}무결과 · ❌ {report.failed}실패
+              <span className="text-gray-400">
+                {" "}
+                (최근 점검: {new Date(report.checkedAt).toLocaleDateString("ko-KR")})
+              </span>
+            </>
+          ) : (
+            <span className="text-gray-400">target 상태: 점검 기록 없음</span>
+          )}
+        </span>
+        <button
+          onClick={run}
+          disabled={running}
+          className="px-2 py-0.5 text-[11px] rounded border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+        >
+          {running ? "점검중..." : "지금 점검"}
+        </button>
+        {report && failed.length > 0 && (
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="text-[11px] text-blue-700 hover:underline"
+          >
+            {open ? "접기" : `실패 ${failed.length}건 보기`}
+          </button>
+        )}
+      </div>
+
+      {error && <div className="text-xs text-red-600">{error}</div>}
+
+      {open && failed.length > 0 && (
+        <ul className="space-y-1 border-t pt-2">
+          {failed.map((r) => (
+            <li key={r.target} className="text-[11px] text-gray-700">
+              <span className="text-red-600">✗</span>{" "}
+              <span className="font-medium">
+                {r.label} ({r.target})
+              </span>
+              <span className="text-gray-500"> — {r.message}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: string }) {
   const [byGroup, setByGroup] = useState<Record<string, TargetSpec[]>>({});
   const [group, setGroup] = useState<Group>("법령");
@@ -258,15 +392,25 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
     setError(null);
     setDetail(null);
     try {
-      let data: unknown;
       if (target === "prec" && byCaseNumber) {
-        data = await callApi("searchPrecedentByNumber", { caseNumber: keyword, limit: 15 });
+        const data = await callApi("searchPrecedentByNumber", {
+          caseNumber: keyword,
+          limit: 15
+        });
+        setResults(Array.isArray(data) ? (data as LawResultItem[]) : []);
       } else if (target === "law" && lawExact) {
-        data = await callApi("searchLawExact", { name: keyword, limit: 15 });
+        const data = await callApi("searchLawExact", { name: keyword, limit: 15 });
+        setResults(Array.isArray(data) ? (data as LawResultItem[]) : []);
       } else {
-        data = await callApi("searchTarget", { target, keyword, limit: 15 });
+        // 진단 가능 버전 — 실패를 "결과 없음"으로 뭉개지 않고 원인을 보여준다.
+        const outcome = (await callApi("searchTargetDetailed", {
+          target,
+          keyword,
+          limit: 15
+        })) as LawSearchOutcome;
+        setResults(outcome.items ?? []);
+        if (isFailureStatus(outcome.status)) setError(outcome.message);
       }
-      setResults(Array.isArray(data) ? (data as LawResultItem[]) : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "검색 실패");
       setResults([]);
@@ -316,6 +460,9 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
 
   return (
     <div className="space-y-4">
+    {/* target 헬스 상태 — 기본 접힘 */}
+    <HealthStrip />
+
     <div className="admin-card p-4 space-y-4">
       {/* Row 1 — 그룹 탭 */}
       <div className="flex gap-2 flex-wrap">

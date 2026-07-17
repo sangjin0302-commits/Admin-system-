@@ -5,20 +5,24 @@
  * target 파라미터로 도메인을 구분한다. wrapper key / item key는 target마다 다르다.
  * Vercel IP 화이트리스트 불가 → Lightsail 프록시(3.36.175.81:8080) 경유.
  *
- * TARGET_REGISTRY는 총 60개 target으로, supported: true 항목(51개)은
+ * TARGET_REGISTRY는 총 59개 target으로, supported: true 항목(53개)은
  * OC=sangjin_api로 실제 호출해 확인한 실측값이다(그 중 verified: false 2개는
  * 프로브 질의 결과가 0건이라 필드명을 형제 target 기준으로 추정했다).
- * supported: false 항목(9개)은 현재 LAW_OC 계정에 target별 조회 권한이 없어 빈 응답만 오며,
- * 스펙은 production bot(_lib.py) 기준 추정값이다. 호출 없이 즉시 []/null을 반환한다.
+ * supported: false 항목(6개)은 DRF target 파라미터 이름이 확인되지 않아 빈 응답만 오며,
+ * 호출 없이 즉시 []/null을 반환한다.
  *
- * 헌재결정례: ccourt는 조회 권한 없음(supported: false). 실제 동작하는 target은 detc이다.
+ * 헌재결정례는 detc, 노동위원회는 nlrc, 국민권익위는 acr target을 쓴다
+ * (ccourt/nodong/acrc는 실재하지 않는 target이라 제거했다).
+ *
+ * 실패 원인 구분이 필요하면 searchTarget 대신 searchTargetDetailed를 쓸 것.
+ * 법제처는 없는 target에도 빈 200을 주므로, 빈 결과와 오류는 스스로 구분해야 한다.
  *
  * 주의: 검색 응답에는 본문/요지(판시사항·질의요지 등)가 없다. 요지는 상세 호출로만 얻는다.
  * 예외: aiSearch는 검색 응답에 조문내용(본문)을 포함하는 유일한 target이다.
  */
 
 import { logger } from "@/lib/utils/logger";
-import { withCache } from "@/lib/services/cache-service";
+import { cacheGet, cacheSet, withCache } from "@/lib/services/cache-service";
 
 /**
  * env는 모듈 top-level 상수로 잡지 않고 호출 시점에 읽는다.
@@ -169,7 +173,7 @@ function pickItems(payload: any, raw: any, itemKeys: string[]): any[] {
 
 export type TargetKey =
   | "law" | "eflaw" | "elaw"
-  | "prec" | "ccourt"
+  | "prec"
   | "expc" | "decc"
   | "molitCgmExpc" | "moelCgmExpc" | "ntsCgmExpc"
   | "mojCgmExpc" | "mofCgmExpc" | "mssCgmExpc" | "kcsCgmExpc" | "mpvaCgmExpc"
@@ -184,7 +188,7 @@ export type TargetKey =
   | "school" | "public" | "pi"
   | "aiSearch" | "aiRltLs"
   | "licbyl" | "admbyl" | "ordinbyl"
-  | "nodong" | "audit" | "acrc" | "empins"
+  | "nlrc" | "audit" | "acr" | "empins"
   | "ftc" | "fsc" | "ppc" | "bill"
   | "kcc" | "sfc" | "eiac" | "oclt" | "iaciac" | "ecc"
   | "lstrmRlt" | "dlytrmRlt";
@@ -590,7 +594,7 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
     supported: true
   },
 
-  // 헌재결정례의 실동작 target (ccourt는 권한 없음)
+  // 헌재결정례의 실동작 target (ccourt는 실재하지 않는 target이라 제거했다)
   detc: {
     key: "detc",
     label: "헌재결정례",
@@ -1080,41 +1084,45 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
     supported: true
   },
 
-  // ===== 미지원: 현재 LAW_OC 계정에 target별 조회 권한 없음 =====
-  // JSON/XML 모두 빈 응답 확인. 법제처에 target별 추가 신청 시 supported: true 로 전환.
-  // ccourt는 조회 권한 없음. 헌재결정례는 detc target을 사용할 것 (실측 동작 확인).
-  ccourt: {
-    key: "ccourt",
-    label: "헌재결정례",
-    group: "판례·심판",
-    wrappers: ["CcourtSearch", "LawSearch"],
-    itemKeys: ["ccourt", "prec"],
-    idFields: ["헌재결정례일련번호", "판례일련번호"],
-    titleFields: ["사건명"],
-    agencyFields: ["법원명", "재판기관"],
-    dateFields: ["종국일자", "선고일자"],
-    numberFields: ["사건번호"],
-    linkFields: ["헌재결정례상세링크", "판례상세링크"],
-    detailIdParam: "ID",
-    verified: false,
-    supported: false
-  },
-  nodong: {
-    key: "nodong",
-    label: "노동위원회 결정례",
+  // ===== 위원회 (실측 검증) =====
+  nlrc: {
+    key: "nlrc",
+    label: "중앙노동위원회 결정문",
     group: "위원회",
-    wrappers: ["NodongSearch", "LawSearch"],
-    itemKeys: ["nodong"],
-    idFields: ["노동위원회결정문일련번호", "일련번호"],
-    titleFields: ["사건명", "안건명", "건명"],
-    agencyFields: ["처분청", "회신기관명"],
-    dateFields: ["의결일자", "회신일자"],
-    numberFields: ["사건번호", "안건번호"],
-    linkFields: ["노동위원회결정문상세링크"],
+    wrappers: ["Nlrc"],
+    itemKeys: ["nlrc"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["제목"],
+    agencyFields: [],
+    dateFields: ["등록일"],
+    numberFields: ["사건번호"],
+    linkFields: ["결정문상세링크"],
     detailIdParam: "ID",
-    verified: false,
-    supported: false
+    verified: true,
+    supported: true
   },
+  acr: {
+    key: "acr",
+    label: "국민권익위원회 결정문",
+    group: "위원회",
+    wrappers: ["Acr"],
+    itemKeys: ["acr"],
+    idFields: ["결정문일련번호"],
+    titleFields: ["제목"],
+    agencyFields: ["회의종류"],
+    dateFields: ["의결일"],
+    numberFields: ["의안번호"],
+    linkFields: ["결정문상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+
+  // ===== 미지원: DRF target 파라미터 이름 미확인 =====
+  // 법제처 문서에 서비스는 존재하나 target 값이 공개돼 있지 않다.
+  // 여러 질의·XML로 재시도해도 빈 응답만 온다(법제처는 없는 target도 빈 200을 준다).
+  // 확인 경로: open.law.go.kr OPEN API 활용방법 문서 또는 법제처 문의(02-2109-6446).
+  // 이름을 확인하면 key/wrappers/itemKeys 를 교체하고 supported: true 로 전환.
   audit: {
     key: "audit",
     label: "감사원 심사결정례",
@@ -1127,22 +1135,6 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
     dateFields: ["의결일자", "결정일자"],
     numberFields: ["사건번호", "안건번호"],
     linkFields: ["감사원심사결정상세링크"],
-    detailIdParam: "ID",
-    verified: false,
-    supported: false
-  },
-  acrc: {
-    key: "acrc",
-    label: "국민권익위 결정례",
-    group: "위원회",
-    wrappers: ["AcrcSearch", "LawSearch"],
-    itemKeys: ["acrc"],
-    idFields: ["국민권익위결정문일련번호", "일련번호"],
-    titleFields: ["사건명", "안건명"],
-    agencyFields: ["처분청", "회신기관명"],
-    dateFields: ["의결일자", "회신일자"],
-    numberFields: ["사건번호", "안건번호"],
-    linkFields: ["국민권익위결정문상세링크"],
     detailIdParam: "ID",
     verified: false,
     supported: false
@@ -1343,53 +1335,176 @@ function mapItem(target: TargetKey, spec: TargetSpec, it: any): LawResultItem {
   return out;
 }
 
+// ---------- 진단 가능한 결과 봉투 ----------
+
+/**
+ * 법제처는 실패를 제대로 신호하지 않는다. 없는 target도 빈 200, 잘못된 파라미터는
+ * 500 또는 빈 응답이다. 그래서 "정상적으로 0건"과 "고장나서 0건"을 우리가 구분해야 한다.
+ * catch { return [] } 로 뭉개면 모든 실패가 똑같이 "결과 없음"으로 보인다.
+ */
+export type LawFetchStatus =
+  | "ok" // 결과 있음
+  | "empty" // 정상 응답, 결과 0건
+  | "not_permitted" // registry에서 supported:false
+  | "unknown_target" // registry에 없는 key
+  | "env_missing" // LAW_OC/LAW_PROXY_TOKEN 미설정
+  | "upstream_error" // 프록시/법제처 호출 실패 (HTTP 오류·타임아웃)
+  | "parse_error"; // 응답은 왔으나 wrapper/itemKey 불일치
+
+export type LawSearchOutcome = {
+  status: LawFetchStatus;
+  items: LawResultItem[];
+  message: string; // 한국어, 사람이 읽는 설명
+  target: TargetKey | string;
+};
+
+export type LawDetailOutcome = {
+  status: LawFetchStatus;
+  detail: {
+    target: TargetKey;
+    id: string;
+    fields: Record<string, string>;
+    detailUrl: string;
+  } | null;
+  message: string;
+  target: TargetKey | string;
+};
+
+/** 오류 상태는 캐시하면 안 된다 — 일시적 장애가 24h 동안 굳어버린다. */
+function isCacheableStatus(status: LawFetchStatus): boolean {
+  return status === "ok" || status === "empty";
+}
+
+/** totalCnt/totcnt가 "0"이거나 아예 없으면 정상적인 0건으로 본다. */
+function readTotalCount(payload: any, raw: any): string | null {
+  for (const src of [payload, raw]) {
+    for (const k of ["totalCnt", "totcnt", "TotalCnt"]) {
+      const v = src?.[k];
+      if (v != null) return String(v).trim();
+    }
+  }
+  return null;
+}
+
 // ---------- 코어: 검색 ----------
 
+/**
+ * searchTarget의 진단 가능 버전. 실패 원인을 구분해 반환한다.
+ *
+ * NOTE: 기존 searchTarget은 withCache가 catch { return [] } 를 감싸고 있어서
+ * 일시적 프록시 장애까지 24시간 캐시에 박혔다. 여기서는 ok/empty만 캐시한다.
+ */
+export async function searchTargetDetailed(
+  target: TargetKey,
+  query: string,
+  limit = 5
+): Promise<LawSearchOutcome> {
+  if (!envReady()) {
+    const message = "법제처 API 환경변수(LAW_OC/LAW_PROXY_TOKEN)가 설정되지 않았습니다.";
+    logger.warn("law-api: env missing", { target, message });
+    return { status: "env_missing", items: [], message, target };
+  }
+  const spec = TARGET_REGISTRY[target];
+  if (!spec) {
+    const message = `등록되지 않은 target입니다: ${target}`;
+    logger.warn("law-api: unknown target", { target, message });
+    return { status: "unknown_target", items: [], message, target };
+  }
+  if (!spec.supported) {
+    const message = `${spec.label}: DRF target 파라미터 이름이 확인되지 않아 조회할 수 없습니다.`;
+    logger.warn("law-api: target not supported", { target, message });
+    return { status: "not_permitted", items: [], message, target };
+  }
+
+  const key = `law:searchTargetDetailed:${target}:${query}:${limit}`;
+  const cached = cacheGet<LawSearchOutcome>(key);
+  if (cached) return cached;
+
+  let raw: any;
+  try {
+    raw = await callDrf("lawSearch.do", {
+      target,
+      query,
+      display: limit,
+      page: 1,
+      ...(spec.searchParams ?? {})
+    });
+  } catch (err) {
+    const message = `법제처 응답 오류: ${String(err)}`;
+    logger.warn("law-api searchTargetDetailed upstream failed", {
+      target,
+      query,
+      message
+    });
+    return { status: "upstream_error", items: [], message, target };
+  }
+
+  // wrapper를 하나도 못 찾았는데 응답에 키가 있다 = 파서와 실제 응답 shape가 어긋났다.
+  // (Expc vs ExpcSearch 같은 wrapper 이름 불일치를 여기서 잡는다)
+  const topKeys = raw && typeof raw === "object" ? Object.keys(raw) : [];
+  const wrapperFound = spec.wrappers.some((w) => raw?.[w]);
+  if (!wrapperFound && topKeys.length > 0) {
+    const message =
+      `파서 불일치: 기대한 wrapper(${spec.wrappers.join(", ")})가 없습니다. ` +
+      `실제 최상위 키: ${topKeys.join(", ")}`;
+    logger.warn("law-api searchTargetDetailed parse mismatch", {
+      target,
+      query,
+      message
+    });
+    return { status: "parse_error", items: [], message, target };
+  }
+
+  const payload = pickWrapper(raw, spec.wrappers);
+  const list = pickItems(payload, raw, spec.itemKeys);
+  const items = list
+    .map((it) => mapItem(target, spec, it))
+    .filter((it) => Boolean(it.title));
+
+  let outcome: LawSearchOutcome;
+  if (items.length === 0) {
+    const total = readTotalCount(payload, raw);
+    if (total == null || total === "0") {
+      outcome = {
+        status: "empty",
+        items: [],
+        message: `${spec.label}: "${query}" 검색 결과가 0건입니다.`,
+        target
+      };
+    } else {
+      // 총건수는 있는데 item을 못 뽑았다 = itemKey 불일치
+      const message =
+        `파서 불일치: 총 ${total}건이라고 응답했으나 itemKey(${spec.itemKeys.join(", ")})로 ` +
+        `항목을 찾지 못했습니다. payload 키: ${
+          payload && typeof payload === "object" ? Object.keys(payload).join(", ") : "(없음)"
+        }`;
+      logger.warn("law-api searchTargetDetailed itemKey mismatch", {
+        target,
+        query,
+        message
+      });
+      return { status: "parse_error", items: [], message, target };
+    }
+  } else {
+    outcome = {
+      status: "ok",
+      items,
+      message: `${spec.label}: ${items.length}건`,
+      target
+    };
+  }
+
+  if (isCacheableStatus(outcome.status)) cacheSet(key, outcome, CACHE_TTL_DAY);
+  return outcome;
+}
+
+/** 하위 호환 — 기존 호출자는 그대로 items만 받는다. */
 export async function searchTarget(
   target: TargetKey,
   query: string,
   limit = 5
 ): Promise<LawResultItem[]> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing (LAW_OC/LAW_PROXY_TOKEN) — returning []");
-    return [];
-  }
-  const spec = TARGET_REGISTRY[target];
-  if (!spec) {
-    logger.warn("law-api: unknown target", { target });
-    return [];
-  }
-  if (!spec.supported) {
-    logger.warn("law-api: target not permitted for current LAW_OC — returning []", {
-      target,
-      label: spec.label
-    });
-    return [];
-  }
-  const key = `law:searchTarget:${target}:${query}:${limit}`;
-  return withCache<LawResultItem[]>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawSearch.do", {
-        target,
-        query,
-        display: limit,
-        page: 1,
-        ...(spec.searchParams ?? {})
-      });
-      const payload = pickWrapper(raw, spec.wrappers);
-      const list = pickItems(payload, raw, spec.itemKeys);
-      return list
-        .map((it) => mapItem(target, spec, it))
-        .filter((it) => Boolean(it.title));
-    } catch (err) {
-      logger.warn("law-api searchTarget failed", {
-        target,
-        query,
-        err: String(err)
-      });
-      return [];
-    }
-  });
+  return (await searchTargetDetailed(target, query, limit)).items;
 }
 
 export async function searchMany(
@@ -1444,6 +1559,93 @@ function flattenFields(
   }
 }
 
+/** getDetail의 진단 가능 버전. searchTargetDetailed와 같은 봉투 규칙을 따른다. */
+export async function getDetailDetailed(
+  target: TargetKey,
+  id: string
+): Promise<LawDetailOutcome> {
+  if (!envReady()) {
+    const message = "법제처 API 환경변수(LAW_OC/LAW_PROXY_TOKEN)가 설정되지 않았습니다.";
+    logger.warn("law-api: env missing", { target, message });
+    return { status: "env_missing", detail: null, message, target };
+  }
+  const spec = TARGET_REGISTRY[target];
+  if (!spec) {
+    const message = `등록되지 않은 target입니다: ${target}`;
+    logger.warn("law-api: unknown target", { target, message });
+    return { status: "unknown_target", detail: null, message, target };
+  }
+  if (!spec.supported) {
+    const message = `${spec.label}: DRF target 파라미터 이름이 확인되지 않아 조회할 수 없습니다.`;
+    logger.warn("law-api: target not supported", { target, message });
+    return { status: "not_permitted", detail: null, message, target };
+  }
+
+  const key = `law:getDetailDetailed:${target}:${id}`;
+  const cached = cacheGet<LawDetailOutcome>(key);
+  if (cached) return cached;
+
+  let raw: any;
+  try {
+    raw = await callDrf("lawService.do", { target, [spec.detailIdParam]: id });
+  } catch (err) {
+    const message = `법제처 응답 오류: ${String(err)}`;
+    logger.warn("law-api getDetailDetailed upstream failed", { target, id, message });
+    return { status: "upstream_error", detail: null, message, target };
+  }
+
+  if (!raw || typeof raw !== "object") {
+    const message = `상세 응답이 객체가 아닙니다(${typeof raw}).`;
+    logger.warn("law-api getDetailDetailed bad shape", { target, id, message });
+    return { status: "parse_error", detail: null, message, target };
+  }
+
+  // 최상위에 중첩 객체가 있으면 그것이 실제 payload
+  let node: any = raw;
+  for (const v of Object.values(raw)) {
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      node = v;
+      break;
+    }
+  }
+
+  const fields: Record<string, string> = {};
+  flattenFields(node, fields);
+
+  let outcome: LawDetailOutcome;
+  if (Object.keys(fields).length === 0) {
+    const topKeys = Object.keys(raw);
+    if (topKeys.length === 0) {
+      outcome = {
+        status: "empty",
+        detail: null,
+        message: `${spec.label}: ID ${id} 에 대한 상세 내용이 없습니다.`,
+        target
+      };
+    } else {
+      const message = `파서 불일치: 상세 응답에서 필드를 추출하지 못했습니다. 최상위 키: ${topKeys.join(", ")}`;
+      logger.warn("law-api getDetailDetailed parse mismatch", { target, id, message });
+      return { status: "parse_error", detail: null, message, target };
+    }
+  } else {
+    outcome = {
+      status: "ok",
+      detail: {
+        target,
+        id,
+        fields,
+        detailUrl: toAbsoluteUrl(firstField(fields, spec.linkFields ?? []))
+      },
+      message: `${spec.label}: ${Object.keys(fields).length}개 필드`,
+      target
+    };
+  }
+
+  if (isCacheableStatus(outcome.status)) cacheSet(key, outcome, CACHE_TTL_DAY);
+  return outcome;
+}
+
+/** 하위 호환 — 기존 호출자는 그대로 detail 또는 null을 받는다. */
 export async function getDetail(
   target: TargetKey,
   id: string
@@ -1453,60 +1655,7 @@ export async function getDetail(
   fields: Record<string, string>;
   detailUrl: string;
 } | null> {
-  if (!envReady()) {
-    logger.warn("law-api: env missing — returning null");
-    return null;
-  }
-  const spec = TARGET_REGISTRY[target];
-  if (!spec) {
-    logger.warn("law-api: unknown target", { target });
-    return null;
-  }
-  if (!spec.supported) {
-    logger.warn("law-api: target not permitted for current LAW_OC — returning null", {
-      target,
-      label: spec.label
-    });
-    return null;
-  }
-  const key = `law:getDetail:${target}:${id}`;
-  return withCache<{
-    target: TargetKey;
-    id: string;
-    fields: Record<string, string>;
-    detailUrl: string;
-  } | null>(key, CACHE_TTL_DAY, async () => {
-    try {
-      const raw = await callDrf("lawService.do", {
-        target,
-        [spec.detailIdParam]: id
-      });
-      if (!raw || typeof raw !== "object") return null;
-
-      // 최상위에 중첩 객체가 있으면 그것이 실제 payload
-      let node: any = raw;
-      for (const v of Object.values(raw)) {
-        if (v && typeof v === "object" && !Array.isArray(v)) {
-          node = v;
-          break;
-        }
-      }
-
-      const fields: Record<string, string> = {};
-      flattenFields(node, fields);
-      if (Object.keys(fields).length === 0) return null;
-
-      return {
-        target,
-        id,
-        fields,
-        detailUrl: toAbsoluteUrl(firstField(fields, spec.linkFields ?? []))
-      };
-    } catch (err) {
-      logger.warn("law-api getDetail failed", { target, id, err: String(err) });
-      return null;
-    }
-  });
+  return (await getDetailDetailed(target, id)).detail;
 }
 
 // ---------- 하위 호환 래퍼 ----------

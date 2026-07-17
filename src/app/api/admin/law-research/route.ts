@@ -24,6 +24,7 @@ import {
   searchOrdinance,
   searchTreaty,
   searchTarget,
+  searchTargetDetailed,
   getDetail,
   searchMany,
   listTargets,
@@ -49,6 +50,10 @@ import {
   type SpecialDeccKind,
   type AdmRulTypeKey
 } from "@/lib/services/law-api-service";
+import {
+  runLawHealthCheck,
+  getLastHealthReport
+} from "@/lib/services/law-health-service";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -75,8 +80,9 @@ type Action =
   | "getLawArticleByJo"
   | "searchOrdinance"
   | "searchTreaty"
-  // 제네릭 (51개 target 전체 접근)
+  // 제네릭 (supported target 전체 접근)
   | "searchTarget"
+  | "searchTargetDetailed"
   | "getDetail"
   | "searchMany"
   | "listTargets"
@@ -94,6 +100,9 @@ type Action =
   | "searchPrecedentByNumber"
   | "searchLawExact"
   | "searchAdminRuleByType"
+  // 헬스체크
+  | "runLawHealthCheck"
+  | "getLawHealthReport"
   // 인용 검증
   | "verifyCitations";
 
@@ -232,6 +241,24 @@ export async function POST(req: Request) {
         data = await searchTarget(target, String(p.keyword ?? ""), Number(p.limit ?? 10));
         break;
       }
+      case "searchTargetDetailed": {
+        const target = toTargetKey(p.target);
+        if (!target) {
+          return api.error(400, "지원하지 않는 target입니다.", { code: "UNKNOWN_TARGET" });
+        }
+        data = await searchTargetDetailed(
+          target,
+          String(p.keyword ?? ""),
+          Number(p.limit ?? 10)
+        );
+        break;
+      }
+      case "runLawHealthCheck":
+        data = await runLawHealthCheck();
+        break;
+      case "getLawHealthReport":
+        data = await getLastHealthReport();
+        break;
       case "getDetail": {
         const target = toTargetKey(p.target);
         if (!target) {
