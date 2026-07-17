@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { PublicHeader } from "@/components/layout/public-header";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { FloatingContact } from "@/components/layout/floating-contact";
-import { LawbotChatWidget } from "@/components/public/lawbot-chat-widget";
 import { PageTransition } from "@/components/public/page-transition";
 import { ScrollProgress } from "@/components/public/scroll-progress";
 import { ExitIntent } from "@/components/public/exit-intent";
@@ -47,7 +46,6 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
         <main id="main-content"><PageTransition>{children}</PageTransition></main>
         <PublicFooter />
         <FloatingContact />
-        <LawbotChatWidget />
         <ExitIntent />
         <PWAInstallPrompt />
         <ChannelTracker />

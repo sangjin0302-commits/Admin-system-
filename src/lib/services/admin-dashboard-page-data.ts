@@ -1,15 +1,12 @@
 import {
   getHealthTone,
-  getLawbotStatus,
   getPublicIntakeStatus
 } from "@/lib/services/admin-dashboard-helpers";
 import { buildDashboardOperationalMetrics } from "@/lib/services/admin-dashboard-operational-metrics-helpers";
 import type { DashboardInquiryBase } from "@/lib/services/admin-dashboard-page-types";
 import { buildDashboardPriorityLists } from "@/lib/services/admin-dashboard-priority-list-helpers";
-import type { MarketingSnapshot } from "@/lib/services/marketing-sync-service";
 import type { PublicIntakeControlSnapshot } from "@/lib/services/public-intake-control-service-safe-v3";
 import type { SystemHealthSnapshot } from "@/lib/services/system-health-service-safe-v3";
-import { formatDateTime } from "@/lib/utils";
 
 function buildPipeline(inquiries: DashboardInquiryBase[]) {
   const activeInquiries = inquiries.filter((item) => item.status !== "CLOSED");
@@ -58,24 +55,6 @@ function buildPipeline(inquiries: DashboardInquiryBase[]) {
   ];
 }
 
-function buildMarketingStatus(marketingSnapshot: MarketingSnapshot | null) {
-  if (!marketingSnapshot) {
-    return {
-      label: "No feed",
-      toneClassName: "bg-warning/10 text-warning",
-      description: "Using fallback signals. Live market engine feed is not connected yet."
-    };
-  }
-
-  return {
-    label: "Feed active",
-    toneClassName: "bg-success/10 text-success",
-    description: `Latest market snapshot synced at ${formatDateTime(
-      marketingSnapshot.received_at ?? marketingSnapshot.generated_at ?? null
-    )}.`
-  };
-}
-
 function buildSystemHealthSummary(systemHealthSnapshot: SystemHealthSnapshot | null) {
   const healthTone = getHealthTone(systemHealthSnapshot?.overallLevel ?? null);
   const healthDescription = systemHealthSnapshot
@@ -102,7 +81,6 @@ function buildSystemHealthSummary(systemHealthSnapshot: SystemHealthSnapshot | n
 
 export function buildAdminDashboardPageData<T extends DashboardInquiryBase>(input: {
   inquiries: T[];
-  marketingSnapshot: MarketingSnapshot | null;
   systemHealthSnapshot: SystemHealthSnapshot | null;
   publicIntakeControl: PublicIntakeControlSnapshot;
 }) {
@@ -114,9 +92,7 @@ export function buildAdminDashboardPageData<T extends DashboardInquiryBase>(inpu
   });
   const pipeline = buildPipeline(input.inquiries);
 
-  const lawbotStatus = getLawbotStatus();
   const publicIntakeStatus = getPublicIntakeStatus(input.publicIntakeControl);
-  const marketingStatus = buildMarketingStatus(input.marketingSnapshot);
   const health = buildSystemHealthSummary(input.systemHealthSnapshot);
 
   return {
@@ -136,9 +112,7 @@ export function buildAdminDashboardPageData<T extends DashboardInquiryBase>(inpu
     recentIntakes: priorityLists.recentIntakes,
     immediateActionItemsWithProgress: priorityLists.immediateActionItemsWithProgress,
     pipeline,
-    lawbotStatus,
     publicIntakeStatus,
-    marketingStatus,
     healthTone: health.healthTone,
     healthDescription: health.healthDescription,
     healthScore: health.healthScore,

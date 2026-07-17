@@ -22,7 +22,6 @@ import {
 } from "@/lib/services/case-matter-action-view-model";
 import { listCaseMatters } from "@/lib/services/case-matter-service";
 import { listInquiries } from "@/lib/services/inquiry-service";
-import { readMarketingSnapshot } from "@/lib/services/marketing-sync-service";
 import {
   getPublicIntakeControlSnapshot,
   type PublicIntakeControlSnapshot
@@ -101,15 +100,6 @@ async function safeListCaseAccountingSummaryRows(): Promise<CaseAccountingSummar
   }
 }
 
-async function safeReadMarketingSnapshot() {
-  try {
-    return await readMarketingSnapshot();
-  } catch (error) {
-    logger.error("Failed to load marketing snapshot for admin dashboard", error);
-    return null;
-  }
-}
-
 async function safeGetSystemHealthSnapshot() {
   try {
     return await getSystemHealthSnapshot();
@@ -148,7 +138,6 @@ export default async function AdminDashboardContent() {
   const dashboardV2Enabled = await isFeatureEnabled("admin_dashboard_v2");
   const [
     inquiries,
-    marketingSnapshot,
     systemHealthSnapshot,
     publicIntakeControl,
     quoteCount,
@@ -158,7 +147,6 @@ export default async function AdminDashboardContent() {
     caseAccountingRows
   ] = await Promise.all([
     safeListInquiries(),
-    safeReadMarketingSnapshot(),
     safeGetSystemHealthSnapshot(),
     safeGetPublicIntakeControlSnapshot(),
     safeCount("quote count", prisma.quote.count(), 0),
@@ -192,9 +180,7 @@ export default async function AdminDashboardContent() {
     recentIntakes,
     immediateActionItemsWithProgress,
     pipeline,
-    lawbotStatus,
     publicIntakeStatus,
-    marketingStatus,
     healthTone,
     healthDescription,
     healthScore,
@@ -202,7 +188,6 @@ export default async function AdminDashboardContent() {
     healthCriticalCount
   } = buildAdminDashboardPageData({
     inquiries,
-    marketingSnapshot,
     systemHealthSnapshot,
     publicIntakeControl
   });
@@ -243,8 +228,6 @@ export default async function AdminDashboardContent() {
         healthTone={healthTone}
         healthScore={healthScore}
         healthDescription={healthDescription}
-        lawbotStatus={lawbotStatus}
-        marketingStatus={marketingStatus}
       />
 
       <NextActionsPanel />

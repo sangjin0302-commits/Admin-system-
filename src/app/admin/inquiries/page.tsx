@@ -17,7 +17,6 @@ import {
   parseInquiryViewMode
 } from "@/lib/services/admin-inquiry-list-helpers";
 import { buildAdminInquiryPageData } from "@/lib/services/admin-inquiry-page-data";
-import { readMarketingSnapshot } from "@/lib/services/marketing-sync-service";
 import { parseAdminInquiryQuery } from "@/lib/validation/admin-safe-v2";
 import { listInquiries } from "@/lib/services/inquiry-service";
 import { getScoresForInquiries } from "@/lib/services/priority-scoring-service";
@@ -37,15 +36,6 @@ async function safeListInquiries(filters?: Parameters<typeof listInquiries>[0]) 
   }
 }
 
-async function safeReadMarketingSnapshot() {
-  try {
-    return await readMarketingSnapshot();
-  } catch (error) {
-    logger.error("Failed to load marketing snapshot for inquiry list", error);
-    return null;
-  }
-}
-
 export default async function AdminInquiryListPage({
   searchParams
 }: {
@@ -56,10 +46,9 @@ export default async function AdminInquiryListPage({
   const listViewHref = buildInquiryListHref(rawParams, "list");
   const boardViewHref = buildInquiryListHref(rawParams, "board");
   const filters = parseAdminInquiryQuery(rawParams);
-  const [allInquiries, inquiries, marketingSnapshot] = await Promise.all([
+  const [allInquiries, inquiries] = await Promise.all([
     safeListInquiries(),
-    safeListInquiries(filters),
-    safeReadMarketingSnapshot()
+    safeListInquiries(filters)
   ]);
   const priorityScores = await getScoresForInquiries(inquiries.map((i) => i.id)).catch((error) => {
     logger.error("Failed to load priority scores", error);
@@ -69,8 +58,6 @@ export default async function AdminInquiryListPage({
   const {
     activeInquiries,
     prioritizedInquiries,
-    lawbotStatus,
-    marketingStatus,
     focusSummary,
     immediateExecutionItems,
     quickActionLinks,
@@ -81,8 +68,7 @@ export default async function AdminInquiryListPage({
     allInquiries,
     inquiries,
     filters,
-    viewMode,
-    marketingSnapshot
+    viewMode
   });
 
   return (
@@ -97,9 +83,7 @@ export default async function AdminInquiryListPage({
                 처음 들어오면 이 화면에서 오늘 우선 처리할 건, 연결 상태, 자료 병목을 한 번에 확인할 수 있도록 정리했습니다.
               </p>
               <p className="mt-3 text-sm text-text">
-                현재 기준으로 <span className="font-semibold text-text-strong">Lawbot는 {lawbotStatus.label}</span>,{" "}
-                <span className="font-semibold text-text-strong">marketing은 {marketingStatus.label}</span> 상태입니다.
-                두 엔진이 서로 직접 연결된 구조는 아직 아니고, system이 각각의 분석 결과와 스냅샷을 받아 운영 흐름에 반영합니다.
+                문의, 상태 전환, 내부 메모, 견적, 사건 스냅샷은 모두 system DB를 기준으로 관리합니다.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -138,7 +122,7 @@ export default async function AdminInquiryListPage({
             ))}
           </div>
 
-          <div className="grid gap-3 xl:grid-cols-3">
+          <div className="grid gap-3">
             <Card className="ui-analysis-panel p-4">
               <p className="ui-kicker">System Core</p>
               <div className="mt-3 flex items-center justify-between gap-3">
@@ -152,31 +136,6 @@ export default async function AdminInquiryListPage({
               </p>
             </Card>
 
-            <Card className="ui-analysis-panel p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="ui-kicker">Lawbot Lane</p>
-                  <h3 className="mt-2 text-base font-semibold text-text-strong">법률 분석 엔진</h3>
-                </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${lawbotStatus.toneClassName}`}>
-                  {lawbotStatus.label}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-text-muted">{lawbotStatus.detail}</p>
-            </Card>
-
-            <Card className="ui-analysis-panel p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="ui-kicker">Market Analyze</p>
-                  <h3 className="mt-2 text-base font-semibold text-text-strong">외부 수요 신호</h3>
-                </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${marketingStatus.toneClassName}`}>
-                  {marketingStatus.label}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-text-muted">{marketingStatus.detail}</p>
-            </Card>
           </div>
         </div>
       </Card>

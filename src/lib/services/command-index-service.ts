@@ -59,7 +59,6 @@ const STATIC_PAGES: CommandItem[] = [
   { id: "page:cases.kanban", group: "page", label: "사건 칸반 보드", href: "/admin/cases/kanban", aliases: ["칸반", "kanban"] },
   { id: "page:advisor", group: "page", label: "운영 참모", href: "/admin/advisor" },
   { id: "page:ai-assistant", group: "page", label: "AI 어시스턴트", href: "/admin/ai-assistant" },
-  { id: "page:lawbot", group: "page", label: "AI 분석 (Lawbot)", href: "/admin/lawbot" },
   { id: "page:stats", group: "page", label: "통계 / 재무", href: "/admin/stats" },
   { id: "page:ledger", group: "page", label: "원장 관리", href: "/admin/ledger" },
   { id: "page:site-content", group: "page", label: "홈페이지 운영", href: "/admin/site-content" },

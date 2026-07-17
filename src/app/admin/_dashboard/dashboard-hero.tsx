@@ -20,8 +20,6 @@ type Props = {
   healthTone: PageData["healthTone"];
   healthScore: PageData["healthScore"];
   healthDescription: PageData["healthDescription"];
-  lawbotStatus: PageData["lawbotStatus"];
-  marketingStatus: PageData["marketingStatus"];
 };
 
 export function DashboardHero({
@@ -36,9 +34,7 @@ export function DashboardHero({
   publicIntakeStatus,
   healthTone,
   healthScore,
-  healthDescription,
-  lawbotStatus,
-  marketingStatus
+  healthDescription
 }: Props) {
   return (
     <Card className="ui-analysis-hero p-6">
@@ -103,7 +99,7 @@ export function DashboardHero({
           <span className="ui-analysis-chip">준비도 낮음 {checklistLowReadinessCount}건</span>
         </div>
 
-        <div className="grid gap-3 xl:grid-cols-5">
+        <div className="grid gap-3 xl:grid-cols-2">
           <Card className="ui-analysis-panel p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -130,39 +126,6 @@ export function DashboardHero({
             <p className="mt-3 text-sm text-text-muted">{healthDescription}</p>
           </Card>
 
-          <Card className="ui-analysis-panel p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="ui-kicker">Lawbot</p>
-                <h3 className="mt-2 text-base font-semibold text-text-strong">법률 분석</h3>
-              </div>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${lawbotStatus.toneClassName}`}>
-                {lawbotStatus.label}
-              </span>
-            </div>
-            <p className="mt-3 text-sm text-text-muted">{lawbotStatus.description}</p>
-          </Card>
-
-          <Card className="ui-analysis-panel p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="ui-kicker">Market Analyze</p>
-                <h3 className="mt-2 text-base font-semibold text-text-strong">시장 인사이트</h3>
-              </div>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${marketingStatus.toneClassName}`}>
-                {marketingStatus.label}
-              </span>
-            </div>
-            <p className="mt-3 text-sm text-text-muted">{marketingStatus.description}</p>
-          </Card>
-
-          <Card className="ui-analysis-panel p-4">
-            <p className="ui-kicker">Workspace</p>
-            <h3 className="mt-3 text-base font-semibold text-text-strong">별도 화면 연결</h3>
-            <p className="mt-2 text-sm text-text-muted">
-              market-analyze 프론트 구조를 기준으로 연동 센터에 스크린 자리를 미리 만들어 둔 상태입니다.
-            </p>
-          </Card>
         </div>
       </div>
     </Card>

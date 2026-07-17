@@ -62,7 +62,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin/advisor", label: "운영 참모", icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" },
       { href: "/admin/ai-assistant", label: "AI 어시스턴트", icon: "M12 2a2 2 0 012 2v1h3a2 2 0 012 2v3h1a1 1 0 011 1v2a1 1 0 01-1 1h-1v4a2 2 0 01-2 2H7a2 2 0 01-2-2v-4H4a1 1 0 01-1-1v-2a1 1 0 011-1h1V7a2 2 0 012-2h3V4a2 2 0 012-2zm-3 9a1 1 0 100 2 1 1 0 000-2zm6 0a1 1 0 100 2 1 1 0 000-2zm-6 4h6" },
-      { href: "/admin/lawbot", label: "AI 분석", icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
       { href: "/admin/stats", label: "통계 / 재무", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
       { href: "/admin/ledger", label: "원장 관리", icon: "M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" },
       { href: "/admin/funnel", label: "전환 퍼널", icon: "M3 4h18M6 8h12M9 12h6m-4 4h2m-1 4h.01" },
@@ -77,7 +76,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/ltv", label: "고객 LTV", icon: "M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" },
       { href: "/admin/reports", label: "비즈니스 리포트", icon: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
       { href: "/admin/bot-stats/lawbot", label: "Lawbot 사용", icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
-      { href: "/admin/market-bot", label: "마켓 분석 봇", icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" },
       { href: "/admin/fee-estimator", label: "수임료 견적기", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
       { href: "/admin/monitoring", label: "모니터링", icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" },
       { href: "/admin/activity", label: "활동 로그", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
