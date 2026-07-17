@@ -81,6 +81,121 @@ function LongText({ text }: { text: string }) {
   );
 }
 
+type CitationVerdict = {
+  citation: { raw: string; lawName: string; article: string; citedTitle: string };
+  status: "verified" | "content_mismatch" | "article_not_found" | "law_not_found" | "unchecked";
+  actualTitle: string;
+  detail: string;
+  layer?: "exact" | "jaccard" | "none";
+  score?: number;
+};
+
+type CitationVerifyResult = {
+  total: number;
+  verified: number;
+  mismatched: number;
+  notFound: number;
+  verdicts: CitationVerdict[];
+  hallucinationDetected: boolean;
+};
+
+/**
+ * 인용 검증 — 초안 텍스트를 붙여넣으면 조문 인용을 법제처 원문과 대조한다.
+ * AI가 지어낸 조문/제목을 서면에 넣기 전에 잡는 용도.
+ */
+function CitationVerifyBlock() {
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<CitationVerifyResult | null>(null);
+
+  const run = useCallback(async () => {
+    if (!text.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = (await callApi("verifyCitations", { text })) as CitationVerifyResult;
+      setResult(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "인용 검증 실패");
+      setResult(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [text]);
+
+  const alert = result?.hallucinationDetected ?? false;
+
+  return (
+    <div className="admin-card p-4 space-y-3">
+      <div>
+        <p className="ui-kicker">인용 검증</p>
+        <p className="mt-1 text-sm text-text-muted">
+          초안 텍스트를 붙여넣으면 「법령명 제N조(제목)」 인용을 법제처 원문과 대조합니다.
+        </p>
+      </div>
+
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="검증할 초안 텍스트를 붙여넣으세요 (예: 「출입국관리법」 제24조(체류자격 변경허가)에 따라…)"
+        rows={5}
+        className="w-full border rounded px-3 py-2 text-sm"
+      />
+
+      <button
+        onClick={run}
+        disabled={loading || !text.trim()}
+        className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+      >
+        {loading ? "검증중..." : "검증"}
+      </button>
+
+      {error && <div className="text-sm text-red-600">{error}</div>}
+
+      {result && result.total === 0 && (
+        <div className="text-sm text-gray-500">
+          텍스트에서 조문 인용을 찾지 못했습니다.
+        </div>
+      )}
+
+      {result && result.total > 0 && (
+        <div
+          className={`rounded border p-3 ${
+            alert ? "border-red-300 bg-red-50" : "border-green-200 bg-green-50"
+          }`}
+        >
+          <div
+            className={`text-xs font-semibold mb-2 ${
+              alert ? "text-red-700" : "text-green-700"
+            }`}
+          >
+            {alert
+              ? `⚠️ 인용 오류 ${result.mismatched + result.notFound}건 감지`
+              : `✅ 인용 검증 통과 (${result.verified}건)`}
+          </div>
+          <ul className="space-y-1">
+            {result.verdicts.map((v, i) => {
+              const ok = v.status === "verified";
+              return (
+                <li key={`${v.citation.raw}-${i}`} className="flex gap-2 text-xs">
+                  <span className={ok ? "text-green-600" : "text-red-600"}>
+                    {ok ? "✓" : "✗"}
+                  </span>
+                  <span className="text-gray-800">
+                    <span className="font-medium">{v.citation.raw}</span>
+                    <span className="text-gray-600"> — {v.detail}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: string }) {
   const [byGroup, setByGroup] = useState<Record<string, TargetSpec[]>>({});
   const [group, setGroup] = useState<Group>("법령");
@@ -200,6 +315,7 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
   }, []);
 
   return (
+    <div className="space-y-4">
     <div className="admin-card p-4 space-y-4">
       {/* Row 1 — 그룹 탭 */}
       <div className="flex gap-2 flex-wrap">
@@ -457,6 +573,10 @@ export function LawResearchPanel({ initialKeyword = "" }: { initialKeyword?: str
           )}
         </div>
       </div>
+    </div>
+
+    {/* 검색 아래 — 초안 인용 검증 */}
+    <CitationVerifyBlock />
     </div>
   );
 }

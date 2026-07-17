@@ -1,5 +1,6 @@
 import { createAdminRequestContext, safeReadJsonBody } from "@/lib/http/admin-api";
 import { requireRole } from "@/lib/services/admin-rbac-service";
+import { verifyCitations } from "@/lib/services/citation-verify-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import {
   searchLaw,
@@ -92,7 +93,9 @@ type Action =
   | "searchRelatedArticles"
   | "searchPrecedentByNumber"
   | "searchLawExact"
-  | "searchAdminRuleByType";
+  | "searchAdminRuleByType"
+  // 인용 검증
+  | "verifyCitations";
 
 function toMinistryKey(v: unknown): MinistryKey | null {
   const k = String(v ?? "");
@@ -294,6 +297,15 @@ export async function POST(req: Request) {
         } catch (e) {
           drf = `ERROR ${String(e).slice(0, 160)}`;
         }
+        // 서비스 레이어를 실제로 태워 본다 — 위 drf가 200인데 이게 len=0이면
+        // 원인은 env가 아니라 서비스 내부(envReady/캐시/파서)다.
+        let serviceProbe = "not attempted";
+        try {
+          const rows = await searchLaw("출입국관리법", 1);
+          serviceProbe = `len=${rows.length}${rows[0] ? ` first="${rows[0].title}"` : ""}`;
+        } catch (e) {
+          serviceProbe = `ERROR ${String(e).slice(0, 160)}`;
+        }
         data = {
           hasProxyUrl: url !== "(unset)",
           proxyUrl: url,
@@ -302,7 +314,8 @@ export async function POST(req: Request) {
           hasOc: Boolean(oc),
           ocValue: oc,
           health,
-          drf
+          drf,
+          serviceProbe
         };
         break;
       }
@@ -362,6 +375,22 @@ export async function POST(req: Request) {
       case "searchLawExact":
         data = await searchLawExact(String(p.name ?? ""), Number(p.limit ?? 10));
         break;
+
+      // ---------- 인용 검증 ----------
+      case "verifyCitations": {
+        const text = String(p.text ?? "");
+        if (!text.trim()) {
+          return api.error(400, "검증할 텍스트를 입력해 주세요.", {
+            code: "MISSING_TEXT"
+          });
+        }
+        const rawMax = Number(p.max ?? 15);
+        const max = Number.isFinite(rawMax)
+          ? Math.min(Math.max(Math.trunc(rawMax), 1), 30)
+          : 15;
+        data = await verifyCitations(text, max);
+        break;
+      }
 
       default:
         return api.error(400, "지원하지 않는 action입니다.", { code: "UNKNOWN_ACTION" });

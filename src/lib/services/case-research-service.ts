@@ -14,6 +14,11 @@ import { createHash } from "crypto";
 
 import { withCache } from "@/lib/services/cache-service";
 import {
+  verifyCitations,
+  type CitationVerifyResult,
+} from "@/lib/services/citation-verify-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import {
   searchAdminJudgment,
   searchAdminRule,
   searchArticleFullText,
@@ -54,6 +59,8 @@ export type CaseResearchResult = {
   forms: FormItem[];
   ordinances: OrdinanceItem[];
   summary: string;
+  /** AI 요약의 조문 인용 검증 결과. 플래그 off이거나 검증 불가 시 null */
+  citationCheck: CitationVerifyResult | null;
   generatedAt: string;
 };
 
@@ -212,7 +219,7 @@ export async function researchCase(
       searchForm(primaryKw, 3).catch(() => [] as FormItem[]),
     ]);
 
-    const summary = await summarize(trimmed, {
+    const rawSummary = await summarize(trimmed, {
       laws,
       articles,
       precedents,
@@ -224,6 +231,21 @@ export async function researchCase(
       ordinances,
       forms,
     });
+
+    /**
+     * 인용 검증 — AI가 지어낸 조문을 잡는다.
+     * 차단·재시도하지 않고 그대로 노출한다. 불일치가 있으면 요약 본문에도
+     * 경고를 덧붙여 복사해 가더라도 놓칠 수 없게 한다.
+     */
+    let citationCheck: CitationVerifyResult | null = null;
+    let summary = rawSummary;
+    if (await isFeatureEnabled("case_research_verify_citations")) {
+      citationCheck = await verifyCitations(rawSummary);
+      if (citationCheck.hallucinationDetected) {
+        const bad = citationCheck.mismatched + citationCheck.notFound;
+        summary = `${rawSummary}\n\n⚠️ 인용 검증: ${bad}건의 조문 인용이 실제와 불일치합니다. 아래 검증 결과를 확인하세요.`;
+      }
+    }
 
     return {
       keywords,
@@ -238,6 +260,7 @@ export async function researchCase(
       forms,
       ordinances,
       summary,
+      citationCheck,
       generatedAt: new Date().toISOString(),
     };
   };

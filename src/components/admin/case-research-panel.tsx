@@ -15,6 +15,76 @@ type LawResultItem = {
   extra: Record<string, string>;
 };
 
+type ParsedCitation = {
+  raw: string;
+  lawName: string;
+  article: string;
+  citedTitle: string;
+};
+
+type CitationVerdict = {
+  citation: ParsedCitation;
+  status:
+    | "verified"
+    | "content_mismatch"
+    | "article_not_found"
+    | "law_not_found"
+    | "unchecked";
+  actualTitle: string;
+  detail: string;
+  layer?: "exact" | "jaccard" | "none";
+  score?: number;
+};
+
+type CitationVerifyResult = {
+  total: number;
+  verified: number;
+  mismatched: number;
+  notFound: number;
+  verdicts: CitationVerdict[];
+  hallucinationDetected: boolean;
+};
+
+/** 인용 검증 결과 카드 — 요약 바로 아래, 결과 섹션보다 위에 둔다. */
+export function CitationCheckCard({ check }: { check: CitationVerifyResult }) {
+  if (check.total === 0) return null;
+  const bad = check.mismatched + check.notFound;
+  const alert = check.hallucinationDetected;
+  return (
+    <div
+      className={`rounded border p-3 ${
+        alert ? "border-red-300 bg-red-50" : "border-green-200 bg-green-50"
+      }`}
+    >
+      <div
+        className={`text-xs font-semibold mb-2 ${
+          alert ? "text-red-700" : "text-green-700"
+        }`}
+      >
+        {alert
+          ? `⚠️ 인용 오류 ${bad}건 감지`
+          : `✅ 인용 검증 통과 (${check.verified}건)`}
+      </div>
+      <ul className="space-y-1">
+        {check.verdicts.map((v, i) => {
+          const ok = v.status === "verified";
+          return (
+            <li key={`${v.citation.raw}-${i}`} className="flex gap-2 text-xs">
+              <span className={ok ? "text-green-600" : "text-red-600"}>
+                {ok ? "✓" : "✗"}
+              </span>
+              <span className="text-gray-800">
+                <span className="font-medium">{v.citation.raw}</span>
+                <span className="text-gray-600"> — {v.detail}</span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 type CaseResearchResult = {
   keywords: string[];
   laws: LawResultItem[];
@@ -28,6 +98,7 @@ type CaseResearchResult = {
   forms: LawResultItem[];
   ordinances: LawResultItem[];
   summary: string;
+  citationCheck: CitationVerifyResult | null;
   generatedAt: string;
 };
 
@@ -146,6 +217,8 @@ export function CaseResearchPanel({ initialDescription = "", autoRun = false }: 
               키워드: {result.keywords.join(", ")} · 생성 {new Date(result.generatedAt).toLocaleString("ko-KR")}
             </div>
           </div>
+
+          {result.citationCheck && <CitationCheckCard check={result.citationCheck} />}
 
           <Section title={`관련 법령 (${result.laws.length})`}>
             {result.laws.map((it, i) => (
