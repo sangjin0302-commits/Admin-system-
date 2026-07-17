@@ -5,18 +5,21 @@
  * target 파라미터로 도메인을 구분한다. wrapper key / item key는 target마다 다르다.
  * Vercel IP 화이트리스트 불가 → Lightsail 프록시(3.36.175.81:8080) 경유.
  *
- * TARGET_REGISTRY는 총 56개 target으로, supported: true 항목(53개)은
- * OC=sangjin_api로 실제 호출해 확인한 실측값이다(그 중 verified: false 2개는
- * 프로브 질의 결과가 0건이라 필드명을 형제 target 기준으로 추정했다).
- * supported: false 항목(3개)은 DRF target 파라미터 이름이 확인되지 않아 빈 응답만 오며,
- * 호출 없이 즉시 []/null을 반환한다.
+ * TARGET_REGISTRY는 총 85개 target으로, supported: true 항목(83개)은
+ * OC=sangjin_api로 실제 호출해 확인한 실측값이다.
+ * supported: false 항목(2개, lstrmRlt/dlytrmRlt)은 DRF target 파라미터 이름이
+ * 확인되지 않아 빈 응답만 오며, 호출 없이 즉시 []/null을 반환한다.
  *
  * 권한 문제가 아니다: 법제처 OPEN API 신청 화면의 공동활용 법령종류 20종은
- * 전부 신청 완료 상태다. 미지원 3건은 순전히 target 이름 미확인 때문이다.
+ * 전부 신청 완료 상태다. 미지원 2건은 순전히 target 이름 미확인 때문이다.
+ *
+ * 부처별 유권해석(38종)은 `{부처영문약칭}CgmExpc` 규칙이며 shape가 전부 동일하다.
+ * 부처명이 바뀌면 약칭도 바뀐다: 여성가족부→성평등가족부이므로 mow가 아니라 mogef다.
+ * ⚠️ mof=해양수산부 / moef=기획재정부 — 약칭이 비슷해 혼동 주의(과거 mof를 기재부로 오기했다).
  *
  * 헌재결정례는 detc, 노동위원회는 nlrc, 국민권익위는 acr,
  * 고용보험심사위원회는 eiac target을 쓴다
- * (ccourt/nodong/acrc/empins는 실재하지 않는 target이라 제거했다).
+ * (ccourt/nodong/acrc/empins/mow는 실재하지 않는 target이라 제거했다).
  * 감사원·법령안(입법예고)은 법제처 공동활용 대상이 아니라 아예 제거했다.
  *
  * 실패 원인 구분이 필요하면 searchTarget 대신 searchTargetDetailed를 쓸 것.
@@ -182,7 +185,14 @@ export type TargetKey =
   | "expc" | "decc"
   | "molitCgmExpc" | "moelCgmExpc" | "ntsCgmExpc"
   | "mojCgmExpc" | "mofCgmExpc" | "mssCgmExpc" | "kcsCgmExpc" | "mpvaCgmExpc"
-  | "mowCgmExpc"
+  | "molegCgmExpc" | "moefCgmExpc" | "mogefCgmExpc" | "moeCgmExpc"
+  | "msitCgmExpc" | "mndCgmExpc" | "moisCgmExpc" | "mafraCgmExpc"
+  | "mcstCgmExpc" | "mohwCgmExpc" | "motieCgmExpc" | "mofaCgmExpc"
+  | "meCgmExpc" | "mfdsCgmExpc" | "mpmCgmExpc" | "kmaCgmExpc"
+  | "khsCgmExpc" | "rdaCgmExpc" | "npaCgmExpc" | "dapaCgmExpc"
+  | "mmaCgmExpc" | "kfsCgmExpc" | "nfaCgmExpc" | "okaCgmExpc"
+  | "ppsCgmExpc" | "kdcaCgmExpc" | "kostatCgmExpc" | "kipoCgmExpc"
+  | "kcgCgmExpc" | "naaccCgmExpc"
   | "ttSpecialDecc" | "kmstSpecialDecc" | "acrSpecialDecc" | "adapSpecialDecc"
   | "detc"
   | "lstrm" | "lstrmAI" | "dlytrm"
@@ -447,6 +457,9 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
   },
   // moj/mof는 CgmExpc wrapper를 반환했으나 프로브 질의 결과 item 0건.
   // target 자체는 유효하며 shape는 다른 CgmExpc target과 동일함을 확인.
+  //
+  // ⚠️ mof = 해양수산부, moef = 기획재정부. 이름이 비슷해 혼동하기 쉽다.
+  //    (mof를 "기획재정부"로 잘못 라벨링했던 것을 프로브로 확인해 바로잡았다.)
   mojCgmExpc: {
     key: "mojCgmExpc",
     label: "법무부 유권해석",
@@ -465,7 +478,7 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
   },
   mofCgmExpc: {
     key: "mofCgmExpc",
-    label: "기획재정부 유권해석",
+    label: "해양수산부 유권해석",
     group: "해석",
     wrappers: ["CgmExpc"],
     itemKeys: ["cgmExpc"],
@@ -514,6 +527,487 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
   mpvaCgmExpc: {
     key: "mpvaCgmExpc",
     label: "국가보훈부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+
+  molegCgmExpc: {
+    key: "molegCgmExpc",
+    label: "법제처 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  moefCgmExpc: {
+    key: "moefCgmExpc",
+    label: "기획재정부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mogefCgmExpc: {
+    key: "mogefCgmExpc",
+    label: "성평등가족부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  moeCgmExpc: {
+    key: "moeCgmExpc",
+    label: "교육부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  msitCgmExpc: {
+    key: "msitCgmExpc",
+    label: "과학기술정보통신부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mndCgmExpc: {
+    key: "mndCgmExpc",
+    label: "국방부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  moisCgmExpc: {
+    key: "moisCgmExpc",
+    label: "행정안전부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mafraCgmExpc: {
+    key: "mafraCgmExpc",
+    label: "농림축산식품부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mcstCgmExpc: {
+    key: "mcstCgmExpc",
+    label: "문화체육관광부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mohwCgmExpc: {
+    key: "mohwCgmExpc",
+    label: "보건복지부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  motieCgmExpc: {
+    key: "motieCgmExpc",
+    label: "산업통상부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mofaCgmExpc: {
+    key: "mofaCgmExpc",
+    label: "외교부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  meCgmExpc: {
+    key: "meCgmExpc",
+    label: "기후에너지환경부 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mfdsCgmExpc: {
+    key: "mfdsCgmExpc",
+    label: "식품의약품안전처 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mpmCgmExpc: {
+    key: "mpmCgmExpc",
+    label: "인사혁신처 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  kmaCgmExpc: {
+    key: "kmaCgmExpc",
+    label: "기상청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  khsCgmExpc: {
+    key: "khsCgmExpc",
+    label: "국가유산청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  rdaCgmExpc: {
+    key: "rdaCgmExpc",
+    label: "농촌진흥청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  npaCgmExpc: {
+    key: "npaCgmExpc",
+    label: "경찰청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  dapaCgmExpc: {
+    key: "dapaCgmExpc",
+    label: "방위사업청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  mmaCgmExpc: {
+    key: "mmaCgmExpc",
+    label: "병무청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  kfsCgmExpc: {
+    key: "kfsCgmExpc",
+    label: "산림청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  nfaCgmExpc: {
+    key: "nfaCgmExpc",
+    label: "소방청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  okaCgmExpc: {
+    key: "okaCgmExpc",
+    label: "재외동포청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  ppsCgmExpc: {
+    key: "ppsCgmExpc",
+    label: "조달청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  kdcaCgmExpc: {
+    key: "kdcaCgmExpc",
+    label: "질병관리청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  kostatCgmExpc: {
+    key: "kostatCgmExpc",
+    label: "국가데이터처 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  kipoCgmExpc: {
+    key: "kipoCgmExpc",
+    label: "지식재산처 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  kcgCgmExpc: {
+    key: "kcgCgmExpc",
+    label: "해양경찰청 유권해석",
+    group: "해석",
+    wrappers: ["CgmExpc"],
+    itemKeys: ["cgmExpc"],
+    idFields: ["법령해석일련번호"],
+    titleFields: ["안건명"],
+    agencyFields: ["해석기관명", "질의기관명"],
+    dateFields: ["해석일자"],
+    numberFields: ["안건번호"],
+    linkFields: ["법령해석상세링크"],
+    detailIdParam: "ID",
+    verified: true,
+    supported: true
+  },
+  naaccCgmExpc: {
+    key: "naaccCgmExpc",
+    label: "행정중심복합도시건설청 유권해석",
     group: "해석",
     wrappers: ["CgmExpc"],
     itemKeys: ["cgmExpc"],
@@ -1130,36 +1624,21 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
   // 법제처 OPEN API 신청 화면의 "공동활용 법령종류" 20종은 전부 신청·체크된 상태다.
   // 따라서 이들이 안 되는 것은 권한 문제가 아니라 target 이름 문제다.
   //
-  // - mowCgmExpc: 부처별 유권해석(*CgmExpc)은 위 20종 목록과 별개 체계다.
-  //               molit/moel/nts/moj/mof/mss/kcs/mpva 는 실측으로 동작하나 mow만 빈 응답.
-  //               여성가족부가 해당 API를 제공하지 않거나 target명이 다른 것으로 보인다.
   // - lstrmRlt / dlytrmRlt: 법령용어 자체(lstrm/dlytrm)는 신청·동작 확인됨.
   //               연계(Rlt) 하위 기능의 target명이 확인되지 않는다.
   //
-  // ⚠️ 프록시 경유로는 이 셋 모두 완전히 빈 200만 온다(JSON·XML·HTML 전부 raw_len=0).
+  // ⚠️ 프록시 경유로는 이 둘 모두 완전히 빈 200만 온다(JSON·XML·HTML 전부 raw_len=0).
   //    없는 target과 미신청 target의 응답이 구분되지 않으므로, 빈 응답만으로
-  //    원인을 단정하지 말 것. 실제로 이 파일에서만 4번 오판했다:
-  //      ccourt→detc / nodong→nlrc / acrc→acr / empins→eiac
+  //    원인을 단정하지 말 것. 실제로 이 파일에서만 5번 오판했다:
+  //      ccourt→detc / nodong→nlrc / acrc→acr / empins→eiac / mow→mogef
   //    전부 lawbot(_lib.py)에서 가져온 미검증 이름이었다.
   //
+  // 감사원 사전컨설팅 의견서: 신청 화면에는 체크돼 있으나 target 이름을 찾지 못했다.
+  //   시도한 후보: bai / baiConsult / baiCnslt / baiPreCnslt / preConsult / auditConsult 등 15종 — 전부 빈 응답.
+  //   통일부 유권해석도 동일 (unikoreaCgmExpc / muCgmExpc / unikCgmExpc 등 실패).
+  //   법제처 문의(02-2109-6446)로 정확한 target 값 확인 필요.
+  //
   // 확인 경로: 법제처 공동활용 유지보수팀 02-2109-6446
-  // 프로브 결과 빈 응답(JSON). shape는 다른 CgmExpc target 기준 추정값.
-  mowCgmExpc: {
-    key: "mowCgmExpc",
-    label: "여성가족부 유권해석",
-    group: "해석",
-    wrappers: ["CgmExpc"],
-    itemKeys: ["cgmExpc"],
-    idFields: ["법령해석일련번호"],
-    titleFields: ["안건명"],
-    agencyFields: ["해석기관명", "질의기관명"],
-    dateFields: ["해석일자"],
-    numberFields: ["안건번호"],
-    linkFields: ["법령해석상세링크"],
-    detailIdParam: "ID",
-    verified: false,
-    supported: false
-  },
   // 프로브 결과 빈 응답. shape는 lstrm/dlytrm 기준 추정값.
   lstrmRlt: {
     key: "lstrmRlt",
@@ -1243,14 +1722,44 @@ export type TreatyItem = LawResultItem;
 // ---------- 부처별 유권해석 target (back-compat) ----------
 
 export const MINISTRY_TARGETS = {
-  molit: { target: "molitCgmExpc", label: "국토교통부" },
-  moel: { target: "moelCgmExpc", label: "고용노동부" },
-  nts: { target: "ntsCgmExpc", label: "국세청" },
-  moj: { target: "mojCgmExpc", label: "법무부" },
-  mof: { target: "mofCgmExpc", label: "기획재정부" },
-  mss: { target: "mssCgmExpc", label: "중소벤처기업부" },
+  dapa: { target: "dapaCgmExpc", label: "방위사업청" },
+  kcg: { target: "kcgCgmExpc", label: "해양경찰청" },
   kcs: { target: "kcsCgmExpc", label: "관세청" },
-  mpva: { target: "mpvaCgmExpc", label: "국가보훈부" }
+  kdca: { target: "kdcaCgmExpc", label: "질병관리청" },
+  kfs: { target: "kfsCgmExpc", label: "산림청" },
+  khs: { target: "khsCgmExpc", label: "국가유산청" },
+  kipo: { target: "kipoCgmExpc", label: "지식재산처" },
+  kma: { target: "kmaCgmExpc", label: "기상청" },
+  kostat: { target: "kostatCgmExpc", label: "국가데이터처" },
+  mafra: { target: "mafraCgmExpc", label: "농림축산식품부" },
+  mcst: { target: "mcstCgmExpc", label: "문화체육관광부" },
+  me: { target: "meCgmExpc", label: "기후에너지환경부" },
+  mfds: { target: "mfdsCgmExpc", label: "식품의약품안전처" },
+  mma: { target: "mmaCgmExpc", label: "병무청" },
+  mnd: { target: "mndCgmExpc", label: "국방부" },
+  moe: { target: "moeCgmExpc", label: "교육부" },
+  moef: { target: "moefCgmExpc", label: "기획재정부" },
+  moel: { target: "moelCgmExpc", label: "고용노동부" },
+  mof: { target: "mofCgmExpc", label: "해양수산부" },
+  mofa: { target: "mofaCgmExpc", label: "외교부" },
+  mogef: { target: "mogefCgmExpc", label: "성평등가족부" },
+  mohw: { target: "mohwCgmExpc", label: "보건복지부" },
+  mois: { target: "moisCgmExpc", label: "행정안전부" },
+  moj: { target: "mojCgmExpc", label: "법무부" },
+  moleg: { target: "molegCgmExpc", label: "법제처" },
+  molit: { target: "molitCgmExpc", label: "국토교통부" },
+  motie: { target: "motieCgmExpc", label: "산업통상부" },
+  mpm: { target: "mpmCgmExpc", label: "인사혁신처" },
+  mpva: { target: "mpvaCgmExpc", label: "국가보훈부" },
+  msit: { target: "msitCgmExpc", label: "과학기술정보통신부" },
+  mss: { target: "mssCgmExpc", label: "중소벤처기업부" },
+  naacc: { target: "naaccCgmExpc", label: "행정중심복합도시건설청" },
+  nfa: { target: "nfaCgmExpc", label: "소방청" },
+  npa: { target: "npaCgmExpc", label: "경찰청" },
+  nts: { target: "ntsCgmExpc", label: "국세청" },
+  oka: { target: "okaCgmExpc", label: "재외동포청" },
+  pps: { target: "ppsCgmExpc", label: "조달청" },
+  rda: { target: "rdaCgmExpc", label: "농촌진흥청" }
 } as const;
 export type MinistryKey = keyof typeof MINISTRY_TARGETS;
 
