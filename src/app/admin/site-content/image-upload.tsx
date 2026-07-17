@@ -17,10 +17,22 @@ const SLOTS: Omit<ImageSlot, "currentUrl">[] = [
   { key: "image.assocBadge", label: "행정사회 뱃지", hint: "대한행정사회 회원 뱃지 — 업로드 시 푸터에 자동 표시됩니다 (권장: 투명 PNG)" },
 ];
 
+const ERROR_LABELS: Record<string, string> = {
+  INVALID_FORM: "폼 데이터가 올바르지 않습니다.",
+  INVALID_KEY: "이미지 키가 올바르지 않습니다.",
+  NO_FILE: "파일이 없습니다.",
+  FILE_TOO_LARGE: "파일 크기가 5MB를 초과합니다.",
+  NOT_IMAGE: "이미지 파일만 업로드 가능합니다.",
+  BLOB_TOKEN_MISSING: "Vercel Blob 토큰 미설정 — 로컬 dev는 저장 불가. 프로덕션 배포에서 시도하세요.",
+  BLOB_UPLOAD_FAILED: "Vercel Blob 업로드 실패",
+  DB_SAVE_FAILED: "DB 저장 실패 (Blob은 저장됨)",
+};
+
 function UploadCard({ slot }: { slot: ImageSlot }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState(slot.currentUrl);
   const [status, setStatus] = useState<"idle" | "uploading" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   async function handleFile(file: File) {
     if (file.size > 5 * 1024 * 1024) {
@@ -28,19 +40,25 @@ function UploadCard({ slot }: { slot: ImageSlot }) {
       return;
     }
     setStatus("uploading");
+    setErrorMsg(null);
     const fd = new FormData();
     fd.append("key", slot.key);
     fd.append("file", file);
     try {
       const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (data.ok) {
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; url?: string; error?: string; message?: string }
+        | null;
+      if (data?.ok && data.url) {
         setUrl(data.url);
         setStatus("idle");
       } else {
+        const label = data?.error ? ERROR_LABELS[data.error] ?? data.error : `HTTP ${res.status}`;
+        setErrorMsg(data?.message ? `${label} — ${data.message}` : label);
         setStatus("error");
       }
-    } catch {
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : String(err));
       setStatus("error");
     }
   }
@@ -48,6 +66,7 @@ function UploadCard({ slot }: { slot: ImageSlot }) {
   async function handleDelete() {
     if (!confirm("이미지를 삭제하시겠습니까?")) return;
     setStatus("uploading");
+    setErrorMsg(null);
     try {
       const res = await fetch("/api/admin/upload", {
         method: "DELETE",
@@ -58,9 +77,13 @@ function UploadCard({ slot }: { slot: ImageSlot }) {
         setUrl(null);
         setStatus("idle");
       } else {
+        const data = (await res.json().catch(() => null)) as { error?: string; message?: string } | null;
+        const label = data?.error ? ERROR_LABELS[data.error] ?? data.error : `HTTP ${res.status}`;
+        setErrorMsg(data?.message ? `${label} — ${data.message}` : label);
         setStatus("error");
       }
-    } catch {
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : String(err));
       setStatus("error");
     }
   }
@@ -110,7 +133,11 @@ function UploadCard({ slot }: { slot: ImageSlot }) {
               삭제
             </button>
           )}
-          {status === "error" && <p className="text-xs text-rose-600">업로드 실패 — 다시 시도해 주세요</p>}
+          {status === "error" && (
+            <p className="max-w-xs text-xs text-rose-600" title={errorMsg ?? undefined}>
+              {errorMsg ?? "업로드 실패 — 다시 시도해 주세요"}
+            </p>
+          )}
         </div>
       </div>
     </div>
