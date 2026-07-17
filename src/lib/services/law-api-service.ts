@@ -1120,11 +1120,22 @@ export const TARGET_REGISTRY: Record<TargetKey, TargetSpec> = {
     supported: true
   },
 
-  // ===== 미지원: DRF target 파라미터 이름 미확인 =====
-  // 법제처 문서에 서비스는 존재하나 target 값이 공개돼 있지 않다.
-  // 여러 질의·XML로 재시도해도 빈 응답만 온다(법제처는 없는 target도 빈 200을 준다).
-  // 확인 경로: open.law.go.kr OPEN API 활용방법 문서 또는 법제처 문의(02-2109-6446).
-  // 이름을 확인하면 key/wrappers/itemKeys 를 교체하고 supported: true 로 전환.
+  // ===== 미지원: OPEN API 신청에서 해당 "법령종류" 미체크 =====
+  //
+  // 법제처 웹 UI는 이 상태에서 아래 안내를 띄운다:
+  //   "미신청된 목록/본문에 대한 접근입니다.
+  //    OPEN API 로그인 후 [OPEN API] → [OPEN API 신청] → 등록된 API 선택 후
+  //    법령종류를 체크해 주세요."
+  //
+  // ⚠️ 함정: 프록시(Lightsail) 경유로는 이 안내가 오지 않고 완전히 빈 200만 온다.
+  //    JSON·XML·HTML 전부 raw_len=0 — 실측 확인. 없는 target의 응답과 구분이 안 된다.
+  //    그래서 "target 이름이 틀렸다"로 오판했었다. 실제 원인은 미신청이다.
+  //    (ccourt→detc, nodong→nlrc, acrc→acr 은 별개로 진짜 이름이 틀렸던 경우)
+  //
+  // 해결: 법제처 OPEN API 신청 화면에서 해당 법령종류 체크 → 즉시 열림.
+  //    이후 supported: true 로 전환하고 실측으로 wrapper/itemKey/필드 확정할 것
+  //    (아래 스펙은 미검증 추정값이다).
+  //    문의: 법제처 공동활용 유지보수팀 02-2109-6446
   audit: {
     key: "audit",
     label: "감사원 심사결정례",
