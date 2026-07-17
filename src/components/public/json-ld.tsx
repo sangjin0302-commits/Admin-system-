@@ -3,40 +3,42 @@
  * Renders Schema.org markup as <script type="application/ld+json">.
  */
 
+import { getSiteUrl } from "@/lib/utils/site-url";
+
 /* ------------------------------------------------------------------ */
 /*  LocalBusinessJsonLd — for home / about pages & root layout        */
 /* ------------------------------------------------------------------ */
 
-const LOCAL_BUSINESS_DATA = {
-  "@context": "https://schema.org",
-  "@type": "LegalService",
-  name: "ETHOS 행정사사무소",
-  description:
-    "비자/체류, 행정심판, 계약서·사실조사, 인허가 업무. 절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를.",
-  url: "https://adminofficemvp2.vercel.app",
-  address: {
-    "@type": "PostalAddress",
-    addressCountry: "KR",
-    addressLocality: "서울특별시",
-  },
-  areaServed: {
-    "@type": "Country",
-    name: "KR",
-  },
-  serviceType: [
-    "비자/외국인 체류",
-    "행정심판",
-    "계약서·사실조사",
-    "인허가",
-    "법인 설립",
-  ],
-};
-
 export function LocalBusinessJsonLd() {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "LegalService",
+    name: "ETHOS 행정사사무소",
+    description:
+      "비자/체류, 행정심판, 계약서·사실조사, 인허가 업무. 절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를.",
+    url: getSiteUrl(),
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "KR",
+      addressLocality: "서울특별시",
+    },
+    areaServed: {
+      "@type": "Country",
+      name: "KR",
+    },
+    serviceType: [
+      "비자/외국인 체류",
+      "행정심판",
+      "계약서·사실조사",
+      "인허가",
+      "법인 설립",
+    ],
+  };
+
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(LOCAL_BUSINESS_DATA) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
     />
   );
 }
@@ -61,7 +63,7 @@ export function ServiceJsonLd({ name, description, url }: ServiceJsonLdProps) {
     provider: {
       "@type": "LegalService",
       name: "ETHOS 행정사사무소",
-      url: "https://adminofficemvp2.vercel.app",
+      url: getSiteUrl(),
     },
   };
 
