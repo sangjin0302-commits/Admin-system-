@@ -11,22 +11,29 @@ import { DarkModeToggle } from "@/components/admin/dark-mode-toggle";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { QuickNoteFab } from "@/components/admin/quick-note-fab";
 import { MacroHotkeyListener } from "@/components/admin/macro-hotkey-listener";
-import { listInquiries } from "@/lib/services/inquiry-service";
+import { countInquiries } from "@/lib/services/inquiry-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  let newCount = 0;
-  try {
-    const newInquiries = await listInquiries({ status: "NEW" });
-    newCount = newInquiries.length;
-  } catch { /* ignore */ }
-  const darkToggleEnabled = await isFeatureEnabled("dark_mode_manual_toggle");
-  const quickNoteEnabled = await isFeatureEnabled("quick_note_fab");
-  const macroHotkeysEnabled = await isFeatureEnabled("macro_hotkeys");
-  const macroServerSync = await isFeatureEnabled("macro_server_sync");
-  const hideMode = await isFeatureEnabled("admin_hide_mode");
-  const showAdvanced = await isFeatureEnabled("admin_show_advanced");
-  const useTopNav = await isFeatureEnabled("admin_top_nav_layout");
+  const [
+    newCount,
+    darkToggleEnabled,
+    quickNoteEnabled,
+    macroHotkeysEnabled,
+    macroServerSync,
+    hideMode,
+    showAdvanced,
+    useTopNav
+  ] = await Promise.all([
+    countInquiries({ status: "NEW" }).catch(() => 0),
+    isFeatureEnabled("dark_mode_manual_toggle"),
+    isFeatureEnabled("quick_note_fab"),
+    isFeatureEnabled("macro_hotkeys"),
+    isFeatureEnabled("macro_server_sync"),
+    isFeatureEnabled("admin_hide_mode"),
+    isFeatureEnabled("admin_show_advanced"),
+    isFeatureEnabled("admin_top_nav_layout")
+  ]);
 
   const header = (
     <>

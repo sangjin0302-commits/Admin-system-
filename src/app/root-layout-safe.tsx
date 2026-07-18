@@ -11,6 +11,7 @@ import { AiChatWidget } from "@/components/public/ai-chat-widget";
 import { BottomSheetMount } from "@/components/public/bottom-sheet-mount";
 import { LiveChat } from "@/components/public/live-chat";
 import { LocalBusinessJsonLd } from "@/components/public/json-ld";
+import { PublicOnly } from "@/components/public/public-only";
 import { PWARegister } from "@/components/public/pwa-register";
 import { AbBootstrap } from "@/components/public/ab-bootstrap";
 import { GA4ConversionTracker } from "@/components/analytics/ga4-conversion-tracker";
@@ -96,7 +97,9 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
         />
       </head>
       <body>
-        <BrandIntro />
+        <PublicOnly>
+          <BrandIntro />
+        </PublicOnly>
         <AppShellSafe>{children}</AppShellSafe>
         <ToastProvider />
         <SonnerToaster
@@ -111,8 +114,10 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
             }
           }}
         />
-        <AiChatWidget />
-        <LiveChat />
+        <PublicOnly>
+          <AiChatWidget />
+          <LiveChat />
+        </PublicOnly>
         <GA4ConversionTracker enabled={true} />
         <Analytics />
         <VercelAnalytics />
@@ -121,7 +126,9 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
         <LocalBusinessJsonLd />
         <AbBootstrap />
         <BottomSheetMount />
-        <OnboardingTour />
+        <PublicOnly>
+          <OnboardingTour />
+        </PublicOnly>
       </body>
     </html>
   );

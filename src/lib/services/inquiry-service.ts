@@ -15,6 +15,7 @@ import {
   updateInquiryAdminFields
 } from "@/lib/services/inquiry-service-admin-mutation-helpers";
 import {
+  countInquiries,
   getInquiryById,
   getInquiryMessagePreviewSet,
   listInquiries,
@@ -37,6 +38,7 @@ export type {
 
 export {
   appendInquiryCommunicationLog,
+  countInquiries,
   createInquiry,
   getInquiryById,
   getInquiryMessagePreviewSet,

@@ -19,7 +19,9 @@ export type FeatureDefinition = {
   category: FeatureCategory;
   default: boolean;
   description?: string;
-  public?: boolean; // 공개 API로 노출 가능 여부
+  public?: boolean;
+  locked?: boolean;
+  lockReason?: string;
 };
 
 export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
@@ -81,7 +83,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "knowledge_graph", label: "사무소 지식 그래프", category: "operations", default: true, description: "사건·의뢰인·판례·법령 연결 시각화" },
   { key: "legal_news_ai", label: "법률 뉴스 자동 요약·매칭", category: "operations", default: true, description: "매일 법률 뉴스 요약 후 활성 사건 자동 매칭" },
   { key: "citation_verifier", label: "서면 인용 자동 검증", category: "operations", default: true, description: "AI 서면 초안의 법조문·판례번호 인용 검증" },
-  { key: "rag_chatbot", label: "RAG 지식 챗봇", category: "marketing", default: true, description: "사무소 전체 지식 기반 RAG 챗봇", public: true },
+  { key: "rag_chatbot", label: "RAG 지식 챗봇", category: "marketing", default: true, description: "사무소 전체 지식 기반 RAG 챗봇", public: true, locked: true, lockReason: "노션 연동 안정화 잠금 2026-07-17" },
   { key: "full_auto_case_flow", label: "완전 자동 사건 진행", category: "operations", default: false, description: "신규 문의 → AI 스크리닝 → 견적 → 계약 → 서명 → 사건 개설을 확신도 임계 이상이면 자동 진행" },
   { key: "ai_decision_tree", label: "AI 의사결정 트리", category: "operations", default: true, description: "사건 단계별로 다음 액션을 AI가 추천 (문서요청/미팅/서면초안/종결/에스컬레이션)" },
   { key: "deadline_autopilot", label: "자동 마감 캘린더 봇", category: "operations", default: true, description: "활성 사건 마감 D-7/D-3/당일 자동 리마인더 + 후속 미완료 시 에스컬레이션" },
@@ -92,7 +94,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "voice_ai_consult", label: "AI 음성 상담", category: "ux", default: false, description: "실시간 음성 대화형 AI 상담", public: true },
   { key: "ar_card", label: "AR 명함", category: "ux", default: false, description: "WebXR 기반 3D 명함 페이지 (QR 스캔 진입)", public: true },
   { key: "haptic_feedback", label: "햅틱 피드백", category: "ux", default: true, description: "모바일 진동 피드백 (CTA·폼 성공 등)", public: true },
-  { key: "notion_sync", label: "Notion 사건 동기화", category: "operations", default: false, description: "사건·문의 Notion 페이지 양방향 동기화" },
+  { key: "notion_sync", label: "Notion 사건 동기화", category: "operations", default: false, description: "사건·문의 Notion 페이지 양방향 동기화", locked: true, lockReason: "노션 연동 안정화 잠금 2026-07-17" },
   { key: "backup_mirror", label: "Airtable/Sheets 미러 백업", category: "operations", default: false, description: "Airtable 또는 Google Sheets 실시간 미러 백업" },
   { key: "zapier_webhooks", label: "Zapier/Make 웹훅", category: "operations", default: false, description: "이벤트 발생 시 등록된 웹훅에 POST 배포" },
   { key: "google_workspace_admin", label: "Google Workspace 계정 관리", category: "operations", default: false, description: "Google Workspace 사용자 생성·중지 자동화" },
@@ -213,9 +215,9 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "blog_low_ctr_rewrite_queue_page", label: "블로그 리라이트 큐 페이지", category: "marketing", default: true, description: "/admin/blog-rewrite-queue GSC 저CTR 실시간 조회" },
   { key: "mentor_hub", label: "실무 멘토링 허브", category: "operations", default: true, description: "/admin/mentor 4개 훈련 도구 카드 그리드" },
   { key: "mentor_case_simulator", label: "사례 시뮬레이터", category: "operations", default: true, description: "AI 상담 시나리오 생성 + 답변 채점 (mentor/case-simulator)" },
-  { key: "market_collect", label: "시장 데이터 수집 (네이버)", category: "operations", default: true, description: "네이버 검색·데이터랩 수집 → 분류 → 경쟁사 프로파일 (cron: market-collect, AI 호출 없음)" },
-  { key: "admin_market_analysis", label: "시장·경쟁사 분석 화면", category: "admin", default: true, description: "/admin/market 경쟁사·여론·급상승 대시보드" },
-  { key: "market_ai_report", label: "시장 AI 리포트 (버튼 클릭 시)", category: "admin", default: true, description: "시장 분석 AI 리포트 — 버튼 클릭 시에만 실행, 1시간 캐시 (자동 실행 없음)" },
+  { key: "market_collect", label: "시장 데이터 수집 (네이버)", category: "operations", default: true, description: "네이버 검색·데이터랩 수집 → 분류 → 경쟁사 프로파일 (cron: market-collect, AI 호출 없음)", locked: true, lockReason: "시장분석 안정화 잠금 2026-07-17" },
+  { key: "admin_market_analysis", label: "시장·경쟁사 분석 화면", category: "admin", default: true, description: "/admin/market 경쟁사·여론·급상승 대시보드", locked: true, lockReason: "시장분석 안정화 잠금 2026-07-17" },
+  { key: "market_ai_report", label: "시장 AI 리포트 (버튼 클릭 시)", category: "admin", default: true, description: "시장 분석 AI 리포트 — 버튼 클릭 시에만 실행, 1시간 캐시 (자동 실행 없음)", locked: true, lockReason: "시장분석 안정화 잠금 2026-07-17" },
   { key: "mentor_document_critique", label: "서면 첨삭", category: "operations", default: false, description: "AI rubric 기반 서면 첨삭 (준비 중)" },
   { key: "mentor_precedent_quiz", label: "판례 퀴즈", category: "operations", default: false, description: "판례 사실관계 → 결론 예측 훈련 (준비 중)" },
   { key: "mentor_client_roleplay", label: "클라이언트 롤플레이", category: "operations", default: false, description: "AI 클라이언트 역할 상담 훈련 (준비 중)" },
@@ -337,27 +339,35 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "admin_rich_memo_editor", label: "리치 메모 에디터", category: "admin" as FeatureCategory, default: true, description: "관리자 메모를 Tiptap 리치텍스트 에디터로 전환 (볼드/리스트/이탤릭)" },
   { key: "admin_korean_date_picker", label: "한국어 달력 선택기", description: "기한 설정 시 한국어 인라인 달력 (react-day-picker)", category: "admin" as FeatureCategory, default: true },
   { key: "admin_tanstack_table", label: "관리자 TanStack 테이블", description: "문의 목록을 @tanstack/react-table로 교체 (정렬/필터/페이지네이션/CSV)", category: "admin" as FeatureCategory, default: true },
-  { key: "ai_chatbot_rag", label: "AI 챗봇 RAG 지식베이스", category: "operations" as FeatureCategory, default: true, description: "AI 챗봇에 사무소 지식베이스(RAG) 컨텍스트 주입" },
+  { key: "ai_chatbot_rag", label: "AI 챗봇 RAG 지식베이스", category: "operations" as FeatureCategory, default: true, description: "AI 챗봇에 사무소 지식베이스(RAG) 컨텍스트 주입", locked: true, lockReason: "노션 연동 안정화 잠금 2026-07-17" },
   { key: "e2e_test_mode", label: "E2E 테스트 모드", category: "operations" as FeatureCategory, default: false, description: "Playwright E2E 테스트 실행 시 테스트 전용 모드 활성화" },
   { key: "ai_response_cache", label: "AI 응답 캐시 (비용 절감)", default: true, category: "operations" as FeatureCategory },
   { key: "cron_batch_dispatcher", label: "Cron 배치 디스패처 (41→8 통합)", default: true, category: "operations" as FeatureCategory },
   { key: "api_deprecation_warnings", label: "API 사용중단 경고", default: true, category: "operations" as FeatureCategory, description: "사용중단 예정 API 라우트 호출 시 경고 로깅 및 응답 헤더 추가" },
   { key: "ai_faq_fast_path", label: "AI FAQ 빠른 응답 (API 절감)", default: true, category: "operations" as FeatureCategory, description: "자주 묻는 질문에 사전 작성 답변을 즉시 반환하여 Anthropic API 호출 절감" },
-  { key: "admin_law_copilot", label: "법령·판례 리서치 코파일럿", default: true, category: "admin" as FeatureCategory, description: "국가법령정보센터(법제처) API로 법령·판례·해석례 검색 (Lightsail 프록시 경유)" },
-  { key: "law_health_check", label: "법제처 target 헬스체크", default: true, category: "operations" as FeatureCategory, description: "주간 배치로 법제처 DRF target을 프로브해 파서 불일치·장애를 조기 감지" },
+  { key: "admin_law_copilot", label: "법령·판례 리서치 코파일럿", default: true, category: "admin" as FeatureCategory, description: "국가법령정보센터(법제처) API로 법령·판례·해석례 검색 (Lightsail 프록시 경유)", locked: true, lockReason: "Lawbot 안정화 잠금 2026-07-17" },
+  { key: "law_health_check", label: "법제처 target 헬스체크", default: true, category: "operations" as FeatureCategory, description: "주간 배치로 법제처 DRF target을 프로브해 파서 불일치·장애를 조기 감지", locked: true, lockReason: "Lawbot 안정화 잠금 2026-07-17" },
   { key: "admin_strict_rbac", label: "Admin 엄격 RBAC (백도어 차단)", default: true, category: "admin" as FeatureCategory, description: "X-Admin-User 헤더 스푸핑 및 미등록 Basic Auth 사용자 SUPER 자동 승격 차단" },
-  { key: "case_auto_research", label: "사건 자동 리서치 (AI+법제처)", default: true, category: "admin" as FeatureCategory, description: "AI 키워드 추출 + 법제처 병렬 조회 + AI 종합 요약 (Haiku+Sonnet, 1시간 캐시)" },
-  { key: "admin_easylaw", label: "생활법령정보 (easylaw) 조회", default: true, category: "admin" as FeatureCategory, description: "생활법령정보(easylaw.go.kr) SOAP API 직접 호출 — 일일 100회/기능 제한, 24시간 캐시" },
-  { key: "case_research_verify_citations", label: "AI 요약 조문 인용 검증", default: true, category: "admin" as FeatureCategory, description: "AI 종합 요약의 조문 인용을 법제처 원문과 2단 매칭(정확 substring + bigram Jaccard)으로 대조해 환각 인용 탐지" },
+  { key: "case_auto_research", label: "사건 자동 리서치 (AI+법제처)", default: true, category: "admin" as FeatureCategory, description: "AI 키워드 추출 + 법제처 병렬 조회 + AI 종합 요약 (Haiku+Sonnet, 1시간 캐시)", locked: true, lockReason: "Lawbot 안정화 잠금 2026-07-17" },
+  { key: "admin_easylaw", label: "생활법령정보 (easylaw) 조회", default: true, category: "admin" as FeatureCategory, description: "생활법령정보(easylaw.go.kr) SOAP API 직접 호출 — 일일 100회/기능 제한, 24시간 캐시", locked: true, lockReason: "Lawbot 안정화 잠금 2026-07-17" },
+  { key: "case_research_verify_citations", label: "AI 요약 조문 인용 검증", default: true, category: "admin" as FeatureCategory, description: "AI 종합 요약의 조문 인용을 법제처 원문과 2단 매칭(정확 substring + bigram Jaccard)으로 대조해 환각 인용 탐지", locked: true, lockReason: "Lawbot 안정화 잠금 2026-07-17" },
 ] as const;
 
 const PUBLIC_KEYS = new Set(FEATURE_REGISTRY.filter((f) => f.public).map((f) => f.key));
 const REGISTRY_MAP = new Map<string, FeatureDefinition>(FEATURE_REGISTRY.map((f) => [f.key, f]));
 
 let _cache: { at: number; data: Record<string, boolean> } | null = null;
+let _inflight: Promise<Record<string, boolean>> | null = null;
+/**
+ * 무효화 세대. 진행 중인 DB 읽기는 취소할 수 없으므로,
+ * 읽기 시작 후 무효화가 일어났으면 그 결과를 캐시에 쓰지 않도록 세대로 판별합니다.
+ */
+let _generation = 0;
 
 export function invalidateFeatureFlagsCache() {
   _cache = null;
+  _inflight = null;
+  _generation += 1;
 }
 
 function defaultsMap(): Record<string, boolean> {
@@ -386,10 +396,28 @@ async function readRawFlags(): Promise<Record<string, boolean>> {
 /** 전체 플래그 조회 (DB + 레지스트리 기본값 병합, 30초 캐시). */
 export async function getAllFlags(): Promise<Record<string, boolean>> {
   if (_cache && Date.now() - _cache.at < CACHE_MS) return _cache.data;
-  const stored = await readRawFlags();
-  const merged = { ...defaultsMap(), ...stored };
-  _cache = { at: Date.now(), data: merged };
-  return merged;
+  // 캐시가 비었을 때 동시 호출이 각자 DB를 조회하지 않도록 진행 중인 조회를 공유합니다.
+  if (_inflight) return _inflight;
+
+  const generation = _generation;
+  const pending = (async () => {
+    const stored = await readRawFlags();
+    const merged = { ...defaultsMap(), ...stored };
+    // 읽는 사이에 무효화가 있었으면 낡은 값이므로 캐시에 쓰지 않습니다.
+    // (안 그러면 플래그를 껐다 켜도 최대 30초간 옛 값이 남습니다.)
+    if (generation === _generation) {
+      _cache = { at: Date.now(), data: merged };
+    }
+    return merged;
+  })();
+  _inflight = pending;
+
+  try {
+    return await pending;
+  } finally {
+    // 내가 건 것만 치웁니다. 무효화 후 다른 호출이 새로 건 것을 지우면 안 됩니다.
+    if (_inflight === pending) _inflight = null;
+  }
 }
 
 /** 단일 플래그 조회. */
@@ -403,6 +431,10 @@ export async function isFeatureEnabled(key: string): Promise<boolean> {
 export async function setFeatureEnabled(key: string, enabled: boolean): Promise<void> {
   if (!REGISTRY_MAP.has(key)) {
     throw new Error(`알 수 없는 기능 키: ${key}`);
+  }
+  const def = REGISTRY_MAP.get(key)!;
+  if (def.locked) {
+    throw new Error(`잠금된 기능은 변경할 수 없습니다: ${key} (${def.lockReason ?? "locked"})`);
   }
   const stored = await readRawFlags();
   stored[key] = enabled;
