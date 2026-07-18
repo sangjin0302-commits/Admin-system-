@@ -25,7 +25,19 @@ const ROWS: { label: string; env: string; get: () => EnvShape; note?: string }[]
   { label: "Auth 비밀키 (v5)", env: "AUTH_SECRET", get: () => describe(process.env.AUTH_SECRET) },
   { label: "관리자 아이디", env: "ADMIN_BASIC_AUTH_USER", get: () => describe(process.env.ADMIN_BASIC_AUTH_USER) },
   { label: "관리자 비밀번호", env: "ADMIN_BASIC_AUTH_PASSWORD", get: () => describe(process.env.ADMIN_BASIC_AUTH_PASSWORD) },
-  { label: "Site URL", env: "NEXT_PUBLIC_SITE_URL", get: () => describe(process.env.NEXT_PUBLIC_SITE_URL) }
+  { label: "Site URL", env: "NEXT_PUBLIC_SITE_URL", get: () => describe(process.env.NEXT_PUBLIC_SITE_URL) },
+
+  // Lawbot — /quick-check(AI 사전진단)은 아래 3개가 모두 있어야 동작한다.
+  { label: "Lawbot 브릿지 주소 ★", env: "LAWBOT_BRIDGE_BASE_URL", get: () => describe(process.env.LAWBOT_BRIDGE_BASE_URL), note: "quick-check 필수" },
+  { label: "Lawbot 서비스 키 ★", env: "LAWBOT_SERVICE_KEY", get: () => describe(process.env.LAWBOT_SERVICE_KEY), note: "quick-check 필수" },
+  { label: "Lawbot 호출자 ID ★", env: "LAWBOT_SERVICE_CALLER", get: () => describe(process.env.LAWBOT_SERVICE_CALLER), note: "quick-check 필수" },
+  { label: "Lawbot 분석 URL (다른 계열)", env: "LAWBOT_ANALYZE_URL", get: () => describe(process.env.LAWBOT_ANALYZE_URL), note: "사건 자동분석용, quick-check와 별개" },
+  { label: "Lawbot 분석 토큰 (다른 계열)", env: "LAWBOT_ANALYZE_TOKEN", get: () => describe(process.env.LAWBOT_ANALYZE_TOKEN) },
+  { label: "Lawbot 자동호출 허용", env: "LAWBOT_ENABLE_AUTOMATIC_CALLS", get: () => describe(process.env.LAWBOT_ENABLE_AUTOMATIC_CALLS), note: "true 여야 자동 분석 동작" },
+  { label: "Lawbot 챗 API URL (또 다른 계열)", env: "LAWBOT_API_URL", get: () => describe(process.env.LAWBOT_API_URL) },
+
+  // Notion
+  { label: "Notion 토큰", env: "NOTION_TOKEN", get: () => describe(process.env.NOTION_TOKEN) }
 ];
 
 export default function DiagnosticsPage() {

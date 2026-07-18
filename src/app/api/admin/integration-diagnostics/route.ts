@@ -117,11 +117,56 @@ export async function POST(request: Request) {
     alertResult = { error: String(err) };
   }
 
+  // 4) Lawbot 브릿지 실제 호출 — /quick-check 과 완전히 같은 경로로 때려본다.
+  //    설정 누락인지, 연결은 되는데 브릿지가 거부하는지 구분하기 위함.
+  const lawbot = await probeLawbot();
+
   return NextResponse.json({
     ok: true,
     env: envReport(),
     getMe,
     plainSend,
-    alertResult
+    alertResult,
+    lawbot
   });
+}
+
+async function probeLawbot(): Promise<unknown> {
+  const missing = (
+    ["LAWBOT_BRIDGE_BASE_URL", "LAWBOT_SERVICE_KEY", "LAWBOT_SERVICE_CALLER"] as const
+  ).filter((k) => !process.env[k]?.trim());
+
+  if (missing.length) {
+    return {
+      ok: false,
+      reason: "missing_env",
+      missing,
+      hint: "이 3개가 모두 있어야 /quick-check 가 동작합니다."
+    };
+  }
+
+  try {
+    const { createLawbotBridgeHttpClientFromEnv } = await import(
+      "@/lib/services/lawbot-bridge-http-client"
+    );
+    const client = createLawbotBridgeHttpClientFromEnv();
+    const started = Date.now();
+    const result = await client.intakeAnalyze({
+      fact: "진단용 테스트 질의입니다. 외국인 체류자격 변경 절차를 간단히 확인합니다.",
+      category: "immigration"
+    } as never);
+    return {
+      ok: true,
+      elapsedMs: Date.now() - started,
+      // 응답 전문은 길 수 있어 형태만 요약
+      shape: result && typeof result === "object" ? Object.keys(result) : typeof result
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      reason: "call_failed",
+      name: err instanceof Error ? err.name : "unknown",
+      message: err instanceof Error ? err.message : String(err)
+    };
+  }
 }
