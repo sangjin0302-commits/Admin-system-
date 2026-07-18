@@ -84,6 +84,23 @@
 
 ## 🔵 봇 통합 (Lawbot/Market 연결)
 
+### ⚠️ Lawbot 변수는 3계열이다 — 먼저 읽을 것
+
+이름이 비슷한 LAWBOT_* 변수가 **서로 다른 3개 시스템**에 속한다. 엉뚱한 계열에
+값을 넣으면 "설정했는데 안 된다"가 된다. `/admin/diagnostics` 에서 어느 계열이
+잡혀 있는지 확인할 수 있다.
+
+| 계열 | 변수 | 쓰는 곳 | 비고 |
+|---|---|---|---|
+| **A. 법제처 직접** | `LAW_OC`, `LAW_PROXY_TOKEN`, `LAW_PROXY_URL`, `EASYLAW_KEY` | `/admin/law-research`, `/law-lookup`, 공개 법령검색 | 안정화 잠금됨. **LAWBOT_ 접두사가 아님** |
+| **B. 브릿지** | `LAWBOT_BRIDGE_BASE_URL`, `LAWBOT_SERVICE_KEY`, `LAWBOT_SERVICE_CALLER` | `/quick-check`, 문의 접수 자동분석, 서면·메시지 초안, batch cron | 봇 쪽에 `/bridge/*` 엔드포인트가 있어야 동작 |
+| **C. 판례 동기화** | `LAWBOT_API_URL` | `precedent-database-service`, `precedent-live-verifier` | `GET /precedents` 필요 |
+
+`LAWBOT_API_KEY` 는 코드에서 읽지 않는다(과거 문서 잔재). 넣어도 효과 없음.
+
+**A 계열의 `LAW_PROXY_URL` 은 미설정 시 하드코딩된 평문 HTTP IP로 폴백**한다
+(`src/lib/services/law-api-service.ts`). 운영에서는 반드시 명시 설정할 것.
+
 ### Lawbot 연결 방법
 
 1. **봇 쪽에 REST 엔드포인트 추가** (Python/FastAPI):
@@ -155,21 +172,26 @@
    answer = data.answer;
    ```
 
-### Market Analyze 봇 연결 방법
+### 시장분석 (Market Analyze)
 
-Market Analyze는 시장 정보 분석 API (FastAPI). 인증: `x-admin-token` 헤더.
+> ⚠️ 2026-07-18 정정: 예전 문서에 적혀 있던 `MARKET_BOT_API_URL` /
+> `MARKET_BOT_ADMIN_TOKEN` 및 `/admin/market-bot/` 페이지는 **코드에 존재하지 않는다.**
+> 외부 FastAPI 봇을 붙이는 구조가 아니라, 사이트가 네이버 API를 직접 호출한다.
+> 해당 변수를 Vercel에 넣어도 아무 효과가 없으니 등록하지 말 것.
 
-**Vercel 환경변수**:
+**실제 구조**: `src/lib/services/market-collect-service.ts` 가 네이버 검색·데이터랩을
+직접 호출 → 분류 → 경쟁사 프로파일 저장. 화면은 `/admin/market`.
+
+**필요 환경변수**:
 ```
-MARKET_BOT_API_URL = https://market-analyze-production.up.railway.app
-MARKET_BOT_ADMIN_TOKEN = <Railway의 ADMIN_API_TOKEN 값과 동일>
+NAVER_CLIENT_ID          / NAVER_CLIENT_SECRET          # 네이버 검색 API
+NAVER_DATALAB_CLIENT_ID  / NAVER_DATALAB_CLIENT_SECRET  # 데이터랩(트렌드)
 ```
 
-Railway 쪽에서는 `ADMIN_API_TOKEN`으로 설정되어 있어도 됨. 양쪽 이름은 달라도 OK — **값만 일치**하면 됨.
+**관련 기능 플래그** (2026-07-17 안정화 잠금 — 변경하려면 잠금 먼저 해제):
+`market_collect`, `admin_market_analysis`, `market_ai_report`
 
-코드 fallback: `MARKET_BOT_ADMIN_TOKEN` → 없으면 `ADMIN_API_TOKEN` → 없으면 미설정 에러.
-
-엔드포인트 29개 자동 연동 (대시보드/트렌드/경쟁사/리포트/수집/동기화). 자세한 페이지는 `/admin/market-bot/`.
+발급: https://developers.naver.com → 애플리케이션 등록 → 검색 / 데이터랩 API 선택
 
 ### 봇 → 사이트 호출 차단 (보안)
 

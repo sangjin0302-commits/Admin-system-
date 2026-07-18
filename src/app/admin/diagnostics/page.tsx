@@ -36,8 +36,27 @@ const ROWS: { label: string; env: string; get: () => EnvShape; note?: string }[]
   { label: "Lawbot 자동호출 허용", env: "LAWBOT_ENABLE_AUTOMATIC_CALLS", get: () => describe(process.env.LAWBOT_ENABLE_AUTOMATIC_CALLS), note: "true 여야 자동 분석 동작" },
   { label: "Lawbot 챗 API URL (또 다른 계열)", env: "LAWBOT_API_URL", get: () => describe(process.env.LAWBOT_API_URL) },
 
+  // 법제처 계열 — /admin/law-research, /law-lookup, 공개 법령검색이 쓰는 "다른" 라인.
+  // Lawbot 브릿지와 완전히 별개다. 이쪽이 비어 있으면 법령 검색 결과가 0건으로만 나온다.
+  { label: "법제처 프록시 주소", env: "LAW_PROXY_URL", get: () => describe(process.env.LAW_PROXY_URL), note: "미설정 시 하드코딩 IP로 폴백" },
+  { label: "법제처 프록시 토큰 ★", env: "LAW_PROXY_TOKEN", get: () => describe(process.env.LAW_PROXY_TOKEN), note: "법령검색 필수" },
+  { label: "법제처 OC 계정 ★", env: "LAW_OC", get: () => describe(process.env.LAW_OC), note: "법령검색 필수" },
+  { label: "생활법령 키", env: "EASYLAW_KEY", get: () => describe(process.env.EASYLAW_KEY) },
+
+  // 시장분석 — 외부 봇이 아니라 네이버 API를 직접 쓴다.
+  { label: "네이버 검색 ID", env: "NAVER_CLIENT_ID", get: () => describe(process.env.NAVER_CLIENT_ID), note: "시장분석 수집용" },
+  { label: "네이버 검색 시크릿", env: "NAVER_CLIENT_SECRET", get: () => describe(process.env.NAVER_CLIENT_SECRET) },
+  { label: "네이버 데이터랩 ID", env: "NAVER_DATALAB_CLIENT_ID", get: () => describe(process.env.NAVER_DATALAB_CLIENT_ID) },
+  { label: "네이버 데이터랩 시크릿", env: "NAVER_DATALAB_CLIENT_SECRET", get: () => describe(process.env.NAVER_DATALAB_CLIENT_SECRET) },
+
   // Notion
-  { label: "Notion 토큰", env: "NOTION_TOKEN", get: () => describe(process.env.NOTION_TOKEN) }
+  { label: "Notion 토큰", env: "NOTION_TOKEN", get: () => describe(process.env.NOTION_TOKEN) },
+  { label: "Notion 참고 홈페이지 DB", env: "NOTION_REFERENCE_WEBSITE_DATABASE_ID", get: () => describe(process.env.NOTION_REFERENCE_WEBSITE_DATABASE_ID) },
+  { label: "Notion 참고 자료 DB", env: "NOTION_REFERENCE_ARCHIVE_DATABASE_ID", get: () => describe(process.env.NOTION_REFERENCE_ARCHIVE_DATABASE_ID) },
+
+  // 보안
+  { label: "Upstash Redis URL", env: "UPSTASH_REDIS_REST_URL", get: () => describe(process.env.UPSTASH_REDIS_REST_URL), note: "관리자 로그인 분산 차단" },
+  { label: "Upstash Redis 토큰", env: "UPSTASH_REDIS_REST_TOKEN", get: () => describe(process.env.UPSTASH_REDIS_REST_TOKEN) }
 ];
 
 export default function DiagnosticsPage() {
