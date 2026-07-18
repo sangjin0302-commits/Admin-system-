@@ -5,8 +5,9 @@
  * Basic Auth 중 하나만 통과하면 인가하므로, 세션 설정이 없거나 깨져도
  * 기존 Basic Auth로 계속 들어갈 수 있다(잠김 방지).
  *
- * 서명 비밀키: ADMIN_SESSION_SECRET → 없으면 NEXTAUTH_SECRET.
- * 둘 다 없으면 세션 로그인 비활성(= Basic Auth만 동작).
+ * 서명 비밀키: ADMIN_SESSION_SECRET → NEXTAUTH_SECRET → AUTH_SECRET 순.
+ * (NextAuth v5는 AUTH_SECRET을 기본으로 쓰므로 둘 다 받아준다.)
+ * 모두 없으면 세션 로그인 비활성(= Basic Auth만 동작).
  *
  * jose를 쓰는 이유: middleware는 Edge 런타임이라 node:crypto를 못 쓴다.
  */
@@ -24,7 +25,9 @@ export function getAdminSessionMaxAgeSec(): number {
 
 function getSecretKey(): Uint8Array | null {
   const raw =
-    process.env.ADMIN_SESSION_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim();
+    process.env.ADMIN_SESSION_SECRET?.trim() ||
+    process.env.NEXTAUTH_SECRET?.trim() ||
+    process.env.AUTH_SECRET?.trim();
   if (!raw) return null;
   return new TextEncoder().encode(raw);
 }

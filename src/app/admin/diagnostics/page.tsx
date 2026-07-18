@@ -20,6 +20,11 @@ const ROWS: { label: string; env: string; get: () => EnvShape; note?: string }[]
   { label: "Sentry DSN (서버)", env: "SENTRY_DSN", get: () => describe(process.env.SENTRY_DSN), note: "http 로 시작해야 정상" },
   { label: "Sentry DSN (클라이언트)", env: "NEXT_PUBLIC_SENTRY_DSN", get: () => describe(process.env.NEXT_PUBLIC_SENTRY_DSN), note: "서버 DSN과 같은 값" },
   { label: "Cron Secret", env: "CRON_SECRET", get: () => describe(process.env.CRON_SECRET) },
+  { label: "관리자 세션 비밀키", env: "ADMIN_SESSION_SECRET", get: () => describe(process.env.ADMIN_SESSION_SECRET), note: "없으면 아래 둘 중 하나 사용" },
+  { label: "NextAuth 비밀키", env: "NEXTAUTH_SECRET", get: () => describe(process.env.NEXTAUTH_SECRET) },
+  { label: "Auth 비밀키 (v5)", env: "AUTH_SECRET", get: () => describe(process.env.AUTH_SECRET) },
+  { label: "관리자 아이디", env: "ADMIN_BASIC_AUTH_USER", get: () => describe(process.env.ADMIN_BASIC_AUTH_USER) },
+  { label: "관리자 비밀번호", env: "ADMIN_BASIC_AUTH_PASSWORD", get: () => describe(process.env.ADMIN_BASIC_AUTH_PASSWORD) },
   { label: "Site URL", env: "NEXT_PUBLIC_SITE_URL", get: () => describe(process.env.NEXT_PUBLIC_SITE_URL) }
 ];
 

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import { isAdminSessionConfigured } from "@/lib/security/admin-session";
 import { AdminLoginForm } from "./login-form";
 
 export const dynamic = "force-dynamic";
@@ -23,9 +24,21 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
-        <Suspense fallback={null}>
-          <AdminLoginForm />
-        </Suspense>
+        {isAdminSessionConfigured() ? (
+          <Suspense fallback={null}>
+            <AdminLoginForm />
+          </Suspense>
+        ) : (
+          <div className="mt-8 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
+            <p className="font-bold">폼 로그인이 아직 활성화되지 않았습니다</p>
+            <p className="mt-2">
+              세션 서명용 비밀키가 없어 브라우저 기본 인증창으로만 로그인할 수 있습니다. Vercel
+              환경변수에 <code className="font-mono">ADMIN_SESSION_SECRET</code> 을 추가하고 재배포하면
+              이 폼이 활성화됩니다.
+            </p>
+            <p className="mt-2 font-mono text-xs">생성: openssl rand -base64 32</p>
+          </div>
+        )}
 
         <p className="mt-6 text-center text-xs text-text-muted">
           관리자 전용 페이지입니다. 의뢰인은{" "}

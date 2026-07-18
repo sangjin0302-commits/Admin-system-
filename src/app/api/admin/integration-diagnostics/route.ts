@@ -48,7 +48,10 @@ function envReport() {
     sentryDsnServer: describe(process.env.SENTRY_DSN),
     sentryDsnClient: describe(process.env.NEXT_PUBLIC_SENTRY_DSN),
     cronSecret: describe(process.env.CRON_SECRET),
-    siteUrl: describe(process.env.NEXT_PUBLIC_SITE_URL)
+    siteUrl: describe(process.env.NEXT_PUBLIC_SITE_URL),
+    adminSessionSecret: describe(process.env.ADMIN_SESSION_SECRET),
+    nextauthSecret: describe(process.env.NEXTAUTH_SECRET),
+    authSecret: describe(process.env.AUTH_SECRET)
   };
 }
 
