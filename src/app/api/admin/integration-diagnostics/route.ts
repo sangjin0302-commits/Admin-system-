@@ -121,14 +121,49 @@ export async function POST(request: Request) {
   //    설정 누락인지, 연결은 되는데 브릿지가 거부하는지 구분하기 위함.
   const lawbot = await probeLawbot();
 
+  // 5) 법제처(Lightsail 프록시) 실제 호출.
+  //    공개 법령검색은 IP당 일 3회라 검증용으로 쓰기 어렵다. 여기서는 관리자
+  //    경로로 직접 때려 status(env_missing / upstream_error / ok)를 그대로 본다.
+  const law = await probeLaw();
+
   return NextResponse.json({
     ok: true,
     env: envReport(),
     getMe,
     plainSend,
     alertResult,
-    lawbot
+    lawbot,
+    law
   });
+}
+
+async function probeLaw(): Promise<unknown> {
+  const missing = (["LAW_OC", "LAW_PROXY_TOKEN"] as const).filter(
+    (k) => !process.env[k]?.trim()
+  );
+
+  try {
+    const { searchTargetDetailed } = await import("@/lib/services/law-api-service");
+    const started = Date.now();
+    const outcome = await searchTargetDetailed("law", "출입국관리법", 1);
+    return {
+      configuredMissing: missing,
+      // status 의미: ok=결과있음 / empty=응답정상 결과0건 /
+      //   env_missing=LAW_OC·LAW_PROXY_TOKEN 없음 / upstream_error=프록시·법제처 실패
+      status: outcome.status,
+      message: outcome.message,
+      itemCount: outcome.items?.length ?? 0,
+      firstItemTitle: outcome.items?.[0]?.title ?? null,
+      elapsedMs: Date.now() - started,
+      proxyUrl: process.env.LAW_PROXY_URL?.trim() || "(미설정 → 하드코딩 폴백)"
+    };
+  } catch (err) {
+    return {
+      configuredMissing: missing,
+      status: "exception",
+      message: err instanceof Error ? err.message : String(err)
+    };
+  }
 }
 
 async function probeLawbot(): Promise<unknown> {
