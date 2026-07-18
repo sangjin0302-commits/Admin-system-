@@ -96,6 +96,18 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
             __html: `try{var t=localStorage.getItem('ethos.theme');if(t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.dataset.theme='dark';}}catch(e){}`,
           }}
         />
+        {/*
+          <html lang>을 실제 표시 언어로 교정한다. 루트 레이아웃은 서버 컴포넌트라
+          경로를 알 수 없어 lang="ko"가 박혀 나가는데, 그러면 영어/아랍어 페이지에서
+          크롬이 "한국어를 번역할까요"를 잘못 띄운다. 번역이 텍스트 노드를 갈아치우면
+          React 재조정이 parentNode null로 터지므로(Sentry 이슈), 브라우저가 언어를
+          판정하기 전인 <head> 단계에서 동기적으로 바로잡는다.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var p=location.pathname,q=new URLSearchParams(location.search).get('lang'),l='ko';if(/^\\/en(\\/|$)/.test(p))l='en';else if(/^\\/ar(\\/|$)/.test(p))l='ar';else if(/^\\/jp(\\/|$)/.test(p))l='ja';else if(/^\\/vn(\\/|$)/.test(p))l='vi';else if(q==='en')l='en';var d=document.documentElement;if(d.lang!==l)d.lang=l;d.dir=l==='ar'?'rtl':'ltr';}catch(e){}`,
+          }}
+        />
       </head>
       <body>
         <HtmlLangSync />
