@@ -8,16 +8,18 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { BlogSearchTrigger } from "@/components/public/blog-search";
 import { LangSwitcher } from "@/components/layout/lang-switcher";
+import { usePublicFlags } from "@/lib/hooks/use-public-flags";
 
+// flagKey: /admin/features 에서 끌 수 있는 항목. 없으면 항상 노출(홈).
 const NAV_ITEMS = [
   { href: "/", label: "홈", labelEn: "Home" },
-  { href: "/about", label: "소개", labelEn: "About" },
-  { href: "/services", label: "분야", labelEn: "Practice" },
-  { href: "/consult", label: "상담", labelEn: "Consult" },
-  { href: "/quick-check", label: "AI 진단", labelEn: "AI" },
-  { href: "/ai-screen", label: "빠른 진단", labelEn: "Screen" },
-  { href: "/cases", label: "활동", labelEn: "Lectures" },
-  { href: "/blog", label: "칼럼", labelEn: "Insights" }
+  { href: "/about", label: "소개", labelEn: "About", flagKey: "nav_about" },
+  { href: "/services", label: "분야", labelEn: "Practice", flagKey: "nav_services" },
+  { href: "/consult", label: "상담", labelEn: "Consult", flagKey: "nav_consult" },
+  { href: "/quick-check", label: "AI 진단", labelEn: "AI", flagKey: "nav_quick_check" },
+  { href: "/ai-screen", label: "빠른 진단", labelEn: "Screen", flagKey: "nav_ai_screen" },
+  { href: "/cases", label: "활동", labelEn: "Lectures", flagKey: "nav_cases" },
+  { href: "/blog", label: "칼럼", labelEn: "Insights", flagKey: "nav_blog" }
 ] as const;
 
 function LangToggle({ pathname }: { pathname: string }) {
@@ -56,6 +58,7 @@ function HeaderInner() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const reduceMotion = useReducedMotion();
+  const flags = usePublicFlags();
 
   useEffect(() => {
     function onScroll() {
@@ -69,6 +72,11 @@ function HeaderInner() {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   }
+
+  // 기능 플래그로 꺼진 메뉴 숨김. 로딩 전(null)에는 전부 노출해 깜빡임 방지.
+  const visibleNavItems = NAV_ITEMS.filter(
+    (item) => !("flagKey" in item) || flags?.[item.flagKey] !== false
+  );
 
   return (
     <header
@@ -94,7 +102,7 @@ function HeaderInner() {
 
         {/* 데스크탑 네비 */}
         <nav className="hidden items-center gap-1 lg:flex">
-          {NAV_ITEMS.map((item) => (
+          {visibleNavItems.map((item) => (
             <Link
               key={item.href}
               href={`${item.href}${qs}`}
@@ -209,7 +217,7 @@ function HeaderInner() {
           {/* 메뉴 항목 */}
           <nav className="flex-1 overflow-y-auto px-6 py-6">
             <ul className="space-y-1">
-              {NAV_ITEMS.map((item, i) => (
+              {visibleNavItems.map((item, i) => (
                 <li
                   key={item.href}
                   className="ethos-fadeUp"

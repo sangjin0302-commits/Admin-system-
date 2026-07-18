@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { CHANNELS } from "@/lib/constants/channels";
+import { usePublicFlags } from "@/lib/hooks/use-public-flags";
 import { PublicDarkModeToggle } from "@/components/public/public-dark-mode-toggle";
 
 const FALLBACK = { phone: "02-0000-0000", email: "a.attorneyjean@gmail.com", hours: "평일 09:00 - 18:00" };
@@ -30,6 +31,7 @@ const EMPTY_TRUST: TrustInfo = {
 export function PublicFooter() {
   const [contact, setContact] = useState(FALLBACK);
   const [trust, setTrust] = useState<TrustInfo>(EMPTY_TRUST);
+  const flags = usePublicFlags();
 
   useEffect(() => {
     let cancelled = false;
@@ -117,23 +119,25 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          {/* 지역 서비스 */}
-          <div>
-            <p className="font-serif text-sm font-bold uppercase tracking-wider text-gold-soft">
-              지역 서비스
-            </p>
-            <ul className="mt-4 space-y-2 text-sm text-white/80">
-              <li><Link href="/local/gangnam" className="transition-colors duration-200 hover:text-gold-soft">강남구</Link></li>
-              <li><Link href="/local/seocho" className="transition-colors duration-200 hover:text-gold-soft">서초구</Link></li>
-              <li><Link href="/local/songpa" className="transition-colors duration-200 hover:text-gold-soft">송파구</Link></li>
-              <li><Link href="/local/mapo" className="transition-colors duration-200 hover:text-gold-soft">마포구</Link></li>
-              <li><Link href="/local/yongsan" className="transition-colors duration-200 hover:text-gold-soft">용산구</Link></li>
-              <li><Link href="/local/suwon" className="transition-colors duration-200 hover:text-gold-soft">수원시</Link></li>
-            </ul>
-            <Link href="/local/gangnam" className="mt-3 inline-block text-xs text-gold-soft/80 transition-colors duration-200 hover:text-gold-soft">
-              전체 31개 지역 →
-            </Link>
-          </div>
+          {/* 지역 서비스 — 기본 숨김. 기능 플래그 footer_local_links 켜면 노출 */}
+          {flags?.footer_local_links === true && (
+            <div>
+              <p className="font-serif text-sm font-bold uppercase tracking-wider text-gold-soft">
+                지역 서비스
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-white/80">
+                <li><Link href="/local/gangnam" className="transition-colors duration-200 hover:text-gold-soft">강남구</Link></li>
+                <li><Link href="/local/seocho" className="transition-colors duration-200 hover:text-gold-soft">서초구</Link></li>
+                <li><Link href="/local/songpa" className="transition-colors duration-200 hover:text-gold-soft">송파구</Link></li>
+                <li><Link href="/local/mapo" className="transition-colors duration-200 hover:text-gold-soft">마포구</Link></li>
+                <li><Link href="/local/yongsan" className="transition-colors duration-200 hover:text-gold-soft">용산구</Link></li>
+                <li><Link href="/local/suwon" className="transition-colors duration-200 hover:text-gold-soft">수원시</Link></li>
+              </ul>
+              <Link href="/local/gangnam" className="mt-3 inline-block text-xs text-gold-soft/80 transition-colors duration-200 hover:text-gold-soft">
+                전체 31개 지역 →
+              </Link>
+            </div>
+          )}
 
           {/* 연락 */}
           <div>

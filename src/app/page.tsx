@@ -234,11 +234,20 @@ export default async function PublicMarketingHomePage({
   // 로고 (DB → /logo.webp fallback)
   const heroLogoRow = await prisma.siteSetting.findUnique({ where: { key: "image.logo" } }).catch(() => null);
   let heroLogo = heroLogoRow?.value || "/logo.webp";
-  const [holoLogoEnabled, personalizationEnabled, heroRotationEnabled, dynamicCtaEnabled] = await Promise.all([
+  const [
+    holoLogoEnabled,
+    personalizationEnabled,
+    heroRotationEnabled,
+    dynamicCtaEnabled,
+    trustBeltEnabled,
+    localGridEnabled
+  ] = await Promise.all([
     isFeatureEnabled("holographic_logo"),
     isFeatureEnabled("homepage_personalization"),
     isFeatureEnabled("hero_image_rotation"),
     isFeatureEnabled("dynamic_cta_labels"),
+    isFeatureEnabled("trust_belt"),
+    isFeatureEnabled("local_landing_grid"),
   ]);
 
   // UX5: 히어로 이미지 일자별 로테이션 — SiteSetting "image.hero.rotation" = JSON string[]
@@ -821,8 +830,8 @@ export default async function PublicMarketingHomePage({
         <NaverBlogSection posts={naverPosts} blogId={naverBlogId} />
       )}
 
-      {/* ═══════════════ 신뢰 뱃지 벨트 ═══════════════ */}
-      <TrustBelt />
+      {/* ═══════════════ 신뢰 뱃지 벨트 (기능 플래그: trust_belt) ═══════════════ */}
+      {trustBeltEnabled && <TrustBelt />}
 
       {/* ═══════════════ 의뢰인 후기 ═══════════════ */}
       <Testimonials items={testimonials} />
@@ -859,8 +868,8 @@ export default async function PublicMarketingHomePage({
         </div>
       </section>
 
-      {/* ═══════════════ 최종 CTA ═══════════════ */}
-      <LocalLandingGrid />
+      {/* ═══════════════ 지역별 안내 그리드 (기능 플래그: local_landing_grid) ═══════════════ */}
+      {localGridEnabled && <LocalLandingGrid />}
 
       <section className="py-20 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
