@@ -6,6 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster as SonnerToaster } from "sonner";
 
 import { AppShellSafe } from "@/components/layout/app-shell-safe";
+import { HtmlLangSync } from "@/components/layout/html-lang-sync";
 import { Analytics } from "@/components/public/analytics";
 import { AiChatWidget } from "@/components/public/ai-chat-widget";
 import { BottomSheetMount } from "@/components/public/bottom-sheet-mount";
@@ -97,6 +98,7 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
         />
       </head>
       <body>
+        <HtmlLangSync />
         <PublicOnly>
           <BrandIntro />
         </PublicOnly>
