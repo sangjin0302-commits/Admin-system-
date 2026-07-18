@@ -8,6 +8,7 @@ import { InstallPWAPrompt } from "@/components/admin/install-pwa-prompt";
 import { VoiceCommandMic } from "@/components/admin/voice-command-mic";
 import { CommandPalette } from "@/components/admin/command-palette";
 import { DarkModeToggle } from "@/components/admin/dark-mode-toggle";
+import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { QuickNoteFab } from "@/components/admin/quick-note-fab";
 import { MacroHotkeyListener } from "@/components/admin/macro-hotkey-listener";
 import { listInquiries } from "@/lib/services/inquiry-service";
@@ -45,6 +46,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <div className="mt-4 flex items-center gap-3">
               <div className="flex-1"><AdminSearchBar /></div>
               <DarkModeToggle enabled={darkToggleEnabled} />
+              <AdminLogoutButton />
             </div>
           </div>
         </div>

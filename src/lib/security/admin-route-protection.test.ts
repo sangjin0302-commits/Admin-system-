@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { isProtectedAdminRoute, isPublicRoute } from "../../middleware";
+import { isAdminAuthRoute, isProtectedAdminRoute, isPublicRoute } from "../../middleware";
 
 const publicRoutes = [
   "/",
@@ -54,6 +54,27 @@ for (const route of protectedRoutes) {
 const similarButPublicRoutes = ["/administrator", "/administer", "/api/administrator"];
 for (const route of similarButPublicRoutes) {
   assert.equal(isProtectedAdminRoute(route), false, `${route} should not match admin prefix`);
+}
+
+// 로그인 화면과 로그인 API는 인증 대상에서 제외되어야 한다.
+// (제외되지 않으면 로그인하러 가는 요청까지 차단되어 순환에 빠진다.)
+const adminAuthRoutes = ["/admin/login", "/api/admin-auth/login", "/api/admin-auth/logout"];
+for (const route of adminAuthRoutes) {
+  assert.equal(isAdminAuthRoute(route), true, `${route} should be an admin auth route`);
+  assert.equal(isProtectedAdminRoute(route), false, `${route} must not require admin auth`);
+}
+
+// 이름만 비슷한 admin 하위 경로가 로그인 예외로 새어나가면 안 된다.
+const notAdminAuthRoutes = ["/admin/login-history", "/admin/logins"];
+for (const route of notAdminAuthRoutes) {
+  assert.equal(isAdminAuthRoute(route), false, `${route} must not bypass admin auth`);
+  assert.equal(isProtectedAdminRoute(route), true, `${route} should still require admin auth`);
+}
+
+// /api/admin-auth 예외가 /api/admin- 로 시작하는 다른 경로까지 열지 않아야 한다.
+// (이들은 /api/admin 접두사에도 걸리지 않으므로 admin 경로 자체가 아니다 — /administrator와 동일.)
+for (const route of ["/api/admin-authority", "/api/admin-authx"]) {
+  assert.equal(isAdminAuthRoute(route), false, `${route} must not match admin auth prefix`);
 }
 
 const middlewareSource = readFileSync(join(process.cwd(), "src", "middleware.ts"), "utf8");

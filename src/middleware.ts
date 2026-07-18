@@ -1,5 +1,10 @@
 ﻿import { NextResponse, type NextRequest } from "next/server";
 import { checkAdminAuthLimit, isUpstashConfigured } from "@/lib/security/upstash-ratelimit";
+import {
+  ADMIN_SESSION_COOKIE,
+  isAdminSessionConfigured,
+  verifyAdminSessionToken
+} from "@/lib/security/admin-session";
 
 const ADMIN_AUTH_USER_ENV = "ADMIN_BASIC_AUTH_USER";
 const ADMIN_AUTH_PASSWORD_ENV = "ADMIN_BASIC_AUTH_PASSWORD";
@@ -172,7 +177,15 @@ export function isPublicRoute(pathname: string) {
   return false;
 }
 
+/** 로그인 화면과 로그인/로그아웃 API는 보호 대상에서 제외(순환 차단 방지). */
+export function isAdminAuthRoute(pathname: string) {
+  if (pathname === "/admin/login") return true;
+  if (hasPathPrefix(pathname, "/api/admin-auth")) return true;
+  return false;
+}
+
 export function isProtectedAdminRoute(pathname: string) {
+  if (isAdminAuthRoute(pathname)) return false;
   if (hasPathPrefix(pathname, "/admin")) return true;
   if (hasPathPrefix(pathname, "/api/admin")) return true;
   return false;
@@ -290,6 +303,19 @@ function getUnauthorizedResponse(request: NextRequest) {
     return response;
   }
 
+  // 화면 요청은 브라우저 기본 인증 팝업 대신 로그인 페이지로 보낸다.
+  // (세션 비밀키가 없으면 로그인 폼이 동작할 수 없으므로 기존 Basic Auth 팝업 유지)
+  if (isAdminSessionConfigured()) {
+    const loginUrl = new URL("/admin/login", request.url);
+    const target = request.nextUrl.pathname + request.nextUrl.search;
+    if (target && target !== "/admin/login") {
+      loginUrl.searchParams.set("next", target);
+    }
+    const redirect = NextResponse.redirect(loginUrl);
+    applySecurityHeaders(request, redirect);
+    return redirect;
+  }
+
   const response = new NextResponse(KO_AUTH_REQUIRED, {
     status: 401,
     headers: { "WWW-Authenticate": ADMIN_REALM }
@@ -332,6 +358,20 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isPublicRoute(pathname)) {
+    const response = NextResponse.next();
+    applySecurityHeaders(request, response);
+    return response;
+  }
+
+  // 로그인 화면·로그인 API는 인증 대상에서 빼되, IP 허용목록은 그대로 적용한다.
+  // (여기서 빠지면 허용목록 밖에서도 비밀번호 대입을 시도할 수 있게 된다.)
+  if (isAdminAuthRoute(pathname)) {
+    const ip = getClientIp(request);
+    if (!isIpAllowed(ip, parseAllowlist(process.env.ADMIN_IP_ALLOWLIST))) {
+      return pathname.startsWith("/api/")
+        ? jsonError(403, KO_IP_REJECTED, request)
+        : textError(403, KO_IP_REJECTED, request);
+    }
     const response = NextResponse.next();
     applySecurityHeaders(request, response);
     return response;
@@ -392,11 +432,18 @@ export async function middleware(request: NextRequest) {
     return getTooManyAttemptsResponse(request, retryAfterSec);
   }
 
+  // 인가 경로 1: 로그인 폼이 발급한 세션 쿠키.
+  // 인가 경로 2: 기존 Basic Auth (자동화·폴백. 세션이 깨져도 잠기지 않도록 유지).
+  const sessionUser = await verifyAdminSessionToken(
+    request.cookies.get(ADMIN_SESSION_COOKIE)?.value
+  );
+
   const provided = parseBasicAuthorization(request.headers.get("authorization"));
   const authorized =
-    provided &&
-    constantTimeEquals(provided.username, credentials.username) &&
-    constantTimeEquals(provided.password, credentials.password);
+    sessionUser !== null ||
+    (provided &&
+      constantTimeEquals(provided.username, credentials.username) &&
+      constantTimeEquals(provided.password, credentials.password));
 
   if (!authorized) {
     const failEntry =
@@ -450,6 +497,7 @@ export const config = {
     "/",
     "/admin/:path*",
     "/api/admin/:path*",
+    "/api/admin-auth/:path*",
     "/services/:path*",
     "/intake/:path*",
     "/track/:path*",
