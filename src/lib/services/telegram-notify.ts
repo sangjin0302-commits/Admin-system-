@@ -42,9 +42,9 @@ export async function sendTelegramAlert(input: TelegramAlertInput & { channel?: 
     : "🔔";
 
   const lines = [
-    `${prefix} *${escapeMd(input.title)}*`,
-    ...(input.lines ?? []).map((l) => escapeMd(l)),
-    ...(input.url ? [`🔗 ${escapeMd(input.url)}`] : [])
+    `${prefix} <b>${escapeHtml(input.title)}</b>`,
+    ...(input.lines ?? []).map((l) => escapeHtml(l)),
+    ...(input.url ? [`🔗 ${escapeHtml(input.url)}`] : [])
   ];
   const text = lines.join("\n");
 
@@ -55,7 +55,7 @@ export async function sendTelegramAlert(input: TelegramAlertInput & { channel?: 
       body: JSON.stringify({
         chat_id: chatId,
         text,
-        parse_mode: "MarkdownV2",
+        parse_mode: "HTML",
         disable_web_page_preview: true
       })
     });
@@ -71,7 +71,13 @@ export async function sendTelegramAlert(input: TelegramAlertInput & { channel?: 
   }
 }
 
-function escapeMd(s: string): string {
-  // Telegram MarkdownV2 reserved chars
-  return s.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, "\\$1");
+/**
+ * Telegram HTML 모드 이스케이프.
+ *
+ * MarkdownV2는 `_*[]()~`>#+-=|{}.!` 를 전부 이스케이프해야 해서 이메일·URL·날짜가
+ * 역슬래시 범벅이 되거나 파싱 실패로 발송 자체가 깨졌다. HTML 모드는 3글자만
+ * 처리하면 되므로 한글 본문·링크가 원문 그대로 표시된다.
+ */
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

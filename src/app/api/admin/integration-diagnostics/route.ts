@@ -101,14 +101,14 @@ export async function POST(request: Request) {
     plainSend = { error: String(err) };
   }
 
-  // 3) 실제 서비스 경로(sendTelegramAlert, MarkdownV2)로도 발송
+  // 3) 실제 서비스 경로(sendTelegramAlert, HTML 서식)로도 발송
   let alertResult: unknown = null;
   try {
     const mod = await import("@/lib/services/telegram-notify");
     alertResult = await mod.sendTelegramAlert({
       kind: "test",
       title: "연동 진단 테스트",
-      lines: ["서비스 경로(MarkdownV2) 발송 확인"]
+      lines: ["서비스 경로(HTML 서식) 발송 확인"]
     });
   } catch (err) {
     alertResult = { error: String(err) };
