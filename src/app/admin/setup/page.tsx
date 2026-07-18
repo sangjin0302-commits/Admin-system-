@@ -32,7 +32,7 @@ export default async function SetupPage() {
     siteUrl: !!process.env.NEXT_PUBLIC_SITE_URL,
     anthropic: !!process.env.ANTHROPIC_API_KEY,
     blob: !!process.env.BLOB_READ_WRITE_TOKEN,
-    sentry: !!process.env.SENTRY_DSN,
+    sentry: !!(process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN),
     tossEnabled: process.env.NEXT_PUBLIC_TOSS_ENABLED === "1"
   };
 
@@ -183,9 +183,12 @@ export default async function SetupPage() {
       hint: "프로덕션 에러 추적",
       cost: "무료 (5k events/월)",
       steps: [
-        "sentry.io 가입 → Next.js 프로젝트",
-        "DSN 복사",
-        "Vercel env: SENTRY_DSN = https://...@sentry.io/..."
+        "sentry.io 가입 → Next.js 프로젝트 생성",
+        "DSN 복사 (https://xxxxx@oXXXXX.ingest.sentry.io/XXXXX 형태)",
+        "Vercel env 2개 추가 (같은 DSN 값):",
+        "  · SENTRY_DSN = 복사한 DSN",
+        "  · NEXT_PUBLIC_SENTRY_DSN = 같은 DSN",
+        "Redeploy"
       ],
       link: "https://sentry.io"
     },
