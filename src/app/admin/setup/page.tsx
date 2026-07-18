@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { DeployStatusCard } from "@/components/admin/deploy-status-card";
+import { SetupLink } from "./setup-link";
 import { getSiteSettings } from "@/lib/services/site-settings";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
@@ -264,17 +265,7 @@ export default async function SetupPage() {
                   </div>
                   <p className="mt-1 text-xs text-text-muted">{it.hint}</p>
                 </div>
-                {it.link && (
-                  <a
-                    href={it.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="shrink-0 rounded-lg border border-gold/40 px-3 py-1.5 text-xs font-bold text-primary hover:bg-gold-soft/30"
-                  >
-                    바로가기 ↗
-                  </a>
-                )}
+                {it.link && <SetupLink href={it.link} />}
               </div>
             </summary>
             <ol className="mt-4 space-y-1.5 border-t border-line/70 pt-4 text-xs leading-6 text-text">
