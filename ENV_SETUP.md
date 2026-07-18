@@ -98,6 +98,32 @@
 
 `LAWBOT_API_KEY` 는 코드에서 읽지 않는다(과거 문서 잔재). 넣어도 효과 없음.
 
+#### ✅ 실제로 붙는 조합은 "D. 분석" 계열이다 (2026-07-18 코드 대조 확인)
+
+Lawbot 저장소(`sangjin0302-commits-Telegram-Lawbot-`)의 `web_api.py` 는 FastAPI로
+`POST /analyze` 와 `POST /analyze/admin` 을 제공하며, 인증은 `x-lawbot-token`
+헤더를 읽는다(`web_helpers.is_internal_analyze_authorized`).
+
+사이트의 `lawbot-case-analysis-service.ts` 는 정확히 이렇게 호출한다:
+
+```
+POST {LAWBOT_ANALYZE_URL}
+헤더: x-lawbot-token: {LAWBOT_ANALYZE_TOKEN}
+본문: { "fact_input": "..." }
+```
+
+**양쪽이 이미 맞아 있으므로 코드 수정 없이 환경변수만으로 연결된다.**
+
+| Lawbot(Railway) | 사이트(Vercel) | 값 |
+|---|---|---|
+| `LAWBOT_INTERNAL_ANALYZE_TOKEN` | `LAWBOT_ANALYZE_TOKEN` | **같은 값**(이름만 다름) |
+| 배포 URL | `LAWBOT_ANALYZE_URL` | `https://<host>/analyze/admin` (관리자용, 8000자·무제한) 또는 `/analyze` (공개용, 4000자·일 5회) |
+| `WEB_ALLOWED_ORIGINS` | — | `https://ethosattorney.com` 추가 필요 |
+| — | `LAWBOT_ENABLE_AUTOMATIC_CALLS` | 자동 분석까지 원하면 `true` |
+
+반면 **B(브릿지) 계열이 요구하는 `/bridge/intake/analyze` 등은 Lawbot에 존재하지
+않는다**(실측 404). `/quick-check` 는 B 계열을 쓰므로 별도 판단이 필요하다.
+
 **A 계열의 `LAW_PROXY_URL` 은 미설정 시 하드코딩된 평문 HTTP IP로 폴백**한다
 (`src/lib/services/law-api-service.ts`). 운영에서는 반드시 명시 설정할 것.
 
@@ -179,8 +205,21 @@
 > 외부 FastAPI 봇을 붙이는 구조가 아니라, 사이트가 네이버 API를 직접 호출한다.
 > 해당 변수를 Vercel에 넣어도 아무 효과가 없으니 등록하지 말 것.
 
-**실제 구조**: `src/lib/services/market-collect-service.ts` 가 네이버 검색·데이터랩을
-직접 호출 → 분류 → 경쟁사 프로파일 저장. 화면은 `/admin/market`.
+**실제 구조**: 별도 저장소 `market-analyze`(Python)의 로직을 **TypeScript로 포팅해
+사이트 안에 넣어둔 것**이다. 외부 서비스를 HTTP로 부르지 않는다.
+
+| 사이트 파일 | 원본(market-analyze) |
+|---|---|
+| `market-naver-client.ts` | `app/services/naver.py` |
+| `market-collect-service.ts` | `collector_v2.py` + `pipeline.rebuild_competitor_profiles` |
+| `market-classifier-service.ts` | `app/services/classifier.py` + `filters.py` |
+
+따라서 **네이버 키만 있으면 동작하고, Python 서비스는 띄우지 않아도 된다.**
+화면은 `/admin/market`.
+
+> 단, `/admin/inquiries/[id]` 상세 화면의 "시장 신호" 패널은 아직 mock이다
+> (`inquiry-detail-view-market-helpers.ts` — "market-analyze 연동 전 단계"). 포팅
+> 범위에 포함되지 않은 별개 항목.
 
 **필요 환경변수**:
 ```
