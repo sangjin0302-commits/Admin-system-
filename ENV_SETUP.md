@@ -73,7 +73,11 @@
 | 변수 | 용도 |
 |------|------|
 | `NEXT_PUBLIC_TAWKTO_WIDGET_ID` | Tawk.to 실시간 채팅 |
-| `SENTRY_DSN` | 에러 모니터링 |
+| `SENTRY_DSN` | 서버 에러 모니터링 |
+| `NEXT_PUBLIC_SENTRY_DSN` | 클라이언트 에러 모니터링 (SENTRY_DSN과 같은 값) |
+| `SENTRY_ORG` | Sentry 조직 slug (소스맵 업로드용, 선택) |
+| `SENTRY_PROJECT` | Sentry 프로젝트 slug (소스맵 업로드용, 선택) |
+| `SENTRY_AUTH_TOKEN` | Sentry auth token (소스맵 업로드용, 선택) |
 | `GOOGLE_CALENDAR_TOKEN` | Google Calendar 동기화 |
 
 ---
