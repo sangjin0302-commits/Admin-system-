@@ -26,7 +26,7 @@ export default async function SetupPage() {
   // 환경변수는 process.env로 확인 (정확한 값은 노출 안 함, 존재 여부만)
   const env = {
     telegramBot: !!process.env.TELEGRAM_BOT_TOKEN,
-    telegramAdmin: !!process.env.TELEGRAM_ADMIN_CHAT_ID,
+    telegramAdmin: !!(process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.TELEGRAM_CHAT_ID),
     telegramChannel: !!process.env.TELEGRAM_CHANNEL_ID,
     cronSecret: !!process.env.CRON_SECRET,
     siteUrl: !!process.env.NEXT_PUBLIC_SITE_URL,

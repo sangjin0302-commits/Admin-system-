@@ -23,9 +23,13 @@ export interface TelegramAlertInput {
 
 export async function sendTelegramAlert(input: TelegramAlertInput & { channel?: "admin" | "public" }): Promise<{ ok: boolean; reason?: string }> {
   const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  // 관리자 chat id는 두 변수명 모두 허용 (문서·과거 설정 혼용 방지):
+  // TELEGRAM_ADMIN_CHAT_ID(정식) 우선, 없으면 TELEGRAM_CHAT_ID 폴백.
+  const adminChatId =
+    process.env.TELEGRAM_ADMIN_CHAT_ID?.trim() || process.env.TELEGRAM_CHAT_ID?.trim();
   const target = input.channel === "public"
     ? process.env.TELEGRAM_CHANNEL_ID?.trim()
-    : process.env.TELEGRAM_ADMIN_CHAT_ID?.trim();
+    : adminChatId;
   if (!token || !target) {
     return { ok: false, reason: "not_configured" };
   }

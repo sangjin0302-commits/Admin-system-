@@ -40,7 +40,7 @@
 | `RESEND_API_KEY` | 이메일 알림 (신규 문의·후속) |
 | `ADMIN_NOTIFICATION_EMAIL` | 알림 받을 이메일 |
 | `SLACK_WEBHOOK_URL` | Slack 알림 |
-| `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` | 텔레그램 알림 |
+| `TELEGRAM_BOT_TOKEN` + `TELEGRAM_ADMIN_CHAT_ID` | 텔레그램 알림 (관리자 chat_id) |
 | `KAKAO_REST_API_KEY` + `KAKAO_SENDER_KEY` | 카카오 알림톡 |
 | `FCM_SERVER_KEY` | 모바일 푸시 |
 
