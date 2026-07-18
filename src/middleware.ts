@@ -318,7 +318,12 @@ function getUnauthorizedResponse(request: NextRequest) {
 
   const response = new NextResponse(KO_AUTH_REQUIRED, {
     status: 401,
-    headers: { "WWW-Authenticate": ADMIN_REALM }
+    headers: {
+      "WWW-Authenticate": ADMIN_REALM,
+      // 진단용: Edge 런타임(미들웨어)에서 세션 비밀키가 보이는지 여부만 노출.
+      // 값은 절대 싣지 않는다. 폼 로그인이 안 뜰 때 원인 판별에 쓴다.
+      "X-Admin-Session-Ready": isAdminSessionConfigured() ? "1" : "0"
+    }
   });
   applySecurityHeaders(request, response);
   return response;
