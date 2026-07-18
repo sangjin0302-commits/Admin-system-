@@ -14,21 +14,22 @@ const PROGRESS_STEPS = [
   "분석 결과를 종합하는 중입니다… (최대 40초 소요)"
 ];
 
+/**
+ * Lawbot `/analyze`(공개 엔드포인트) 응답을 서버에서 화이트리스트 가공한 형태.
+ * 실무자 전략(pros/cons/argument_strategy 등)은 서버에서 이미 걸러져 오지 않는다.
+ */
 type AnalyzeResult = {
   ok: true;
   requestId: string;
-  summary: Record<string, unknown> | null;
-  domain: Record<string, unknown> | null;
-  scope: Record<string, unknown> | null;
-  reviewRequired: boolean;
-  mustVerify: string[];
+  summary: string | null;
+  keyIssues: string[];
+  followupFacts: string[];
   riskFlags: string[];
-  caseOutlook: Record<string, unknown> | null;
-  practitionerGuide: Record<string, unknown> | null;
-  matchedSubtypes: string[];
+  reviewRequired: boolean;
+  citations: { name: string; url: string }[];
 };
 
-type ErrorResult = { ok: false; error: string };
+type ErrorResult = { ok: false; error: string; code?: string };
 
 const SAMPLES = [
   "체류기간이 다음 달 만료인데 F-2 자격 변경 가능한지 알고 싶습니다.",
@@ -184,15 +185,16 @@ function suggestKeywords(text: string): Array<{ term: string; label: string }> {
 }
 
 function ResultDisplay({ result }: { result: AnalyzeResult }) {
-  // 매칭 분야 → intake prefill 파라미터
-  const topCat = result.matchedSubtypes[0] ?? "";
+  // 핵심 쟁점 → intake prefill 파라미터
+  const topCat = result.keyIssues[0] ?? "";
   const summary = [
-    result.matchedSubtypes.length > 0 ? `추정 분야: ${result.matchedSubtypes.join(", ")}` : "",
-    result.mustVerify.length > 0 ? `확인 필요: ${result.mustVerify.slice(0, 2).join(" · ")}` : "",
+    result.summary ? `요약: ${result.summary}` : "",
+    result.keyIssues.length > 0 ? `핵심 쟁점: ${result.keyIssues.join(", ")}` : "",
+    result.followupFacts.length > 0 ? `확인 필요: ${result.followupFacts.slice(0, 2).join(" · ")}` : "",
     result.riskFlags.length > 0 ? `주의: ${result.riskFlags.slice(0, 2).join(" · ")}` : ""
   ].filter(Boolean).join("\n");
   const prefillUrl = `/intake?from=quick-check&cat=${encodeURIComponent(topCat)}&summary=${encodeURIComponent(summary.slice(0, 300))}`;
-  const keywords = suggestKeywords(`${result.matchedSubtypes.join(" ")} ${result.mustVerify.join(" ")} ${result.riskFlags.join(" ")}`);
+  const keywords = suggestKeywords(`${result.keyIssues.join(" ")} ${result.followupFacts.join(" ")} ${result.riskFlags.join(" ")}`);
 
   return (
     <div className="space-y-5">
@@ -209,11 +211,18 @@ function ResultDisplay({ result }: { result: AnalyzeResult }) {
         </div>
       </Card>
 
-      {/* 매칭된 분야 */}
-      {result.matchedSubtypes.length > 0 && (
-        <Section title="추정 업무 분야">
+      {/* 사안 요약 */}
+      {result.summary && (
+        <Section title="사안 요약">
+          <p className="text-sm leading-7 text-text">{result.summary}</p>
+        </Section>
+      )}
+
+      {/* 핵심 쟁점 */}
+      {result.keyIssues.length > 0 && (
+        <Section title="핵심 쟁점">
           <div className="flex flex-wrap gap-2">
-            {result.matchedSubtypes.map((s) => (
+            {result.keyIssues.map((s) => (
               <span
                 key={s}
                 className="rounded-full bg-primary px-4 py-1.5 font-serif text-xs font-bold text-white"
@@ -226,10 +235,10 @@ function ResultDisplay({ result }: { result: AnalyzeResult }) {
       )}
 
       {/* 확인 필요 사항 */}
-      {result.mustVerify.length > 0 && (
+      {result.followupFacts.length > 0 && (
         <Section title="추가 확인이 필요한 사항">
           <ul className="space-y-2">
-            {result.mustVerify.map((m, i) => (
+            {result.followupFacts.map((m, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-text">
                 <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rotate-45 bg-gold" />
                 {m}
@@ -259,6 +268,29 @@ function ResultDisplay({ result }: { result: AnalyzeResult }) {
             ))}
           </ul>
         </Card>
+      )}
+
+      {/* 관련 법령 — 법령명과 원문 링크만. 본문은 싣지 않는다(참고자료 수준 유지) */}
+      {result.citations.length > 0 && (
+        <Section title="관련 법령">
+          <div className="flex flex-wrap gap-2">
+            {result.citations.map((c) => (
+              <a
+                key={c.name}
+                href={c.url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-surface px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-gold-soft/40"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+                {c.name} ↗
+              </a>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-text-muted">
+            국가법령정보센터 원문으로 연결됩니다.
+          </p>
+        </Section>
       )}
 
       {/* 검토 권고 */}

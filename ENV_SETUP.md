@@ -121,8 +121,29 @@ POST {LAWBOT_ANALYZE_URL}
 | `WEB_ALLOWED_ORIGINS` | — | `https://ethosattorney.com` 추가 필요 |
 | — | `LAWBOT_ENABLE_AUTOMATIC_CALLS` | 자동 분석까지 원하면 `true` |
 
+#### 관리자용 / 고객용 분리 (2026-07-18 적용)
+
+`/quick-check`(고객)를 브릿지에서 **D 계열로 이관했다.** 관리자 경로와 고객 경로는
+엔드포인트·토큰·한도가 분리되어 있다.
+
+| 구분 | 엔드포인트 | 토큰 | 입력 상한 | 횟수 제한 |
+|---|---|---|---|---|
+| 관리자(사건 분석·초안) | `/analyze/admin` | `x-lawbot-token` **보냄** | 8000자 | 없음 |
+| 고객(`/quick-check`) | `/analyze` | **안 보냄** | 4000자 | 봇 일 5회 + 사이트 IP당 5분 5회 |
+
+`LAWBOT_ANALYZE_URL` 을 `.../analyze/admin` 으로 넣으면, 고객용 URL은 코드가
+`/analyze` 로 **자동 변환**한다(`toPublicAnalyzeUrl`). 별도 지정이 필요하면
+`LAWBOT_ANALYZE_PUBLIC_URL` 을 쓴다.
+
+고객 응답에서 실무자 전략 필드(`pros`/`cons`/`argument_strategy`/
+`counter_argument_points`/`matched_*`)는 서버에서 제거되며, 법령은 **이름과 원문
+링크만** 나가고 요약 본문은 나가지 않는다. 이 두 가지와 "공개 호출에 관리자 토큰이
+실리지 않을 것"은 테스트로 고정되어 있다
+(`src/lib/services/lawbot-analyze-public-client.test.ts`).
+
 반면 **B(브릿지) 계열이 요구하는 `/bridge/intake/analyze` 등은 Lawbot에 존재하지
-않는다**(실측 404). `/quick-check` 는 B 계열을 쓰므로 별도 판단이 필요하다.
+않는다**(실측 404). 아직 브릿지를 쓰는 경로(문의 접수 자동분석, 서면·메시지 초안,
+batch cron 등 10곳)는 설정이 없으면 조용히 비활성 상태로 넘어간다.
 
 **A 계열의 `LAW_PROXY_URL` 은 미설정 시 하드코딩된 평문 HTTP IP로 폴백**한다
 (`src/lib/services/law-api-service.ts`). 운영에서는 반드시 명시 설정할 것.
