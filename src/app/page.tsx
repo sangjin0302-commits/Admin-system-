@@ -463,6 +463,68 @@ export default async function PublicMarketingHomePage({
         </div>
       </section>
 
+      {/* ━━━━━━━━━━━━━━━ 의뢰인 여정 ① 내 문제를 아는가 — 업무분야 ━━━━━━━━━━━━━━━ */}
+      {/* 방문자의 첫 질문은 "이 사무소가 내 사건을 다루나?"다. 신뢰·프로필보다 먼저
+          업무분야를 보여줘 정보 냄새를 잇는다(예전엔 6번째로 밀려 있었다). */}
+      <section className="py-24 sm:py-28" aria-labelledby="practice-heading">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="ethos-eyebrow">Practice Areas</p>
+                <h2 id="practice-heading" className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">
+                  다섯 가지 주력 분야
+                </h2>
+              </div>
+              <p className="max-w-xs text-sm leading-7 text-text-muted">
+                각 분야별 전문 워크플로우로 처음부터 끝까지 안내합니다.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="mt-14 grid gap-5 md:grid-cols-2">
+            {PRACTICE_AREAS.map((area, i) => (
+              <Reveal key={area.title} delay={((i % 2) + 1) as 1 | 2}>
+                <Link
+                  href={area.href}
+                  className="ethos-card ethos-card-hover ethos-card-topline ethos-cta-shine ethos-tilt group relative flex h-full flex-col overflow-hidden p-8"
+                >
+                  <span className="ethos-index pointer-events-none absolute -right-2 -top-4 select-none">
+                    {area.no}
+                  </span>
+                  <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-gold/40 bg-gold-soft/30 text-primary transition-colors duration-300 group-hover:bg-gold-soft/60">
+                    {area.icon}
+                  </div>
+                  <p className="relative mt-6 font-serif text-[11px] font-bold tracking-[0.2em] text-gold-deep">
+                    {area.subtitle}
+                  </p>
+                  <h3 className="ethos-display relative mt-1 text-2xl">{area.title}</h3>
+                  <p className="relative mt-4 text-sm leading-7 text-text">{area.description}</p>
+                  <ul className="relative mt-5 space-y-2.5">
+                    {area.bullets.map((bullet) => (
+                      <li key={bullet} className="flex items-center gap-2.5 text-sm text-text-muted">
+                        <span className="h-1.5 w-1.5 rotate-45 bg-gold" />
+                        {bullet}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="relative mt-auto flex items-center justify-between pt-6">
+                    <span className="inline-flex items-center gap-1 font-serif text-sm font-semibold text-primary transition-colors group-hover:text-gold-deep">
+                      자세히 보기
+                      <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-lg border border-gold/40 bg-gold-soft/30 px-3 py-1.5 font-serif text-xs font-bold text-gold-deep transition-colors group-hover:bg-gold-soft/60">
+                      이 분야 상담
+                    </span>
+                  </div>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ━━━━━━━━━━━━━━━ 의뢰인 여정 ② 믿을 수 있는가 — 차별화·프로필·후기 ━━━━━━━━━━━━━━━ */}
       {/* ═══════════════ 왜 ETHOS인가 — 차별화 스트립 ═══════════════ */}
       <section className="py-24 sm:py-28" aria-labelledby="why-ethos-heading">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -579,6 +641,13 @@ export default async function PublicMarketingHomePage({
         </div>
       </section>
 
+      {/* ═══════════════ 의뢰인 후기 (신뢰 클러스터로 이동) ═══════════════ */}
+      <Testimonials items={testimonials} />
+
+      {/* ═══════════════ Naver Place 실제 방문자 후기 ═══════════════ */}
+      <NaverReviewBand />
+
+      {/* ━━━━━━━━━━━━━━━ 의뢰인 여정 ③ 어떻게 진행되나 — 철학·비용·절차 ━━━━━━━━━━━━━━━ */}
       {/* ═══════════════ 철학 — DARK 풀블리드 밴드 ═══════════════ */}
       <section className="ethos-band ethos-band-dark ethos-grain overflow-hidden py-24 sm:py-32" style={{ backgroundColor: "rgb(22 50 80)" }}>
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -639,65 +708,6 @@ export default async function PublicMarketingHomePage({
                 </Reveal>
               ))}
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ 4개 업무 — editorial ═══════════════ */}
-      <section className="py-24 sm:py-28" aria-labelledby="practice-heading">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <Reveal>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="ethos-eyebrow">Practice Areas</p>
-                <h2 id="practice-heading" className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">
-                  다섯 가지 주력 분야
-                </h2>
-              </div>
-              <p className="max-w-xs text-sm leading-7 text-text-muted">
-                각 분야별 전문 워크플로우로 처음부터 끝까지 안내합니다.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="mt-14 grid gap-5 md:grid-cols-2">
-            {PRACTICE_AREAS.map((area, i) => (
-              <Reveal key={area.title} delay={((i % 2) + 1) as 1 | 2}>
-                <Link
-                  href={area.href}
-                  className="ethos-card ethos-card-hover ethos-card-topline ethos-cta-shine ethos-tilt group relative flex h-full flex-col overflow-hidden p-8"
-                >
-                  <span className="ethos-index pointer-events-none absolute -right-2 -top-4 select-none">
-                    {area.no}
-                  </span>
-                  <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-gold/40 bg-gold-soft/30 text-primary transition-colors duration-300 group-hover:bg-gold-soft/60">
-                    {area.icon}
-                  </div>
-                  <p className="relative mt-6 font-serif text-[11px] font-bold tracking-[0.2em] text-gold-deep">
-                    {area.subtitle}
-                  </p>
-                  <h3 className="ethos-display relative mt-1 text-2xl">{area.title}</h3>
-                  <p className="relative mt-4 text-sm leading-7 text-text">{area.description}</p>
-                  <ul className="relative mt-5 space-y-2.5">
-                    {area.bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-center gap-2.5 text-sm text-text-muted">
-                        <span className="h-1.5 w-1.5 rotate-45 bg-gold" />
-                        {bullet}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="relative mt-auto flex items-center justify-between pt-6">
-                    <span className="inline-flex items-center gap-1 font-serif text-sm font-semibold text-primary transition-colors group-hover:text-gold-deep">
-                      자세히 보기
-                      <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-lg border border-gold/40 bg-gold-soft/30 px-3 py-1.5 font-serif text-xs font-bold text-gold-deep transition-colors group-hover:bg-gold-soft/60">
-                      이 분야 상담
-                    </span>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
           </div>
         </div>
       </section>
@@ -825,6 +835,7 @@ export default async function PublicMarketingHomePage({
       {/* ═══════════════ 상담 구조 ═══════════════ */}
       <ConsultStructure />
 
+      {/* ━━━━━━━━━━━━━━━ 의뢰인 여정 ④ 지금 시작 — 블로그·뉴스레터·FAQ·상담 ━━━━━━━━━━━━━━━ */}
       {/* ═══════════════ 네이버 블로그 최신글 ═══════════════ */}
       {naverPosts.length > 0 && naverBlogId && (
         <NaverBlogSection posts={naverPosts} blogId={naverBlogId} />
@@ -832,12 +843,6 @@ export default async function PublicMarketingHomePage({
 
       {/* ═══════════════ 신뢰 뱃지 벨트 (기능 플래그: trust_belt) ═══════════════ */}
       {trustBeltEnabled && <TrustBelt />}
-
-      {/* ═══════════════ 의뢰인 후기 ═══════════════ */}
-      <Testimonials items={testimonials} />
-
-      {/* ═══════════════ Naver Place 실제 방문자 후기 ═══════════════ */}
-      <NaverReviewBand />
 
       {/* ═══════════════ Newsletter ═══════════════ */}
       <NewsletterWidget />

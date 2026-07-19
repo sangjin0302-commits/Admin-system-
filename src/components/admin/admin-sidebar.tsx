@@ -59,10 +59,17 @@ export function AdminSidebar({
   useEffect(() => {
     try {
       const raw = localStorage.getItem("admin.sidebar.collapsedGroups");
-      if (raw) setCollapsedGroups(new Set(JSON.parse(raw) as string[]));
+      if (raw) {
+        // 사용자가 직접 접고 편 기록이 있으면 그대로 존중한다.
+        setCollapsedGroups(new Set(JSON.parse(raw) as string[]));
+        return;
+      }
     } catch {
-      // 저장값이 깨졌으면 기본값(모두 펼침)을 쓴다.
+      // 저장값이 깨졌으면 기본값 규칙으로 넘어간다.
     }
+    // 저장값이 없는 첫 방문 — defaultCollapsed 그룹(실험실 등)은 접힌 채로 시작한다.
+    const defaults = NAV_GROUPS.filter((g) => g.defaultCollapsed).map((g) => g.title);
+    if (defaults.length > 0) setCollapsedGroups(new Set(defaults));
   }, []);
   const toggleGroup = (title: string) => {
     setCollapsedGroups((prev) => {
