@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 
+import { BulkManager } from "@/components/admin/bulk-manager";
 import { InquiryCardList } from "@/components/admin/inquiry-card-list";
 import { InquiryFlowAlerts } from "@/components/admin/inquiry-flow-alerts";
 import { InquiryKanbanBoard } from "@/components/admin/inquiry-kanban-board";
@@ -19,6 +20,8 @@ import {
 import { buildAdminInquiryPageData } from "@/lib/services/admin-inquiry-page-data";
 import { parseAdminInquiryQuery } from "@/lib/validation/admin-safe-v2";
 import { listInquiries } from "@/lib/services/inquiry-service";
+import { getInquiryStatusLabel, inquiryStatusValues } from "@/types/inquiry";
+import { formatDate } from "@/lib/utils";
 import { getScoresForInquiries } from "@/lib/services/priority-scoring-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { logger } from "@/lib/utils/logger";
@@ -55,6 +58,7 @@ export default async function AdminInquiryListPage({
     return {};
   });
   const useTanstack = await isFeatureEnabled("admin_tanstack_table");
+  const bulkActionsEnabled = await isFeatureEnabled("inquiry_bulk_actions");
   const {
     activeInquiries,
     prioritizedInquiries,
@@ -287,6 +291,22 @@ export default async function AdminInquiryListPage({
       <div id="inquiry-filters">
         <InquiryFilters filters={filters} viewMode={viewMode} />
       </div>
+
+      {bulkActionsEnabled && (
+        <BulkManager
+          noun="문의"
+          endpoint="/api/admin/inquiries/bulk-action"
+          statusOptions={inquiryStatusValues.map((value) => ({
+            value,
+            label: getInquiryStatusLabel(value)
+          }))}
+          items={prioritizedInquiries.map((item) => ({
+            id: item.id,
+            title: item.title,
+            subtitle: `${item.contactName} · ${getInquiryStatusLabel(item.status)} · ${formatDate(item.createdAt)}`
+          }))}
+        />
+      )}
 
       <div id="inquiry-results">
         {prioritizedInquiries.length > 0 ? (

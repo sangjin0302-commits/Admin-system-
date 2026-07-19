@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BulkManager } from "@/components/admin/bulk-manager";
 import { CaseMatterActionSections } from "@/components/admin/case-matter-action-sections";
 import { type CaseRow } from "@/components/admin/cases-table";
 import { CasesTableWithFilters } from "@/components/admin/cases-table-with-filters";
@@ -15,7 +16,7 @@ import { formatCaseMatterTypeLabel } from "@/lib/immigration";
 import { buildCaseMatterActionDashboard } from "@/lib/services/case-matter-action-view-model";
 import { listCaseMatters } from "@/lib/services/case-matter-service";
 import { formatDate, formatDateTime } from "@/lib/utils";
-import { getCaseMatterStatusLabel } from "@/types/case-matter";
+import { caseMatterStatusValues, getCaseMatterStatusLabel } from "@/types/case-matter";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -185,6 +186,22 @@ export default async function AdminCasesPage({
       <SavedFilters scope="cases" enabled={await isFeatureEnabled("saved_filter_views")} />
 
       <CaseMatterActionSections dashboard={actionDashboard} locale={locale} />
+
+      {(await isFeatureEnabled("inquiry_bulk_actions")) && (
+        <BulkManager
+          noun="사건"
+          endpoint="/api/admin/case-matters/bulk-action"
+          statusOptions={caseMatterStatusValues.map((value) => ({
+            value,
+            label: getCaseMatterStatusLabel(value, locale)
+          }))}
+          items={cases.map((item) => ({
+            id: item.id,
+            title: item.caseNo ? `[${item.caseNo}] ${item.title}` : item.title,
+            subtitle: `${getCaseMatterStatusLabel(item.status, locale)} · ${formatCaseMatterTypeLabel(item.matterType)} · ${formatDate(item.createdAt)}`
+          }))}
+        />
+      )}
 
       {cases.length === 0 ? (
         <EmptyState

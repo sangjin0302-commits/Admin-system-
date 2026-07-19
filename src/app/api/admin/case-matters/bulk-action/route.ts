@@ -1,19 +1,20 @@
 /**
- * AAA5 (XX2): 문의 배치 액션.
+ * 사건 배치 액션 — 여러 사건을 한 번에 상태 이동·담당자 지정·삭제.
  *
- * POST /api/admin/inquiries/bulk-action
- * Body: { ids: string[], action: "assign"|"status"|"delete", value?: string }
+ * POST /api/admin/case-matters/bulk-action
+ * Body: { ids: string[], action: "status"|"assign"|"delete", value?: string }
  * Response: { updated: number, failed: string[] }
  *
- * 다중 문의 일괄 상태변경·담당자할당·삭제.
+ * 문의 쪽(/api/admin/inquiries/bulk-action)과 같은 계약을 쓴다.
  *
- * Feature flag: `inquiry_bulk_actions`
+ * Feature flag: `inquiry_bulk_actions` (문의와 동일 플래그를 공유 — 운영자
+ * 입장에서 "일괄 관리"는 하나의 기능이고, 문의만 켜고 사건만 끄는 조합은 없다.)
  */
 
 import { prisma } from "@/lib/prisma/client";
 import { createAdminRequestContext } from "@/lib/http/admin-api";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
-import { InquiryStatus } from "@generated/prisma-client/client";
+import { CaseMatterStatus } from "@generated/prisma-client/client";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,10 +22,10 @@ export const runtime = "nodejs";
 const MAX_IDS = 50;
 /** 삭제는 복구가 불가능하므로 한 번에 처리할 수 있는 건수를 더 좁게 잡는다. */
 const MAX_DELETE_IDS = 20;
-const ALLOWED_STATUSES = new Set<string>(Object.values(InquiryStatus));
+const ALLOWED_STATUSES = new Set<string>(Object.values(CaseMatterStatus));
 
 export async function POST(req: Request) {
-  const api = createAdminRequestContext("admin.inquiries.bulk-action");
+  const api = createAdminRequestContext("admin.case-matters.bulk-action");
   if (!(await isFeatureEnabled("inquiry_bulk_actions"))) {
     return api.error(403, "배치 액션 비활성", { code: "FEATURE_DISABLED" });
   }
@@ -42,47 +43,37 @@ export async function POST(req: Request) {
     let updated = 0;
 
     switch (body.action) {
-      case "assign": {
-        const value = body.value?.trim();
-        if (!value) return api.error(400, "담당자(value) 필수", { code: "INVALID_VALUE" });
-        const result = await prisma.inquiry.updateMany({
-          where: { id: { in: ids } },
-          data: { assignee: value },
-        });
-        updated = result.count;
-        break;
-      }
       case "status": {
         const value = body.value?.trim();
         if (!value || !ALLOWED_STATUSES.has(value)) {
           return api.error(400, "유효한 status(value) 필수", { code: "INVALID_STATUS" });
         }
-        const result = await prisma.inquiry.updateMany({
+        const result = await prisma.caseMatter.updateMany({
           where: { id: { in: ids } },
-          data: { status: value as InquiryStatus },
+          data: { status: value as CaseMatterStatus },
         });
         updated = result.count;
         break;
       }
-      case "mark_read": {
-        const result = await prisma.inquiry.updateMany({
-          where: { id: { in: ids }, firstResponseAt: null },
-          data: { firstResponseAt: new Date() },
+      case "assign": {
+        const value = body.value?.trim();
+        if (!value) return api.error(400, "담당자(value) 필수", { code: "INVALID_VALUE" });
+        const result = await prisma.caseMatter.updateMany({
+          where: { id: { in: ids } },
+          data: { assignedTo: value },
         });
         updated = result.count;
         break;
       }
       case "delete": {
-        // 되돌릴 수 없다. 관련 견적·사건·과제는 스키마의 onDelete: Cascade 로 함께 사라진다.
-        // 오조작 방지를 위해 한 번에 지울 수 있는 수를 따로 더 낮게 제한한다.
+        // 되돌릴 수 없다. 당사자·서류·과제·이벤트가 Cascade 로 함께 사라진다.
         if (ids.length > MAX_DELETE_IDS) {
           return api.error(400, `삭제는 한 번에 최대 ${MAX_DELETE_IDS}건`, { code: "TOO_MANY" });
         }
-        const result = await prisma.inquiry.deleteMany({ where: { id: { in: ids } } });
+        const result = await prisma.caseMatter.deleteMany({ where: { id: { in: ids } } });
         updated = result.count;
-        // 요청한 id 중 실제로 지워지지 않은 건(이미 삭제됨 등)을 보고한다.
         if (updated < ids.length) {
-          const survivors = await prisma.inquiry.findMany({
+          const survivors = await prisma.caseMatter.findMany({
             where: { id: { in: ids } },
             select: { id: true },
           });
@@ -91,7 +82,7 @@ export async function POST(req: Request) {
         break;
       }
       default:
-        return api.error(400, "action: assign|status|mark_read|delete", { code: "INVALID_ACTION" });
+        return api.error(400, "action: status|assign|delete", { code: "INVALID_ACTION" });
     }
 
     return api.ok({ updated, failed });
