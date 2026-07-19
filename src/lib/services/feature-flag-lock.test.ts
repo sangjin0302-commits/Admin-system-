@@ -25,7 +25,9 @@ const MUST_BE_LOCKED = [
   "admin_easylaw",
   "case_research_verify_citations",
   // 노션 연동 안정화
-  "ai_chatbot_rag"
+  "ai_chatbot_rag",
+  // 문의·사건 일괄 이동/삭제 — 2026-07-19 프로덕션 검증
+  "inquiry_bulk_actions"
 ];
 
 async function main() {

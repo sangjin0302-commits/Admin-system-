@@ -252,7 +252,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "inquiry_auto_labeling", label: "문의 자동 라벨링", category: "operations", default: false, description: "요구/공포/불만/문의 자동 태깅 (Haiku 분류, POST /api/admin/inquiries/{id}/labels)" },
   { key: "case_delay_detection", label: "사건 지연 감지", category: "operations", default: false, description: "matterType 평균 대비 +50% 지연 감지 + 텔레그램 알림. 매주 월요일 23:00 cron" },
   { key: "message_tone_adjust", label: "메시지 톤 조정 AI", category: "operations", default: true, description: "/admin/tone-tools에서 원문을 친근/공식/사과/안심 톤으로 재작성 (Haiku)" },
-  { key: "inquiry_bulk_actions", label: "문의 배치 액션", category: "operations", default: true, description: "다중 문의 일괄 상태변경·담당자할당·읽음처리 (최대 50건)" },
+  { key: "inquiry_bulk_actions", label: "문의 배치 액션", category: "operations", default: true, description: "다중 문의 일괄 상태변경·담당자할당·읽음처리 (최대 50건)", locked: true, lockReason: "문의·사건 일괄 이동/삭제 프로덕션 검증 완료 2026-07-19" },
   { key: "my_activity_timeline", label: "내 활동 timeline", category: "ux", default: true, description: "/admin/my-activity: 최근 40건 문의+사건+블로그 통합 timeline" },
   { key: "inquiry_similar_search", label: "유사 문의 검색", category: "operations", default: true, description: "/admin/similar-search: 자연어로 과거 문의 유사도 검색 (토큰 매칭)" },
   { key: "auto_status_on_first_response", label: "첫 응답 시 자동 상태전환", category: "operations", default: false, description: "NEW→CONSULTATION_REQUIRED 자동 (첫 응답 firstResponseAt 세팅 시)" },
