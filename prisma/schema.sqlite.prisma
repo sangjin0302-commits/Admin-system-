@@ -2,7 +2,7 @@
 generator client {
   provider      = "prisma-client"
   output        = "../generated/prisma-client-next"
-  binaryTargets = ["rhel-openssl-3.0.x"]
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -464,6 +464,13 @@ model Inquiry {
   classificationReason     String
   recommendedNextStep      String
   serviceTags              String        @default("[]")
+  // 자동 라벨링(요구/공포/불만/문의) 결과 보관.
+  // serviceTags 는 룰 기반 분류기가 쓰는 필드라 섞지 않는다.
+  // 저장하지 않던 시절에는 목록의 라벨 배지가 매 행마다 AI를 호출해야 해서
+  // 사실상 동작할 수 없었다(그래서 배지가 늘 비어 있었다).
+  autoLabels               String?
+  autoLabelPrimary         String?
+  autoLabeledAt            DateTime?
   lawbotLastAnalyzedAt     DateTime?
   lawbotSnapshotVersion    Int           @default(1)
   lawbotSnapshotStatus     String?

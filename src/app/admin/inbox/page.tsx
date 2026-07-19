@@ -66,6 +66,7 @@ export default async function InboxPage({
         id: true, title: true, contactName: true, email: true,
         phone: true, status: true, urgencyLevel: true, intakeChannel: true,
         createdAt: true, firstResponseAt: true, dueDate: true,
+        autoLabels: true,
       },
       orderBy: [{ urgencyLevel: "desc" }, { createdAt: "desc" }],
       take: 100,
@@ -152,7 +153,7 @@ export default async function InboxPage({
                       <Link href={`/admin/inquiries/${r.id}`} className="font-medium text-text-strong hover:text-gold-deep">
                         {r.title || "(제목 없음)"}
                       </Link>
-                      {labelBadgeEnabled && <InquiryLabelBadge inquiryId={r.id} enabled={labelBadgeEnabled} />}
+                      {labelBadgeEnabled && <InquiryLabelBadge labels={r.autoLabels} />}
                     </td>
                     <td className="px-4 py-2 text-text-muted">{r.contactName || "—"}</td>
                     <td className="px-4 py-2 text-text-muted">{r.intakeChannel || "직접"}</td>

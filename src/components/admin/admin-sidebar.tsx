@@ -51,13 +51,19 @@ export function AdminSidebar({
     return pathname.startsWith(href);
   };
 
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
-    if (typeof window === "undefined") return new Set();
+  // localStorage 를 렌더 중에 읽으면 안 된다 — 서버는 빈 Set 으로, 클라이언트는
+  // 저장된 Set 으로 첫 렌더를 그려 hydration 불일치가 나고, 접어둔 그룹이 펼쳐졌다
+  // 다시 접히는 깜빡임이 생긴다. 첫 렌더는 서버와 동일하게 두고 마운트 후 반영한다.
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
     try {
       const raw = localStorage.getItem("admin.sidebar.collapsedGroups");
-      return new Set(raw ? (JSON.parse(raw) as string[]) : []);
-    } catch { return new Set(); }
-  });
+      if (raw) setCollapsedGroups(new Set(JSON.parse(raw) as string[]));
+    } catch {
+      // 저장값이 깨졌으면 기본값(모두 펼침)을 쓴다.
+    }
+  }, []);
   const toggleGroup = (title: string) => {
     setCollapsedGroups((prev) => {
       const next = new Set(prev);

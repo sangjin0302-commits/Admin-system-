@@ -65,12 +65,20 @@ export async function POST(req: Request) {
     },
   });
 
-  // Seed org-scoped defaults (SiteSetting keyed by org id).
+  // organization-service 는 키 하나(`org.<id>`)에 JSON 값 하나를 기대한다.
+  // 예전에는 `org.<id>.name` 같은 키 4개에 평문을 넣어서, 목록 조회가 그 4개를
+  // 전부 JSON.parse 하려다 실패하고 조직을 통째로 누락시켰다(경고 로그만 쌓임).
   const settings: Array<{ key: string; value: string }> = [
-    { key: `org.${org.id}.name`, value: name },
-    { key: `org.${org.id}.adminEmail`, value: adminEmail },
-    { key: `org.${org.id}.adminName`, value: body.adminName?.trim() || adminEmail },
-    { key: `org.${org.id}.createdAt`, value: new Date().toISOString() },
+    {
+      key: `org.${org.id}`,
+      value: JSON.stringify({
+        name,
+        description: body.addressLine?.trim() || "",
+        adminEmail,
+        adminName: body.adminName?.trim() || adminEmail,
+        createdAt: new Date().toISOString(),
+      }),
+    },
   ];
 
   for (const s of settings) {

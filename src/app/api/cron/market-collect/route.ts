@@ -21,8 +21,10 @@ export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const auth = request.headers.get("authorization");
-  const expected = process.env.CRON_SECRET;
-  if (expected && auth !== `Bearer ${expected}`) {
+  const cronSecret = process.env.CRON_SECRET?.trim();
+  // 시크릿이 비어 있으면 예전 코드는 검사 자체를 건너뛰어 누구나 실행할 수 있었다.
+  // 미설정이면 무조건 거부한다.
+  if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 

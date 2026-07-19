@@ -14,11 +14,11 @@ import { logger } from "@/lib/utils/logger";
 export async function GET(request: Request) {
   // 인증 — Vercel Cron은 Bearer <CRON_SECRET>
   const auth = request.headers.get("authorization");
-  const expected = process.env.CRON_SECRET;
-  if (expected) {
-    if (auth !== `Bearer ${expected}`) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    }
+  const cronSecret = process.env.CRON_SECRET?.trim();
+  // 시크릿이 비어 있으면 예전 코드는 검사 자체를 건너뛰어 누구나 실행할 수 있었다.
+  // 미설정이면 무조건 거부한다.
+  if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
   try {

@@ -43,9 +43,12 @@ export function InquiryBulkActionsBar({ selectedIds, onDone, onClear }: Props) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ ids: selectedIds, action, value }),
       });
-      const data = (await res.json()) as { data?: { updated?: number }; error?: string };
+      // api.ok() 는 payload 를 그대로 내보낸다 — data 래퍼가 없다.
+      // 예전에는 30건을 처리하고도 "0건 처리됨"이라 떠서, 실패한 줄 알고
+      // 다시 실행하게 만드는 위험한 오해를 유발했다.
+      const data = (await res.json()) as { updated?: number; error?: string };
       if (!res.ok) return toast.error(data.error ?? "실패");
-      toast.success(`${data.data?.updated ?? 0}건 처리됨`);
+      toast.success(`${data.updated ?? 0}건 처리됨`);
       onDone?.();
       onClear();
       router.refresh();

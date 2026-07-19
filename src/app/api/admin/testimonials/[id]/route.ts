@@ -18,7 +18,14 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   if (typeof body.published === "boolean") data.published = body.published;
   if (typeof body.sortOrder === "number") data.sortOrder = body.sortOrder;
 
-  const updated = await prisma.testimonial.update({ where: { id }, data });
+  // 이미 삭제된 id 로 들어오면(목록이 오래됐거나 일괄 정렬 루프 중) Prisma 가
+  // P2025 를 던져 처리되지 않은 500 이 나갔다. 없으면 404 로 알린다.
+  const updated = await prisma.testimonial
+    .update({ where: { id }, data })
+    .catch(() => null);
+  if (!updated) {
+    return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
+  }
   return NextResponse.json({ ok: true, item: updated });
 }
 

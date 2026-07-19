@@ -35,7 +35,9 @@ export function SmartSearchBar() {
           {results.map((r: any) => (
             <a key={r.id} href={`/admin/inquiries/${r.id}`} className="flex items-center justify-between px-4 py-3 text-sm hover:bg-gray-50">
               <div>
-                <span className="font-semibold">{r.name}</span>
+                {/* 검색 서비스는 contactName 을 준다 — r.name 은 존재한 적이 없어
+                    이름 자리가 항상 비어 있었다. */}
+                <span className="font-semibold">{r.contactName ?? r.title}</span>
                 <span className="ml-2 text-text-muted">{r.phone || r.email}</span>
               </div>
               <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">{r.status}</span>

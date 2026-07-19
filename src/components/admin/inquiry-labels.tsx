@@ -25,17 +25,20 @@ export function InquiryLabels({ inquiryId, enabled = true }: { inquiryId: string
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/inquiries/${inquiryId}/labels`, { method: "POST" });
+      // api.ok() 는 payload 를 그대로 내보낸다 — data 래퍼가 없다.
+      // 예전에는 data.data 를 읽어 라벨이 항상 비었고 토스트에 "분류: undefined" 가 떴다.
       const data = (await res.json()) as {
-        data?: { labels?: string[]; primary?: string };
+        labels?: string[];
+        primary?: string;
         error?: string;
       };
       if (!res.ok) {
         toast.error(data.error ?? "라벨링 실패");
         return;
       }
-      setLabels(data.data?.labels ?? []);
-      setPrimary(data.data?.primary ?? null);
-      toast.success(`분류: ${data.data?.primary}`);
+      setLabels(data.labels ?? []);
+      setPrimary(data.primary ?? null);
+      toast.success(data.primary ? `분류: ${data.primary}` : "분류 결과가 없습니다.");
     } catch (err) {
       toast.error(`오류: ${(err as Error).message}`);
     } finally {

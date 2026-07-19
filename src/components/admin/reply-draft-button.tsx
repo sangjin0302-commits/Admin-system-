@@ -33,22 +33,32 @@ export function ReplyDraftButton({ inquiryId, enabled = true, variantsEnabled = 
     try {
       const qs = asVariants ? "?variants=3" : "";
       const res = await fetch(`/api/admin/inquiries/${inquiryId}/reply-draft${qs}`, { method: "POST" });
+      // api.ok() 는 payload 를 그대로 내보낸다 — data 래퍼가 없다.
+      // 예전에는 data.data 를 읽어 초안이 항상 빈 문자열이었고, 그런데도
+      // "답장 초안 생성됨" 토스트가 떠서 아무것도 안 나오는 이유를 알 수 없었다.
       const data = (await res.json()) as {
-        data?: { draft?: string; model?: string; variants?: Variants };
+        draft?: string;
+        model?: string;
+        variants?: Variants;
         error?: string;
       };
       if (!res.ok) {
         toast.error(data.error ?? "초안 생성 실패");
         return;
       }
-      if (data.data?.variants) {
-        setVariants(data.data.variants);
+      if (data.variants) {
+        setVariants(data.variants);
         setActiveVariant("friendly");
-        setDraft(data.data.variants.friendly || data.data.variants.formal || data.data.variants.practical);
+        setDraft(data.variants.friendly || data.variants.formal || data.variants.practical);
       } else {
-        setDraft(data.data?.draft ?? "");
+        const draftText = data.draft ?? "";
+        if (!draftText) {
+          toast.error("초안이 비어 있습니다.");
+          return;
+        }
+        setDraft(draftText);
       }
-      setModel(data.data?.model ?? null);
+      setModel(data.model ?? null);
       toast.success("답장 초안 생성됨");
     } catch (err) {
       toast.error(`오류: ${(err as Error).message}`);

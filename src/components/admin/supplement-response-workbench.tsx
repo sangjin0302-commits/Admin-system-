@@ -70,9 +70,9 @@ export function SupplementResponseWorkbench({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ caseId, requestText })
         });
-        const data = (await res.json()) as { ok?: boolean; draft?: DraftShape; message?: string };
+        const data = (await res.json()) as { ok?: boolean; draft?: DraftShape; error?: string; message?: string };
         if (!res.ok || !data.ok || !data.draft) {
-          throw new Error(data.message ?? "초안 생성 실패");
+          throw new Error(data.error ?? data.message ?? "초안 생성 실패");
         }
         setDraft(data.draft);
         setEditableBody(data.draft.body);
@@ -100,9 +100,9 @@ export function SupplementResponseWorkbench({
             autoSend
           })
         });
-        const data = (await res.json()) as { ok?: boolean; message?: string };
+        const data = (await res.json()) as { ok?: boolean; error?: string; message?: string };
         if (!res.ok || !data.ok) {
-          throw new Error(data.message ?? "저장 실패");
+          throw new Error(data.error ?? data.message ?? "저장 실패");
         }
         setSaved(true);
       } catch (e) {

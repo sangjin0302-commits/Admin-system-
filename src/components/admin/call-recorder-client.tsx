@@ -60,6 +60,11 @@ export function CallRecorderClient() {
   const [session, setSession] = useState<LiveCallSession | null>(null);
   const [interim, setInterim] = useState("");
   const [recording, setRecording] = useState(false);
+  // onend 콜백은 start() 실행 시점의 recording 값을 붙잡는다. 그 시점엔 아직
+  // false 라(setRecording(true) 는 뒤에 실행) 재시작 분기가 영영 죽어 있었고,
+  // Web Speech 가 몇 초 침묵 후 자동 종료하면 통화 나머지가 통째로 유실됐다.
+  // 최신 값을 읽기 위해 ref 를 함께 둔다.
+  const recordingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [contactName, setContactName] = useState("");
@@ -103,13 +108,14 @@ export function CallRecorderClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "start", language })
       });
-      const data = (await res.json()) as { ok?: boolean; session?: LiveCallSession; message?: string };
-      if (!data.ok || !data.session) throw new Error(data.message ?? "세션 시작 실패");
+      const data = (await res.json()) as { ok?: boolean; session?: LiveCallSession; error?: string; message?: string };
+      if (!data.ok || !data.session) throw new Error(data.error ?? data.message ?? "세션 시작 실패");
       setSession(data.session);
 
       const Ctor = pickRecognitionCtor();
       if (!Ctor) {
         setError("이 브라우저는 Web Speech API를 지원하지 않습니다. Chrome 등에서 시도해 주세요.");
+        recordingRef.current = false;
         setRecording(false);
         setBusy(false);
         return;
@@ -140,7 +146,7 @@ export function CallRecorderClient() {
       };
       rec.onend = () => {
         // if still recording, restart (Web Speech tends to stop after silence)
-        if (recognitionRef.current === rec && recording) {
+        if (recognitionRef.current === rec && recordingRef.current) {
           try {
             rec.start();
           } catch {
@@ -150,6 +156,7 @@ export function CallRecorderClient() {
       };
       recognitionRef.current = rec;
       rec.start();
+      recordingRef.current = true;
       setRecording(true);
 
       // Periodic server flush
@@ -167,6 +174,7 @@ export function CallRecorderClient() {
   const stop = async () => {
     if (!session) return;
     setBusy(true);
+    recordingRef.current = false;
     setRecording(false);
     try {
       recognitionRef.current?.stop();
@@ -181,8 +189,8 @@ export function CallRecorderClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "end", sessionId: session.id })
       });
-      const data = (await res.json()) as { ok?: boolean; session?: LiveCallSession; message?: string };
-      if (!data.ok || !data.session) throw new Error(data.message ?? "세션 종료 실패");
+      const data = (await res.json()) as { ok?: boolean; session?: LiveCallSession; error?: string; message?: string };
+      if (!data.ok || !data.session) throw new Error(data.error ?? data.message ?? "세션 종료 실패");
       setSession(data.session);
       setInterim("");
     } catch (e) {
@@ -208,8 +216,8 @@ export function CallRecorderClient() {
           phone: phone || undefined
         })
       });
-      const data = (await res.json()) as { ok?: boolean; inquiryId?: string; message?: string };
-      if (!data.ok || !data.inquiryId) throw new Error(data.message ?? "의뢰 저장 실패");
+      const data = (await res.json()) as { ok?: boolean; inquiryId?: string; error?: string; message?: string };
+      if (!data.ok || !data.inquiryId) throw new Error(data.error ?? data.message ?? "의뢰 저장 실패");
       setSavedInquiryId(data.inquiryId);
     } catch (e) {
       setError(e instanceof Error ? e.message : "의뢰 저장 실패");

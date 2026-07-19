@@ -16,7 +16,12 @@ export async function GET(req: Request) {
   const channel = url.searchParams.get("channel") as Channel | null;
   const status = url.searchParams.get("status") as Status | null;
   const caseId = url.searchParams.get("caseId");
-  const take = Math.min(Number(url.searchParams.get("limit") ?? 100), 500);
+  // Number("all") 은 NaN 이고, NaN 이 그대로 Prisma take 로 들어가면 검증 오류가
+  // 나서 400 이 아니라 500 이 나갔다. 숫자가 아니면 기본값으로 되돌린다.
+  const rawLimit = Number(url.searchParams.get("limit") ?? 100);
+  const take = Number.isFinite(rawLimit)
+    ? Math.min(Math.max(1, Math.floor(rawLimit)), 500)
+    : 100;
 
   try {
     const where: Record<string, unknown> = {};

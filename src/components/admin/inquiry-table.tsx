@@ -34,6 +34,8 @@ type InquiryItem = {
   responsePending?: boolean;
   intakeSource?: string | null;
   intakeChannel?: string | null;
+  /** Inquiry.autoLabels — 자동 라벨링 결과(JSON 문자열) */
+  autoLabels?: string | null;
   intakePracticeArea?: string | null;
   intakeContentId?: string | null;
   checklistProgressPercent?: number;
@@ -81,7 +83,7 @@ export function InquiryTable({
                   <Link href={`/admin/inquiries/${inquiry.id}`} className="block">
                     <p className="truncate whitespace-nowrap font-semibold text-text-strong">
                       {inquiry.title}
-                      <InquiryLabelBadge inquiryId={inquiry.id} enabled />
+                      <InquiryLabelBadge labels={inquiry.autoLabels} />
                     </p>
                     <p className="mt-1 truncate whitespace-nowrap text-sm text-text">{inquiry.contactName}</p>
                     <p className="truncate whitespace-nowrap text-sm text-text-muted">

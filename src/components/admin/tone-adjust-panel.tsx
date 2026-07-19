@@ -36,9 +36,14 @@ export function ToneAdjustPanel({ enabled = true }: { enabled?: boolean }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text: trimmed, tone }),
       });
-      const data = (await res.json()) as { data?: { adjusted?: string }; error?: string };
+      // api.ok() 는 payload 를 그대로 내보낸다 — data 래퍼가 없다.
+      // 예전에는 data.data?.adjusted 를 읽어 결과가 항상 빈 문자열이었고,
+      // 그런데도 "톤 조정 완료" 토스트가 떠서 성공한 것처럼 보였다.
+      const data = (await res.json()) as { adjusted?: string; error?: string };
       if (!res.ok) return toast.error(data.error ?? "실패");
-      setResult(data.data?.adjusted ?? "");
+      const adjusted = data.adjusted ?? "";
+      if (!adjusted) return toast.error("조정 결과가 비어 있습니다.");
+      setResult(adjusted);
       toast.success("톤 조정 완료");
     } catch (err) {
       toast.error(`오류: ${(err as Error).message}`);

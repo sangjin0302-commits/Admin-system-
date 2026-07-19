@@ -65,8 +65,8 @@ export function SchedulingBotClient({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        const data = (await res.json()) as { ok?: boolean; session?: SchedulingSession; message?: string };
-        if (!res.ok || !data.ok) throw new Error(data.message ?? "요청 실패");
+        const data = (await res.json()) as { ok?: boolean; session?: SchedulingSession; error?: string; message?: string };
+        if (!res.ok || !data.ok) throw new Error(data.error ?? data.message ?? "요청 실패");
         if (data.session) setSession(data.session);
       } catch (e) {
         setError(e instanceof Error ? e.message : "요청 실패");

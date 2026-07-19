@@ -12,13 +12,27 @@ export default function DocumentCritiqueClient() {
     setLoading(true);
     setResult(null);
     try {
-      const res = await fetch("/api/admin/mentor/document-critique", {
+      // 예전에는 존재하지 않는 /api/admin/mentor/document-critique 로 보내
+      // 항상 404 HTML 을 받았고, 파싱 실패를 삼켜 화면엔 늘 "응답 없음"만 떴다.
+      // 실제 라우트는 critique-draft 이고 본문 키는 draft 다.
+      const res = await fetch("/api/admin/mentor/critique-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ draft: text }),
       });
-      const data = await res.json().catch(() => ({} as { critique?: string; error?: string }));
-      setResult(data.critique ?? data.error ?? "응답 없음");
+      const data = (await res.json().catch(() => ({}))) as {
+        critique?: unknown;
+        error?: string;
+      };
+      if (!res.ok) {
+        setResult(data.error ?? `채점 실패 (${res.status})`);
+        return;
+      }
+      if (!data.critique) {
+        setResult("채점 결과를 해석하지 못했습니다. 초안을 조금 더 길게 넣어 보세요.");
+        return;
+      }
+      setResult(JSON.stringify(data.critique, null, 2));
     } catch (err) {
       setResult(`오류: ${(err as Error).message}`);
     } finally {

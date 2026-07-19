@@ -25,10 +25,13 @@ export function SimilarSearchClient() {
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/inquiries/similar-search?q=${encodeURIComponent(q.trim())}`);
-      const data = (await res.json()) as { data?: { results?: Result[] }; error?: string };
+      // api.ok() 는 payload 를 그대로 내보낸다 — data 래퍼가 없다.
+      // 예전에는 data.data 를 읽어 10건이 나와도 화면엔 늘 "0건 발견"이었다.
+      const data = (await res.json()) as { results?: Result[]; error?: string };
       if (!res.ok) return toast.error(data.error ?? "실패");
-      setResults(data.data?.results ?? []);
-      toast.success(`${data.data?.results?.length ?? 0}건 발견`);
+      const found = data.results ?? [];
+      setResults(found);
+      toast.success(`${found.length}건 발견`);
     } catch (err) {
       toast.error(`오류: ${(err as Error).message}`);
     } finally {

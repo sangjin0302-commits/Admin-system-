@@ -5,15 +5,38 @@ export function SurveyForm({ token }: { token: string }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   const submit = async () => {
-    if (rating === 0) return;
-    await fetch("/api/public/survey", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, rating, comment }),
-    });
-    setSubmitted(true);
+    if (rating === 0 || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch("/api/public/survey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, rating, comment }),
+      });
+      // 예전에는 응답을 보지 않고 무조건 완료 화면으로 넘어갔다. 만료·잘못된
+      // 링크(404)로 아무것도 저장되지 않아도 "감사합니다!"가 떠서, 의뢰인은
+      // 제출된 줄 알고 우리는 응답을 못 받는 상태가 됐다.
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(
+          body.error ??
+            (res.status === 404
+              ? "만료되었거나 잘못된 설문 링크입니다."
+              : "제출에 실패했습니다. 잠시 후 다시 시도해 주세요.")
+        );
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setError("네트워크 오류로 제출하지 못했습니다.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (submitted) return (
@@ -34,8 +57,9 @@ export function SurveyForm({ token }: { token: string }) {
         ))}
       </div>
       <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="추가 의견 (선택사항)" className="mt-6 w-full rounded-lg border p-3 text-sm focus:border-primary focus:outline-none" rows={3} />
-      <button type="button" onClick={submit} disabled={rating === 0} className="mt-4 w-full rounded-lg bg-primary py-3 text-sm font-bold text-white transition hover:bg-text-strong disabled:opacity-50">
-        평가 제출
+      {error && <p className="mt-3 text-center text-sm text-red-600">{error}</p>}
+      <button type="button" onClick={submit} disabled={rating === 0 || busy} className="mt-4 w-full rounded-lg bg-primary py-3 text-sm font-bold text-white transition hover:bg-text-strong disabled:opacity-50">
+        {busy ? "제출 중…" : "평가 제출"}
       </button>
     </div>
   );

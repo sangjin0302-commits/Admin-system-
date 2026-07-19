@@ -59,8 +59,8 @@ export function CaseChecklistPanel({ caseId }: { caseId: string }) {
     startGen(async () => {
       try {
         const res = await fetch(`/api/admin/cases/${caseId}/checklist`, { method: "POST" });
-        const data = (await res.json()) as { ok?: boolean; state?: StoredChecklistState; message?: string };
-        if (!res.ok || !data.ok || !data.state) throw new Error(data.message ?? "생성 실패");
+        const data = (await res.json()) as { ok?: boolean; state?: StoredChecklistState; error?: string; message?: string };
+        if (!res.ok || !data.ok || !data.state) throw new Error(data.error ?? data.message ?? "생성 실패");
         setState(data.state);
       } catch (e) {
         setError(e instanceof Error ? e.message : "체크리스트 생성 실패");
