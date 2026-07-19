@@ -20,20 +20,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Feature disabled" }, { status: 404 });
   }
 
-  const ip = getClientIp(request);
-  const limit = await checkPublicLawLimit(ip);
-  if (!limit.success) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "일일 조회 3회를 모두 사용하셨습니다. 내일 다시 시도해주세요.",
-        remaining: 0,
-        resetAt: limit.resetAt
-      },
-      { status: 429 }
-    );
-  }
-
+  // 입력 검증을 한도 차감보다 먼저 한다.
+  // 예전에는 순서가 반대라, 검색어를 한 글자만 넣는 등 형식이 틀린 요청도
+  // 하루 3회 중 1회를 소모했다. 오타 한 번에 그날 조회권이 줄어드는 셈이었다.
   let body: { keyword?: unknown };
   try {
     body = (await request.json()) as { keyword?: unknown };
@@ -46,6 +35,20 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { ok: false, error: "검색어는 2자 이상 100자 이하로 입력해 주세요." },
       { status: 400 }
+    );
+  }
+
+  const ip = getClientIp(request);
+  const limit = await checkPublicLawLimit(ip);
+  if (!limit.success) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "일일 조회 3회를 모두 사용하셨습니다. 내일 다시 시도해주세요.",
+        remaining: 0,
+        resetAt: limit.resetAt
+      },
+      { status: 429 }
     );
   }
 
