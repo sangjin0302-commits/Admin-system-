@@ -10,17 +10,17 @@ export default function TeamChatPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6">
-        <p className="ui-kicker">Team</p>
-        <h1 className="ui-page-title">Team Chat</h1>
+        <p className="ui-kicker">팀</p>
+        <h1 className="ui-page-title">팀 채팅</h1>
         <p className="mt-1 text-sm text-text-muted">
-          Discuss cases with your colleagues. Use @mentions to notify teammates.
+          동료와 사건에 대해 논의하세요. @멘션으로 팀원에게 알릴 수 있습니다.
         </p>
       </div>
 
       <Card>
         {cases.length === 0 ? (
           <p className="text-sm text-text-muted">
-            No active chat threads yet. Open a case to start a discussion.
+            진행 중인 대화가 없습니다. 사건을 열어 논의를 시작하세요.
           </p>
         ) : (
           <ul className="divide-y">
@@ -31,9 +31,9 @@ export default function TeamChatPage() {
                   className="block hover:bg-gray-50"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">Case {c.caseId}</span>
+                    <span className="font-medium">사건 {c.caseId}</span>
                     <span className="text-xs text-text-muted">
-                      {c.total} message{c.total === 1 ? "" : "s"}
+                      메시지 {c.total}건
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-text-muted truncate">

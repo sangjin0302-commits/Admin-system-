@@ -76,14 +76,14 @@ export function ForecastChart({ forecast }: { forecast: ForecastResult }) {
             stroke="none"
             fill={GOLD}
             fillOpacity={0.18}
-            name="Confidence Band"
+            name="신뢰 구간"
             isAnimationActive={false}
           />
 
           <Line
             type="monotone"
             dataKey="actual"
-            name="Actual Revenue"
+            name="실제 매출"
             stroke={NAVY}
             strokeWidth={2.5}
             dot={{ r: 3, fill: NAVY }}
@@ -93,7 +93,7 @@ export function ForecastChart({ forecast }: { forecast: ForecastResult }) {
           <Line
             type="monotone"
             dataKey="predicted"
-            name="Predicted Revenue"
+            name="예측 매출"
             stroke={GOLD}
             strokeWidth={2.5}
             strokeDasharray="6 4"

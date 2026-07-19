@@ -21,10 +21,10 @@ export default function CalendarPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-6">
-        <p className="ui-kicker">Schedule</p>
-        <h1 className="ui-page-title">Calendar</h1>
+        <p className="ui-kicker">일정</p>
+        <h1 className="ui-page-title">일정표</h1>
         <p className="mt-1 text-sm text-text-muted">
-          Office events, deadlines, and case schedules.
+          사무소 일정, 기한, 사건 일정을 한눈에 확인합니다.
         </p>
       </div>
 
@@ -33,9 +33,9 @@ export default function CalendarPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-sm font-semibold">Upcoming Events</h2>
+        <h2 className="mb-3 text-sm font-semibold">다가오는 일정</h2>
         {upcoming.length === 0 ? (
-          <p className="text-sm text-text-muted">No upcoming events.</p>
+          <p className="text-sm text-text-muted">예정된 일정이 없습니다.</p>
         ) : (
           <ul className="divide-y">
             {upcoming.map((e) => (
@@ -53,7 +53,7 @@ export default function CalendarPage() {
           href="/api/admin/calendar/export"
           className="mt-3 inline-block text-sm text-blue-600 hover:underline"
         >
-          Export to .ics
+          .ics 파일로 내보내기
         </a>
       </Card>
     </div>

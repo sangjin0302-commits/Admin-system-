@@ -13,22 +13,22 @@ export default async function ReferralsPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        kicker="Growth"
-        title="Customer Referrals"
-        description="Generate referral codes and track top referrers."
+        kicker="성장"
+        title="고객 추천"
+        description="추천 코드를 발급하고 주요 추천인 현황을 관리합니다."
       />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="p-5">
-          <p className="text-xs text-text-muted">Total Codes</p>
+          <p className="text-xs text-text-muted">전체 코드 수</p>
           <p className="mt-1 text-2xl font-semibold">{stats.totalCodes}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-xs text-text-muted">Total Uses</p>
+          <p className="text-xs text-text-muted">전체 사용 횟수</p>
           <p className="mt-1 text-2xl font-semibold">{stats.totalUses}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-xs text-text-muted">Top Referrers</p>
+          <p className="text-xs text-text-muted">주요 추천인</p>
           <p className="mt-1 text-2xl font-semibold">{stats.topReferrers.length}</p>
         </Card>
       </div>
@@ -36,15 +36,15 @@ export default async function ReferralsPage() {
       <NewCodeButton />
 
       <Card className="p-5">
-        <h2 className="text-sm font-semibold text-text-strong">Top Referrers</h2>
+        <h2 className="text-sm font-semibold text-text-strong">주요 추천인</h2>
         {stats.topReferrers.length === 0 ? (
-          <p className="mt-3 text-sm text-text-muted">No referrers yet.</p>
+          <p className="mt-3 text-sm text-text-muted">등록된 추천인이 없습니다.</p>
         ) : (
           <table className="mt-4 w-full text-sm">
             <thead>
               <tr className="text-left text-text-muted">
-                <th className="py-2">Email</th>
-                <th className="py-2">Uses</th>
+                <th className="py-2">이메일</th>
+                <th className="py-2">사용 횟수</th>
               </tr>
             </thead>
             <tbody>
@@ -60,19 +60,19 @@ export default async function ReferralsPage() {
       </Card>
 
       <Card className="p-5">
-        <h2 className="text-sm font-semibold text-text-strong">All Codes</h2>
+        <h2 className="text-sm font-semibold text-text-strong">전체 코드</h2>
         {codes.length === 0 ? (
-          <p className="mt-3 text-sm text-text-muted">No codes yet.</p>
+          <p className="mt-3 text-sm text-text-muted">발급된 코드가 없습니다.</p>
         ) : (
           <table className="mt-4 w-full text-sm">
             <thead>
               <tr className="text-left text-text-muted">
-                <th className="py-2">Code</th>
-                <th className="py-2">Referrer</th>
-                <th className="py-2">Email</th>
-                <th className="py-2">Uses</th>
-                <th className="py-2">Reward</th>
-                <th className="py-2">Created</th>
+                <th className="py-2">코드</th>
+                <th className="py-2">추천인</th>
+                <th className="py-2">이메일</th>
+                <th className="py-2">사용 횟수</th>
+                <th className="py-2">보상금</th>
+                <th className="py-2">발급일</th>
               </tr>
             </thead>
             <tbody>

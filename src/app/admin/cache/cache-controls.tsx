@@ -11,9 +11,11 @@ export function CacheControls() {
       try {
         const res = await fetch("/api/admin/cache/clear", { method: "POST" });
         const data = await res.json();
-        setMessage(data.success ? "Cache cleared." : "Failed to clear cache.");
+        setMessage(
+          data.success ? "캐시를 비웠습니다." : "캐시 비우기에 실패했습니다."
+        );
       } catch {
-        setMessage("Failed to clear cache.");
+        setMessage("캐시 비우기에 실패했습니다.");
       }
     });
   };
@@ -26,7 +28,7 @@ export function CacheControls() {
         disabled={isPending}
         className="text-sm px-3 py-1.5 border rounded"
       >
-        {isPending ? "Clearing..." : "Clear All"}
+        {isPending ? "비우는 중…" : "전체 비우기"}
       </button>
       {message ? (
         <span className="text-xs text-muted-foreground">{message}</span>

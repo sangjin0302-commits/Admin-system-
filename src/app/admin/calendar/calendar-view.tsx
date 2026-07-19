@@ -13,7 +13,7 @@ type SerializedEvent = {
   reminderMinutes?: number;
 };
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 export function CalendarView({ initialEvents }: { initialEvents: SerializedEvent[] }) {
   const [cursor, setCursor] = useState(() => {
@@ -71,7 +71,7 @@ export function CalendarView({ initialEvents }: { initialEvents: SerializedEvent
           onClick={prevMonth}
           className="rounded border px-2 py-1 text-sm hover:bg-gray-50"
         >
-          ← Prev
+          ← 이전 달
         </button>
         <div className="text-sm font-semibold">
           {cursor.toLocaleString(undefined, { year: "numeric", month: "long" })}
@@ -80,7 +80,7 @@ export function CalendarView({ initialEvents }: { initialEvents: SerializedEvent
           onClick={nextMonth}
           className="rounded border px-2 py-1 text-sm hover:bg-gray-50"
         >
-          Next →
+          다음 달 →
         </button>
       </div>
 
@@ -116,7 +116,7 @@ export function CalendarView({ initialEvents }: { initialEvents: SerializedEvent
                   </div>
                 ))}
                 {evts.length > 2 && (
-                  <div className="text-text-muted">+{evts.length - 2} more</div>
+                  <div className="text-text-muted">외 {evts.length - 2}건</div>
                 )}
               </div>
             </button>
@@ -126,9 +126,9 @@ export function CalendarView({ initialEvents }: { initialEvents: SerializedEvent
 
       {selectedDate && (
         <div className="mt-4 rounded border p-3">
-          <h3 className="mb-2 text-sm font-semibold">Events on {selectedDate}</h3>
+          <h3 className="mb-2 text-sm font-semibold">{selectedDate} 일정</h3>
           {selectedEvents.length === 0 ? (
-            <p className="text-sm text-text-muted">No events.</p>
+            <p className="text-sm text-text-muted">일정이 없습니다.</p>
           ) : (
             <ul className="space-y-2">
               {selectedEvents.map((e) => (

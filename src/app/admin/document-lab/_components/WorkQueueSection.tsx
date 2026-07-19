@@ -35,10 +35,10 @@ export function WorkQueueSection({
     <Card className="p-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="ui-kicker">Official source work queue</p>
+          <p className="ui-kicker">공식 출처 작업 대기열</p>
           <h3 className="mt-2 ui-section-title">공식 출처 검토 워크큐</h3>
           <p className="mt-2 text-sm text-text-muted">
-            검토자 미기록, 최신 확인일 미기록, 공식 출처 미확인, 고위험 서식 검토 필요 항목을 read-only로 정렬합니다.
+            검토자 미기록, 최신 확인일 미기록, 공식 출처 미확인, 고위험 서식 검토 필요 항목을 읽기 전용으로 정렬합니다.
           </p>
           <p className="mt-2 text-xs text-text-muted">
             이 큐는 검토 우선순위 안내이며, 문서 생성 단계 도달을 의미하지 않습니다.
@@ -61,7 +61,7 @@ export function WorkQueueSection({
       </div>
 
       <div className="mt-5 rounded-2xl border border-line bg-surface-muted p-4">
-        <p className="text-sm font-semibold text-text-strong">누락 사유 quick filter</p>
+        <p className="text-sm font-semibold text-text-strong">누락 사유 빠른 필터</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {missingReasonFilterOptions.map((option) => (
             <Link

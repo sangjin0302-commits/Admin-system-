@@ -18,6 +18,18 @@ type SearchParams = {
 const LEVEL_FILTERS = ["all", "error", "warning", "info"] as const;
 const STATUS_FILTERS = ["all", "unresolved"] as const;
 
+const LEVEL_LABELS: Record<string, string> = {
+  all: "전체",
+  error: "오류",
+  warning: "경고",
+  info: "정보"
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  all: "전체",
+  unresolved: "미해결"
+};
+
 export default async function AdminErrorsPage({
   searchParams
 }: {
@@ -36,26 +48,26 @@ export default async function AdminErrorsPage({
   return (
     <div className="space-y-6">
       <div>
-        <div className="ui-kicker">Monitoring</div>
-        <h1 className="ui-page-title">Error Monitor</h1>
+        <div className="ui-kicker">모니터링</div>
+        <h1 className="ui-page-title">오류 모니터</h1>
       </div>
 
       <Card>
         <div className="flex flex-wrap gap-4 text-sm">
           <div>
-            Total: <strong>{stats.total}</strong>
+            전체: <strong>{stats.total}</strong>
           </div>
           <div>
-            Errors: <strong>{stats.byLevel.error ?? 0}</strong>
+            오류: <strong>{stats.byLevel.error ?? 0}</strong>
           </div>
           <div>
-            Warnings: <strong>{stats.byLevel.warning ?? 0}</strong>
+            경고: <strong>{stats.byLevel.warning ?? 0}</strong>
           </div>
           <div>
-            Info: <strong>{stats.byLevel.info ?? 0}</strong>
+            정보: <strong>{stats.byLevel.info ?? 0}</strong>
           </div>
           <div>
-            Unresolved: <strong>{stats.unresolved}</strong>
+            미해결: <strong>{stats.unresolved}</strong>
           </div>
         </div>
       </Card>
@@ -63,7 +75,7 @@ export default async function AdminErrorsPage({
       <Card>
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">Level:</span>
+            <span className="text-xs text-muted-foreground">수준:</span>
             {LEVEL_FILTERS.map((f) => (
               <Link
                 key={f}
@@ -72,10 +84,10 @@ export default async function AdminErrorsPage({
                   level === f ? "bg-primary text-primary-foreground" : ""
                 }`}
               >
-                {f}
+                {LEVEL_LABELS[f] ?? f}
               </Link>
             ))}
-            <span className="text-xs text-muted-foreground ml-4">Status:</span>
+            <span className="text-xs text-muted-foreground ml-4">상태:</span>
             {STATUS_FILTERS.map((s) => (
               <Link
                 key={s}
@@ -84,7 +96,7 @@ export default async function AdminErrorsPage({
                   status === s ? "bg-primary text-primary-foreground" : ""
                 }`}
               >
-                {s}
+                {STATUS_LABELS[s] ?? s}
               </Link>
             ))}
           </div>

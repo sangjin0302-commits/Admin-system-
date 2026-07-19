@@ -23,7 +23,7 @@ export function NewCampaignForm() {
           onClick={() => setOpen(true)}
           className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
         >
-          New Campaign
+          새 캠페인
         </button>
       </Card>
     );
@@ -61,9 +61,9 @@ export function NewCampaignForm() {
   return (
     <Card className="p-5">
       <form onSubmit={handleSubmit} className="space-y-3">
-        <h2 className="text-sm font-semibold text-text-strong">New Campaign</h2>
+        <h2 className="text-sm font-semibold text-text-strong">새 캠페인</h2>
         <div>
-          <label className="block text-xs text-text-muted">Name</label>
+          <label className="block text-xs text-text-muted">캠페인명</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -72,7 +72,7 @@ export function NewCampaignForm() {
           />
         </div>
         <div>
-          <label className="block text-xs text-text-muted">Subject</label>
+          <label className="block text-xs text-text-muted">제목</label>
           <input
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
@@ -81,7 +81,7 @@ export function NewCampaignForm() {
           />
         </div>
         <div>
-          <label className="block text-xs text-text-muted">Body (HTML)</label>
+          <label className="block text-xs text-text-muted">본문 (HTML)</label>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
@@ -91,16 +91,16 @@ export function NewCampaignForm() {
           />
         </div>
         <div>
-          <label className="block text-xs text-text-muted">Target Segment</label>
+          <label className="block text-xs text-text-muted">대상 세그먼트</label>
           <select
             value={segment}
             onChange={(e) => setSegment(e.target.value as typeof segment)}
             className="mt-1 w-full rounded border border-line px-3 py-2 text-sm"
           >
-            <option value="all">All</option>
-            <option value="won">Won</option>
-            <option value="active">Active</option>
-            <option value="new">New</option>
+            <option value="all">전체</option>
+            <option value="won">수임 완료</option>
+            <option value="active">진행 중</option>
+            <option value="new">신규</option>
           </select>
         </div>
         {error && <p className="text-sm text-rose-600">{error}</p>}
@@ -110,14 +110,14 @@ export function NewCampaignForm() {
             disabled={busy}
             className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
           >
-            {busy ? "Creating…" : "Create"}
+            {busy ? "생성 중…" : "생성"}
           </button>
           <button
             type="button"
             onClick={() => setOpen(false)}
             className="rounded border border-line px-4 py-2 text-sm"
           >
-            Cancel
+            취소
           </button>
         </div>
       </form>

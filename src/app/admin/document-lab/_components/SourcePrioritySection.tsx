@@ -31,10 +31,10 @@ export function SourcePrioritySection({
     <Card className="p-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="ui-kicker">Official source priority</p>
+          <p className="ui-kicker">공식 출처 우선순위</p>
           <h3 className="mt-2 ui-section-title">공식 출처 검토 우선순위</h3>
           <p className="mt-2 text-sm text-text-muted">
-            readiness와 별도로, 고위험 서식의 공식 출처/최신성 확인 대상을 먼저 보여줍니다.
+            준비 상태와 별도로, 고위험 서식의 공식 출처/최신성 확인 대상을 먼저 보여줍니다.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -164,7 +164,7 @@ export function SourcePrioritySection({
         </Card>
 
         <Card muted className="p-4">
-          <p className="text-sm font-semibold text-text-strong">Risk별 출처 상태</p>
+          <p className="text-sm font-semibold text-text-strong">위험도별 출처 상태</p>
           <div className="mt-4 space-y-3 text-xs text-text-muted">
             {(["high", "medium", "low"] as const).map((risk) => {
               const counts = sourcePrioritySummary.statusByRisk[risk];

@@ -14,12 +14,12 @@ export default async function AdminDbPerfPage() {
   return (
     <div className="space-y-6">
       <div>
-        <div className="ui-kicker">Performance</div>
-        <h1 className="ui-page-title">DB Performance Analyzer</h1>
+        <div className="ui-kicker">성능</div>
+        <h1 className="ui-page-title">DB 성능 분석</h1>
       </div>
 
       <Card>
-        <h2 className="text-lg font-semibold mb-3">Table Row Counts</h2>
+        <h2 className="text-lg font-semibold mb-3">테이블별 행 수</h2>
         <ul className="text-sm space-y-1">
           {dbSize.tables.map((t) => (
             <li key={t.name} className="flex justify-between border-b py-1">
@@ -31,7 +31,7 @@ export default async function AdminDbPerfPage() {
       </Card>
 
       <Card>
-        <h2 className="text-lg font-semibold mb-3">Existing Indexes</h2>
+        <h2 className="text-lg font-semibold mb-3">기존 인덱스</h2>
         <ul className="text-sm space-y-1">
           {report.existingIndexes.map((idx) => (
             <li key={idx} className="font-mono">
@@ -42,7 +42,7 @@ export default async function AdminDbPerfPage() {
       </Card>
 
       <Card>
-        <h2 className="text-lg font-semibold mb-3">Recommendations</h2>
+        <h2 className="text-lg font-semibold mb-3">권장 사항</h2>
         <ul className="space-y-3">
           {report.recommendations.map((r, i) => (
             <li key={i} className="border-l-2 border-primary pl-3">
@@ -56,7 +56,7 @@ export default async function AdminDbPerfPage() {
       </Card>
 
       <Card>
-        <h2 className="text-lg font-semibold mb-3">Common Query Patterns</h2>
+        <h2 className="text-lg font-semibold mb-3">주요 쿼리 패턴</h2>
         <ul className="space-y-2">
           {report.queryPatterns.map((p) => (
             <li key={p.name}>
@@ -70,7 +70,7 @@ export default async function AdminDbPerfPage() {
       </Card>
 
       <Card>
-        <h2 className="text-lg font-semibold mb-3">Slow Query Hints</h2>
+        <h2 className="text-lg font-semibold mb-3">느린 쿼리 개선 힌트</h2>
         <ul className="space-y-2 text-sm">
           {hints.map((h, i) => (
             <li key={i}>

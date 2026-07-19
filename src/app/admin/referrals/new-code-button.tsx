@@ -45,11 +45,11 @@ export function NewCodeButton() {
           onClick={() => setOpen(true)}
           className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
         >
-          Generate New Code
+          새 추천 코드 발급
         </button>
         {generated && (
           <p className="mt-3 text-sm">
-            Last generated: <code className="font-mono">{generated}</code>
+            최근 발급 코드: <code className="font-mono">{generated}</code>
           </p>
         )}
       </Card>
@@ -59,9 +59,9 @@ export function NewCodeButton() {
   return (
     <Card className="p-5">
       <form onSubmit={handleSubmit} className="space-y-3">
-        <h2 className="text-sm font-semibold text-text-strong">New Referral Code</h2>
+        <h2 className="text-sm font-semibold text-text-strong">새 추천 코드</h2>
         <div>
-          <label className="block text-xs text-text-muted">Referrer Name</label>
+          <label className="block text-xs text-text-muted">추천인 이름</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -70,7 +70,7 @@ export function NewCodeButton() {
           />
         </div>
         <div>
-          <label className="block text-xs text-text-muted">Referrer Email</label>
+          <label className="block text-xs text-text-muted">추천인 이메일</label>
           <input
             type="email"
             value={email}
@@ -86,14 +86,14 @@ export function NewCodeButton() {
             disabled={busy}
             className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
           >
-            {busy ? "Generating…" : "Generate"}
+            {busy ? "발급 중…" : "발급"}
           </button>
           <button
             type="button"
             onClick={() => setOpen(false)}
             className="rounded border border-line px-4 py-2 text-sm"
           >
-            Close
+            닫기
           </button>
         </div>
       </form>

@@ -18,8 +18,8 @@ export default async function CaseChatPage({
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="mb-6">
-        <p className="ui-kicker">Team</p>
-        <h1 className="ui-page-title">Case {caseId} Discussion</h1>
+        <p className="ui-kicker">팀</p>
+        <h1 className="ui-page-title">사건 {caseId} 논의</h1>
       </div>
       <Card>
         <ChatPanel caseId={caseId} initialMessages={initial} />

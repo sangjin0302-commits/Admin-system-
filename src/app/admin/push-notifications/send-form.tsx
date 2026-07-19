@@ -29,11 +29,11 @@ export function SendPushForm() {
         const data = await res.json();
         setMessage(
           data.success
-            ? `Sent: ${data.data?.sent ?? 0}, Failed: ${data.data?.failed ?? 0}`
-            : `Error: ${data.error ?? "unknown"}`
+            ? `발송 ${data.data?.sent ?? 0}건, 실패 ${data.data?.failed ?? 0}건`
+            : `오류: ${data.error ?? "알 수 없음"}`
         );
       } catch (err) {
-        setMessage(`Error: ${(err as Error).message}`);
+        setMessage(`오류: ${(err as Error).message}`);
       }
     });
   };
@@ -42,7 +42,7 @@ export function SendPushForm() {
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
         <label className="block text-xs text-muted-foreground mb-1">
-          Title
+          제목
         </label>
         <input
           type="text"
@@ -53,7 +53,7 @@ export function SendPushForm() {
         />
       </div>
       <div>
-        <label className="block text-xs text-muted-foreground mb-1">Body</label>
+        <label className="block text-xs text-muted-foreground mb-1">내용</label>
         <textarea
           required
           value={body}
@@ -64,7 +64,7 @@ export function SendPushForm() {
       </div>
       <div>
         <label className="block text-xs text-muted-foreground mb-1">
-          Target Tokens (comma/space separated; leave empty for all devices)
+          대상 토큰 (쉼표 또는 공백으로 구분, 비워 두면 전체 기기로 발송)
         </label>
         <textarea
           value={targetTokens}
@@ -79,7 +79,7 @@ export function SendPushForm() {
           disabled={isPending}
           className="text-sm px-3 py-1.5 border rounded"
         >
-          {isPending ? "Sending..." : "Send Push"}
+          {isPending ? "발송하는 중…" : "푸시 알림 발송"}
         </button>
         {message ? (
           <span className="text-xs text-muted-foreground">{message}</span>

@@ -45,16 +45,16 @@ export function OcrUploader() {
       const json = (await res.json()) as ApiResponse;
       setResponse(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "failed");
+      setError(err instanceof Error ? err.message : "처리에 실패했습니다");
     } finally {
       setLoading(false);
     }
   }
 
   const TYPES: { value: ExtractionType; label: string }[] = [
-    { value: "text", label: "Text" },
-    { value: "id", label: "ID Card" },
-    { value: "invoice", label: "Invoice" },
+    { value: "text", label: "텍스트" },
+    { value: "id", label: "신분증" },
+    { value: "invoice", label: "청구서" },
   ];
 
   return (
@@ -87,7 +87,7 @@ export function OcrUploader() {
           disabled={!file || loading}
           className="ui-button-primary"
         >
-          {loading ? "Extracting..." : "Extract"}
+          {loading ? "추출하는 중…" : "추출하기"}
         </button>
       </form>
 
@@ -96,7 +96,7 @@ export function OcrUploader() {
       {response && (
         <div className="space-y-3">
           <h3 className="text-md font-semibold text-text-strong">
-            Result ({response.type})
+            추출 결과 ({response.type})
           </h3>
           {response.type !== "text" && (
             <dl className="grid grid-cols-2 gap-2 rounded border border-border-subtle p-3 text-sm">
@@ -111,7 +111,7 @@ export function OcrUploader() {
             </dl>
           )}
           <div>
-            <p className="mb-1 text-sm font-medium text-text-muted">Raw text</p>
+            <p className="mb-1 text-sm font-medium text-text-muted">원문 텍스트</p>
             <pre className="whitespace-pre-wrap rounded border border-border-subtle bg-surface-muted p-3 text-xs">
               {response.result.rawText ?? response.result.text ?? ""}
             </pre>

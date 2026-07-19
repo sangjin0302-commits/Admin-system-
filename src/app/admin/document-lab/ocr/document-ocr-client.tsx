@@ -65,7 +65,7 @@ export function DocumentOcrClient({ supportedTypes }: { supportedTypes: string[]
         setSavedType(data.result.type);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "network_error");
+      setError(err instanceof Error ? err.message : "네트워크 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -88,7 +88,7 @@ export function DocumentOcrClient({ supportedTypes }: { supportedTypes: string[]
         >
           {preview ? (
             <>
-              <img src={preview} alt="preview" className="max-h-64 rounded-lg border border-line" />
+              <img src={preview} alt="미리보기" className="max-h-64 rounded-lg border border-line" />
               <p className="mt-2 text-xs text-text-muted">{file?.name}</p>
             </>
           ) : (
@@ -114,8 +114,8 @@ export function DocumentOcrClient({ supportedTypes }: { supportedTypes: string[]
               className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm"
             >
               <option value="none">첨부 안 함</option>
-              <option value="inquiry">Inquiry (문의)</option>
-              <option value="case">CaseMatter (사건)</option>
+              <option value="inquiry">문의</option>
+              <option value="case">사건</option>
             </select>
           </label>
           {attachKind !== "none" ? (
@@ -125,7 +125,7 @@ export function DocumentOcrClient({ supportedTypes }: { supportedTypes: string[]
                 type="text"
                 value={attachId}
                 onChange={(e) => setAttachId(e.target.value)}
-                placeholder={attachKind === "inquiry" ? "Inquiry ID" : "CaseMatter ID"}
+                placeholder={attachKind === "inquiry" ? "문의 ID" : "사건 ID"}
                 className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm font-mono"
               />
             </label>
@@ -170,7 +170,7 @@ export function DocumentOcrClient({ supportedTypes }: { supportedTypes: string[]
             <div className="rounded-lg border border-line bg-surface-muted p-3">
               <p className="text-xs text-text-muted">엔진</p>
               <p className="mt-1 text-sm font-medium text-text-strong">
-                {result.usedVision ? "Claude Vision" : "Fallback OCR"}
+                {result.usedVision ? "Claude Vision" : "대체 OCR"}
               </p>
             </div>
           </div>

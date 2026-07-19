@@ -22,14 +22,14 @@ export function AddTenantForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, subdomain, ownerEmail, plan }),
       });
-      if (!res.ok) throw new Error("Failed to create tenant");
+      if (!res.ok) throw new Error("사무소 등록에 실패했습니다");
       setName("");
       setSubdomain("");
       setOwnerEmail("");
       setPlan("free");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : "오류가 발생했습니다");
     } finally {
       setSubmitting(false);
     }
@@ -38,7 +38,7 @@ export function AddTenantForm() {
   return (
     <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
       <div>
-        <label className="block text-xs font-medium">Name</label>
+        <label className="block text-xs font-medium">사무소명</label>
         <input
           className="w-full rounded border px-2 py-1"
           value={name}
@@ -47,7 +47,7 @@ export function AddTenantForm() {
         />
       </div>
       <div>
-        <label className="block text-xs font-medium">Subdomain</label>
+        <label className="block text-xs font-medium">서브도메인</label>
         <input
           className="w-full rounded border px-2 py-1"
           value={subdomain}
@@ -56,7 +56,7 @@ export function AddTenantForm() {
         />
       </div>
       <div>
-        <label className="block text-xs font-medium">Owner Email</label>
+        <label className="block text-xs font-medium">담당자 이메일</label>
         <input
           type="email"
           className="w-full rounded border px-2 py-1"
@@ -66,15 +66,15 @@ export function AddTenantForm() {
         />
       </div>
       <div>
-        <label className="block text-xs font-medium">Plan</label>
+        <label className="block text-xs font-medium">요금제</label>
         <select
           className="w-full rounded border px-2 py-1"
           value={plan}
           onChange={(e) => setPlan(e.target.value as "free" | "pro" | "enterprise")}
         >
-          <option value="free">Free</option>
-          <option value="pro">Pro</option>
-          <option value="enterprise">Enterprise</option>
+          <option value="free">무료</option>
+          <option value="pro">프로</option>
+          <option value="enterprise">엔터프라이즈</option>
         </select>
       </div>
       {error && (
@@ -86,7 +86,7 @@ export function AddTenantForm() {
           disabled={submitting}
           className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
         >
-          {submitting ? "Adding..." : "Add Tenant"}
+          {submitting ? "등록하는 중…" : "사무소 추가"}
         </button>
       </div>
     </form>

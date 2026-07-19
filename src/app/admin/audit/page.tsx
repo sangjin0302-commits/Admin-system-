@@ -44,22 +44,22 @@ export default async function AuditPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="ui-kicker">Security</p>
-        <h1 className="ui-page-title">Admin Audit Log</h1>
+        <p className="ui-kicker">보안</p>
+        <h1 className="ui-page-title">관리자 감사 로그</h1>
       </div>
 
       {events.length === 0 ? (
-        <p className="text-muted text-sm">No admin audit events recorded yet.</p>
+        <p className="text-muted text-sm">기록된 감사 로그가 없습니다.</p>
       ) : (
         <TableContainer>
           <Table>
             <thead>
               <tr>
-                <th className="text-left px-4 py-2">Timestamp</th>
-                <th className="text-left px-4 py-2">Actor</th>
-                <th className="text-left px-4 py-2">Action</th>
-                <th className="text-left px-4 py-2">Resource</th>
-                <th className="text-left px-4 py-2">Details</th>
+                <th className="text-left px-4 py-2">시각</th>
+                <th className="text-left px-4 py-2">작업자</th>
+                <th className="text-left px-4 py-2">작업</th>
+                <th className="text-left px-4 py-2">대상</th>
+                <th className="text-left px-4 py-2">상세 내용</th>
               </tr>
             </thead>
             <tbody>

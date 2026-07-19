@@ -11,14 +11,14 @@ export default async function ABTestsPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        kicker="Growth"
-        title="A/B Tests"
-        description="Manage experiments and review variant performance."
+        kicker="성장"
+        title="A/B 테스트"
+        description="실험을 관리하고 변형별 성과를 확인합니다."
       />
 
       {results.length === 0 ? (
         <Card className="p-5">
-          <p className="text-sm text-text-muted">No tests defined.</p>
+          <p className="text-sm text-text-muted">등록된 테스트가 없습니다.</p>
         </Card>
       ) : (
         results.map(({ test, result }) => (
@@ -27,22 +27,22 @@ export default async function ABTestsPage() {
               <div>
                 <h2 className="text-sm font-semibold text-text-strong">{test.name}</h2>
                 <p className="text-xs text-text-muted">
-                  key: <code>{test.key}</code> · {test.active ? "active" : "inactive"}
+                  키: <code>{test.key}</code> · {test.active ? "사용" : "미사용"}
                 </p>
               </div>
               {result.winner && (
                 <span className="rounded bg-emerald-100 px-2 py-1 text-xs text-emerald-800">
-                  Winner: {result.winner}
+                  우승 변형: {result.winner}
                 </span>
               )}
             </div>
             <table className="mt-4 w-full text-sm">
               <thead>
                 <tr className="text-left text-text-muted">
-                  <th className="py-2">Variant</th>
-                  <th className="py-2">Views</th>
-                  <th className="py-2">Conversions</th>
-                  <th className="py-2">Rate</th>
+                  <th className="py-2">변형</th>
+                  <th className="py-2">노출 수</th>
+                  <th className="py-2">전환 수</th>
+                  <th className="py-2">전환율</th>
                 </tr>
               </thead>
               <tbody>

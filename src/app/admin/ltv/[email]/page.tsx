@@ -13,25 +13,31 @@ const RISK_COLOR: Record<string, string> = {
   high: "#dc2626",
 };
 
+const RISK_LABEL: Record<string, string> = {
+  low: "낮음",
+  medium: "보통",
+  high: "높음",
+};
+
 function recommendationsFor(
   churnRisk: "low" | "medium" | "high",
   caseCount: number,
 ): string[] {
   const recs: string[] = [];
   if (churnRisk === "high") {
-    recs.push("Reach out personally within 7 days — high churn signal.");
-    recs.push("Offer a complimentary consult or case review.");
+    recs.push("이탈 신호가 높습니다 — 7일 이내에 직접 연락하십시오.");
+    recs.push("무료 상담 또는 사건 점검을 제안하십시오.");
   } else if (churnRisk === "medium") {
-    recs.push("Send a quarterly check-in email with relevant updates.");
-    recs.push("Surface a related service this customer hasn't used.");
+    recs.push("분기별 안부 메일과 함께 관련 소식을 발송하십시오.");
+    recs.push("아직 이용하지 않은 연관 업무분야를 안내하십시오.");
   } else {
-    recs.push("Maintain regular newsletter cadence; customer is healthy.");
+    recs.push("관계가 양호합니다. 정기 뉴스레터 발송 주기를 유지하십시오.");
   }
   if (caseCount === 1) {
-    recs.push("Upsell: introduce a second matter type relevant to their case history.");
+    recs.push("추가 제안: 기존 사건 이력과 연관된 두 번째 업무분야를 소개하십시오.");
   }
   if (caseCount >= 3) {
-    recs.push("Consider VIP track: dedicated advisor and faster response SLA.");
+    recs.push("VIP 관리 대상 검토: 전담 담당자 배정 및 우선 응대를 고려하십시오.");
   }
   return recs;
 }
@@ -74,7 +80,7 @@ export default async function CustomerLTVDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <div className="ui-kicker">Customer Analytics</div>
+        <div className="ui-kicker">의뢰인 분석</div>
         <h1 className="ui-page-title">{ltv.name}</h1>
         <div className="text-sm text-gray-500">{ltv.email}</div>
         <Link
@@ -82,72 +88,72 @@ export default async function CustomerLTVDetailPage({
           className="mt-2 inline-block text-sm hover:underline"
           style={{ color: "#1a3c5f" }}
         >
-          &larr; Back to LTV Rankings
+          &larr; 생애가치 순위로 돌아가기
         </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <Card>
-          <div className="text-sm text-gray-500">Predicted LTV</div>
+          <div className="text-sm text-gray-500">예측 생애가치</div>
           <div className="mt-1 text-2xl font-semibold" style={{ color: "#c9a961" }}>
             ₩{ltv.predictedLTV.toLocaleString()}
           </div>
         </Card>
         <Card>
-          <div className="text-sm text-gray-500">Total Revenue</div>
+          <div className="text-sm text-gray-500">총 매출</div>
           <div className="mt-1 text-2xl font-semibold" style={{ color: "#1a3c5f" }}>
             ₩{ltv.totalRevenue.toLocaleString()}
           </div>
         </Card>
         <Card>
-          <div className="text-sm text-gray-500">Avg Case Value</div>
+          <div className="text-sm text-gray-500">평균 사건 금액</div>
           <div className="mt-1 text-2xl font-semibold">
             ₩{ltv.avgCaseValue.toLocaleString()}
           </div>
         </Card>
         <Card>
-          <div className="text-sm text-gray-500">Churn Risk</div>
+          <div className="text-sm text-gray-500">이탈 위험도</div>
           <div
             className="mt-1 text-2xl font-semibold"
             style={{ color: RISK_COLOR[ltv.churnRisk] }}
           >
-            {ltv.churnRisk}
+            {RISK_LABEL[ltv.churnRisk] ?? ltv.churnRisk}
           </div>
         </Card>
       </div>
 
       <Card>
-        <h2 className="mb-3 text-lg font-semibold">Churn Factors</h2>
+        <h2 className="mb-3 text-lg font-semibold">이탈 위험 요인</h2>
         <ul className="space-y-1 text-sm">
           <li>
-            <span className="text-gray-500">Days since last activity:</span>{" "}
+            <span className="text-gray-500">최근 활동 이후 경과일:</span>{" "}
             <span className="font-medium">{daysSince}</span>
           </li>
           <li>
-            <span className="text-gray-500">Case count:</span>{" "}
+            <span className="text-gray-500">사건 수:</span>{" "}
             <span className="font-medium">{ltv.caseCount}</span>
           </li>
           <li>
-            <span className="text-gray-500">First contact:</span>{" "}
+            <span className="text-gray-500">최초 접촉일:</span>{" "}
             <span className="font-medium">
               {ltv.firstContactDate.toISOString().slice(0, 10)}
             </span>
           </li>
           <li>
-            <span className="text-gray-500">Last activity:</span>{" "}
+            <span className="text-gray-500">최근 활동일:</span>{" "}
             <span className="font-medium">
               {ltv.lastActivityDate.toISOString().slice(0, 10)}
             </span>
           </li>
           <li>
-            <span className="text-gray-500">Predicted lifetime:</span>{" "}
-            <span className="font-medium">{ltv.predictedLifetimeMonths} months</span>
+            <span className="text-gray-500">예측 거래 지속 기간:</span>{" "}
+            <span className="font-medium">{ltv.predictedLifetimeMonths}개월</span>
           </li>
         </ul>
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-lg font-semibold">Retention Recommendations</h2>
+        <h2 className="mb-3 text-lg font-semibold">관계 유지 권장 조치</h2>
         <ul className="list-disc space-y-1 pl-5 text-sm">
           {recs.map((r) => (
             <li key={r}>{r}</li>
@@ -156,17 +162,17 @@ export default async function CustomerLTVDetailPage({
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-lg font-semibold">Case History</h2>
+        <h2 className="mb-3 text-lg font-semibold">사건 이력</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-xs uppercase text-gray-500">
-                <th className="py-2">Case No.</th>
-                <th className="py-2">Title</th>
-                <th className="py-2">Status</th>
-                <th className="py-2">Opened</th>
-                <th className="py-2 text-right">Paid Amount</th>
-                <th className="py-2">Paid At</th>
+                <th className="py-2">사건번호</th>
+                <th className="py-2">사건명</th>
+                <th className="py-2">상태</th>
+                <th className="py-2">접수일</th>
+                <th className="py-2 text-right">수납 금액</th>
+                <th className="py-2">수납일</th>
               </tr>
             </thead>
             <tbody>
@@ -193,7 +199,7 @@ export default async function CustomerLTVDetailPage({
               {caseHistory.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-6 text-center text-gray-500">
-                    No cases on record.
+                    등록된 사건이 없습니다.
                   </td>
                 </tr>
               )}

@@ -17,27 +17,27 @@ export default function AdminCachePage() {
   return (
     <div className="space-y-6">
       <div>
-        <div className="ui-kicker">Performance</div>
-        <h1 className="ui-page-title">Cache</h1>
+        <div className="ui-kicker">성능</div>
+        <h1 className="ui-page-title">캐시</h1>
       </div>
 
       <Card>
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
-              <div className="text-xs text-muted-foreground">Entries</div>
+              <div className="text-xs text-muted-foreground">항목 수</div>
               <div className="text-lg font-semibold">{stats.entries}</div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground">
-                Estimated Size
+                예상 용량
               </div>
               <div className="text-lg font-semibold">
                 {formatBytes(stats.estimatedSizeBytes)}
               </div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Hit Rate</div>
+              <div className="text-xs text-muted-foreground">적중률</div>
               <div className="text-lg font-semibold">
                 {(stats.hitRate * 100).toFixed(1)}%
               </div>

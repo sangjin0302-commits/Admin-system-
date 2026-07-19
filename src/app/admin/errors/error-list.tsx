@@ -33,7 +33,9 @@ export function ErrorList({ initialErrors }: Props) {
   };
 
   if (errors.length === 0) {
-    return <p className="text-sm text-muted-foreground">No errors logged.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">기록된 오류가 없습니다.</p>
+    );
   }
 
   return (
@@ -50,7 +52,7 @@ export function ErrorList({ initialErrors }: Props) {
                 {new Date(evt.timestamp).toLocaleString()}
               </span>
               {evt.resolved ? (
-                <span className="text-success">resolved</span>
+                <span className="text-success">해결됨</span>
               ) : null}
             </div>
             <div className="text-sm font-medium truncate">{evt.message}</div>
@@ -67,7 +69,7 @@ export function ErrorList({ initialErrors }: Props) {
               disabled={isPending}
               className="text-xs px-2 py-1 border rounded"
             >
-              Resolve
+              해결 처리
             </button>
           ) : null}
         </li>

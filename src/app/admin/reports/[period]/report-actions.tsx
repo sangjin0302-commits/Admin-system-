@@ -38,10 +38,10 @@ export function ReportActions({ report, html, markdown }: Props) {
         body: JSON.stringify({ period: report.period, action: "email" }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setEmailStatus("Email queued.");
+      setEmailStatus("이메일 발송을 예약했습니다.");
     } catch (e) {
       setEmailStatus(
-        `Failed: ${e instanceof Error ? e.message : "unknown error"}`,
+        `실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`,
       );
     } finally {
       setSending(false);
@@ -56,7 +56,7 @@ export function ReportActions({ report, html, markdown }: Props) {
         className="rounded px-4 py-2 text-sm font-medium text-white"
         style={{ backgroundColor: "#1a3c5f" }}
       >
-        Download HTML
+        HTML 내려받기
       </button>
       <button
         type="button"
@@ -66,7 +66,7 @@ export function ReportActions({ report, html, markdown }: Props) {
         className="rounded px-4 py-2 text-sm font-medium text-white"
         style={{ backgroundColor: "#c9a961" }}
       >
-        Download Markdown
+        마크다운 내려받기
       </button>
       <button
         type="button"
@@ -75,7 +75,7 @@ export function ReportActions({ report, html, markdown }: Props) {
         className="rounded border px-4 py-2 text-sm font-medium disabled:opacity-50"
         style={{ borderColor: "#1a3c5f", color: "#1a3c5f" }}
       >
-        {sending ? "Sending..." : "Email Report"}
+        {sending ? "발송 중…" : "보고서 이메일 발송"}
       </button>
       {emailStatus && (
         <span className="text-sm text-gray-600">{emailStatus}</span>

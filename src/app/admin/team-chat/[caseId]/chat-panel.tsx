@@ -68,13 +68,13 @@ export function ChatPanel({
       <div className="grid grid-cols-2 gap-2">
         <input
           className="rounded border px-2 py-1 text-sm"
-          placeholder="Your name"
+          placeholder="이름"
           value={authorName}
           onChange={(e) => setAuthorName(e.target.value)}
         />
         <input
           className="rounded border px-2 py-1 text-sm"
-          placeholder="Your email"
+          placeholder="이메일"
           value={authorEmail}
           onChange={(e) => setAuthorEmail(e.target.value)}
         />
@@ -82,7 +82,7 @@ export function ChatPanel({
 
       <div className="h-80 overflow-y-auto rounded border p-3 bg-gray-50">
         {messages.length === 0 ? (
-          <p className="text-sm text-text-muted">No messages yet.</p>
+          <p className="text-sm text-text-muted">아직 메시지가 없습니다.</p>
         ) : (
           messages.map((m) => (
             <div key={m.id} className="mb-2">
@@ -93,7 +93,7 @@ export function ChatPanel({
               <div className="text-sm">{m.message}</div>
               {m.mentions.length > 0 && (
                 <div className="text-xs text-blue-600">
-                  Mentions: {m.mentions.map((u) => `@${u}`).join(", ")}
+                  멘션: {m.mentions.map((u) => `@${u}`).join(", ")}
                 </div>
               )}
             </div>
@@ -105,7 +105,7 @@ export function ChatPanel({
       <form onSubmit={send} className="flex gap-2">
         <input
           className="flex-1 rounded border px-2 py-1 text-sm"
-          placeholder="Type a message... (use @name to mention)"
+          placeholder="메시지를 입력하세요… (@이름 으로 멘션)"
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
@@ -114,7 +114,7 @@ export function ChatPanel({
           disabled={sending}
           className="rounded bg-blue-600 px-3 py-1 text-sm text-white disabled:opacity-50"
         >
-          Send
+          발송
         </button>
       </form>
     </div>

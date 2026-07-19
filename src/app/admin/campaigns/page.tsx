@@ -17,33 +17,46 @@ function statusBadge(status: string): string {
   }
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  sent: "발송 완료",
+  scheduled: "발송 예약",
+  draft: "임시저장"
+};
+
+const SEGMENT_LABELS: Record<string, string> = {
+  all: "전체",
+  won: "수임 완료",
+  active: "진행 중",
+  new: "신규"
+};
+
 export default async function CampaignsPage() {
   const campaigns = listCampaigns();
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        kicker="Marketing"
-        title="Email Campaigns"
-        description="Create and send targeted email campaigns to inquiry segments."
+        kicker="마케팅"
+        title="이메일 캠페인"
+        description="문의 세그먼트를 대상으로 이메일 캠페인을 생성하고 발송합니다."
       />
 
       <NewCampaignForm />
 
       <Card className="p-5">
-        <h2 className="text-sm font-semibold text-text-strong">All Campaigns</h2>
+        <h2 className="text-sm font-semibold text-text-strong">전체 캠페인</h2>
         {campaigns.length === 0 ? (
-          <p className="mt-3 text-sm text-text-muted">No campaigns yet.</p>
+          <p className="mt-3 text-sm text-text-muted">등록된 캠페인이 없습니다.</p>
         ) : (
           <table className="mt-4 w-full text-sm">
             <thead>
               <tr className="text-left text-text-muted">
-                <th className="py-2">Name</th>
-                <th className="py-2">Subject</th>
-                <th className="py-2">Segment</th>
-                <th className="py-2">Recipients</th>
-                <th className="py-2">Status</th>
-                <th className="py-2">Created</th>
+                <th className="py-2">캠페인명</th>
+                <th className="py-2">제목</th>
+                <th className="py-2">세그먼트</th>
+                <th className="py-2">수신자 수</th>
+                <th className="py-2">상태</th>
+                <th className="py-2">생성일</th>
               </tr>
             </thead>
             <tbody>
@@ -51,11 +64,13 @@ export default async function CampaignsPage() {
                 <tr key={c.id} className="border-t border-line">
                   <td className="py-2">{c.name}</td>
                   <td className="py-2">{c.subject}</td>
-                  <td className="py-2">{c.targetSegment}</td>
+                  <td className="py-2">
+                    {SEGMENT_LABELS[c.targetSegment] ?? c.targetSegment}
+                  </td>
                   <td className="py-2">{c.recipientCount}</td>
                   <td className="py-2">
                     <span className={`rounded px-2 py-0.5 text-xs ${statusBadge(c.status)}`}>
-                      {c.status}
+                      {STATUS_LABELS[c.status] ?? c.status}
                     </span>
                   </td>
                   <td className="py-2 text-text-muted">

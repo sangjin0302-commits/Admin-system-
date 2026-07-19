@@ -15,6 +15,12 @@ export const dynamic = "force-dynamic";
 
 const VALID_PERIODS: ReportPeriod[] = ["weekly", "monthly", "quarterly"];
 
+const PERIOD_LABELS: Record<string, string> = {
+  weekly: "주간",
+  monthly: "월간",
+  quarterly: "분기",
+};
+
 export default async function ReportDetailPage({
   params,
 }: {
@@ -32,9 +38,9 @@ export default async function ReportDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <div className="ui-kicker">Reports</div>
+        <div className="ui-kicker">보고서</div>
         <h1 className="ui-page-title">
-          {period.charAt(0).toUpperCase() + period.slice(1)} Business Report
+          {PERIOD_LABELS[period] ?? period} 경영 보고서
         </h1>
         <div className="text-sm text-gray-500">
           {report.startDate.toISOString().slice(0, 10)} –{" "}
@@ -45,7 +51,7 @@ export default async function ReportDetailPage({
           className="mt-2 inline-block text-sm hover:underline"
           style={{ color: "#1a3c5f" }}
         >
-          &larr; Back to Reports
+          &larr; 보고서 목록으로 돌아가기
         </Link>
       </div>
 
@@ -54,7 +60,7 @@ export default async function ReportDetailPage({
       </Card>
 
       <Card>
-        <h2 className="mb-2 text-lg font-semibold">Summary</h2>
+        <h2 className="mb-2 text-lg font-semibold">요약</h2>
         <p className="text-sm leading-relaxed">{report.summary}</p>
       </Card>
 

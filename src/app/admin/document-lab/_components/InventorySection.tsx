@@ -51,17 +51,17 @@ export function InventorySection({
   return (
     <Card className="p-6">
       <div className="flex flex-col gap-2">
-        <p className="ui-kicker">Template inventory</p>
-        <h3 className="ui-section-title">read-only inventory</h3>
+        <p className="ui-kicker">서식 목록</p>
+        <h3 className="ui-section-title">읽기 전용 목록</h3>
         <p className="text-sm text-text-muted">
-          실제 파일 path나 고객 데이터 없이 후보 서식의 상태만 표시합니다.
+          실제 파일 경로나 고객 데이터 없이 후보 서식의 상태만 표시합니다.
         </p>
       </div>
 
       <div className="mt-5 space-y-4 rounded-2xl border border-line bg-surface-muted p-4">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-semibold text-text-strong">Inventory filters</p>
+            <p className="text-sm font-semibold text-text-strong">목록 필터</p>
             <p className="text-xs text-text-muted">
               {templates.length}개 중 {filteredTemplates.length}개 표시
             </p>
@@ -100,7 +100,7 @@ export function InventorySection({
               href={buildDocumentTemplateFilterHref(filters, { category: null })}
               className={filterLinkClassName(filters.category === null)}
             >
-              전체 category
+              전체 분류
             </Link>
             {listDocumentTemplateCategories().map((category) => (
               <Link
@@ -117,7 +117,7 @@ export function InventorySection({
               href={buildDocumentTemplateFilterHref(filters, { risk: null })}
               className={filterLinkClassName(filters.risk === null)}
             >
-              전체 risk
+              전체 위험도
             </Link>
             {listDocumentTemplateRiskLevels().map((risk) => (
               <Link
@@ -134,7 +134,7 @@ export function InventorySection({
               href={buildDocumentTemplateFilterHref(filters, { conversionStatus: null })}
               className={filterLinkClassName(filters.conversionStatus === null)}
             >
-              전체 conversion status
+              전체 변환 상태
             </Link>
             {listDocumentTemplateConversionStatuses().map((conversionStatus) => (
               <Link
@@ -256,7 +256,7 @@ export function InventorySection({
                           {getDocumentTemplateOfficialSourceStatusLabel(officialSourceStatus)}
                         </span>
                         {officialSourceStatus === "manual_only" ? (
-                          <p className="mt-1 text-xs text-text-muted">manual-only</p>
+                          <p className="mt-1 text-xs text-text-muted">수동 작성 전용</p>
                         ) : null}
                       </td>
                       <td className="px-3 py-3">
@@ -266,7 +266,7 @@ export function InventorySection({
                           {getDocumentTemplateRiskLabel(template.riskLevel)}
                         </span>
                         {template.riskLevel === "high" ? (
-                          <p className="mt-1 text-xs text-text-muted">admin review 필요</p>
+                          <p className="mt-1 text-xs text-text-muted">관리자 검토 필요</p>
                         ) : null}
                       </td>
                       <td className="px-3 py-3 text-text-muted">{template.requiredFields.length}개</td>
