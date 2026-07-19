@@ -16,6 +16,13 @@ export type BusinessReport = {
   sections: ReportSection[];
 };
 
+/** 기간 enum → 화면 표기. period 문자열 자체는 라우트·비교에 쓰이므로 바꾸지 않는다. */
+const PERIOD_LABEL: Record<ReportPeriod, string> = {
+  weekly: "주간",
+  monthly: "월간",
+  quarterly: "분기",
+};
+
 function periodDays(period: ReportPeriod): number {
   if (period === "weekly") return 7;
   if (period === "monthly") return 30;
@@ -34,6 +41,11 @@ function periodBounds(period: ReportPeriod) {
 function pctChange(current: number, previous: number): number {
   if (previous === 0) return current === 0 ? 0 : 100;
   return Math.round(((current - previous) / previous) * 1000) / 10;
+}
+
+/** 부호 붙은 퍼센트 표기(예: +12.3%, -5%). */
+function signedPct(n: number): string {
+  return `${n >= 0 ? "+" : ""}${n}%`;
 }
 
 async function buildInquirySection(
@@ -57,19 +69,19 @@ async function buildInquirySection(
   const change = pctChange(current, previous);
 
   const insights: string[] = [];
-  if (change >= 20) insights.push(`Inquiry volume up ${change}% vs prior period — capacity check recommended.`);
-  else if (change <= -20) insights.push(`Inquiry volume down ${change}% — review marketing channels.`);
-  else insights.push(`Inquiry volume stable (${change >= 0 ? "+" : ""}${change}%).`);
+  if (change >= 20) insights.push(`문의량이 직전 기간 대비 ${change}% 증가 — 처리 여력 점검이 필요합니다.`);
+  else if (change <= -20) insights.push(`문의량이 ${Math.abs(change)}% 감소 — 마케팅 채널을 점검하세요.`);
+  else insights.push(`문의량은 안정적입니다(${signedPct(change)}).`);
   if (topType) {
-    insights.push(`Top inquiry type: ${topType.inquiryType} (${topType._count._all} inquiries).`);
+    insights.push(`가장 많은 문의 유형: ${topType.inquiryType} (${topType._count._all}건).`);
   }
 
   return {
-    title: "Inquiries",
+    title: "문의",
     metrics: [
-      { label: "New Inquiries", value: current, change },
-      { label: "Previous Period", value: previous },
-      { label: "Top Type", value: topType?.inquiryType ?? "-" },
+      { label: "신규 문의", value: current, change },
+      { label: "직전 기간", value: previous },
+      { label: "최다 유형", value: topType?.inquiryType ?? "-" },
     ],
     insights,
   };
@@ -89,16 +101,16 @@ async function buildCaseSection(
 
   const change = pctChange(current, previous);
   const insights: string[] = [];
-  insights.push(`${current} new cases opened, ${closed} closed this period.`);
-  if (closed > current) insights.push("Net case backlog shrinking — good operational health.");
-  if (current > closed * 1.5 && closed > 0) insights.push("Intake outpacing closure — review staffing.");
+  insights.push(`이번 기간 신규 사건 ${current}건 착수, ${closed}건 종결.`);
+  if (closed > current) insights.push("미결 사건이 줄고 있습니다 — 운영 건전성 양호.");
+  if (current > closed * 1.5 && closed > 0) insights.push("착수가 종결을 앞지릅니다 — 인력 배치를 점검하세요.");
 
   return {
-    title: "Cases",
+    title: "사건",
     metrics: [
-      { label: "Opened", value: current, change },
-      { label: "Closed", value: closed },
-      { label: "Net", value: current - closed },
+      { label: "착수", value: current, change },
+      { label: "종결", value: closed },
+      { label: "순증", value: current - closed },
     ],
     insights,
   };
@@ -131,17 +143,17 @@ async function buildRevenueSection(
 
   const insights: string[] = [];
   insights.push(
-    `Revenue ${change >= 0 ? "grew" : "fell"} ${Math.abs(change)}% vs prior period (₩${currentRevenue.toLocaleString()} vs ₩${previousRevenue.toLocaleString()}).`,
+    `매출이 직전 기간 대비 ${Math.abs(change)}% ${change >= 0 ? "증가" : "감소"} (₩${currentRevenue.toLocaleString()} / 이전 ₩${previousRevenue.toLocaleString()}).`,
   );
-  if (avgDeal > 0) insights.push(`Average deal size: ₩${avgDeal.toLocaleString()}.`);
+  if (avgDeal > 0) insights.push(`건당 평균 수임료: ₩${avgDeal.toLocaleString()}.`);
 
   return {
-    title: "Revenue",
+    title: "매출",
     metrics: [
-      { label: "Revenue", value: `₩${currentRevenue.toLocaleString()}`, change },
-      { label: "Prev Revenue", value: `₩${previousRevenue.toLocaleString()}` },
-      { label: "Avg Deal", value: `₩${avgDeal.toLocaleString()}` },
-      { label: "Payments", value: currentMemos.length },
+      { label: "매출", value: `₩${currentRevenue.toLocaleString()}`, change },
+      { label: "직전 매출", value: `₩${previousRevenue.toLocaleString()}` },
+      { label: "건당 평균", value: `₩${avgDeal.toLocaleString()}` },
+      { label: "결제 건수", value: currentMemos.length },
     ],
     insights,
   };
@@ -169,19 +181,19 @@ async function buildConversionSection(
   const change = Math.round((currRate - prevRate) * 10) / 10;
 
   const insights: string[] = [];
-  insights.push(`Conversion rate: ${currRate}% (was ${prevRate}%).`);
+  insights.push(`수임 전환율: ${currRate}% (이전 ${prevRate}%).`);
   if (currRate < 10 && inqCurr > 10) {
-    insights.push("Low conversion — examine intake-to-case handoff.");
+    insights.push("전환율이 낮습니다 — 문의에서 사건으로 넘어가는 단계를 점검하세요.");
   } else if (currRate > 40) {
-    insights.push("Strong conversion — current channels qualified well.");
+    insights.push("전환율이 높습니다 — 현재 유입 채널의 질이 좋습니다.");
   }
 
   return {
-    title: "Conversion",
+    title: "전환",
     metrics: [
-      { label: "Conversion Rate", value: `${currRate}%`, change },
-      { label: "Prior Rate", value: `${prevRate}%` },
-      { label: "Inquiries → Cases", value: `${casesCurr} / ${inqCurr}` },
+      { label: "전환율", value: `${currRate}%`, change },
+      { label: "직전 전환율", value: `${prevRate}%` },
+      { label: "문의 → 사건", value: `${casesCurr} / ${inqCurr}` },
     ],
     insights,
   };
@@ -217,29 +229,29 @@ async function buildTopPerformersSection(
   const metrics: ReportSection["metrics"] = [];
   ranked.forEach((r, i) => {
     metrics.push({
-      label: `#${i + 1} Assignee`,
-      value: `${r.assignedTo ?? "-"} (${r._count._all} cases)`,
+      label: `담당 ${i + 1}위`,
+      value: `${r.assignedTo ?? "-"} (${r._count._all}건)`,
     });
   });
   topPaidMemos.forEach((m, i) => {
     metrics.push({
-      label: `Top Deal #${i + 1}`,
+      label: `최고 수임료 ${i + 1}위`,
       value: `${m.caseMatter.caseNo ?? m.caseMatter.title} — ₩${(m.paidAmount ?? 0).toLocaleString()}`,
     });
   });
 
   const insights: string[] = [];
   if (ranked[0]?.assignedTo) {
-    insights.push(`Highest case load: ${ranked[0].assignedTo} (${ranked[0]._count._all} cases).`);
+    insights.push(`사건을 가장 많이 맡은 담당: ${ranked[0].assignedTo} (${ranked[0]._count._all}건).`);
   }
   if (topPaidMemos[0]?.paidAmount) {
-    insights.push(`Largest deal closed: ₩${topPaidMemos[0].paidAmount.toLocaleString()}.`);
+    insights.push(`최고 수임료: ₩${topPaidMemos[0].paidAmount.toLocaleString()}.`);
   }
   if (metrics.length === 0) {
-    metrics.push({ label: "Top Performers", value: "No data" });
+    metrics.push({ label: "담당별 실적", value: "데이터 없음" });
   }
 
-  return { title: "Top Performers", metrics, insights };
+  return { title: "담당별 실적", metrics, insights };
 }
 
 export async function generateReport(period: ReportPeriod): Promise<BusinessReport> {
@@ -255,15 +267,16 @@ export async function generateReport(period: ReportPeriod): Promise<BusinessRepo
 
   const revenueSection = sections[2];
   const inquirySection = sections[0];
+  // 아래 라벨은 위 섹션에서 만든 것과 정확히 일치해야 한다("매출", "신규 문의").
   const revenueChange =
-    revenueSection.metrics.find((m) => m.label === "Revenue")?.change ?? 0;
+    revenueSection.metrics.find((m) => m.label === "매출")?.change ?? 0;
   const inquiryChange =
-    inquirySection.metrics.find((m) => m.label === "New Inquiries")?.change ?? 0;
+    inquirySection.metrics.find((m) => m.label === "신규 문의")?.change ?? 0;
 
   const summary =
-    `${period[0].toUpperCase()}${period.slice(1)} report (${startDate.toISOString().slice(0, 10)} – ${endDate.toISOString().slice(0, 10)}). ` +
-    `Revenue ${revenueChange >= 0 ? "up" : "down"} ${Math.abs(revenueChange)}%, ` +
-    `inquiries ${inquiryChange >= 0 ? "up" : "down"} ${Math.abs(inquiryChange)}% vs prior period.`;
+    `${PERIOD_LABEL[period]} 리포트 (${startDate.toISOString().slice(0, 10)} ~ ${endDate.toISOString().slice(0, 10)}). ` +
+    `직전 기간 대비 매출 ${Math.abs(revenueChange)}% ${revenueChange >= 0 ? "증가" : "감소"}, ` +
+    `문의 ${Math.abs(inquiryChange)}% ${inquiryChange >= 0 ? "증가" : "감소"}.`;
 
   return { period, startDate, endDate, summary, sections };
 }
@@ -277,7 +290,7 @@ function escapeHtml(s: string | number): string {
 }
 
 export function generateReportHTML(report: BusinessReport): string {
-  const periodLabel = report.period.charAt(0).toUpperCase() + report.period.slice(1);
+  const periodLabel = PERIOD_LABEL[report.period];
   const sectionsHtml = report.sections
     .map((sec) => {
       const metricsHtml = sec.metrics
@@ -305,12 +318,12 @@ export function generateReportHTML(report: BusinessReport): string {
     .join("");
 
   return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>${escapeHtml(periodLabel)} Business Report</title></head>
+<html lang="ko"><head><meta charset="utf-8"><title>${escapeHtml(periodLabel)} 비즈니스 리포트</title></head>
 <body style="font-family:-apple-system,Segoe UI,sans-serif;max-width:760px;margin:0 auto;padding:32px;color:#222">
   <header>
     <div style="color:#c9a961;font-size:12px;letter-spacing:.1em;text-transform:uppercase">Business Report</div>
-    <h1 style="color:#1a3c5f;margin:4px 0">${escapeHtml(periodLabel)} Report</h1>
-    <div style="color:#666;font-size:14px">${report.startDate.toISOString().slice(0, 10)} – ${report.endDate.toISOString().slice(0, 10)}</div>
+    <h1 style="color:#1a3c5f;margin:4px 0">${escapeHtml(periodLabel)} 리포트</h1>
+    <div style="color:#666;font-size:14px">${report.startDate.toISOString().slice(0, 10)} ~ ${report.endDate.toISOString().slice(0, 10)}</div>
     <p style="margin-top:12px;line-height:1.5">${escapeHtml(report.summary)}</p>
   </header>
   ${sectionsHtml}
@@ -318,12 +331,12 @@ export function generateReportHTML(report: BusinessReport): string {
 }
 
 export function generateReportMarkdown(report: BusinessReport): string {
-  const periodLabel = report.period.charAt(0).toUpperCase() + report.period.slice(1);
+  const periodLabel = PERIOD_LABEL[report.period];
   const lines: string[] = [];
-  lines.push(`# ${periodLabel} Business Report`);
+  lines.push(`# ${periodLabel} 비즈니스 리포트`);
   lines.push("");
   lines.push(
-    `**Period:** ${report.startDate.toISOString().slice(0, 10)} – ${report.endDate.toISOString().slice(0, 10)}`,
+    `**기간:** ${report.startDate.toISOString().slice(0, 10)} ~ ${report.endDate.toISOString().slice(0, 10)}`,
   );
   lines.push("");
   lines.push(report.summary);
@@ -332,7 +345,7 @@ export function generateReportMarkdown(report: BusinessReport): string {
   for (const section of report.sections) {
     lines.push(`## ${section.title}`);
     lines.push("");
-    lines.push("| Metric | Value | Change |");
+    lines.push("| 지표 | 값 | 증감 |");
     lines.push("| --- | --- | --- |");
     for (const m of section.metrics) {
       const change =
@@ -341,7 +354,7 @@ export function generateReportMarkdown(report: BusinessReport): string {
     }
     lines.push("");
     if (section.insights.length > 0) {
-      lines.push("**Insights:**");
+      lines.push("**분석:**");
       for (const insight of section.insights) {
         lines.push(`- ${insight}`);
       }

@@ -492,6 +492,17 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // 관리자 페이지 라우트는 현재 경로를 요청 헤더로 실어 보낸다.
+  // 서버 레이아웃(Node 런타임)이 이 값을 읽어 실험 페이지 게이트를 판정한다
+  // (Edge 미들웨어는 DB 기능 플래그를 못 읽으므로 판정은 레이아웃에서 한다).
+  if (pathname.startsWith("/admin") && !pathname.startsWith("/api/")) {
+    const forwardHeaders = new Headers(request.headers);
+    forwardHeaders.set("x-admin-pathname", pathname);
+    const response = NextResponse.next({ request: { headers: forwardHeaders } });
+    applySecurityHeaders(request, response);
+    return response;
+  }
+
   const response = NextResponse.next();
   applySecurityHeaders(request, response);
   return response;

@@ -11,8 +11,38 @@ import { DarkModeToggle } from "@/components/admin/dark-mode-toggle";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { QuickNoteFab } from "@/components/admin/quick-note-fab";
 import { MacroHotkeyListener } from "@/components/admin/macro-hotkey-listener";
+import { headers } from "next/headers";
+import Link from "next/link";
+
 import { countInquiries } from "@/lib/services/inquiry-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import { isExperimentalAdminPath } from "@/lib/security/experimental-admin-pages";
+
+/** 실험 페이지가 비활성일 때 본문 대신 보여주는 안내. 셸·메뉴는 그대로 두어 다른 화면으로 이동 가능. */
+function ExperimentalDisabledNotice({ pathname }: { pathname: string }) {
+  return (
+    <section className="admin-card-static">
+      <p className="ui-kicker">실험실</p>
+      <h2 className="mt-2 text-xl font-semibold text-text-strong">비활성화된 실험 기능입니다</h2>
+      <p className="mt-2 max-w-prose text-sm text-text-muted">
+        이 페이지(<code className="rounded bg-surface-muted px-1 font-mono text-xs">{pathname}</code>)는
+        실험·데모 성격이라 기본적으로 꺼져 있습니다. 페이지와 데이터는 그대로 보존됩니다.
+      </p>
+      <p className="mt-1 max-w-prose text-sm text-text-muted">
+        필요하면 <Link href="/admin/features" className="font-medium text-primary underline underline-offset-2">기능 설정</Link>에서
+        &ldquo;실험실 페이지 활성화&rdquo;를 켜면 즉시 다시 열립니다.
+      </p>
+      <div className="mt-5">
+        <Link
+          href="/admin"
+          className="inline-flex items-center justify-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-text transition hover:border-line-strong hover:bg-surface-muted"
+        >
+          대시보드로 돌아가기
+        </Link>
+      </div>
+    </section>
+  );
+}
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const [
@@ -23,7 +53,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     macroServerSync,
     hideMode,
     showAdvanced,
-    useTopNav
+    useTopNav,
+    experimentalEnabled
   ] = await Promise.all([
     countInquiries({ status: "NEW" }).catch(() => 0),
     isFeatureEnabled("dark_mode_manual_toggle"),
@@ -32,8 +63,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     isFeatureEnabled("macro_server_sync"),
     isFeatureEnabled("admin_hide_mode"),
     isFeatureEnabled("admin_show_advanced"),
-    isFeatureEnabled("admin_top_nav_layout")
+    isFeatureEnabled("admin_top_nav_layout"),
+    isFeatureEnabled("admin_experimental_pages")
   ]);
+
+  // 실험 페이지 게이트 — 미들웨어가 실어 보낸 경로로 판정한다.
+  const adminPathname = (await headers()).get("x-admin-pathname") ?? "";
+  const experimentalBlocked =
+    !experimentalEnabled && !!adminPathname && isExperimentalAdminPath(adminPathname);
+  const content = experimentalBlocked ? (
+    <ExperimentalDisabledNotice pathname={adminPathname} />
+  ) : (
+    children
+  );
 
   const header = (
     <>
@@ -79,7 +121,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <AdminTopNav newInquiryCount={newCount} hideMode={hideMode} showAdvanced={showAdvanced} />
         <div className="min-w-0 w-full space-y-5 p-2 lg:p-4 pb-16 lg:pb-4">
           {header}
-          {children}
+          {content}
         </div>
         {overlays}
       </div>
@@ -91,7 +133,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <AdminSidebar newInquiryCount={newCount} hideMode={hideMode} showAdvanced={showAdvanced} />
       <div className="min-w-0 flex-1 space-y-5 pb-16 lg:pb-0">
         {header}
-        {children}
+        {content}
       </div>
       {overlays}
     </div>

@@ -12,6 +12,7 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { FEATURE_REGISTRY } from "@/lib/services/feature-flags-service";
+import { NAV_GROUPS } from "@/components/admin/admin-nav-config";
 
 const CACHE_MS = 5 * 60 * 1000;
 
@@ -141,6 +142,43 @@ function flagItems(): CommandItem[] {
 }
 
 /** 인덱스 전체 반환 — 5분 인메모리 캐시 (최근 목록만). */
+/**
+ * 사이드바 메뉴(NAV_GROUPS)의 모든 항목을 명령 팔레트 항목으로 변환한다.
+ *
+ * 이렇게 하면 '실험실'처럼 기본 접힌 그룹의 페이지도 Ctrl+K 로 이름만 쳐서
+ * 바로 이동할 수 있다. 예전에는 팔레트가 별도 하드코딩 목록이라 메뉴와
+ * 드리프트했고, 접힌 페이지는 검색으로도 닿기 어려웠다.
+ */
+function navPageItems(): CommandItem[] {
+  const items: CommandItem[] = [];
+  for (const group of NAV_GROUPS) {
+    const isLab = group.defaultCollapsed === true;
+    for (const item of group.items) {
+      items.push({
+        id: `nav:${item.href}`,
+        group: "page",
+        label: item.label,
+        href: item.href,
+        hint: isLab ? `${group.title} (기본 숨김)` : group.title,
+        keywords: [group.title, ...(isLab ? ["실험실", "lab", "숨김"] : [])],
+      });
+    }
+  }
+  return items;
+}
+
+/** href 기준 중복 제거 — STATIC_PAGES 를 우선한다(설명·별칭이 더 풍부하므로). */
+function dedupePagesByHref(primary: CommandItem[], extra: CommandItem[]): CommandItem[] {
+  const seen = new Set(primary.map((i) => i.href).filter(Boolean));
+  const merged = [...primary];
+  for (const item of extra) {
+    if (item.href && seen.has(item.href)) continue;
+    if (item.href) seen.add(item.href);
+    merged.push(item);
+  }
+  return merged;
+}
+
 export async function buildCommandIndex(): Promise<CommandItem[]> {
   const now = Date.now();
   let recent: CommandItem[];
@@ -150,7 +188,8 @@ export async function buildCommandIndex(): Promise<CommandItem[]> {
     recent = await fetchRecent();
     _recentCache = { at: now, items: recent };
   }
-  return [...STATIC_PAGES, ...STATIC_ACTIONS, ...flagItems(), ...recent];
+  const pages = dedupePagesByHref(STATIC_PAGES, navPageItems());
+  return [...pages, ...STATIC_ACTIONS, ...flagItems(), ...recent];
 }
 
 export function invalidateCommandIndex(): void {

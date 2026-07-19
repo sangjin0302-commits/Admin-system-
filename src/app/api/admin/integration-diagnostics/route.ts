@@ -159,11 +159,17 @@ async function probeLaw(): Promise<unknown> {
   );
 
   try {
-    const { searchTargetDetailed } = await import("@/lib/services/law-api-service");
+    const { searchTargetDetailed, lawProxySecurity } = await import(
+      "@/lib/services/law-api-service"
+    );
+    const security = lawProxySecurity();
     const started = Date.now();
     const outcome = await searchTargetDetailed("law", "출입국관리법", 1);
     return {
       configuredMissing: missing,
+      // 프록시 전송 보안 — secure=false 면 토큰이 평문으로 나간다(HTTPS 전환 권장).
+      proxySecure: security.secure,
+      proxyWarning: security.warning,
       // status 의미: ok=결과있음 / empty=응답정상 결과0건 /
       //   env_missing=LAW_OC·LAW_PROXY_TOKEN 없음 / upstream_error=프록시·법제처 실패
       status: outcome.status,

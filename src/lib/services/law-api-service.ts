@@ -41,6 +41,43 @@ import { cacheGet, cacheSet, withCache } from "@/lib/services/cache-service";
 function lawProxyUrl(): string {
   return process.env.LAW_PROXY_URL || "http://3.36.175.81:8080";
 }
+
+/**
+ * 프록시가 평문 HTTP인지 검사한다.
+ *
+ * 현재 프록시(Lightsail 3.36.175.81:8080)는 TLS가 없어 X-Proxy-Token 이
+ * 암호화 없이 전송된다. 데이터(법령) 자체는 공개 정보지만 토큰은 유출 위험이 있다.
+ *
+ * HTTPS 전환은 코드가 아니라 인프라 작업이다:
+ *   1) 프록시 서버에 도메인+TLS(Caddy/nginx+Let's Encrypt)를 붙이거나
+ *   2) Lightsail 로드밸런서 / CloudFront 로 앞단에 무료 TLS를 두고
+ *   3) LAW_PROXY_URL 을 https:// 주소로 바꾼다(코드 변경 불필요 — 이미 env를 읽는다).
+ *
+ * 이 함수는 진단 화면에서 위험을 눈에 보이게 하고, 프로덕션에서 한 번 경고 로그를 남긴다.
+ */
+export function lawProxySecurity(): { url: string; secure: boolean; warning: string | null } {
+  const url = lawProxyUrl();
+  const secure = url.trim().toLowerCase().startsWith("https://");
+  return {
+    url,
+    secure,
+    warning: secure
+      ? null
+      : "프록시가 평문 HTTP입니다 — X-Proxy-Token 이 암호화 없이 전송됩니다. HTTPS 전환 권장(인프라 작업).",
+  };
+}
+
+let _warnedInsecureProxy = false;
+function warnIfInsecureLawProxy(): void {
+  if (_warnedInsecureProxy) return;
+  if (process.env.NODE_ENV !== "production") return;
+  const { secure, warning } = lawProxySecurity();
+  if (!secure && warning) {
+    _warnedInsecureProxy = true;
+    // logger는 파일 하단에서 import됨. 순환을 피하려 동적 경고 대신 console 사용.
+    console.warn(`[law-proxy] ${warning}`);
+  }
+}
 function lawProxyToken(): string {
   return process.env.LAW_PROXY_TOKEN || "";
 }
@@ -80,6 +117,7 @@ function buildUrl(
 }
 
 async function fetchProxy(url: string, endpoint: string): Promise<any> {
+  warnIfInsecureLawProxy();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PROXY_TIMEOUT_MS);
   try {
