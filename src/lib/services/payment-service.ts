@@ -163,7 +163,15 @@ export async function confirmPayment(
   const secretKey = getSecretKey();
 
   if (!secretKey) {
-    logger.warn("[payment-service] mock confirm");
+    // 프로덕션에서 mock 승인을 내주면 안 된다. 예전에는 키가 없을 때 무조건
+    // success:true 를 반환했고, 호출부(portal/payments/confirm)에 인증도 없어서
+    // 아무나 사건을 "입금 완료"로 바꾸고 실제 의뢰인에게 입금 확인 알림까지
+    // 발송시킬 수 있었다. 결제 수단이 미설정이면 실패로 처리한다.
+    if (process.env.NODE_ENV === "production") {
+      logger.error("[payment-service] confirm 거부 — TOSS_SECRET_KEY 미설정");
+      return { success: false, error: "결제 수단이 설정되지 않았습니다." };
+    }
+    logger.warn("[payment-service] mock confirm (개발 환경 전용)");
     await prisma.payment.updateMany({
       where: { orderId },
       data: {

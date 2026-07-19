@@ -14,16 +14,16 @@ import {
   type NotaryDocType,
   type NotaryUrgency,
 } from "@/lib/services/notary-integration-service";
+import { portalUserKey, requirePortalUser } from "@/lib/security/portal-auth";
 
-function resolveUserId(req: Request, body?: { userId?: string }): string | null {
-  if (body?.userId) return body.userId;
-  const url = new URL(req.url);
-  return url.searchParams.get("userId") ?? url.searchParams.get("email") ?? req.headers.get("x-portal-user");
-}
+// 신원은 세션에서만 얻는다. 예전에는 ?userId=/x-portal-user 헤더/본문 userId 를
+// 그대로 믿어서 남의 서류 배송·공증 요청 내역을 조회하고 남의 이름으로
+// 배송·공증을 접수할 수 있었다.
 
-export async function GET(req: Request) {
-  const userId = resolveUserId(req);
-  if (!userId) return NextResponse.json({ ok: false, error: "NO_USER" }, { status: 400 });
+export async function GET() {
+  const authed = await requirePortalUser();
+  if (authed instanceof NextResponse) return authed;
+  const userId = portalUserKey(authed);
   const [shipping, notary] = await Promise.all([
     listShippingRequests({ userId }),
     listNotaryRequests({ userId }),
@@ -32,9 +32,13 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const authed = await requirePortalUser();
+  if (authed instanceof NextResponse) return authed;
+  const userId = portalUserKey(authed);
+
+  // 본문의 userId 는 무시한다 — 요청 주체는 언제나 로그인한 본인이다.
   const body = (await req.json().catch(() => null)) as
     | {
-        userId?: string;
         kind?: "shipping" | "notary" | "shipping.estimate" | "notary.estimate";
         shipping?: {
           caseId?: string;
@@ -54,8 +58,7 @@ export async function POST(req: Request) {
         };
       }
     | null;
-  const userId = resolveUserId(req, body ?? undefined);
-  if (!userId || !body?.kind) return NextResponse.json({ ok: false, error: "INVALID" }, { status: 400 });
+  if (!body?.kind) return NextResponse.json({ ok: false, error: "INVALID" }, { status: 400 });
 
   if (body.kind === "shipping.estimate" && body.shipping) {
     const cost = estimateShippingCost(body.shipping.destination, body.shipping.service, body.shipping.documents.length * 5);

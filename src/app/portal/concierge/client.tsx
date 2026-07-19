@@ -8,8 +8,9 @@ interface Msg {
   at?: string;
 }
 
+// 이메일 입력칸은 제거됐다. 대화 주체는 언제나 로그인한 본인이며, 서버가 세션에서
+// 신원을 읽는다. 예전에는 남의 이메일만 넣으면 그 사람의 VIP 상담 내역이 그대로 열렸다.
 export function ConciergeClient() {
-  const [clientId, setClientId] = useState<string>("");
   const [plan, setPlan] = useState<string | null>(null);
   const [thread, setThread] = useState<Msg[]>([]);
   const [input, setInput] = useState<string>("");
@@ -18,17 +19,10 @@ export function ConciergeClient() {
   const [err, setErr] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    // 이메일을 로컬스토리지에서 로드 (포털 세션 통합 전까지 임시)
-    const stored = typeof window !== "undefined" ? window.localStorage.getItem("portal.email") : null;
-    if (stored) setClientId(stored);
-  }, []);
-
-  const loadThread = useCallback(async (email: string) => {
-    if (!email) return;
+  const loadThread = useCallback(async () => {
     setErr(null);
     try {
-      const res = await fetch(`/api/portal/concierge?clientId=${encodeURIComponent(email)}`);
+      const res = await fetch("/api/portal/concierge");
       const json = await res.json();
       if (!res.ok || !json.ok) {
         setErr(json.error === "NOT_VIP" ? "VIP 회원 전용 서비스입니다." : json.error ?? "조회 실패");
@@ -44,8 +38,8 @@ export function ConciergeClient() {
   }, []);
 
   useEffect(() => {
-    if (clientId) loadThread(clientId);
-  }, [clientId, loadThread]);
+    loadThread();
+  }, [loadThread]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -53,7 +47,7 @@ export function ConciergeClient() {
 
   async function send() {
     const message = input.trim();
-    if (!message || !clientId) return;
+    if (!message) return;
     setThread((prev) => [...prev, { role: "user", content: message }]);
     setInput("");
     setStreaming(true);
@@ -63,7 +57,7 @@ export function ConciergeClient() {
       const res = await fetch("/api/portal/concierge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, message }),
+        body: JSON.stringify({ message }),
       });
       if (!res.ok || !res.body) {
         const json = await res.json().catch(() => ({}));
@@ -109,34 +103,11 @@ export function ConciergeClient() {
     }
   }
 
-  if (!clientId) {
-    return (
-      <div className="rounded border p-4 text-sm">
-        <p>포털 로그인이 확인되지 않았습니다. 이메일을 입력하세요:</p>
-        <div className="mt-2 flex gap-2">
-          <input
-            className="flex-1 rounded border px-2 py-1"
-            placeholder="you@example.com"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                const v = (e.target as HTMLInputElement).value.trim();
-                if (v) {
-                  window.localStorage.setItem("portal.email", v);
-                  setClientId(v);
-                }
-              }
-            }}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-3">
       {plan ? (
         <p className="text-xs text-text-muted">
-          <span className="rounded bg-primary/10 px-2 py-0.5 text-primary">{plan.toUpperCase()}</span> · {clientId}
+          <span className="rounded bg-primary/10 px-2 py-0.5 text-primary">{plan.toUpperCase()}</span>
         </p>
       ) : null}
       {err ? <p className="rounded bg-red-50 p-2 text-xs text-red-700">{err}</p> : null}

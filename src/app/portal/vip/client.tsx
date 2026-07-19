@@ -33,17 +33,18 @@ interface Payload {
   membership: Membership | null;
 }
 
+// 이메일 입력칸은 제거됐다. 대상은 언제나 로그인한 본인이며, 서버가 세션에서
+// 신원을 읽는다. 예전에는 아무 이메일이나 넣어 남의 VIP 정보를 조회·변경할 수 있었다.
 export function VipPortalClient() {
-  const [email, setEmail] = useState("");
   const [data, setData] = useState<Payload | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const load = useCallback(async (uid: string) => {
+  const load = useCallback(async () => {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(`/api/portal/vip?userId=${encodeURIComponent(uid)}`);
+      const res = await fetch("/api/portal/vip");
       const json = (await res.json()) as Payload;
       if (json.ok) setData(json);
       else setError("조회 실패");
@@ -55,25 +56,18 @@ export function VipPortalClient() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cached = window.localStorage.getItem("portal.email");
-      if (cached) {
-        setEmail(cached);
-        load(cached);
-      }
-    }
+    load();
   }, [load]);
 
   async function act(action: "subscribe" | "cancel", plan?: VipPlan) {
-    if (!email) return;
     setBusy(true);
     try {
       await fetch("/api/portal/vip", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: email, action, plan }),
+        body: JSON.stringify({ action, plan }),
       });
-      await load(email);
+      await load();
     } finally {
       setBusy(false);
     }
@@ -81,27 +75,6 @@ export function VipPortalClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2">
-        <input
-          type="email"
-          placeholder="이메일 입력"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 rounded-lg border border-line px-3 py-2 text-sm"
-        />
-        <button
-          type="button"
-          onClick={() => {
-            if (typeof window !== "undefined")
-              window.localStorage.setItem("portal.email", email);
-            load(email);
-          }}
-          disabled={!email || busy}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-        >
-          조회
-        </button>
-      </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {data && data.membership && (

@@ -6,28 +6,29 @@ import {
   subscribeVip,
   type VipPlan,
 } from "@/lib/services/vip-membership-service";
+import { portalUserKey, requirePortalUser } from "@/lib/security/portal-auth";
 
-function resolveUserId(req: Request, body?: { userId?: string }): string | null {
-  if (body?.userId) return body.userId;
-  const url = new URL(req.url);
-  const q = url.searchParams.get("userId") ?? url.searchParams.get("email");
-  if (q) return q;
-  return req.headers.get("x-portal-user") ?? req.headers.get("x-user-email");
-}
+// 신원은 세션에서만 얻는다. 예전에는 ?userId=/x-portal-user 헤더/본문 userId 를
+// 그대로 믿어서 아무나 남의 VIP 멤버십을 해지하거나 결제 없이 platinum 을 받을 수 있었다.
 
-export async function GET(req: Request) {
-  const userId = resolveUserId(req);
-  if (!userId) return NextResponse.json({ ok: false, error: "NO_USER" }, { status: 400 });
+export async function GET() {
+  const authed = await requirePortalUser();
+  if (authed instanceof NextResponse) return authed;
+  const userId = portalUserKey(authed);
   const [plans, membership] = await Promise.all([getVipPlans(), getPlan(userId)]);
   return NextResponse.json({ ok: true, plans, membership });
 }
 
 export async function POST(req: Request) {
+  const authed = await requirePortalUser();
+  if (authed instanceof NextResponse) return authed;
+  const userId = portalUserKey(authed);
+
+  // 본문의 userId 는 무시한다 — 대상은 언제나 로그인한 본인이다.
   const body = (await req.json().catch(() => null)) as
-    | { userId?: string; plan?: VipPlan; action?: "subscribe" | "cancel" | "upgrade" | "downgrade" }
+    | { plan?: VipPlan; action?: "subscribe" | "cancel" | "upgrade" | "downgrade" }
     | null;
-  const userId = resolveUserId(req, body ?? undefined);
-  if (!userId || !body?.action) {
+  if (!body?.action) {
     return NextResponse.json({ ok: false, error: "INVALID" }, { status: 400 });
   }
   if (body.action === "cancel") {

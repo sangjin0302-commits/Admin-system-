@@ -5,6 +5,7 @@ import { notifyClient } from "@/lib/services/notify-orchestrator";
 import { issueTaxInvoice } from "@/lib/services/tax-invoice-service";
 import { prisma } from "@/lib/prisma/client";
 import { captureError } from "@/lib/services/error-monitor-service";
+import { requirePortalUser } from "@/lib/security/portal-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,6 +17,11 @@ const confirmSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  // 인증 필수. 예전에는 누구나 임의의 orderId 로 호출해 사건을 "입금 완료"로
+  // 바꾸고 실제 의뢰인에게 입금 확인 알림·세금계산서를 발생시킬 수 있었다.
+  const authed = await requirePortalUser();
+  if (authed instanceof NextResponse) return authed;
+
   let body: unknown;
   try {
     body = await req.json();
@@ -31,6 +37,27 @@ export async function POST(req: Request) {
   }
 
   const { paymentKey, orderId, amount } = parsed.data;
+
+  // 이 주문이 정말 본인 것인지 확인한다. 주문은 checkout 에서 만들어지며
+  // customerEmail 에 결제 요청 당시의 이메일이 남는다.
+  const order = await prisma.payment.findUnique({
+    where: { orderId },
+    select: { customerEmail: true, amount: true },
+  });
+  if (!order) {
+    return NextResponse.json({ ok: false, error: "주문을 찾을 수 없습니다." }, { status: 404 });
+  }
+  if (
+    !order.customerEmail ||
+    order.customerEmail.trim().toLowerCase() !== authed.email.trim().toLowerCase()
+  ) {
+    return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+  }
+  // 승인 금액은 서버에 저장된 주문 금액과 일치해야 한다 — 본문 금액만 믿지 않는다.
+  if (order.amount !== amount) {
+    return NextResponse.json({ ok: false, error: "금액이 주문과 다릅니다." }, { status: 400 });
+  }
+
   const result = await confirmPayment(paymentKey, orderId, amount);
 
   if (!result.success) {

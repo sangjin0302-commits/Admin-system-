@@ -3,18 +3,14 @@ import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { chat, getThread, relayToTelegram } from "@/lib/services/vip-concierge-bot";
 import { getPlan } from "@/lib/services/vip-membership-service";
 import { logger } from "@/lib/utils/logger";
+import { portalUserKey, requirePortalUser } from "@/lib/security/portal-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-function resolveClientId(req: Request, body?: { clientId?: string }): string | null {
-  if (body?.clientId) return body.clientId.trim().toLowerCase();
-  const url = new URL(req.url);
-  const q = url.searchParams.get("clientId") ?? url.searchParams.get("email");
-  if (q) return q.trim().toLowerCase();
-  const header = req.headers.get("x-portal-user") ?? req.headers.get("x-user-email");
-  return header ? header.trim().toLowerCase() : null;
-}
+// 신원은 세션에서만 얻는다. 예전에는 ?clientId=/x-portal-user 헤더/본문 clientId 를
+// 그대로 믿어서, 남의 이메일만 알면 그 사람의 VIP 상담 내역 전체를 읽고
+// 그 사람 이름으로 텔레그램에 메시지를 흘려보낼 수 있었다.
 
 // 간이 IP 기반 rate limit (30초당 12회)
 const RATE_MAP = new Map<string, { count: number; windowStart: number }>();
@@ -33,12 +29,13 @@ function checkRate(key: string): boolean {
   return true;
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   if (!(await isFeatureEnabled("vip_concierge_bot"))) {
     return NextResponse.json({ ok: false, error: "FEATURE_DISABLED" }, { status: 403 });
   }
-  const clientId = resolveClientId(req);
-  if (!clientId) return NextResponse.json({ ok: false, error: "NO_USER" }, { status: 400 });
+  const authed = await requirePortalUser();
+  if (authed instanceof NextResponse) return authed;
+  const clientId = portalUserKey(authed);
   const membership = await getPlan(clientId);
   if (!membership) return NextResponse.json({ ok: false, error: "NOT_VIP" }, { status: 403 });
   const thread = await getThread(clientId);
@@ -49,9 +46,13 @@ export async function POST(req: Request) {
   if (!(await isFeatureEnabled("vip_concierge_bot"))) {
     return NextResponse.json({ ok: false, error: "FEATURE_DISABLED" }, { status: 403 });
   }
-  const body = (await req.json().catch(() => null)) as { clientId?: string; message?: string } | null;
-  const clientId = resolveClientId(req, body ?? undefined);
-  if (!clientId || !body?.message) {
+  const authed = await requirePortalUser();
+  if (authed instanceof NextResponse) return authed;
+  const clientId = portalUserKey(authed);
+
+  // 본문의 clientId 는 무시한다 — 대화 주체는 언제나 로그인한 본인이다.
+  const body = (await req.json().catch(() => null)) as { message?: string } | null;
+  if (!body?.message) {
     return NextResponse.json({ ok: false, error: "INVALID" }, { status: 400 });
   }
   const rateKey = `${clientId}:${req.headers.get("x-forwarded-for") ?? "unknown"}`;

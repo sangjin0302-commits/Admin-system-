@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createPaymentSession } from "@/lib/services/payment-service";
 import { captureError } from "@/lib/services/error-monitor-service";
+import { requirePortalUser } from "@/lib/security/portal-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -15,6 +16,11 @@ const checkoutSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  // 인증 필수. 예전에는 누구나 임의의 caseId·금액으로 결제 주문을 만들 수 있었고,
+  // 그 금액이 그대로 승인 기준이 되어 스스로 1원짜리 청구서를 만들 수 있었다.
+  const authed = await requirePortalUser();
+  if (authed instanceof NextResponse) return authed;
+
   let body: unknown;
   try {
     body = await req.json();
@@ -30,7 +36,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { caseId, amount, orderName, customerName, customerEmail } = parsed.data;
+  const { caseId, amount, orderName, customerName } = parsed.data;
   const orderId = `CASE-${caseId}-${Date.now().toString(36)}`;
 
   try {
@@ -39,7 +45,9 @@ export async function POST(req: Request) {
       amount,
       orderName,
       customerName,
-      customerEmail,
+      // 본문의 customerEmail 은 무시한다 — 주문 소유자는 언제나 로그인한 본인이고,
+      // confirm 단계의 소유권 검증이 이 값을 기준으로 이뤄진다.
+      customerEmail: authed.email,
     });
     return NextResponse.json({ ok: true, orderId, ...session });
   } catch (err) {

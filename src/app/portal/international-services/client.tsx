@@ -10,24 +10,22 @@ interface Payload {
   notary: Array<{ id: string; documentTitle: string; costKrw: number; status: string; createdAt: string; urgency: string }>;
 }
 
+// 이메일 입력칸은 제거됐다. 요청 주체는 언제나 로그인한 본인이며, 서버가 세션에서
+// 신원을 읽는다. 예전에는 남의 이메일을 넣어 남의 배송·공증 내역을 볼 수 있었다.
 export function InternationalClient() {
-  const [email, setEmail] = useState("");
   const [tab, setTab] = useState<Tab>("shipping");
   const [data, setData] = useState<Payload | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
 
-  const load = useCallback(async (uid: string) => {
-    const res = await fetch(`/api/portal/international-services?userId=${encodeURIComponent(uid)}`);
+  const load = useCallback(async () => {
+    const res = await fetch("/api/portal/international-services");
     const json = (await res.json()) as Payload;
     if (json.ok) setData(json);
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cached = window.localStorage.getItem("portal.email");
-      if (cached) { setEmail(cached); load(cached); }
-    }
+    load();
   }, [load]);
 
   // Shipping form state
@@ -47,13 +45,12 @@ export function InternationalClient() {
   });
 
   async function submitShipping() {
-    if (!email) { setMsg("이메일 필요"); return; }
     setBusy(true); setMsg("");
     try {
       const res = await fetch("/api/portal/international-services", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: email, kind: "shipping",
+          kind: "shipping",
           shipping: {
             documents: ship.documents.split("\n").filter(Boolean),
             service: ship.service,
@@ -65,30 +62,24 @@ export function InternationalClient() {
         }),
       });
       const json = (await res.json()) as { ok: boolean };
-      if (json.ok) { setMsg("배송 요청 접수 완료"); await load(email); setTab("history"); }
+      if (json.ok) { setMsg("배송 요청 접수 완료"); await load(); setTab("history"); }
     } finally { setBusy(false); }
   }
 
   async function submitNotary() {
-    if (!email) { setMsg("이메일 필요"); return; }
     setBusy(true); setMsg("");
     try {
       const res = await fetch("/api/portal/international-services", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: email, kind: "notary", notary: not }),
+        body: JSON.stringify({ kind: "notary", notary: not }),
       });
       const json = (await res.json()) as { ok: boolean };
-      if (json.ok) { setMsg("공증 요청 접수 완료"); await load(email); setTab("history"); }
+      if (json.ok) { setMsg("공증 요청 접수 완료"); await load(); setTab("history"); }
     } finally { setBusy(false); }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2">
-        <input type="email" placeholder="이메일" value={email} onChange={(e) => setEmail(e.target.value)} className="flex-1 rounded-lg border border-line px-3 py-2 text-sm" />
-        <button type="button" onClick={() => { if (typeof window !== "undefined") window.localStorage.setItem("portal.email", email); load(email); }} disabled={!email} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50">조회</button>
-      </div>
-
       <nav className="flex gap-2 border-b border-line">
         {(["shipping", "notary", "history"] as Tab[]).map((t) => (
           <button key={t} type="button" onClick={() => setTab(t)} className={`px-4 py-2 text-sm ${tab === t ? "border-b-2 border-primary font-bold text-primary" : "text-text-muted"}`}>

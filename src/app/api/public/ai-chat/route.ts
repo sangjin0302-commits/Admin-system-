@@ -4,6 +4,8 @@ import { getUsage, incrementUsage } from "@/lib/services/ai-subscription-service
 import { buildRagContext } from "@/lib/services/ai-knowledge-base-service";
 import { findFaqMatch } from "@/lib/services/ai-faq-cache-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import { getPortalUser, portalUserKey } from "@/lib/security/portal-auth";
+import { consumeRateLimit, getClientIpFromHeaders, getEnvInt } from "@/lib/security/rate-limit";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-4-5-20251001";
@@ -37,12 +39,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "메시지가 필요합니다." }, { status: 400 });
     }
 
-    // AI subscription quota gate: only enforced when the caller identifies
-    // themselves. Anonymous callers keep the legacy unlimited behavior.
-    const userId =
-      request.headers.get("x-user-email") ||
-      request.headers.get("x-portal-user") ||
-      (typeof body.userId === "string" ? body.userId : "");
+    // 구독 한도 게이트.
+    //
+    // 예전에는 호출자가 스스로 밝힌 x-user-email/x-portal-user/body.userId 로만
+    // 신원을 잡았다. 즉 그 세 개를 빼고 부르면 한도 검사가 통째로 건너뛰어져,
+    // 무료 5회 제한이 헤더 하나로 무력화되고 Pro 요금제가 무의미해졌다.
+    //
+    // 이제 신원은 세션에서만 얻고, 비로그인 호출은 IP 기준으로 따로 제한한다.
+    const sessionUser = await getPortalUser();
+    const userId = sessionUser ? portalUserKey(sessionUser) : "";
+
+    if (!userId) {
+      const ip = getClientIpFromHeaders(request.headers);
+      const anon = consumeRateLimit({
+        namespace: "public-ai-chat-anon",
+        key: ip,
+        max: getEnvInt("PUBLIC_AI_CHAT_ANON_MAX", 5, 1, 100),
+        windowMs: getEnvInt("PUBLIC_AI_CHAT_ANON_WINDOW_MS", 24 * 60 * 60 * 1000, 60_000, 7 * 24 * 60 * 60 * 1000)
+      });
+      if (!anon.allowed) {
+        return NextResponse.json(
+          {
+            error:
+              "무료 상담 횟수를 모두 사용하셨습니다. 로그인 후 이용하시거나 Pro 요금제를 확인해 주세요.",
+            code: "QUOTA_EXCEEDED",
+            upgradeUrl: "/ai-subscription"
+          },
+          { status: 402, headers: { "Retry-After": String(anon.retryAfterSec) } }
+        );
+      }
+    }
+
     if (userId) {
       const usage = await getUsage(userId).catch(() => null);
       if (usage && usage.quota >= 0 && usage.remaining <= 0) {
