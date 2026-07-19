@@ -9,21 +9,37 @@
  *   Authorization: Bearer <CRON_SECRET>
  */
 
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/security/admin-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * /api/admin/* 는 middleware(isProtectedAdminRoute)에서 Basic Auth로 이미 차단된다.
- * 따라서 브라우저 접근은 그 인증을 신뢰하고, 자동화용으로 CRON_SECRET Bearer도 허용한다.
+ * /api/admin/* 는 middleware(isProtectedAdminRoute)가 이미 막는다.
+ * Basic Auth 든 관리자 세션 쿠키든, 여기까지 온 요청은 통과한 것이다.
+ *
+ * 예전에는 여기서 `Authorization: Basic ...` 헤더를 다시 요구했다. 관리자
+ * 로그인 페이지(세션 쿠키)로 들어오면 브라우저 fetch 에 그 헤더가 없어서
+ * "테스트 발송"이 항상 {"ok":false,"error":"unauthorized"} 로 끝났다.
+ * 실시간 알림 SSE 가 "연결 중…"에서 멈춰 있던 것과 같은 원인이다.
+ *
+ * 자동화(cron·스크립트)용으로 Bearer CRON_SECRET 은 계속 허용한다.
  */
-function authorized(request: Request): boolean {
+async function authorized(request: Request): Promise<boolean> {
   const secret = process.env.CRON_SECRET?.trim();
   const auth = request.headers.get("authorization") ?? "";
   if (secret && auth === `Bearer ${secret}`) return true;
-  // middleware를 통과했다면 Basic Auth가 이미 검증된 요청이다.
-  return auth.startsWith("Basic ");
+
+  // Basic Auth 로 들어온 경우(구 방식).
+  if (auth.startsWith("Basic ")) return true;
+
+  // 관리자 세션 쿠키로 들어온 경우(로그인 페이지 방식) — 브라우저 fetch 는
+  // Authorization 헤더를 붙이지 않으므로 쿠키를 직접 검증한다.
+  const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value;
+  return (await verifyAdminSessionToken(token)) !== null;
 }
 
 /** 비밀값 노출 없이 형태만 요약. */
@@ -56,14 +72,14 @@ function envReport() {
 }
 
 export async function GET(request: Request) {
-  if (!authorized(request)) {
+  if (!(await authorized(request))) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
   return NextResponse.json({ ok: true, env: envReport() });
 }
 
 export async function POST(request: Request) {
-  if (!authorized(request)) {
+  if (!(await authorized(request))) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 

@@ -30,12 +30,25 @@ export const dynamic = "force-dynamic";
 
 type InquiryListItem = Awaited<ReturnType<typeof listInquiries>>[number];
 
-async function safeListInquiries(filters?: Parameters<typeof listInquiries>[0]) {
+/**
+ * 조회 실패를 빈 목록으로 바꿔 화면이 죽지 않게 한다.
+ *
+ * 다만 실패 사실 자체는 화면에 알려야 한다. 예전에는 오류를 서버 로그로만
+ * 보내고 빈 배열을 돌려줘서, DB 문제(예: 배포한 코드가 기대하는 컬럼이
+ * 아직 DB에 없음)가 "문의가 한 건도 없음"으로 보였다. 관리자는 원인을
+ * 알 방법이 없다.
+ */
+async function safeListInquiries(
+  filters?: Parameters<typeof listInquiries>[0]
+): Promise<{ items: InquiryListItem[]; error: string | null }> {
   try {
-    return await listInquiries(filters);
+    return { items: await listInquiries(filters), error: null };
   } catch (error) {
     logger.error("Failed to load inquiries for admin list", error);
-    return [] as InquiryListItem[];
+    return {
+      items: [] as InquiryListItem[],
+      error: error instanceof Error ? error.message : String(error)
+    };
   }
 }
 
@@ -49,10 +62,13 @@ export default async function AdminInquiryListPage({
   const listViewHref = buildInquiryListHref(rawParams, "list");
   const boardViewHref = buildInquiryListHref(rawParams, "board");
   const filters = parseAdminInquiryQuery(rawParams);
-  const [allInquiries, inquiries] = await Promise.all([
+  const [allResult, filteredResult] = await Promise.all([
     safeListInquiries(),
     safeListInquiries(filters)
   ]);
+  const allInquiries = allResult.items;
+  const inquiries = filteredResult.items;
+  const loadError = allResult.error ?? filteredResult.error;
   const priorityScores = await getScoresForInquiries(inquiries.map((i) => i.id)).catch((error) => {
     logger.error("Failed to load priority scores", error);
     return {};
@@ -77,6 +93,23 @@ export default async function AdminInquiryListPage({
 
   return (
     <div className="space-y-6">
+      {loadError && (
+        <Card className="border-danger/40 bg-danger/5 p-5">
+          <p className="text-sm font-semibold text-danger">문의를 불러오지 못했습니다.</p>
+          <p className="mt-1 text-sm text-text">
+            아래 목록이 비어 보이는 것은 문의가 없어서가 아니라 조회가 실패했기 때문입니다.
+          </p>
+          <p className="mt-2 text-xs text-text-muted">
+            DB 스키마가 배포된 코드보다 오래된 경우일 수 있습니다. 그럴 때는 프로덕션 DB에
+            <code className="mx-1 rounded bg-surface-muted px-1">prisma db push</code>
+            를 실행해 주세요.
+          </p>
+          <pre className="mt-3 overflow-x-auto rounded-lg bg-surface-muted p-3 font-mono text-[11px] leading-5 text-text">
+            {loadError}
+          </pre>
+        </Card>
+      )}
+
       <Card className="ui-analysis-hero p-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">

@@ -23,19 +23,23 @@ export function AddDocForm() {
         body: JSON.stringify({
           content,
           metadata: {
-            title: title || "Untitled",
+            title: title || "제목 없음",
             tags: tags || "",
             createdAt: new Date().toISOString(),
           },
         }),
       });
-      if (!res.ok) throw new Error("failed");
+      if (!res.ok) {
+        // 예전에는 서버가 준 사유를 버리고 "failed" 만 보여줬다.
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? `추가 실패 (${res.status})`);
+      }
       setContent("");
       setTitle("");
       setTags("");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "error");
+      setError(err instanceof Error ? err.message : "문서를 추가하지 못했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -44,31 +48,31 @@ export function AddDocForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-3">
       <div>
-        <label className="block text-sm font-medium text-text-strong">Title</label>
+        <label className="block text-sm font-medium text-text-strong">제목</label>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="ui-input mt-1 w-full"
-          placeholder="Document title"
+          placeholder="문서 제목"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-text-strong">Tags</label>
+        <label className="block text-sm font-medium text-text-strong">태그</label>
         <input
           value={tags}
           onChange={(e) => setTags(e.target.value)}
           className="ui-input mt-1 w-full"
-          placeholder="comma,separated,tags"
+          placeholder="쉼표로 구분 (예: 비자,체류)"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-text-strong">Content</label>
+        <label className="block text-sm font-medium text-text-strong">내용</label>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={5}
           className="ui-input mt-1 w-full"
-          placeholder="Document content to embed and index"
+          placeholder="검색 색인에 넣을 문서 내용"
           required
         />
       </div>
@@ -78,7 +82,7 @@ export function AddDocForm() {
         disabled={submitting || !content.trim()}
         className="ui-button-primary"
       >
-        {submitting ? "Adding..." : "Add Document"}
+        {submitting ? "추가 중…" : "문서 추가"}
       </button>
     </form>
   );
