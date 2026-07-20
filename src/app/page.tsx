@@ -275,9 +275,9 @@ export default async function PublicMarketingHomePage({
     heroLogo = list[dayOfYear % list.length] || heroLogo;
   }
 
-  // 대표 프로필 사진 — about 페이지와 동일한 site-setting 사용
-  const aboutPhotoRow = await prisma.siteSetting.findUnique({ where: { key: "image.aboutPhoto" } }).catch(() => null);
-  const aboutPhoto = aboutPhotoRow?.value || null;
+  // NOTE: 대표 프로필 사진(image.aboutPhoto) 조회를 제거했다. 프로필 섹션에서
+  // 사진/로고 카드를 걷어내면서 쓰이지 않게 됐고, 남겨두면 렌더마다 불필요한
+  // DB 조회가 한 번씩 더 나간다. 사진을 다시 쓰려면 이 조회와 슬롯을 함께 되살린다.
 
   return (
     <div className="overflow-x-clip">
@@ -567,52 +567,10 @@ export default async function PublicMarketingHomePage({
       {/* ═══════════════ 대표 행정사 프로필 ═══════════════ */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28" aria-labelledby="lead-attorney-heading">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
-            {/* 좌: 사진 슬롯 (about 페이지와 동일한 image.aboutPhoto 설정 사용) */}
-            <Reveal>
-              <div className="relative mx-auto w-full max-w-sm lg:mx-0">
-                <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border-4 border-gold/40 bg-gradient-to-br from-primary/10 via-surface to-gold/10 shadow-floating">
-                  {aboutPhoto ? (
-                    <Image
-                      src={aboutPhoto}
-                      alt="대표 행정사 지상진"
-                      fill
-                      className="object-cover"
-                      unoptimized
-                      sizes="(max-width: 768px) 100vw, 35vw"
-                    />
-                  ) : (
-                    <div
-                      className="flex h-full flex-col items-center justify-center gap-6 px-8"
-                      style={{
-                        backgroundColor: "rgb(22 50 80)",
-                        backgroundImage: "linear-gradient(180deg, rgb(22 50 80) 0%, rgb(18 40 65) 60%, rgb(12 28 48) 100%)"
-                      }}
-                    >
-                      <div className="relative flex h-36 w-36 items-center justify-center overflow-hidden rounded-2xl bg-white p-4 shadow-floating ring-4 ring-gold/40">
-                        <Image
-                          src={heroLogo}
-                          alt="ETHOS 행정사사무소"
-                          fill
-                          className="object-contain p-2"
-                          unoptimized={heroLogo.startsWith("http")}
-                          sizes="9rem"
-                        />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-serif text-sm font-bold tracking-[0.3em] text-white">ETHOS</p>
-                        <p className="mt-1 font-serif text-[11px] tracking-[0.2em] text-gold-soft">에토스 행정사사무소</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="absolute -bottom-5 -right-5 rounded-xl bg-primary px-6 py-4 text-white shadow-floating">
-                  <p className="ethos-quote text-xs tracking-wider text-gold-soft">Lead</p>
-                  <p className="mt-1 font-serif text-lg font-bold">대표 행정사</p>
-                </div>
-              </div>
-            </Reveal>
-
+          {/* 사진/로고 카드는 제거했다. 세로 4:5 블록이 화면을 크게 차지하는 데 비해
+              전하는 정보가 없었다. 이름·자격·CTA 만 한 단으로 둔다.
+              사진을 쓰려면 image.aboutPhoto 설정 + 이 자리에 슬롯을 되살리면 된다. */}
+          <div className="mx-auto max-w-3xl">
             {/* 우: 이름 · 자격 요약 · CTA */}
             <Reveal delay={1}>
               <div>
