@@ -71,7 +71,7 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "services.corporate.desc": "",
   "payment.bankName": "",
   "payment.accountNumber": "",
-  "payment.accountHolder": "행정사 Jean",
+  "payment.accountHolder": "지상진",
   "trust.bizRegNo": "",
   "trust.adminLicenseNo": "",
   "trust.representative": "",
@@ -113,7 +113,7 @@ export const SITE_SETTINGS_LABELS: Record<
   "services.corporate.desc": { label: "서비스: 법인 설립 소개글", hint: "비우면 기본 문구 사용", multiline: true },
   "payment.bankName": { label: "결제: 은행명", hint: "예: 국민은행, 우리은행 (계좌이체 안내용)" },
   "payment.accountNumber": { label: "결제: 계좌번호", hint: "예: 123-456-789012" },
-  "payment.accountHolder": { label: "결제: 예금주", hint: "예: 행정사 Jean / 김OO" },
+  "payment.accountHolder": { label: "결제: 예금주", hint: "은행 표기와 정확히 일치해야 합니다. 예: 지상진" },
   "trust.bizRegNo": {
     label: "사업자등록번호",
     hint: "예: 123-45-67890 — 입력 시 푸터에 자동 표시됩니다",

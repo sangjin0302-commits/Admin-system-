@@ -22,7 +22,7 @@ export async function generateMetadata({
       }
     : {
         title: "강연 · 활동 — ETHOS 행정사사무소",
-        description: "OASIS 4 외국인 창업지원 프로그램 강의 등 행정사 Jean의 교육·강연 활동을 소개합니다."
+        description: "OASIS 4 외국인 창업지원 프로그램 강의 등 행정사 지상진의 교육·강연 활동을 소개합니다."
       };
 }
 
@@ -30,7 +30,7 @@ const COPY = {
   ko: {
     heading: "강연 · 활동",
     intro:
-      "행정사 Jean은 외국인 창업가·예비 의뢰인을 대상으로 비자·창업 절차에 대한 실무 교육을 진행해 왔습니다. 강연 자료와 후기를 일부 정리했습니다.",
+      "행정사 지상진은 외국인 창업가·예비 의뢰인을 대상으로 비자·창업 절차에 대한 실무 교육을 진행해 왔습니다. 강연 자료와 후기를 일부 정리했습니다.",
     ctaTitle: "강연 / 사내 세미나 의뢰가 필요하신가요?",
     cta: "강연 문의하기"
   },
@@ -139,7 +139,7 @@ export default async function LecturesPage({
     <div className="overflow-x-clip">
       <EventJsonLd
         name="OASIS 4 — 외국인 창업지원 프로그램 강의"
-        description="외국인 창업가를 위한 비자·법인설립·인허가 절차 실무 가이드. 행정사 Jean 진행."
+        description="외국인 창업가를 위한 비자·법인설립·인허가 절차 실무 가이드. 행정사 지상진 진행."
       />
       {/* HERO */}
       <section className="relative overflow-hidden pt-20 pb-12 sm:pt-28 sm:pb-16">

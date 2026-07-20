@@ -62,7 +62,7 @@ export default async function KeywordOgImage({ params }: { params: Promise<{ ter
             {theme.label}
           </div>
           <div style={{ marginTop: 24, fontSize: 26, color: "#a88647", fontStyle: "italic" }}>
-            행정사 Jean — 실무 가이드 + 관련 칼럼
+            행정사 지상진 — 실무 가이드 + 관련 칼럼
           </div>
         </div>
 

@@ -38,7 +38,7 @@ export async function GET() {
 <channel>
   <title>ETHOS 행정사사무소 — 칼럼</title>
   <link>${BASE}/blog</link>
-  <description>비자·행정심판·계약·인허가·법인설립 실무 칼럼. 행정사 Jean.</description>
+  <description>비자·행정심판·계약·인허가·법인설립 실무 칼럼. 행정사 지상진.</description>
   <language>ko-KR</language>
   <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 ${items}

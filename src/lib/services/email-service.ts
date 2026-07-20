@@ -74,7 +74,7 @@ export async function sendIntakeConfirmation(input: {
         ${trackingSection}
         <hr style="border:none;border-top:1px solid #e5e3da;margin:24px 0;" />
         <p style="font-size:12px;color:#999;line-height:1.6;">
-          ETHOS 행정사사무소 · 행정사 Jean<br>
+          ETHOS 행정사사무소 · 행정사 지상진<br>
           <a href="https://ethosattorney.com" style="color:#b8963e;">ethosattorney.com</a>
         </p>
       </div>

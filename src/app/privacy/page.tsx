@@ -77,7 +77,7 @@ export default function PrivacyPage() {
 
             <Section title="8. 개인정보 보호 책임자">
               <p className="text-sm leading-relaxed text-text">
-                책임자: 행정사 Jean<br />
+                책임자: 행정사 지상진<br />
                 연락: a.attorneyjean@gmail.com
               </p>
             </Section>

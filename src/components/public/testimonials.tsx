@@ -194,7 +194,7 @@ export function Testimonials({ items }: { items: PublicTestimonial[] }) {
 
         <Reveal>
           <div className="mt-10 flex flex-col items-center gap-3 text-center">
-            <p className="text-sm text-text-muted">저도 상담 받고 싶다면</p>
+            <p className="text-sm text-text-muted">상담 받고 싶다면</p>
             <Link
               href="/intake"
               className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-gold/40 bg-gold-soft/30 px-7 text-sm font-bold text-primary transition hover:bg-gold-soft/60"

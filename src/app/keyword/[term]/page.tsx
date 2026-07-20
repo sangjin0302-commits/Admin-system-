@@ -24,7 +24,7 @@ const KEYWORDS: Record<string, { label: string; query: string[]; description: st
   "d-8-비자": {
     label: "D-8 비자 (기업투자)",
     query: ["D-8", "D8", "기업투자", "투자비자"],
-    description: "외국인 창업가 D-8 비자 신청, 요건, 사업계획서, 자본금 안내 — 행정사 Jean이 정리한 실무 가이드."
+    description: "외국인 창업가 D-8 비자 신청, 요건, 사업계획서, 자본금 안내 — 행정사 지상진이 정리한 실무 가이드."
   },
   "d-10-비자": {
     label: "D-10 비자 (구직)",
@@ -39,7 +39,7 @@ const KEYWORDS: Record<string, { label: string; query: string[]; description: st
   "행정심판": {
     label: "행정심판",
     query: ["행정심판", "재결", "청구기한"],
-    description: "행정심판 청구 90일 기한, 처분 취소, 재결 절차 — 행정사 Jean의 실무 안내."
+    description: "행정심판 청구 90일 기한, 처분 취소, 재결 절차 — 행정사 지상진의 실무 안내."
   },
   "귀화": {
     label: "귀화 · 국적",
@@ -200,7 +200,7 @@ export default async function KeywordLandingPage({ params }: { params: Promise<{
           <Reveal>
             <h2 className="ethos-display text-2xl sm:text-3xl">가장 도움이 되는 글</h2>
             <p className="mt-2 text-sm text-text-muted">
-              네이버 블로그에서 행정사 Jean이 정리한 {k.label} 관련 글입니다.
+              네이버 블로그에서 행정사 지상진이 정리한 {k.label} 관련 글입니다.
             </p>
           </Reveal>
 

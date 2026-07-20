@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
+import { WritingChannels } from "@/components/public/writing-channels";
 import { CHANNELS } from "@/lib/constants/channels";
 
 export const dynamic = "force-dynamic";
@@ -56,7 +57,7 @@ const AUTHORITY = [
   { kicker: "Embassy", title: "2.5+ years of visa & immigration practice", sub: "in a Seoul embassy consular section" },
   { kicker: "Ministry of Justice", title: "Official translator — refugee rulings", sub: "Korean ↔ English / Arabic" },
   { kicker: "Court Administration", title: "Registered court interpreter", sub: "ko · en · ar" },
-  { kicker: "Academic", title: "HUFS Graduate School of Interpretation & Translation", sub: "Korean–Arabic · GPA 4.41" },
+  { kicker: "Academic", title: "HUFS Graduate School of Interpretation & Translation", sub: "Korean–Arabic" },
   { kicker: "Lecture", title: "OASIS 4 — Foreign Founder Program", sub: "Recurring lectures (KISED)" },
   { kicker: "AI", title: "Legal automation system", sub: "Self-built; in-house operation" }
 ] as const;
@@ -196,6 +197,9 @@ export default function EnglishLanding() {
           </div>
         </div>
       </section>
+
+      {/* Writing channels — Korean columns + English LinkedIn */}
+      <WritingChannels lang="en" />
 
       {/* CTA */}
       <section className="py-20 sm:py-24">

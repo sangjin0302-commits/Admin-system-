@@ -13,7 +13,7 @@ export function NewsletterBanner() {
     if (!email.trim()) return;
     setStatus("submitting");
     // 메일 클라이언트 즉시 열기 (mailto 전략 — 별도 인프라 없이)
-    const body = encodeURIComponent(`행정사 Jean 칼럼 구독 신청\n\n이메일: ${email}\n\n비자/행정심판/계약/인허가/법인설립 분야 신간 알림을 받겠습니다.`);
+    const body = encodeURIComponent(`행정사 지상진 칼럼 구독 신청\n\n이메일: ${email}\n\n비자/행정심판/계약/인허가/법인설립 분야 신간 알림을 받겠습니다.`);
     const subject = encodeURIComponent("[ETHOS] 칼럼 구독 신청");
     window.location.href = `mailto:a.attorneyjean@gmail.com?subject=${subject}&body=${body}`;
     setStatus("done");

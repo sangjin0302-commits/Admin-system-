@@ -8,11 +8,11 @@ import { prisma } from "@/lib/prisma/client";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "모든 채널 — ETHOS 행정사사무소 Jean",
+  title: "모든 채널 — ETHOS 행정사사무소 지상진",
   description:
     "네이버 톡톡, 카카오, 이메일, 텔레그램, 네이버 엑스퍼트, 링크드인 — 한 곳에서 연결하세요.",
   openGraph: {
-    title: "ETHOS · 행정사 Jean — 모든 채널",
+    title: "ETHOS · 행정사 지상진 — 모든 채널",
     description: "한·영·아랍어 응대 · 무료 검토 · 수임 시 상담료 차감"
   }
 };
@@ -86,7 +86,7 @@ const LINKS: Link[] = [
 ];
 
 const SECONDARY = [
-  { url: "/about", label: "사무소 · Jean 소개" },
+  { url: "/about", label: "사무소 · 대표 소개" },
   { url: "/services", label: "5대 업무 분야" },
   { url: "/consult", label: "상담 안내 (무료 vs 유료)" },
   { url: "/blog", label: "법률 칼럼" },
@@ -118,7 +118,7 @@ export default async function LinksPage() {
           <p className="mt-5 font-serif text-[11px] font-bold uppercase tracking-[0.3em] text-gold-deep">
             ETHOS 행정사사무소
           </p>
-          <h1 className="ethos-display mt-2 text-3xl">행정사 Jean</h1>
+          <h1 className="ethos-display mt-2 text-3xl">행정사 지상진</h1>
           <p className="mt-2 text-sm text-text-muted">
             비자 · 행정심판 · 계약 · 인허가 · 법인설립
           </p>
@@ -180,10 +180,10 @@ export default async function LinksPage() {
             Authority
           </p>
           <ul className="mt-3 space-y-1.5 text-xs leading-6 text-text-muted">
-            <li>· 주한 대사관 비자·출입국 실무 2.5년+</li>
+            <li>· 주한 대사관 비자·출입국 실무 3년</li>
             <li>· 법무부 난민 판결문 공식 번역인</li>
             <li>· 법원행정처 법정 통번역인 등록</li>
-            <li>· 한국외대 통번역대학원 한아과 (GPA 4.41)</li>
+            <li>· 한국외대 통번역대학원 한국어–아랍어 전공</li>
             <li>· OASIS 4 외국인 창업지원 강의 이력</li>
             <li>· AI 법률 자동화 시스템 개발·운영</li>
           </ul>

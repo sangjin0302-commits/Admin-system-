@@ -178,7 +178,7 @@ export async function bulkImportNaverBlog(options: {
           importedAt: new Date(),
           published: true,
           publishedAt: safePublishedAt,
-          authorName: "행정사 Jean"
+          authorName: "행정사 지상진"
         }
       });
       imported++;

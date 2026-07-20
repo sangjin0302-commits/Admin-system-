@@ -20,10 +20,11 @@ export type PublicCredential = {
   detail: string;
 };
 
+// 연혁 기본값. 자격 취득(2025) 이전에 "행정심판·인허가 업무 확장"이 오면
+// 시간순이 맞지 않아 정리했다. 실제 값은 /admin/credentials 에서 편집한다.
 const DEFAULTS: readonly PublicCredential[] = [
-  { type: "LICENSE", year: "2020", title: "행정사 자격 취득", detail: "" },
-  { type: "CAREER", year: "2022", title: "출입국·체류 전문 분야 경험 축적", detail: "" },
-  { type: "CAREER", year: "2024", title: "행정심판·인허가 업무 확장", detail: "" },
+  { type: "CAREER", year: "2022", title: "주한 대사관 비자·출입국 실무", detail: "" },
+  { type: "LICENSE", year: "2025", title: "행정사 자격 취득", detail: "" },
   { type: "CAREER", year: "2026", title: "에토스 행정사사무소 개업", detail: "" }
 ];
 

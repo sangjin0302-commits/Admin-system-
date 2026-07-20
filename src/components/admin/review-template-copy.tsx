@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const TEMPLATE = `안녕하세요, 행정사 Jean입니다.
+const TEMPLATE = `안녕하세요, 행정사 지상진입니다.
 
 [검토 결과]
 → [가능 / 추가 확인 필요 / 에토스 업무 범위 외]

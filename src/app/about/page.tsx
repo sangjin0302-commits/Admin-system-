@@ -87,20 +87,20 @@ const COPY = {
     valuesTitle: "세 가지 가치",
     values: VALUES_KO,
     leadEyebrow: "Lead Attorney",
-    leadTitle: "행정사 Jean",
+    leadTitle: "행정사 지상진",
     leadPhotoAlt: "대표 행정사",
     leadBadge: "대표 행정사",
     leadBadgeKicker: "Lead",
     leadBody1:
-      "비자·출입국, 행정심판, 계약서·사실조사, 인허가, 법인설립 업무를 담당합니다. 주한 대사관 비자·출입국 실무를 2.5년 이상 경험하였고, 법무부 난민 판결문 공식 번역인 · 법원행정처 법정 통번역인으로 등록되어 있습니다.",
+      "비자·출입국, 행정심판, 계약서·사실조사, 인허가, 법인설립 업무를 담당합니다. 주한 대사관 비자·출입국 실무를 3년간 경험하였고, 법무부 난민 판결문 공식 번역인 · 법원행정처 법정 통번역인으로 등록되어 있습니다.",
     leadBody2Prefix: "한국어·영어·아랍어로 상담이 가능하며, 외국인 의뢰인의 사정에 맞춘",
     leadBody2Highlight: " 다국어 서류 검토와 절차 안내",
     leadBody2Suffix: "를 함께 진행합니다.",
     credentialCards: [
-      { kicker: "Embassy", title: "주한 대사관 비자 실무", desc: "비자·출입국 실무 2.5년+" },
+      { kicker: "Embassy", title: "주한 대사관 비자 실무", desc: "비자·출입국 실무 3년" },
       { kicker: "MOJ", title: "법무부 난민 판결문 번역인", desc: "공식 번역인 등록" },
       { kicker: "Court", title: "법정 통번역인", desc: "법원행정처 등록" },
-      { kicker: "Academic", title: "한국외대 통번역대학원", desc: "한아과 · GPA 4.41" },
+      { kicker: "Academic", title: "한국외대 통번역대학원", desc: "한국어–아랍어 전공" },
       { kicker: "Lecture", title: "OASIS 4 강의", desc: "외국인 창업지원 프로그램" },
       { kicker: "AI System", title: "법률 자동화 시스템", desc: "심판청구서·법령 자동수집 운영" }
     ],
@@ -161,7 +161,7 @@ const COPY = {
       { kicker: "Embassy", title: "Embassy Visa Practice", desc: "2.5+ years visa/immigration experience" },
       { kicker: "MOJ", title: "MOJ Refugee Ruling Translator", desc: "Registered official translator" },
       { kicker: "Court", title: "Certified Court Interpreter", desc: "Registered with National Court Administration" },
-      { kicker: "Academic", title: "HUFS Graduate School of Interpretation & Translation", desc: "Korean-Arabic · GPA 4.41" },
+      { kicker: "Academic", title: "HUFS Graduate School of Interpretation & Translation", desc: "Korean–Arabic" },
       { kicker: "Lecture", title: "OASIS 4 Lecturer", desc: "Foreign entrepreneur support program" },
       { kicker: "AI System", title: "Legal Automation System", desc: "Operates automated appeal drafting and statute collection" }
     ],

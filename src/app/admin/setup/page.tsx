@@ -172,7 +172,7 @@ export default async function SetupPage() {
         "/admin/site-content →",
         "  · payment.bankName: 은행명 (예: 국민은행)",
         "  · payment.accountNumber: 계좌번호",
-        "  · payment.accountHolder: 예금주 (기본: 행정사 Jean)",
+        "  · payment.accountHolder: 예금주 (기본: 행정사 지상진)",
         "/portal/payments/checkout/[orderId] 자동으로 계좌 안내 표시"
       ]
     },

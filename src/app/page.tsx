@@ -15,7 +15,7 @@ import { HeroScrollIndicator } from "@/components/public/hero-scroll-indicator";
 import { ParallaxAurora } from "@/components/public/parallax-aurora";
 import { NewsletterWidget } from "@/components/public/newsletter-widget";
 import { NaverReviewBand } from "@/components/public/naver-review-band";
-import { NaverBlogSection } from "@/components/public/naver-blog-section";
+import { WritingChannels } from "@/components/public/writing-channels";
 import { HeroCtaSubtitleVariants } from "@/components/public/hero-cta-variants";
 import { HoloLogo } from "@/components/public/holo-logo";
 import { PersonalizedHero } from "@/components/public/personalized-hero";
@@ -355,7 +355,7 @@ export default async function PublicMarketingHomePage({
             <Reveal delay={2}>
               <div className="mt-7 flex flex-wrap gap-2.5">
                 {[
-                  "주한 대사관 실무 2.5년+",
+                  "주한 대사관 실무 3년",
                   "영업일 24시간 내 회신 안내",
                   "한국어 · 영어 · 아랍어 상담"
                 ].map((benefit) => (
@@ -451,7 +451,7 @@ export default async function PublicMarketingHomePage({
 
                 {/* 권위 한 줄 */}
                 <p className="mt-6 text-xs leading-6 text-white/85">
-                  주한 대사관 비자 실무 2.5년+<br />
+                  주한 대사관 비자 실무 3년<br />
                   법무부 번역인 · 법원 통번역인
                 </p>
 
@@ -549,7 +549,7 @@ export default async function PublicMarketingHomePage({
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { title: "행정 절차 근거 명확", desc: "행정사법 제2조 업무 범위 내에서 사안별로 견적하고 착수 전 서면으로 확인합니다." },
-              { title: "대사관 실무 2.5년+", desc: "주한 대사관 비자·출입국 실무 경험을 바탕으로 서식·기한·근거를 짚어드립니다." },
+              { title: "대사관 실무 3년", desc: "주한 대사관 비자·출입국 실무 경험을 바탕으로 서식·기한·근거를 짚어드립니다." },
               { title: "끝까지 한 창구", desc: "검토 → 서면 → 제출 → 결과까지 담당 행정사가 직접 관리합니다." },
               { title: "3언어 대응", desc: "한국어 · 영어 · 아랍어로 외국인 의뢰인도 모국어 상담이 가능합니다." }
             ].map((card, i) => (
@@ -575,7 +575,7 @@ export default async function PublicMarketingHomePage({
                   {aboutPhoto ? (
                     <Image
                       src={aboutPhoto}
-                      alt="대표 행정사 Jean"
+                      alt="대표 행정사 지상진"
                       fill
                       className="object-cover"
                       unoptimized
@@ -618,7 +618,7 @@ export default async function PublicMarketingHomePage({
               <div>
                 <p className="ethos-eyebrow">Lead Attorney</p>
                 <h2 id="lead-attorney-heading" className="ethos-display mt-3 text-3xl sm:text-4xl">
-                  행정사 Jean
+                  행정사 지상진
                 </h2>
                 <p className="mt-4 max-w-lg text-sm leading-7 text-text-muted">
                   비자·출입국, 행정심판, 계약서·사실조사, 인허가 업무를 직접 담당합니다.
@@ -626,7 +626,7 @@ export default async function PublicMarketingHomePage({
                 </p>
                 <ul className="mt-7 space-y-3">
                   {[
-                    "주한 대사관 비자·출입국 실무 2.5년+",
+                    "주한 대사관 비자·출입국 실무 3년",
                     "법무부 난민 판결문 공식 번역인",
                     "법원행정처 법정 통번역인 등록",
                     "한국어 · 영어 · 아랍어 상담 가능"
@@ -853,10 +853,11 @@ export default async function PublicMarketingHomePage({
       {consultStructureEnabled && <ConsultStructure />}
 
       {/* ━━━━━━━━━━━━━━━ 의뢰인 여정 ④ 지금 시작 — 블로그·뉴스레터·FAQ·상담 ━━━━━━━━━━━━━━━ */}
-      {/* ═══════════════ 네이버 블로그 최신글 ═══════════════ */}
-      {naverPosts.length > 0 && naverBlogId && (
-        <NaverBlogSection posts={naverPosts} blogId={naverBlogId} />
-      )}
+      {/* ═══════════════ 글 채널 — 법률 칼럼 + LinkedIn ═══════════════ */}
+      {/* 예전의 '네이버 블로그 최신글'은 /blog(법률 칼럼)와 같은 글을 실시간으로
+          다시 보여줘 중복이었고, 방문자를 네이버로 내보내 자사 도메인 SEO 자산을
+          깎았다. 글은 /blog 하나로 모으고 영문 독자용 LinkedIn 을 함께 안내한다. */}
+      <WritingChannels lang={lang === "en" ? "en" : "ko"} />
 
       {/* ═══════════════ 신뢰 뱃지 벨트 (기능 플래그: trust_belt) ═══════════════ */}
       {trustBeltEnabled && <TrustBelt />}

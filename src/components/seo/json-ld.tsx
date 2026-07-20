@@ -125,7 +125,7 @@ export function PersonJsonLd() {
     "@context": "https://schema.org",
     "@type": "Person",
     name: "Jean",
-    alternateName: "행정사 Jean",
+    alternateName: "행정사 지상진",
     jobTitle: "행정사 (Administrative Attorney)",
     worksFor: {
       "@type": "Organization",

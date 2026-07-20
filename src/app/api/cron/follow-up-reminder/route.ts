@@ -50,7 +50,7 @@ export async function GET(req: Request) {
         await sendEmail({
           to: inq.email,
           subject: `[ETHOS] ${inq.contactName || "고객"}님, 추가 자료 확인 부탁드립니다`,
-          html: `<p>${inq.contactName || "고객"}님 안녕하세요, 행정사 Jean입니다.</p>
+          html: `<p>${inq.contactName || "고객"}님 안녕하세요, 행정사 지상진입니다.</p>
 <p>요청하신 자료가 아직 접수되지 않아 안내드립니다. (${daysSince}일 경과)</p>
 <p>추가 자료를 준비하시는 데 어려움이 있으시면 편하게 연락주세요.</p>
 <p>— ETHOS 행정사사무소</p>`,
