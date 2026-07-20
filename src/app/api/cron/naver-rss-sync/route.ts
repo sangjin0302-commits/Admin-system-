@@ -18,7 +18,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await importNaverBlogPosts({ translate: false });
+  // 신규 글만 영어로 자동 번역한다(translateBlogPost, Claude).
+  //  - cron 은 기존 글을 skip 하므로 매일 번역 대상은 그날 새로 올라온 글뿐이다.
+  //  - ANTHROPIC_API_KEY 가 없으면 importer 내부 가드가 번역을 건너뛴다(무해).
+  //  - 가져온 글은 blog 상세에서 canonical=네이버 원문 + robots noindex 로
+  //    처리되므로(page.tsx) 중복 콘텐츠 페널티 위험이 없다.
+  // 주의: 한 번에 신규 글이 많으면(초기 대량 유입 등) 본문 통번역이 누적돼
+  //   maxDuration(60s)을 넘길 수 있다. 그 경우 남은 글은 다음 실행에서 처리된다.
+  const result = await importNaverBlogPosts({ translate: true });
   logger.info("[cron/naver-rss-sync] done", result);
 
   // 신규 글 있을 때만 텔레그램 알림 (admin)
