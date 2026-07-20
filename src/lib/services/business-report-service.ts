@@ -43,6 +43,11 @@ function pctChange(current: number, previous: number): number {
   return Math.round(((current - previous) / previous) * 1000) / 10;
 }
 
+/** 사람이 읽는 날짜(예: 2026. 7. 19.). CSV·파일명 등 기계용은 ISO를 그대로 쓴다. */
+function fmtDate(d: Date): string {
+  return new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(d);
+}
+
 /** 부호 붙은 퍼센트 표기(예: +12.3%, -5%). */
 function signedPct(n: number): string {
   return `${n >= 0 ? "+" : ""}${n}%`;
@@ -274,7 +279,7 @@ export async function generateReport(period: ReportPeriod): Promise<BusinessRepo
     inquirySection.metrics.find((m) => m.label === "신규 문의")?.change ?? 0;
 
   const summary =
-    `${PERIOD_LABEL[period]} 리포트 (${startDate.toISOString().slice(0, 10)} ~ ${endDate.toISOString().slice(0, 10)}). ` +
+    `${PERIOD_LABEL[period]} 리포트 (${fmtDate(startDate)} ~ ${fmtDate(endDate)}). ` +
     `직전 기간 대비 매출 ${Math.abs(revenueChange)}% ${revenueChange >= 0 ? "증가" : "감소"}, ` +
     `문의 ${Math.abs(inquiryChange)}% ${inquiryChange >= 0 ? "증가" : "감소"}.`;
 
@@ -323,7 +328,7 @@ export function generateReportHTML(report: BusinessReport): string {
   <header>
     <div style="color:#c9a961;font-size:12px;letter-spacing:.1em;text-transform:uppercase">Business Report</div>
     <h1 style="color:#1a3c5f;margin:4px 0">${escapeHtml(periodLabel)} 리포트</h1>
-    <div style="color:#666;font-size:14px">${report.startDate.toISOString().slice(0, 10)} ~ ${report.endDate.toISOString().slice(0, 10)}</div>
+    <div style="color:#666;font-size:14px">${fmtDate(report.startDate)} ~ ${fmtDate(report.endDate)}</div>
     <p style="margin-top:12px;line-height:1.5">${escapeHtml(report.summary)}</p>
   </header>
   ${sectionsHtml}
@@ -336,7 +341,7 @@ export function generateReportMarkdown(report: BusinessReport): string {
   lines.push(`# ${periodLabel} 비즈니스 리포트`);
   lines.push("");
   lines.push(
-    `**기간:** ${report.startDate.toISOString().slice(0, 10)} ~ ${report.endDate.toISOString().slice(0, 10)}`,
+    `**기간:** ${fmtDate(report.startDate)} ~ ${fmtDate(report.endDate)}`,
   );
   lines.push("");
   lines.push(report.summary);

@@ -5,6 +5,7 @@ import {
   isAdminSessionConfigured,
   verifyAdminSessionToken
 } from "@/lib/security/admin-session";
+import { isExperimentalAdminPath } from "@/lib/security/experimental-admin-pages";
 
 const ADMIN_AUTH_USER_ENV = "ADMIN_BASIC_AUTH_USER";
 const ADMIN_AUTH_PASSWORD_ENV = "ADMIN_BASIC_AUTH_PASSWORD";
@@ -490,6 +491,25 @@ export async function middleware(request: NextRequest) {
     const response = NextResponse.redirect(new URL("/admin", request.url));
     applySecurityHeaders(request, response);
     return response;
+  }
+
+  // 실험 페이지 하드 차단 — env 로만 켤 수 있는 상위 스위치.
+  //
+  // 레이아웃 게이트는 "표시 게이트"라 페이지 서버 컴포넌트가 실행된 뒤 출력만 가려진다.
+  // 여기서 막으면 페이지 코드 자체가 실행되지 않는다(DB 조회·외부 호출도 발생 안 함).
+  //
+  // Edge 런타임은 DB 기능 플래그를 못 읽으므로 env 를 쓴다.
+  //   ADMIN_ENABLE_EXPERIMENTAL=true  → 하드 차단 해제(그 뒤 레이아웃의 DB 플래그가 판정)
+  //   그 외(기본)                      → 실험 경로는 여기서 안내 페이지로 rewrite
+  if (
+    pathname.startsWith("/admin") &&
+    !pathname.startsWith("/api/") &&
+    !getEnvBoolean("ADMIN_ENABLE_EXPERIMENTAL", false) &&
+    isExperimentalAdminPath(pathname)
+  ) {
+    const rewritten = NextResponse.rewrite(new URL("/admin/lab-disabled", request.url));
+    applySecurityHeaders(request, rewritten);
+    return rewritten;
   }
 
   // 관리자 페이지 라우트는 현재 경로를 요청 헤더로 실어 보낸다.

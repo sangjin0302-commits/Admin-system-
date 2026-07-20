@@ -240,7 +240,12 @@ export default async function PublicMarketingHomePage({
     heroRotationEnabled,
     dynamicCtaEnabled,
     trustBeltEnabled,
-    localGridEnabled
+    localGridEnabled,
+    naverReviewsEnabled,
+    processCtaEnabled,
+    newsletterEnabled,
+    consultStructureEnabled,
+    trackingPrinciplesEnabled
   ] = await Promise.all([
     isFeatureEnabled("holographic_logo"),
     isFeatureEnabled("homepage_personalization"),
@@ -248,6 +253,11 @@ export default async function PublicMarketingHomePage({
     isFeatureEnabled("dynamic_cta_labels"),
     isFeatureEnabled("trust_belt"),
     isFeatureEnabled("local_landing_grid"),
+    isFeatureEnabled("home_naver_reviews"),
+    isFeatureEnabled("home_process_cta"),
+    isFeatureEnabled("home_newsletter"),
+    isFeatureEnabled("home_consult_structure"),
+    isFeatureEnabled("home_tracking_principles"),
   ]);
 
   // UX5: 히어로 이미지 일자별 로테이션 — SiteSetting "image.hero.rotation" = JSON string[]
@@ -645,7 +655,8 @@ export default async function PublicMarketingHomePage({
       <Testimonials items={testimonials} />
 
       {/* ═══════════════ Naver Place 실제 방문자 후기 ═══════════════ */}
-      <NaverReviewBand />
+      {/* 위 '의뢰인 후기'와 사회적 증거가 중복되어 기본 OFF (플래그: home_naver_reviews). */}
+      {naverReviewsEnabled && <NaverReviewBand />}
 
       {/* ━━━━━━━━━━━━━━━ 의뢰인 여정 ③ 어떻게 진행되나 — 철학·비용·절차 ━━━━━━━━━━━━━━━ */}
       {/* ═══════════════ 철학 — DARK 풀블리드 밴드 ═══════════════ */}
@@ -764,6 +775,8 @@ export default async function PublicMarketingHomePage({
       </section>
 
       {/* ═══════════════ 절차 후 CTA ═══════════════ */}
+      {/* 하단 최종 CTA와 중복되어 기본 OFF (플래그: home_process_cta). */}
+      {processCtaEnabled && (
       <div className="py-6 sm:py-8">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal>
@@ -782,8 +795,10 @@ export default async function PublicMarketingHomePage({
           </Reveal>
         </div>
       </div>
+      )}
 
-      {/* ═══════════════ 진행상황 + 운영원칙 ═══════════════ */}
+      {/* 진행 추적은 헤더 메뉴로도 가능하고 운영원칙은 소개 페이지와 중복되어 기본 OFF (플래그: home_tracking_principles). */}
+      {trackingPrinciplesEnabled && (
       <section className="py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr]">
@@ -831,9 +846,11 @@ export default async function PublicMarketingHomePage({
           </div>
         </div>
       </section>
+      )}
 
-      {/* ═══════════════ 상담 구조 ═══════════════ */}
-      <ConsultStructure />
+      {/* 상담 구조 */}
+      {/* '진행 절차' 섹션과 겹쳐 기본 OFF (플래그: home_consult_structure). */}
+      {consultStructureEnabled && <ConsultStructure />}
 
       {/* ━━━━━━━━━━━━━━━ 의뢰인 여정 ④ 지금 시작 — 블로그·뉴스레터·FAQ·상담 ━━━━━━━━━━━━━━━ */}
       {/* ═══════════════ 네이버 블로그 최신글 ═══════════════ */}
@@ -845,7 +862,8 @@ export default async function PublicMarketingHomePage({
       {trustBeltEnabled && <TrustBelt />}
 
       {/* ═══════════════ Newsletter ═══════════════ */}
-      <NewsletterWidget />
+      {/* 이메일 발송 수단 미설정으로 기본 OFF (플래그: home_newsletter). */}
+      {newsletterEnabled && <NewsletterWidget />}
 
       {/* ═══════════════ FAQ — soft band ═══════════════ */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28" aria-labelledby="home-faq-heading">

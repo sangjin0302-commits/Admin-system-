@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
+import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma/client";
 import { calculateCustomerLTV } from "@/lib/services/ltv-service";
 
@@ -136,13 +137,13 @@ export default async function CustomerLTVDetailPage({
           <li>
             <span className="text-gray-500">최초 접촉일:</span>{" "}
             <span className="font-medium">
-              {ltv.firstContactDate.toISOString().slice(0, 10)}
+              {formatDate(ltv.firstContactDate)}
             </span>
           </li>
           <li>
             <span className="text-gray-500">최근 활동일:</span>{" "}
             <span className="font-medium">
-              {ltv.lastActivityDate.toISOString().slice(0, 10)}
+              {formatDate(ltv.lastActivityDate)}
             </span>
           </li>
           <li>
@@ -182,7 +183,7 @@ export default async function CustomerLTVDetailPage({
                   <td className="py-2">{c.title}</td>
                   <td className="py-2">{c.status}</td>
                   <td className="py-2">
-                    {c.createdAt.toISOString().slice(0, 10)}
+                    {formatDate(c.createdAt)}
                   </td>
                   <td className="py-2 text-right">
                     {c.accountingMemo?.paidAmount
@@ -191,7 +192,7 @@ export default async function CustomerLTVDetailPage({
                   </td>
                   <td className="py-2">
                     {c.accountingMemo?.paidAt
-                      ? c.accountingMemo.paidAt.toISOString().slice(0, 10)
+                      ? formatDate(c.accountingMemo.paidAt)
                       : "-"}
                   </td>
                 </tr>

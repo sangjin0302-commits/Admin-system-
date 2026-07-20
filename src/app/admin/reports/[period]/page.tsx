@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
+import { formatDate } from "@/lib/utils";
 import {
   generateReport,
   generateReportHTML,
@@ -43,8 +44,7 @@ export default async function ReportDetailPage({
           {PERIOD_LABELS[period] ?? period} 경영 보고서
         </h1>
         <div className="text-sm text-gray-500">
-          {report.startDate.toISOString().slice(0, 10)} –{" "}
-          {report.endDate.toISOString().slice(0, 10)}
+          {formatDate(report.startDate)} ~ {formatDate(report.endDate)}
         </div>
         <Link
           href="/admin/reports"

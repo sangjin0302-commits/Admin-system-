@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
+import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma/client";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { logger } from "@/lib/utils/logger";
@@ -76,7 +77,7 @@ export default async function AdminOrgsPage() {
                     <td className="py-2 pr-3">
                       <span className={o.active ? "text-success" : "text-text-muted"}>{o.active ? "활성" : "중지"}</span>
                     </td>
-                    <td className="py-2 pr-3 text-text-muted">{o.createdAt.toISOString().slice(0, 10)}</td>
+                    <td className="py-2 pr-3 text-text-muted">{formatDate(o.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>

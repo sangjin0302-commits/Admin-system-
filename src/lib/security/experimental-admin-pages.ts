@@ -66,6 +66,53 @@ export const EXPERIMENTAL_ADMIN_PAGES: ReadonlySet<string> = new Set([
   "interpreter",
   "whitepapers",
   "brochure",
+
+  // ── 2차 정리: 메뉴에 없고 실무에 쓰이지 않는 데모·중복 화면 ──
+  // (통합 설정·재무·기한 계산·사용자 관리·CMS·생산성 도구는 의도적으로 제외했다.)
+  "ab-experiments",
+  "ai-agent",
+  "ai-draft-check",
+  "ai-prompts",
+  "audit-log", // nav 의 "audit" 와 중복
+  "auto-flow",
+  "auto-reply",
+  "blog-translate",
+  "blog-translation",
+  "briefing", // nav 의 "morning"(아침 브리핑)과 중복
+  "call-recorder",
+  "case-stories",
+  "deadline-autopilot",
+  "document-dictation",
+  "document-similarity",
+  "document-viewer",
+  "editor-permissions",
+  "fact-check",
+  "guideline-audit",
+  "guideline-rules",
+  "marketing-guideline",
+  "i18n",
+  "insights", // 하위 journey·personas·pricing 등 전부 포함
+  "intake-funnel", // nav 의 "funnel" 과 중복
+  "landing",
+  "notifications", // nav 의 push-notifications 와 중복
+  "precedent-verify",
+  "precedents",
+  "section-order",
+  "security/anomalies",
+  "self-docs",
+  "sso",
+  "text-compare",
+  "timeline",
+  "voice-memo",
+  "workflows",
+  // 채널별 마케팅 데모 (seo-audit·utm·competitors·search-trends·ad-optimizer 는 유지)
+  "marketing/heatmap",
+  "marketing/instagram",
+  "marketing/naver-kin",
+  "marketing/podcast",
+  "marketing/shorts",
+  "marketing/youtube",
+  "marketing/reengagement",
 ]);
 
 /**

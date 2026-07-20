@@ -254,6 +254,13 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "message_tone_adjust", label: "메시지 톤 조정 AI", category: "operations", default: true, description: "/admin/tone-tools에서 원문을 친근/공식/사과/안심 톤으로 재작성 (Haiku)" },
   { key: "inquiry_bulk_actions", label: "문의 배치 액션", category: "operations", default: true, description: "다중 문의 일괄 상태변경·담당자할당·읽음처리 (최대 50건)", locked: true, lockReason: "문의·사건 일괄 이동/삭제 프로덕션 검증 완료 2026-07-19" },
   { key: "admin_experimental_pages", label: "실험실 페이지 활성화", category: "admin" as FeatureCategory, default: false, description: "chaos·canary·api-marketplace 등 실험·데모 성격의 관리자 페이지 접근 허용. OFF면 해당 페이지는 '비활성' 안내를 표시(페이지·코드는 보존). src/lib/security/experimental-admin-pages.ts 목록 기준." },
+  // 홈페이지 길이 정리(17→12 섹션). 중복·저가치 섹션을 기본 OFF로 내렸다.
+  // 삭제가 아니라 플래그라 언제든 되살릴 수 있다.
+  { key: "home_naver_reviews", label: "홈: 네이버 플레이스 후기", category: "marketing", default: false, description: "의뢰인 후기 섹션과 사회적 증거가 중복되어 기본 OFF", public: true },
+  { key: "home_process_cta", label: "홈: 절차 후 CTA 밴드", category: "marketing", default: false, description: "하단 최종 CTA와 중복되어 기본 OFF", public: true },
+  { key: "home_newsletter", label: "홈: 뉴스레터 구독", category: "marketing", default: false, description: "이메일 발송 수단(Resend) 미설정 상태라 기본 OFF", public: true },
+  { key: "home_consult_structure", label: "홈: 상담 구조 안내", category: "marketing", default: false, description: "진행 절차 섹션과 내용이 겹쳐 기본 OFF", public: true },
+  { key: "home_tracking_principles", label: "홈: 진행상황·운영원칙", category: "marketing", default: false, description: "진행 추적은 헤더 메뉴로도 가능하고 운영원칙은 소개 페이지와 중복되어 기본 OFF", public: true },
   { key: "my_activity_timeline", label: "내 활동 timeline", category: "ux", default: true, description: "/admin/my-activity: 최근 40건 문의+사건+블로그 통합 timeline" },
   { key: "inquiry_similar_search", label: "유사 문의 검색", category: "operations", default: true, description: "/admin/similar-search: 자연어로 과거 문의 유사도 검색 (토큰 매칭)" },
   { key: "auto_status_on_first_response", label: "첫 응답 시 자동 상태전환", category: "operations", default: false, description: "NEW→CONSULTATION_REQUIRED 자동 (첫 응답 firstResponseAt 세팅 시)" },

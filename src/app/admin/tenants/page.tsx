@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { formatDate } from "@/lib/utils";
 import { listTenants } from "@/lib/services/tenant-service";
 import { AddTenantForm } from "./add-tenant-form";
 
@@ -42,7 +43,7 @@ export default async function TenantsPage() {
                 <td className="px-3 py-2">{t.plan}</td>
                 <td className="px-3 py-2">{t.active ? "사용" : "미사용"}</td>
                 <td className="px-3 py-2">
-                  {t.createdAt.toISOString().slice(0, 10)}
+                  {formatDate(t.createdAt)}
                 </td>
               </tr>
             ))}
