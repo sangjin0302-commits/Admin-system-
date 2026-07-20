@@ -139,7 +139,7 @@ html {
  * 합성 비용이 계속 발생하고, 무엇보다 흐릿한 그라디언트 글로우는 2020년경
  * SaaS 의 언어라 전문서비스의 격과 맞지 않는다.
  *
- * 대신 B방향(문서의 물성) — 종이 결과 미세한 괘선을 바탕에 둔다.
+ * 대신 B방향(문서의 물성) — 종이 결을 바탕에 둔다.
  * 아래 .ethos-paper 가 그 역할을 한다.
  */
 .ethos-aurora {
@@ -162,7 +162,7 @@ html {
  *
  * 이 사무소의 업(業)은 서류다 — 처분서·청구서·신청서.
  * 그래서 배경을 컨테이너선 같은 구상 이미지가 아니라 공문서의 질감으로 만든다:
- * 종이 결(feTurbulence 노이즈) + 아주 옅은 괘선.
+ * 종이 결(feTurbulence 노이즈)만으로.
  *
  * 이미지 파일을 쓰지 않으므로 다운로드가 0KB 이고, 확대해도 깨지지 않는다.
  */
@@ -178,41 +178,31 @@ html {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.5;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+  opacity: 0.32;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
   mix-blend-mode: multiply;
 }
 
 /*
- * 괘선 — 서식의 기하학. 아주 옅게 깔아 '문서 위에 얹힌 글' 느낌만 만든다.
- * 눈에 띄면 실패다. 보이는 게 아니라 느껴지는 정도로 둔다.
+ * 괘선은 제거했다 — 참조를 잘못 잡은 것이었다.
+ *
+ * 1) 지각: 선 하나는 3.5% 대비(ΔE≈3)로 안 보이지만, 30개가 나란히 놓이면
+ *    시각계의 공간주파수 채널이 주기적 패턴을 증폭해 또렷하게 읽힌다.
+ *    "개별 요소를 흐리게" 만으로는 반복 패턴을 숨길 수 없다.
+ *
+ * 2) 은유: 더 중요한 문제. 크림 바탕의 가로 괘선은 '공문서'가 아니라
+ *    '노트·원고지'로 읽힌다. 실제 처분서·청구서는 줄이 그어진 종이가 아니라
+ *    깨끗한 흰 바탕에 서식 칸이 있는 문서다. 방향은 맞았지만 소재가 틀렸다.
+ *
+ * 종이의 물성은 아래 .ethos-paper 의 결(grain)만으로 충분히 전달된다.
  */
-.ethos-ruled::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: repeating-linear-gradient(
-    180deg,
-    rgb(26 60 95 / 0.035) 0px,
-    rgb(26 60 95 / 0.035) 1px,
-    transparent 1px,
-    transparent 34px
-  );
-  /* 위아래로 서서히 사라지게 — 잘린 종이가 아니라 이어지는 지면처럼 */
-  -webkit-mask-image: linear-gradient(180deg, transparent, #000 22%, #000 62%, transparent);
-  mask-image: linear-gradient(180deg, transparent, #000 22%, #000 62%, transparent);
-}
 
 /* 다크 테마에서는 종이 은유가 성립하지 않는다. 질감을 걷어낸다. */
-:root[data-theme="dark"] .ethos-paper::before,
-:root[data-theme="dark"] .ethos-ruled::after {
+:root[data-theme="dark"] .ethos-paper::before {
   opacity: 0;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .ethos-paper::before,
-  :root:not([data-theme="light"]) .ethos-ruled::after {
+  :root:not([data-theme="light"]) .ethos-paper::before {
     opacity: 0;
   }
 }

@@ -10,16 +10,33 @@ import { BlogSearchTrigger } from "@/components/public/blog-search";
 import { LangSwitcher } from "@/components/layout/lang-switcher";
 import { usePublicFlags } from "@/lib/hooks/use-public-flags";
 
-// flagKey: /admin/features 에서 끌 수 있는 항목. 없으면 항상 노출(홈).
+/**
+ * 공개 메뉴 라벨.
+ *
+ * flagKey: /admin/features 에서 끌 수 있는 항목. 없으면 항상 노출(홈).
+ *
+ * 라벨을 다음 근거로 정리했다.
+ *
+ * 1) 정보 냄새(Pirolli & Card, 1999) — 라벨은 목적지를 예측하게 해야 한다.
+ *    "AI 진단"과 "빠른 진단"은 서로 구별되지 않아 방문자가 찍어서 눌러야 했다.
+ *    각각 무엇을 주는지가 드러나도록 "사전진단"·"자가진단"으로 갈랐다.
+ *
+ * 2) 야콥의 법칙(Nielsen) — 방문자는 다른 사이트에서 익힌 관습을 기대한다.
+ *    법률·행정 분야의 관용 표기는 "분야"가 아니라 "업무분야"다.
+ *
+ * 3) 라벨-언어 일치 — 한국어와 영어가 서로 다른 것을 가리키고 있었다.
+ *    활동↔Lectures(강연), 칼럼↔Insights(통찰). 언어를 바꾸면 목적지가
+ *    달라 보인다. 같은 대상을 가리키도록 맞췄다.
+ */
 const NAV_ITEMS = [
   { href: "/", label: "홈", labelEn: "Home" },
   { href: "/about", label: "소개", labelEn: "About", flagKey: "nav_about" },
-  { href: "/services", label: "분야", labelEn: "Practice", flagKey: "nav_services" },
-  { href: "/consult", label: "상담", labelEn: "Consult", flagKey: "nav_consult" },
-  { href: "/quick-check", label: "AI 진단", labelEn: "AI", flagKey: "nav_quick_check" },
-  { href: "/ai-screen", label: "빠른 진단", labelEn: "Screen", flagKey: "nav_ai_screen" },
-  { href: "/cases", label: "활동", labelEn: "Lectures", flagKey: "nav_cases" },
-  { href: "/blog", label: "칼럼", labelEn: "Insights", flagKey: "nav_blog" }
+  { href: "/services", label: "업무분야", labelEn: "Practice Areas", flagKey: "nav_services" },
+  { href: "/consult", label: "상담 안내", labelEn: "Consultation", flagKey: "nav_consult" },
+  { href: "/quick-check", label: "사전진단", labelEn: "Pre-check", flagKey: "nav_quick_check" },
+  { href: "/ai-screen", label: "자가진단", labelEn: "Self-check", flagKey: "nav_ai_screen" },
+  { href: "/cases", label: "강연·활동", labelEn: "Lectures", flagKey: "nav_cases" },
+  { href: "/blog", label: "법률 칼럼", labelEn: "Legal Columns", flagKey: "nav_blog" }
 ] as const;
 
 function LangToggle({ pathname }: { pathname: string }) {

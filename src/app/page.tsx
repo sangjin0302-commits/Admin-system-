@@ -311,8 +311,8 @@ export default async function PublicMarketingHomePage({
 
       {/* ═══════════════ HERO ═══════════════ */}
       {/* A방향(여백·타이포) + B방향(문서의 물성)을 함께 적용한 히어로.
-          ethos-paper = 종이 결, ethos-ruled = 옅은 괘선. 둘 다 이미지 파일 없이 CSS 로만 만든다. */}
-      <section className="ethos-paper ethos-ruled relative overflow-hidden">
+          ethos-paper = 종이 결. 이미지 파일 없이 CSS 로만 만든다. */}
+      <section className="ethos-paper relative overflow-hidden">
         <ParallaxAurora className="ethos-aurora ethos-aurora-animated" />
 
         {/* A방향: 상하 여백을 키우고(pt-28→pt-36) 좌우 비율을 글자 쪽으로 더 준다. */}
@@ -749,7 +749,7 @@ export default async function PublicMarketingHomePage({
                 href={intakeHref}
                 className="ethos-cta-shine inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-sm transition hover:bg-text-strong"
               >
-                상담 신청하기 →
+                무료 검토 신청 →
               </Link>
             </div>
           </Reveal>
@@ -845,7 +845,7 @@ export default async function PublicMarketingHomePage({
                 href={intakeHref}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-7 text-sm font-bold text-white shadow-sm transition hover:bg-text-strong"
               >
-                지금 상담 신청하기 →
+                무료 검토 신청 →
               </Link>
             </div>
           </Reveal>
@@ -893,7 +893,7 @@ export default async function PublicMarketingHomePage({
                     href={intakeHref}
                     className="inline-flex h-12 items-center justify-center rounded-lg bg-gold px-7 text-sm font-bold text-primary shadow-md transition-all duration-300 hover:bg-gold-soft hover:shadow-lg"
                   >
-                    상담 신청하기
+                    무료 검토 신청
                   </Link>
                   <Link
                     href="/portal"
