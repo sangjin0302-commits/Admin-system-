@@ -19,6 +19,7 @@ import { GA4ConversionTracker } from "@/components/analytics/ga4-conversion-trac
 import { BrandIntro } from "@/components/public/brand-intro";
 import { OnboardingTour } from "@/components/public/onboarding-tour";
 import { ToastProvider } from "@/components/ui/toast-provider";
+import { fontVariables } from "@/lib/fonts";
 import { getSiteUrl } from "@/lib/utils/site-url";
 import "./globals.css";
 
@@ -89,7 +90,7 @@ export const metadata: Metadata = {
 
 export default function RootLayoutSafe({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="ko" className={fontVariables} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

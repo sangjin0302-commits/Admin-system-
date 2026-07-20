@@ -1,4 +1,8 @@
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Nanum+Myeongjo:wght@400;700;800&display=swap");
+/*
+ * 폰트는 next/font/google 로 빌드 시 자체 호스팅한다(src/lib/fonts.ts).
+ * 예전에는 여기서 Google Fonts 를 @import 했는데, CSS 파싱이 끝나야
+ * 폰트 요청이 시작돼 글자가 뜨기까지 왕복이 세 번 직렬로 일어났다.
+ */
 
 @tailwind base;
 @tailwind components;
@@ -128,27 +132,89 @@ html {
   /* grid removed for cleaner look */
 }
 
+/*
+ * A방향 — 흐릿한 광원(aurora)을 걷어냈다.
+ *
+ * blur(50px) 레이어가 20초 주기로 무한 반복하고 있었다. 저사양 기기에서
+ * 합성 비용이 계속 발생하고, 무엇보다 흐릿한 그라디언트 글로우는 2020년경
+ * SaaS 의 언어라 전문서비스의 격과 맞지 않는다.
+ *
+ * 대신 B방향(문서의 물성) — 종이 결과 미세한 괘선을 바탕에 둔다.
+ * 아래 .ethos-paper 가 그 역할을 한다.
+ */
 .ethos-aurora {
   position: absolute;
-  inset: -40% -20% auto -20%;
-  height: 600px;
-  background:
-    radial-gradient(ellipse 70% 50% at 20% 30%, rgba(201, 169, 97, 0.22), transparent 55%),
-    radial-gradient(ellipse 60% 45% at 75% 55%, rgba(26, 60, 95, 0.20), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 50% 45%, rgba(240, 224, 188, 0.28), transparent 65%),
-    radial-gradient(circle at 85% 25%, rgba(201, 169, 97, 0.10), transparent 40%);
-  filter: blur(50px);
+  inset: 0 0 auto 0;
+  height: 520px;
+  /* 광원 대신 종이 바탕의 아주 옅은 온도차만 남긴다. */
+  background: linear-gradient(180deg, rgb(250 248 243) 0%, rgb(247 246 242 / 0) 100%);
   z-index: -1;
   pointer-events: none;
 }
 
-@keyframes ethos-aurora-drift {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(2%, -3%) scale(1.05); }
+/* 무한 반복 애니메이션은 제거했다. 클래스는 호출부 호환을 위해 남겨둔다. */
+.ethos-aurora-animated {
+  animation: none;
 }
 
-.ethos-aurora-animated {
-  animation: ethos-aurora-drift 20s ease-in-out infinite;
+/*
+ * ── B방향: 문서의 물성 ──────────────────────────────
+ *
+ * 이 사무소의 업(業)은 서류다 — 처분서·청구서·신청서.
+ * 그래서 배경을 컨테이너선 같은 구상 이미지가 아니라 공문서의 질감으로 만든다:
+ * 종이 결(feTurbulence 노이즈) + 아주 옅은 괘선.
+ *
+ * 이미지 파일을 쓰지 않으므로 다운로드가 0KB 이고, 확대해도 깨지지 않는다.
+ */
+
+/* 종이 결 — SVG 노이즈를 data URI 로 인라인. 외부 요청 없음. */
+.ethos-paper {
+  position: relative;
+  isolation: isolate;
+}
+.ethos-paper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+/*
+ * 괘선 — 서식의 기하학. 아주 옅게 깔아 '문서 위에 얹힌 글' 느낌만 만든다.
+ * 눈에 띄면 실패다. 보이는 게 아니라 느껴지는 정도로 둔다.
+ */
+.ethos-ruled::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    180deg,
+    rgb(26 60 95 / 0.035) 0px,
+    rgb(26 60 95 / 0.035) 1px,
+    transparent 1px,
+    transparent 34px
+  );
+  /* 위아래로 서서히 사라지게 — 잘린 종이가 아니라 이어지는 지면처럼 */
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 22%, #000 62%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 22%, #000 62%, transparent);
+}
+
+/* 다크 테마에서는 종이 은유가 성립하지 않는다. 질감을 걷어낸다. */
+:root[data-theme="dark"] .ethos-paper::before,
+:root[data-theme="dark"] .ethos-ruled::after {
+  opacity: 0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ethos-paper::before,
+  :root:not([data-theme="light"]) .ethos-ruled::after {
+    opacity: 0;
+  }
 }
 
 /* Subtle gold shimmer line */
@@ -184,7 +250,7 @@ html {
 
 /* Vertical index number for editorial sections */
 .ethos-index {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-display-latin), Georgia, serif;
   font-weight: 800;
   font-size: clamp(3rem, 8vw, 6rem);
   line-height: 0.8;
@@ -194,7 +260,7 @@ html {
 
 /* Editorial pull-quote */
 .ethos-quote {
-  font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
+  font-family: var(--font-display-latin), var(--font-display-ko), Georgia, serif;
   font-style: italic;
   letter-spacing: 0;
 }
@@ -204,7 +270,7 @@ html {
 
 /* Editorial drop-cap (Open Design — Editorial direction). 첫 글자 매거진 스타일 */
 .ethos-dropcap::first-letter {
-  font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
+  font-family: var(--font-display-latin), var(--font-display-ko), Georgia, serif;
   font-weight: 800;
   font-size: 3.4em;
   line-height: 0.82;
@@ -219,7 +285,7 @@ html {
   align-items: center;
   gap: 0.9rem;
   color: rgb(150 118 60);
-  font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
+  font-family: var(--font-display-latin), var(--font-display-ko), Georgia, serif;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.28em;
@@ -353,7 +419,7 @@ html {
   position: absolute;
   left: 0.5rem;
   top: 0.25rem;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-display-latin), Georgia, serif;
   font-size: 2.5rem;
   color: rgb(201 169 97 / 0.5);
   line-height: 1;
@@ -493,7 +559,7 @@ html {
 
 /* ── Typography helpers ──────────────────────────── */
 .ethos-eyebrow {
-  font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
+  font-family: var(--font-display-latin), var(--font-display-ko), Georgia, serif;
   font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -507,7 +573,7 @@ html {
   color: rgb(22 52 84);
 }
 .ethos-display {
-  font-family: "Playfair Display", "Nanum Myeongjo", Georgia, serif;
+  font-family: var(--font-display-latin), var(--font-display-ko), Georgia, serif;
   font-weight: 700;
   letter-spacing: -0.005em;
   line-height: 1.18;
@@ -581,7 +647,10 @@ html {
 
 body {
   @apply min-h-screen bg-canvas font-sans text-text antialiased;
-  line-height: 1.65;
+  /* 한글 본문을 명시한다. 예전에는 시스템 폰트로 떨어져 기기마다 다르게 보였다. */
+  font-family: var(--font-body-ko), -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
+  line-height: 1.7;                /* A방향: 본문 행간을 넓혀 읽는 밀도를 낮춘다 */
   letter-spacing: -0.003em;
   word-break: keep-all;            /* Korean: break on word boundaries, not mid-syllable */
   text-rendering: optimizeLegibility;

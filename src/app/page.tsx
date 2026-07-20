@@ -310,11 +310,13 @@ export default async function PublicMarketingHomePage({
       )}
 
       {/* ═══════════════ HERO ═══════════════ */}
-      <section className="relative overflow-hidden">
+      {/* A방향(여백·타이포) + B방향(문서의 물성)을 함께 적용한 히어로.
+          ethos-paper = 종이 결, ethos-ruled = 옅은 괘선. 둘 다 이미지 파일 없이 CSS 로만 만든다. */}
+      <section className="ethos-paper ethos-ruled relative overflow-hidden">
         <ParallaxAurora className="ethos-aurora ethos-aurora-animated" />
-        <div className="absolute inset-0 -z-10 ethos-grid-pattern" aria-hidden />
 
-        <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-20 sm:px-6 sm:pb-28 sm:pt-28 lg:grid-cols-[1.15fr_0.85fr]">
+        {/* A방향: 상하 여백을 키우고(pt-28→pt-36) 좌우 비율을 글자 쪽으로 더 준다. */}
+        <div className="mx-auto grid max-w-6xl items-center gap-16 px-4 pb-24 pt-24 sm:px-6 sm:pb-32 sm:pt-36 lg:grid-cols-[1.25fr_0.75fr]">
           <div>
             {personalizationEnabled && <PersonalizedHero fallbackBadge={heroBadge} fallbackTitle={heroTitleOverride || "비자 거절, 행정처분, 인허가 —\n방향은 빠르게, 판단은 사안별로 드립니다"} fallbackDescription={heroDescription} />}
             <Reveal>
@@ -325,7 +327,7 @@ export default async function PublicMarketingHomePage({
             </Reveal>
 
             <Reveal delay={1}>
-              <h1 className="ethos-display mt-6 text-[2.7rem] leading-[1.1] sm:text-[3.8rem]">
+              <h1 className="ethos-display mt-7 max-w-[19ch] text-[2.9rem] leading-[1.06] tracking-[-0.028em] text-balance sm:text-[4.15rem]">
                 {heroTitleLines ? (
                   heroTitleLines.map((line, i) => (
                     <span key={i}>

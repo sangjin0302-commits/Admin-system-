@@ -11,7 +11,9 @@ type Props = {
  * Only the variant matching the ethos_ab cookie assignment will render.
  */
 export function HeroCtaSubtitleVariants({ className }: Props) {
-  const cls = className ?? "mt-7 max-w-xl text-base leading-8 text-text";
+  // A방향(여백·타이포): 본문 측정폭을 60~65자로 묶고 행간을 넓힌다.
+  // 한 줄이 길수록 눈이 다음 줄 첫머리를 놓치고, 읽는 밀도가 높아 보인다.
+  const cls = className ?? "mt-8 max-w-[62ch] text-[15.5px] leading-[1.85] text-text";
   return (
     <>
       <AbVariant experiment="hero_cta" variant="control">
