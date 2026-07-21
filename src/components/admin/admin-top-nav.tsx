@@ -7,10 +7,20 @@ import { cn } from "@/lib/utils";
 import { isPageVisible } from "@/lib/services/admin-page-tiers";
 import { NAV_GROUPS, BADGE_MAP, type SidebarCounts, type NavItem } from "./admin-nav-config";
 
+const FAVORITES_KEY = "admin:favorites";
+
 function NavIcon({ d }: { d: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d={d} />
+    </svg>
+  );
+}
+
+function StarIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118L2.05 12.81c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
     </svg>
   );
 }
@@ -28,6 +38,33 @@ export function AdminTopNav({
   const [counts, setCounts] = useState<SidebarCounts>({ unresponded: 0, receivables: 0, dueSoon: 0, quotePending: 0 });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<NavItem[]>([]);
+
+  // 즐겨찾기: localStorage 기반(서버 무관, DB 불필요). 마운트 시 1회 로드.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FAVORITES_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setFavorites(parsed.filter((it) => it && typeof it.href === "string" && typeof it.label === "string"));
+        }
+      }
+    } catch { /* ignore malformed */ }
+  }, []);
+
+  const isFav = (href: string) => favorites.some((f) => f.href === href);
+
+  const toggleFav = (item: NavItem) => {
+    setFavorites((prev) => {
+      const exists = prev.some((f) => f.href === item.href);
+      const next = exists
+        ? prev.filter((f) => f.href !== item.href)
+        : [...prev, { href: item.href, label: item.label, icon: item.icon }];
+      try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(next)); } catch { /* ignore quota */ }
+      return next;
+    });
+  };
 
   useEffect(() => {
     let alive = true;
@@ -84,6 +121,38 @@ export function AdminTopNav({
     <>
       {/* Desktop 2-tier top nav */}
       <div className="sticky top-0 z-30 hidden lg:block bg-surface border-b border-line">
+        {/* Tier 0: 즐겨찾기 (핀 고정된 페이지가 있을 때만) */}
+        {favorites.length > 0 && (
+          <div className="h-9 flex items-center gap-1 overflow-x-auto px-4 border-b border-line bg-surface">
+            <span className="mr-1 shrink-0 text-[11px] font-semibold text-text-muted/70">즐겨찾기</span>
+            {favorites.map((f) => {
+              const active = isActive(f.href);
+              return (
+                <div key={f.href} className="group inline-flex items-center shrink-0">
+                  <Link
+                    href={f.href}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors",
+                      active ? "bg-primary text-white shadow-sm" : "text-text-muted hover:bg-surface-muted hover:text-text-strong"
+                    )}
+                  >
+                    <NavIcon d={f.icon} />
+                    <span>{f.label}</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => toggleFav(f)}
+                    aria-label={`${f.label} 즐겨찾기 해제`}
+                    title="즐겨찾기 해제"
+                    className="ml-0.5 rounded p-0.5 text-amber-500 hover:text-amber-600"
+                  >
+                    <StarIcon filled />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {/* Tier 1: main tabs */}
         <div className="h-12 flex items-stretch px-4 border-b border-line bg-surface">
           <Link href="/admin" className="flex items-center pr-6 mr-2 border-r border-line">
@@ -121,21 +190,37 @@ export function AdminTopNav({
           <div className="h-10 flex items-center gap-1 overflow-x-auto px-4 bg-surface-muted">
             {displayGroup.items.map((item) => {
               const active = isActive(item.href);
+              const fav = isFav(item.href);
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors",
-                    active
-                      ? "bg-primary text-white shadow-sm"
-                      : "text-text-muted hover:bg-surface hover:text-text-strong"
-                  )}
-                >
-                  <NavIcon d={item.icon} />
-                  <span>{item.label}</span>
-                  {renderBadge(item)}
-                </Link>
+                <div key={item.href} className="group inline-flex items-center shrink-0">
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors",
+                      active
+                        ? "bg-primary text-white shadow-sm"
+                        : "text-text-muted hover:bg-surface hover:text-text-strong"
+                    )}
+                  >
+                    <NavIcon d={item.icon} />
+                    <span>{item.label}</span>
+                    {renderBadge(item)}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => toggleFav(item)}
+                    aria-label={fav ? `${item.label} 즐겨찾기 해제` : `${item.label} 즐겨찾기 추가`}
+                    title={fav ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+                    className={cn(
+                      "ml-0.5 rounded p-0.5 transition-opacity",
+                      fav
+                        ? "text-amber-500"
+                        : "text-text-muted/40 opacity-0 group-hover:opacity-100 hover:text-amber-500"
+                    )}
+                  >
+                    <StarIcon filled={fav} />
+                  </button>
+                </div>
               );
             })}
           </div>

@@ -253,7 +253,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "case_delay_detection", label: "사건 지연 감지", category: "operations", default: false, description: "matterType 평균 대비 +50% 지연 감지 + 텔레그램 알림. 매주 월요일 23:00 cron" },
   { key: "message_tone_adjust", label: "메시지 톤 조정 AI", category: "operations", default: true, description: "/admin/tone-tools에서 원문을 친근/공식/사과/안심 톤으로 재작성 (Haiku)" },
   { key: "inquiry_bulk_actions", label: "문의 배치 액션", category: "operations", default: true, description: "다중 문의 일괄 상태변경·담당자할당·읽음처리 (최대 50건)", locked: true, lockReason: "문의·사건 일괄 이동/삭제 프로덕션 검증 완료 2026-07-19" },
-  { key: "admin_experimental_pages", label: "실험실 페이지 활성화", category: "admin" as FeatureCategory, default: false, description: "chaos·canary·api-marketplace 등 실험·데모 성격의 관리자 페이지 접근 허용. OFF면 해당 페이지는 '비활성' 안내를 표시(페이지·코드는 보존). src/lib/security/experimental-admin-pages.ts 목록 기준." },
+  { key: "admin_experimental_pages", label: "실험실 페이지 활성화", category: "admin" as FeatureCategory, default: false, description: "chaos·canary·api-marketplace 등 실험·데모 성격의 관리자 페이지 접근 허용. OFF면 해당 페이지는 '비활성' 안내를 표시(페이지·코드는 보존). src/lib/security/experimental-admin-pages.ts 목록 기준.", locked: true, lockReason: "실험 게이트 검증 완료 — 프로덕션 차단 유지 2026-07-21" },
   // 홈페이지 길이 정리(17→12 섹션). 중복·저가치 섹션을 기본 OFF로 내렸다.
   // 삭제가 아니라 플래그라 언제든 되살릴 수 있다.
   { key: "home_naver_reviews", label: "홈: 네이버 플레이스 후기", category: "marketing", default: false, description: "의뢰인 후기 섹션과 사회적 증거가 중복되어 기본 OFF", public: true },

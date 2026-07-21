@@ -29,3 +29,7 @@ data/marketing-sync-latest.json
 
 # Storybook build output
 storybook-static/
+
+# Playwright
+test-results/
+playwright-report/

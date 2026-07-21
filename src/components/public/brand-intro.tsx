@@ -46,7 +46,7 @@ export function BrandIntro() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="fixed inset-0 flex items-center justify-center bg-[#1a3c5f] text-white"
+          className="pointer-events-none fixed inset-0 flex items-center justify-center bg-[#1a3c5f] text-white"
           style={{ zIndex: 100 }}
           aria-hidden="true"
         >
