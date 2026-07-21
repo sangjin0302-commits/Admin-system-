@@ -17,6 +17,7 @@ export const PAGE_TIERS: Record<string, PageTier> = {
   "cases/kanban": "core",
   "content-editor": "core",
   "site-content": "core",
+  "content-metrics": "core",
   "marketing-guideline": "core",
   "guideline-audit": "core",
   "blog": "core",

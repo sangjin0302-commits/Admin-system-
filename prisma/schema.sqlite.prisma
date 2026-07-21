@@ -1685,3 +1685,50 @@ model MarketTrendSnapshot {
   @@unique([keyword, period])
   @@index([orgId, keyword])
 }
+
+/// 콘텐츠 주간 성과 스냅샷 — 네이버 블로그 + LinkedIn 지표를 주 단위로 수기 기록.
+/// 전주 대비(WoW)는 이전 weekStart 행에서 서비스 레이어가 자동 계산한다.
+model ContentMetricWeek {
+  id        String   @id @default(cuid())
+  weekStart String   // 기준 주 시작일 YYYY-MM-DD (월요일 권장, 고유키)
+  weekEnd   String? // 기준 주 종료일 YYYY-MM-DD
+  updatedOn String? // 지표 업데이트 기준일 YYYY-MM-DD
+
+  // 네이버 블로그
+  naverViews        Int? // 조회수
+  naverRevisitRate  Float? // 재방문율 %
+  naverAiCitations  Float? // AI 브리핑 누적 인용수 (예: 4200)
+  naverReferralJson String? // 유입 채널 분포 JSON: [{label, pct}]
+  naverInquiries    Int? // 문의 건수
+  naverInquiryNote  String? // 유입 글 등 메모
+
+  // LinkedIn (영문)
+  liImpressions   Int? // 노출수
+  liMemberReach   Int? // 회원 도달
+  liFollowers     Int? // 팔로워 수
+  liFollowerDelta Int? // 팔로워 증감
+
+  insight String? // 이번 주 인사이트 1~2줄
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  topItems ContentMetricTopItem[]
+
+  @@unique([weekStart])
+  @@index([weekStart])
+}
+
+/// 주간 스냅샷의 TOP 게시물(네이버/LinkedIn 각각). 소재(분야)는 자유 텍스트.
+model ContentMetricTopItem {
+  id      String            @id @default(cuid())
+  weekId  String
+  week    ContentMetricWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  channel String            // NAVER | LINKEDIN
+  rank    Int               // 1..N
+  title   String            // 제목/소재
+  area    String? // 분야(예: 인허가, 계약서, 출입국, 비영리법인, 중동분야)
+  views   Int? // 조회수/노출수
+
+  @@index([weekId, channel])
+}
