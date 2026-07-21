@@ -37,6 +37,8 @@ export const PAGE_TIERS: Record<string, PageTier> = {
   "kakao-stats": "frequent",
   "quote-conversion": "frequent",
   "macro-hotkeys": "frequent",
+  "hide-mode": "frequent", // 감춤모드 토글 페이지 자신은 항상 접근 가능해야 순환잠금 방지
+  "features": "frequent", // 기능 플래그 페이지도 감춤모드 해제에 필요
   "ai-assistant": "frequent",
   "saved-filters": "frequent",
   "morning-briefing": "frequent",
@@ -138,7 +140,6 @@ export const PAGE_TIERS: Record<string, PageTier> = {
   "mobile-app": "advanced",
   "pii-tool": "advanced",
   "settings/2fa": "advanced",
-  "hide-mode": "advanced",
   "api-marketplace": "advanced",
   "architecture": "advanced",
   "adaptive-ui": "advanced",
@@ -171,7 +172,6 @@ export const PAGE_TIERS: Record<string, PageTier> = {
   "fact-check": "advanced",
   "finance": "advanced",
   "franchise": "advanced",
-  "features": "advanced",
   "ar-card": "advanced",
   "activity/legacy": "advanced",
 };

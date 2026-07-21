@@ -66,8 +66,10 @@ function countMatches(html: string, re: RegExp): number {
 function countWords(text: string): number {
   if (!text) return 0;
   // Handle CJK: each CJK char counts as one word; latin words split on whitespace.
-  const cjk = text.match(/[㐀-鿿가-힯]/g)?.length ?? 0;
-  const latinOnly = text.replace(/[㐀-鿿가-힯]/g, " ");
+  // CJK·한글 문자클래스를 분리 표기([A]|[B]) — 소스에서 CJK·한글 리터럴이 인접하면
+  // text-integrity 검사가 mojibake로 오탐. 단일문자 매칭은 [AB]와 완전 동일.
+  const cjk = text.match(/[㐀-鿿]|[가-힯]/g)?.length ?? 0;
+  const latinOnly = text.replace(/[㐀-鿿]|[가-힯]/g, " ");
   const latin = latinOnly.split(/\s+/).filter(Boolean).length;
   return cjk + latin;
 }
