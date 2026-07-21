@@ -93,15 +93,15 @@ export function AdminTopNav({
           <nav className="flex items-stretch gap-1">
             {filteredGroups.map((group) => {
               const isActiveGroup = activeGroup?.title === group.title;
+              const firstHref = group.items[0]?.href ?? "/admin";
               return (
-                <button
+                <Link
                   key={group.title}
-                  type="button"
+                  href={firstHref}
                   onMouseEnter={() => setHoveredGroup(group.title)}
                   onMouseLeave={() => setHoveredGroup(null)}
-                  onClick={() => setHoveredGroup(group.title)}
                   className={cn(
-                    "relative px-4 text-sm font-medium transition-colors",
+                    "relative flex items-center px-4 text-sm font-medium transition-colors",
                     isActiveGroup
                       ? "text-primary"
                       : "text-text-muted hover:text-text-strong"
@@ -111,7 +111,7 @@ export function AdminTopNav({
                   {isActiveGroup && (
                     <span className="absolute inset-x-2 -bottom-px h-0.5 bg-primary rounded-t" />
                   )}
-                </button>
+                </Link>
               );
             })}
           </nav>
