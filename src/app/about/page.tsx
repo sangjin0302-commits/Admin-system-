@@ -86,6 +86,35 @@ const COPY = {
     valuesEyebrow: "Our Values",
     valuesTitle: "세 가지 가치",
     values: VALUES_KO,
+    colorEyebrow: "Color System",
+    colorTitle: "색에 담긴 태도",
+    colorIntro:
+      "에토스의 색은 장식이 아니라 인식의 설계입니다. 의뢰인이 사무소를 처음 마주하는 순간 전해야 할 두 가지 — 신뢰와 전문성 — 을 색으로 옮겼습니다.",
+    colorSwatches: [
+      { hex: "#1B2B6B", name: "네이비", role: "주 텍스트 · 바" },
+      { hex: "#152056", name: "네이비 딥", role: "그라데이션 끝 · 깊이" },
+      { hex: "#B8972A", name: "골드", role: "포인트 · 구분선" },
+      { hex: "#F5F0E8", name: "크림", role: "기본 배경" },
+      { hex: "#F8F3E8", name: "크림 딥", role: "분할 · 박스" },
+      { hex: "#FFFFFF", name: "화이트", role: "카드 배경" }
+    ],
+    colorGrounding: [
+      {
+        k: "네이비 — 신뢰와 역량",
+        v: "색채 인지 연구에서 파랑 계열은 여러 색 가운데 '역량(competence)'과 신뢰 인식이 가장 높게 나타납니다. 행정·법률 서비스가 가장 먼저 전해야 할 인상과 정확히 일치합니다.",
+        cite: "Labrecque & Milne, Journal of the Academy of Marketing Science, 2012"
+      },
+      {
+        k: "골드 — 절제된 전문성",
+        v: "금색은 문화권을 가로질러 '프리미엄 · 품격 · 전문성'의 신호로 해석됩니다. 화려함이 아니라 격을 위해, 포인트와 구분선에만 절제해서 사용합니다.",
+        cite: "Aslam, Journal of Marketing Communications, 2006"
+      },
+      {
+        k: "크림 — 저널리즘의 진중함",
+        v: "순백 대신 신문지 톤의 크림을 배경으로 써 장시간 읽어도 눈부심이 적고, 기록하고 검토하는 저널리즘 특유의 진중한 인상을 남깁니다.",
+        cite: null
+      }
+    ],
     leadEyebrow: "Lead Attorney",
     leadTitle: "행정사 지상진",
     leadPhotoAlt: "대표 행정사",
@@ -147,6 +176,35 @@ const COPY = {
     valuesEyebrow: "Our Values",
     valuesTitle: "Three Core Values",
     values: VALUES_EN,
+    colorEyebrow: "Color System",
+    colorTitle: "Color as a Stance",
+    colorIntro:
+      "Our palette is not decoration but a design of perception. It translates into color the two impressions a client should feel at first sight — trust and expertise.",
+    colorSwatches: [
+      { hex: "#1B2B6B", name: "Navy", role: "Body text · bars" },
+      { hex: "#152056", name: "Deep Navy", role: "Gradient end · depth" },
+      { hex: "#B8972A", name: "Gold", role: "Accent · dividers" },
+      { hex: "#F5F0E8", name: "Cream", role: "Base background" },
+      { hex: "#F8F3E8", name: "Deep Cream", role: "Sections · boxes" },
+      { hex: "#FFFFFF", name: "White", role: "Card background" }
+    ],
+    colorGrounding: [
+      {
+        k: "Navy — Trust & Competence",
+        v: "In color-perception research, blue hues score highest among colors for perceived competence and trust — precisely the first impression an administrative and legal practice must convey.",
+        cite: "Labrecque & Milne, Journal of the Academy of Marketing Science, 2012"
+      },
+      {
+        k: "Gold — Restrained Expertise",
+        v: "Across cultures, gold reads as a signal of premium quality, dignity, and professionalism. We use it sparingly — only for accents and dividers — for stature, not flash.",
+        cite: "Aslam, Journal of Marketing Communications, 2006"
+      },
+      {
+        k: "Cream — Editorial Gravitas",
+        v: "Instead of pure white, a newsprint-toned cream reduces glare over long reading and leaves the composed impression of journalism that records and reviews.",
+        cite: null
+      }
+    ],
     leadEyebrow: "Lead Attorney",
     leadTitle: "Administrative Attorney Jean",
     leadPhotoAlt: "Lead Administrative Attorney",
@@ -300,6 +358,50 @@ export default async function AboutPage({
           </div>
         </section>
       )}
+
+      {/* 컬러 시스템 — 브랜드 색 팔레트 + 근거 */}
+      <section className="border-b border-gold/20 py-20 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal className="text-center">
+            <p className="ethos-eyebrow">{t.colorEyebrow}</p>
+            <h2 className="ethos-display mt-4 text-3xl sm:text-[2.4rem]">{t.colorTitle}</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-text-muted">{t.colorIntro}</p>
+          </Reveal>
+
+          <div className="mt-12 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
+            {t.colorSwatches.map((s, i) => (
+              <Reveal key={s.hex} delay={((i % 3) + 1) as 1 | 2 | 3}>
+                <div className="flex flex-col">
+                  <div
+                    className="aspect-[4/3] w-full rounded-xl border border-line shadow-panel"
+                    style={{ backgroundColor: s.hex }}
+                    aria-hidden
+                  />
+                  <p className="mt-3 font-serif text-sm font-bold text-text-strong">{s.name}</p>
+                  <p className="mt-0.5 font-mono text-[11px] uppercase tracking-wide text-gold-deep">{s.hex}</p>
+                  <p className="mt-1 text-[11px] leading-5 text-text-muted">{s.role}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <div className="mt-12 grid gap-4 md:grid-cols-3">
+            {t.colorGrounding.map((g, i) => (
+              <Reveal key={g.k} delay={((i % 3) + 1) as 1 | 2 | 3}>
+                <div className="h-full rounded-2xl border border-gold/25 bg-surface p-6 shadow-panel">
+                  <p className="font-serif text-sm font-bold text-primary">{g.k}</p>
+                  <p className="mt-2.5 text-xs leading-6 text-text-muted">{g.v}</p>
+                  {g.cite ? (
+                    <p className="mt-3.5 border-t border-line pt-3 text-[10px] italic leading-4 text-text-muted/80">
+                      {g.cite}
+                    </p>
+                  ) : null}
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* 인사말 — DARK band */}
       <section className="ethos-band ethos-band-dark ethos-grain py-24 sm:py-32" style={{ backgroundColor: "rgb(22 50 80)" }}>
