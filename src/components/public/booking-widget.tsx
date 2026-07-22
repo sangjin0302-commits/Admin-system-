@@ -85,7 +85,16 @@ export function BookingWidget() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedDate || !selectedTime || !name.trim() || !phone.trim()) return;
+    if (!selectedDate || !selectedTime) {
+      setResult("error");
+      setErrorMsg("날짜와 시간을 먼저 선택해 주세요.");
+      return;
+    }
+    if (!name.trim() || !phone.trim()) {
+      setResult("error");
+      setErrorMsg("이름과 연락처는 필수입니다.");
+      return;
+    }
     setSubmitting(true);
     setResult("idle");
     setErrorMsg("");

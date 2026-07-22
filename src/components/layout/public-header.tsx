@@ -39,38 +39,16 @@ const NAV_ITEMS = [
   { href: "/blog", label: "법률 칼럼", labelEn: "Legal Columns", flagKey: "nav_blog" }
 ] as const;
 
-function LangToggle({ pathname }: { pathname: string }) {
-  const current = pathname.startsWith("/en") ? "en" : pathname.startsWith("/ar") ? "ar" : "ko";
-  return (
-    <div className="hidden items-center gap-1 border-r border-gold/30 pr-3 lg:flex">
-      <Link
-        href="/"
-        className={`px-2 font-serif text-xs font-bold ${current === "ko" ? "text-primary" : "text-text-muted hover:text-primary"}`}
-      >
-        KO
-      </Link>
-      <span className="text-gold/40">|</span>
-      <Link
-        href="/en"
-        className={`px-2 font-serif text-xs font-bold ${current === "en" ? "text-primary" : "text-text-muted hover:text-primary"}`}
-      >
-        EN
-      </Link>
-      <span className="text-gold/40">|</span>
-      <Link
-        href="/ar"
-        className={`px-2 font-serif text-xs font-bold ${current === "ar" ? "text-primary" : "text-text-muted hover:text-primary"}`}
-      >
-        AR
-      </Link>
-    </div>
-  );
-}
-
 function HeaderInner() {
   const pathname = usePathname();
   const sp = useSearchParams();
-  const lang = sp.get("lang") === "en" ? "en" : "ko";
+  // 로케일은 경로 우선(/en, /ar), 그 다음 ?lang= 쿼리. 헤더 라벨과 CTA 라벨 언어 불일치 방지.
+  const pathLang: "ko" | "en" | "ar" = pathname.startsWith("/en")
+    ? "en"
+    : pathname.startsWith("/ar")
+      ? "ar"
+      : "ko";
+  const lang: "ko" | "en" = pathLang === "en" || sp.get("lang") === "en" ? "en" : "ko";
   const qs = lang === "en" ? "?lang=en" : "";
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -324,12 +302,14 @@ function MiniLogo() {
   const [src, setSrc] = useState("/logo.png");
 
   useEffect(() => {
-    fetch("/api/public/site-images")
+    const ctrl = new AbortController();
+    fetch("/api/public/site-images", { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.images?.["image.logo"]) setSrc(d.images["image.logo"]);
       })
       .catch(() => {});
+    return () => ctrl.abort();
   }, []);
 
   return (

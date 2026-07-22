@@ -183,10 +183,26 @@ export default async function AboutPage({
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
   const t = COPY[lang];
-  const greeting = await getSiteSetting("about.greeting");
+  const [greeting, brandEyebrow, brandTitle, brandBody, brandLogoNote] = await Promise.all([
+    getSiteSetting("about.greeting"),
+    getSiteSetting("about.brandStory.eyebrow"),
+    getSiteSetting("about.brandStory.title"),
+    getSiteSetting("about.brandStory.body"),
+    getSiteSetting("about.brandStory.logoNote")
+  ]);
   const credentials = await listPublicCredentials();
-  const photoRow = await prisma.siteSetting.findUnique({ where: { key: "image.aboutPhoto" } }).catch(() => null);
-  const aboutPhoto = photoRow?.value || null;
+  const imageRows = await prisma.siteSetting
+    .findMany({ where: { key: { in: ["image.aboutPhoto", "image.brandStory"] } } })
+    .catch(() => [] as { key: string; value: string }[]);
+  const imageMap = new Map(imageRows.map((r) => [r.key, r.value]));
+  const aboutPhoto = imageMap.get("image.aboutPhoto") || null;
+  const brandStoryImage = imageMap.get("image.brandStory") || null;
+  const hasBrandStory = Boolean(
+    brandStoryImage ||
+      (brandTitle && brandTitle.trim()) ||
+      (brandBody && brandBody.trim()) ||
+      (brandLogoNote && brandLogoNote.trim())
+  );
   return (
     <div className="overflow-x-clip">
       <PersonJsonLd />
@@ -208,6 +224,82 @@ export default async function AboutPage({
           </Reveal>
         </div>
       </section>
+
+      {/* 로고·브랜드 스토리 — 관리자가 입력한 텍스트 또는 업로드한 이미지가 있을 때만 노출 */}
+      {hasBrandStory && (
+        <section className="border-y border-gold/25 bg-surface py-20 sm:py-24">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
+            {brandStoryImage ? (
+              // 업로드한 인포그래픽이 있으면: 헤더 + 이미지를 중심으로 크게 노출 (이미지 자체가 상징 설명을 포함).
+              <div className="text-center">
+                {brandEyebrow && brandEyebrow.trim() ? (
+                  <Reveal>
+                    <p className="ethos-eyebrow">{brandEyebrow}</p>
+                  </Reveal>
+                ) : null}
+                {brandTitle && brandTitle.trim() ? (
+                  <Reveal delay={1}>
+                    <h2 className="ethos-display mt-4 text-3xl leading-tight sm:text-[2.4rem]">{brandTitle}</h2>
+                  </Reveal>
+                ) : null}
+                <Reveal delay={2}>
+                  <div className="mx-auto mt-10 max-w-3xl overflow-hidden rounded-3xl border border-gold/30 shadow-floating">
+                    <Image
+                      src={brandStoryImage}
+                      alt={brandTitle?.trim() || "로고·브랜드 스토리"}
+                      width={1456}
+                      height={1080}
+                      className="h-auto w-full"
+                      unoptimized
+                      sizes="(max-width: 768px) 100vw, 768px"
+                    />
+                  </div>
+                </Reveal>
+                {brandLogoNote && brandLogoNote.trim() ? (
+                  <Reveal delay={3}>
+                    <p className="mx-auto mt-6 max-w-2xl whitespace-pre-line text-sm leading-7 text-text-muted">
+                      {brandLogoNote}
+                    </p>
+                  </Reveal>
+                ) : null}
+              </div>
+            ) : (
+              // 이미지가 없으면: SVG 로고 + 텍스트 2단 레이아웃 (기본).
+              <div className="grid gap-10 lg:grid-cols-[0.9fr_1.4fr] lg:items-center">
+                <Reveal>
+                  <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:text-left">
+                    <div className="rounded-3xl border border-gold/30 bg-gradient-to-br from-gold-soft/20 via-surface to-primary/10 p-8 shadow-panel">
+                      <EthosLogo size={160} />
+                    </div>
+                    {brandLogoNote && brandLogoNote.trim() ? (
+                      <p className="max-w-xs whitespace-pre-line text-xs leading-6 text-text-muted">
+                        {brandLogoNote}
+                      </p>
+                    ) : null}
+                  </div>
+                </Reveal>
+                <Reveal delay={1}>
+                  <div>
+                    {brandEyebrow && brandEyebrow.trim() ? (
+                      <p className="ethos-eyebrow">{brandEyebrow}</p>
+                    ) : null}
+                    {brandTitle && brandTitle.trim() ? (
+                      <h2 className="ethos-display mt-4 text-3xl leading-tight sm:text-[2.4rem]">
+                        {brandTitle}
+                      </h2>
+                    ) : null}
+                    {brandBody && brandBody.trim() ? (
+                      <div className="mt-6 whitespace-pre-line text-sm leading-8 text-text">
+                        {brandBody}
+                      </div>
+                    ) : null}
+                  </div>
+                </Reveal>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* 인사말 — DARK band */}
       <section className="ethos-band ethos-band-dark ethos-grain py-24 sm:py-32" style={{ backgroundColor: "rgb(22 50 80)" }}>

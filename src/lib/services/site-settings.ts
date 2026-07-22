@@ -14,6 +14,10 @@ export type SiteSettingsKey =
   | "home.brandStory"
   | "home.faq"
   | "about.greeting"
+  | "about.brandStory.eyebrow"    // 로고·철학 섹션 상단 kicker
+  | "about.brandStory.title"      // 로고·철학 섹션 헤드라인
+  | "about.brandStory.body"       // 로고·철학 섹션 본문 (여러 문단, 줄바꿈 유지)
+  | "about.brandStory.logoNote"   // 로고 의미 캡션 (로고 이미지 아래)
   | "contact.phone"
   | "contact.email"
   | "contact.address"
@@ -51,6 +55,12 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "home.faq": "",
   "about.greeting":
     "행정 문제는 단순히 서류를 작성하고 절차를 밟는 일만은 아닙니다. 그 안에는 누군가의 생계, 체류, 권리, 가족, 사업, 그리고 앞으로의 삶이 함께 담겨 있습니다.",
+  "about.brandStory.eyebrow": "Brand Story",
+  "about.brandStory.title": "로고에 담긴 이야기",
+  "about.brandStory.body":
+    "기둥은 로고스(Logos)를 상징합니다. 질서와 원칙, 절차를 뜻하며 — 행정 문제를 감정만으로 접근하지 않고 정확한 법령과 논리적 판단으로 풀어가겠다는 태도를 담았습니다.\n\n빛은 에토스(Ethos)를 상징합니다. 신뢰와 품격, 책임을 뜻하며 — 막막한 절차 앞에서도 의뢰인이 믿고 따라갈 수 있는 기준과 방향을 제시하겠다는 마음을 담았습니다.\n\n손은 파토스(Pathos)를 상징합니다. 공감과 이해, 위로를 뜻하며 — 행정 문제 뒤에 있는 사람의 사정과 마음까지 함께 헤아리겠다는 뜻을 담았습니다.",
+  "about.brandStory.logoNote":
+    "기둥 · 빛 · 원 — 이성으로 절차를 풀고, 신뢰로 길을 밝히며, 공감으로 사람을 받칩니다.",
   "contact.phone": "02-0000-0000",
   "contact.email": "a.attorneyjean@gmail.com",
   "contact.address": "서울 동대문구 (비상주 · 전국 비대면 가능)",
@@ -90,6 +100,28 @@ export const SITE_SETTINGS_LABELS: Record<
   "home.brandStory": { label: "홈 Brand Story 본문", hint: "비우면 기본 문구. 빈 줄로 문단 구분", multiline: true },
   "home.faq": { label: "홈 자주 묻는 질문", hint: "한 줄에 'Q :: A' 형식. 한 줄 = 한 문답. 비우면 기본 FAQ", multiline: true },
   "about.greeting": { label: "사무소 소개 인사말", multiline: true },
+  "about.brandStory.eyebrow": {
+    label: "소개 · 로고·브랜드 스토리 상단 라벨",
+    hint: "예: Brand Story / 로고 이야기 — 비우면 섹션 전체가 숨겨집니다",
+    section: "소개 · 로고·브랜드 스토리"
+  },
+  "about.brandStory.title": {
+    label: "소개 · 로고·브랜드 스토리 헤드라인",
+    hint: "로고와 철학을 아우르는 한 줄 헤드라인",
+    section: "소개 · 로고·브랜드 스토리"
+  },
+  "about.brandStory.body": {
+    label: "소개 · 로고·브랜드 스토리 본문",
+    hint: "여러 문단 가능 · 줄바꿈은 Enter · 문단 구분은 빈 줄",
+    multiline: true,
+    section: "소개 · 로고·브랜드 스토리"
+  },
+  "about.brandStory.logoNote": {
+    label: "소개 · 로고 아래 캡션",
+    hint: "로고 이미지 아래 작은 설명 (로고 상징·색·서체 의미 등)",
+    multiline: true,
+    section: "소개 · 로고·브랜드 스토리"
+  },
   "contact.phone": { label: "대표 전화" },
   "contact.email": { label: "이메일" },
   "contact.address": { label: "사무소 주소" },

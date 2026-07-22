@@ -111,7 +111,11 @@ const BASE_KEYS: ContentKeyDefinition[] = [
 const ABOUT_KEYS: ContentKeyDefinition[] = [
   { key: "about.greeting", section: "소개 · About", label: "대표 인사말", type: "text", default: "안녕하세요. ETHOS 대표 행정사입니다. 절차의 이성과 사람의 공감을 함께 담아 일합니다.", hint: "줄바꿈 지원" },
   { key: "about.philosophy", section: "소개 · About", label: "철학·가치", type: "text", default: "Logos(논리) · Pathos(공감) · Ethos(신뢰) — 세 축이 흔들리지 않도록 실무를 설계합니다." },
-  { key: "about.career", section: "소개 · About", label: "대표 경력·이력", type: "text", default: "• 행정사 자격\n• 조세·행정심판 실무 경력\n• 다국적 클라이언트 대응 경험" }
+  { key: "about.career", section: "소개 · About", label: "대표 경력·이력", type: "text", default: "• 행정사 자격\n• 조세·행정심판 실무 경력\n• 다국적 클라이언트 대응 경험" },
+  { key: "about.brandStory.eyebrow", section: "소개 · 로고·브랜드 스토리", label: "섹션 상단 라벨 (Eyebrow)", type: "text", default: "", hint: "예: Brand Story / 로고 이야기 — 비워두면 섹션 자체가 숨겨집니다." },
+  { key: "about.brandStory.title", section: "소개 · 로고·브랜드 스토리", label: "헤드라인", type: "text", default: "", hint: "로고와 철학을 아우르는 한 줄 헤드라인" },
+  { key: "about.brandStory.body", section: "소개 · 로고·브랜드 스토리", label: "본문", type: "text", default: "", hint: "여러 문단 가능. 줄바꿈은 Enter (Enter 두번 = 문단 구분)" },
+  { key: "about.brandStory.logoNote", section: "소개 · 로고·브랜드 스토리", label: "로고 아래 캡션", type: "text", default: "", hint: "로고 이미지 아래 작은 설명 (예: 로고 상징·색·서체 의미)" }
 ];
 
 const CONTACT_PAGE_KEYS: ContentKeyDefinition[] = [

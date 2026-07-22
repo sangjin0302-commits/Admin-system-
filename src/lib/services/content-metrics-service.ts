@@ -194,15 +194,22 @@ export async function getAreaRanking(): Promise<AreaRankRow[]> {
     select: { channel: true, area: true, views: true }
   });
 
+  // 채널별로 분리 집계 — 네이버 조회수와 LinkedIn 노출수는 단위가 달라 합산이 오도됨.
   const map = new Map<string, AreaRankRow>();
   for (const it of items) {
     const area = (it.area ?? "").trim();
     if (!area) continue;
-    const key = area;
-    const row = map.get(key) ?? { area, channel: "ALL", totalViews: 0, appearances: 0 };
+    const channel = (it.channel as "NAVER" | "LINKEDIN") ?? "NAVER";
+    const key = `${channel}::${area}`;
+    const row = map.get(key) ?? { area, channel, totalViews: 0, appearances: 0 };
     row.totalViews += it.views ?? 0;
     row.appearances += 1;
     map.set(key, row);
   }
-  return [...map.values()].sort((a, b) => b.totalViews - a.totalViews || b.appearances - a.appearances);
+  return [...map.values()].sort(
+    (a, b) =>
+      (a.channel === b.channel ? 0 : a.channel === "NAVER" ? -1 : 1) ||
+      b.totalViews - a.totalViews ||
+      b.appearances - a.appearances
+  );
 }

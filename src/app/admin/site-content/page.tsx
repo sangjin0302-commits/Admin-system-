@@ -6,7 +6,7 @@ import { SiteImageUpload } from "./image-upload";
 
 export const dynamic = "force-dynamic";
 
-const IMAGE_KEYS = ["image.logo", "image.aboutPhoto", "image.ogImage", "image.assocBadge"];
+const IMAGE_KEYS = ["image.logo", "image.aboutPhoto", "image.ogImage", "image.assocBadge", "image.brandStory"];
 
 export default async function AdminSiteContentPage() {
   const settings = await getSiteSettings();
