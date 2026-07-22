@@ -9,8 +9,13 @@ export async function POST(req: Request) {
   const text: string = typeof body?.text === "string" ? body.text : "";
   const action: string = body?.action === "mask" ? "mask" : "detect";
 
-  if (action === "mask") {
-    return NextResponse.json({ masked: maskPII(text) });
+  try {
+    if (action === "mask") {
+      return NextResponse.json({ masked: maskPII(text) });
+    }
+    return NextResponse.json({ detected: detectPII(text) });
+  } catch (error) {
+    console.error("admin/pii-mask POST failed", error);
+    return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
   }
-  return NextResponse.json({ detected: detectPII(text) });
 }

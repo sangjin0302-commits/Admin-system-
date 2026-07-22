@@ -12,6 +12,7 @@ export async function POST(req: Request) {
     const code = generateReferralCode(referrerEmail, referrerName);
     return NextResponse.json({ code });
   } catch (error) {
-    return NextResponse.json({ error: "failed", detail: String(error) }, { status: 500 });
+    console.error("admin/referrals POST failed", error);
+    return NextResponse.json({ error: "failed" }, { status: 500 });
   }
 }

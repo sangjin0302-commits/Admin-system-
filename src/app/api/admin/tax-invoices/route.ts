@@ -18,8 +18,9 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true, invoice });
   } catch (err) {
+    console.error("admin/tax-invoices POST failed", err);
     return NextResponse.json(
-      { ok: false, error: String(err) },
+      { ok: false, error: "SERVER_ERROR" },
       { status: 500 }
     );
   }

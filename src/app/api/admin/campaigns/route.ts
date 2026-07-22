@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     const campaign = createCampaign({ name, subject, bodyHtml, targetSegment });
     return NextResponse.json({ campaign });
   } catch (error) {
-    return NextResponse.json({ error: "failed", detail: String(error) }, { status: 500 });
+    console.error("admin/campaigns POST failed", error);
+    return NextResponse.json({ error: "failed" }, { status: 500 });
   }
 }

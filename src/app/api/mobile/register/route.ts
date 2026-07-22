@@ -27,8 +27,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: session });
   } catch (err) {
+    console.error("mobile/register POST failed", err);
     return NextResponse.json(
-      { success: false, error: (err as Error).message },
+      { success: false, error: "SERVER_ERROR" },
       { status: 500 }
     );
   }

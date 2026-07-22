@@ -10,21 +10,26 @@ export async function POST(request: Request) {
   const name = typeof body?.name === "string" && body.name.trim() ? body.name.trim() : "대표 행정사";
   const subtitle = typeof body?.subtitle === "string" ? body.subtitle.trim() : "ETHOS 행정사사무소";
 
-  const creds = await listPublicCredentials();
-  const entries: ResumeEntry[] = creds.map((c) => ({
-    typeLabel: CREDENTIAL_TYPE_LABELS[c.type] ?? c.type,
-    year: c.year,
-    title: c.title,
-    detail: c.detail || undefined
-  }));
+  try {
+    const creds = await listPublicCredentials();
+    const entries: ResumeEntry[] = creds.map((c) => ({
+      typeLabel: CREDENTIAL_TYPE_LABELS[c.type] ?? c.type,
+      year: c.year,
+      title: c.title,
+      detail: c.detail || undefined
+    }));
 
-  const pdf = await generateResumePdf({ name, subtitle, entries });
-  const date = new Date().toISOString().slice(0, 10);
+    const pdf = await generateResumePdf({ name, subtitle, entries });
+    const date = new Date().toISOString().slice(0, 10);
 
-  return new Response(Buffer.from(pdf), {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="resume-${date}.pdf"`
-    }
-  });
+    return new Response(Buffer.from(pdf), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="resume-${date}.pdf"`
+      }
+    });
+  } catch (error) {
+    console.error("admin/credentials/resume POST failed", error);
+    return Response.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

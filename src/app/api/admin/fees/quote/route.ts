@@ -35,34 +35,39 @@ export async function POST(request: Request) {
   const ids: string[] = Array.isArray(body.feeItemIds) ? body.feeItemIds.filter((x: unknown) => typeof x === "string") : [];
   if (ids.length === 0) return new Response("항목을 1개 이상 선택하세요.", { status: 400 });
 
-  const items = await prisma.feeItem.findMany({ where: { id: { in: ids } } });
-  if (items.length === 0) return new Response("항목을 찾을 수 없습니다.", { status: 404 });
+  try {
+    const items = await prisma.feeItem.findMany({ where: { id: { in: ids } } });
+    if (items.length === 0) return new Response("항목을 찾을 수 없습니다.", { status: 404 });
 
-  const lines: QuotePdfLine[] = items.map((i) => ({
-    category: FEE_CATEGORY_LABELS[i.category] ?? i.category,
-    service: i.service,
-    amount: i.amount,
-    note: i.note || undefined
-  }));
+    const lines: QuotePdfLine[] = items.map((i) => ({
+      category: FEE_CATEGORY_LABELS[i.category] ?? i.category,
+      service: i.service,
+      amount: i.amount,
+      note: i.note || undefined
+    }));
 
-  // 사건에 견적 이력 기록 (caseId가 있으면)
-  if (typeof body.caseId === "string" && body.caseId) {
-    await recordQuoteEvent(body.caseId, lines, typeof body.totalText === "string" ? body.totalText.trim() : undefined);
-  }
-
-  const date = new Date().toISOString().slice(0, 10);
-  const pdf = await generateQuotePdf({
-    clientName,
-    date,
-    lines,
-    totalText: typeof body.totalText === "string" ? body.totalText.trim() || undefined : undefined,
-    signature: typeof body.signature === "string" ? body.signature.trim() || undefined : undefined
-  });
-
-  return new Response(Buffer.from(pdf), {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="quote-${date}.pdf"`
+    // 사건에 견적 이력 기록 (caseId가 있으면)
+    if (typeof body.caseId === "string" && body.caseId) {
+      await recordQuoteEvent(body.caseId, lines, typeof body.totalText === "string" ? body.totalText.trim() : undefined);
     }
-  });
+
+    const date = new Date().toISOString().slice(0, 10);
+    const pdf = await generateQuotePdf({
+      clientName,
+      date,
+      lines,
+      totalText: typeof body.totalText === "string" ? body.totalText.trim() || undefined : undefined,
+      signature: typeof body.signature === "string" ? body.signature.trim() || undefined : undefined
+    });
+
+    return new Response(Buffer.from(pdf), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="quote-${date}.pdf"`
+      }
+    });
+  } catch (error) {
+    console.error("admin/fees/quote POST failed", error);
+    return new Response("SERVER_ERROR", { status: 500 });
+  }
 }

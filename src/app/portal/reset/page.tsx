@@ -16,18 +16,23 @@ function ResetForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const res = await fetch("/api/portal/password-reset", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, password })
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!data.ok) {
-      setError(data.error ?? "재설정에 실패했습니다.");
-      return;
+    try {
+      const res = await fetch("/api/portal/password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password })
+      });
+      const data = await res.json();
+      setLoading(false);
+      if (!data.ok) {
+        setError(data.error ?? "재설정에 실패했습니다.");
+        return;
+      }
+      router.push("/portal/signin?reset=1");
+    } catch {
+      setLoading(false);
+      setError("네트워크 오류입니다. 잠시 후 다시 시도해 주세요.");
     }
-    router.push("/portal/signin?reset=1");
   }
 
   if (!token) {

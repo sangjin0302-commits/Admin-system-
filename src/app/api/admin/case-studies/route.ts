@@ -27,17 +27,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "분야/제목/요약은 필수입니다." }, { status: 400 });
   }
 
-  const created = await prisma.caseStudy.create({
-    data: {
-      category,
-      title,
-      summary,
-      outcome: outcome || "사안별로 진행되었습니다.",
-      duration: duration || "사안별",
-      published: body.published !== false,
-      sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : 0
-    }
-  });
+  try {
+    const created = await prisma.caseStudy.create({
+      data: {
+        category,
+        title,
+        summary,
+        outcome: outcome || "사안별로 진행되었습니다.",
+        duration: duration || "사안별",
+        published: body.published !== false,
+        sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : 0
+      }
+    });
 
-  return NextResponse.json({ ok: true, item: created });
+    return NextResponse.json({ ok: true, item: created });
+  } catch (error) {
+    console.error("admin/case-studies POST failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

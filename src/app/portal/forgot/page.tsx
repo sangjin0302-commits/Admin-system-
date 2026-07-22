@@ -8,17 +8,24 @@ export default function ForgotPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    await fetch("/api/portal/password-forgot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
-    });
-    setLoading(false);
-    setSent(true);
+    try {
+      await fetch("/api/portal/password-forgot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      setLoading(false);
+      setSent(true);
+    } catch {
+      setLoading(false);
+      setError("네트워크 오류입니다. 잠시 후 다시 시도해 주세요.");
+    }
   }
 
   return (
@@ -53,6 +60,9 @@ export default function ForgotPage() {
                 className="mt-1 w-full rounded-lg border border-gold/40 bg-surface px-4 py-2.5 text-sm focus:border-gold focus:outline-none"
               />
             </div>
+            {error && (
+              <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+            )}
             <button
               type="submit"
               disabled={loading}

@@ -25,16 +25,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "메시지를 입력해 주세요." }, { status: 400 });
   }
 
-  const notification = await prisma.portalNotification.create({
-    data: {
-      clientId: userId,
-      caseId: body.caseId ?? null,
-      event: "message",
-      title: "의뢰인 메시지",
-      body: message,
-      link: body.caseId ? `/portal/cases/${body.caseId}` : "/portal/messages",
-    },
-  });
+  try {
+    const notification = await prisma.portalNotification.create({
+      data: {
+        clientId: userId,
+        caseId: body.caseId ?? null,
+        event: "message",
+        title: "의뢰인 메시지",
+        body: message,
+        link: body.caseId ? `/portal/cases/${body.caseId}` : "/portal/messages",
+      },
+    });
 
-  return NextResponse.json({ notification }, { status: 201 });
+    return NextResponse.json({ notification }, { status: 201 });
+  } catch (error) {
+    console.error("portal/messages POST failed", error);
+    return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

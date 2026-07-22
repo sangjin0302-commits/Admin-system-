@@ -13,6 +13,11 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
   const { id } = await context.params;
   if (!id) return NextResponse.json({ ok: false, error: "INVALID_ID" }, { status: 400 });
 
-  const result = await markPortalNotificationRead(id, userId);
-  return NextResponse.json({ ok: true, marked: result.count });
+  try {
+    const result = await markPortalNotificationRead(id, userId);
+    return NextResponse.json({ ok: true, marked: result.count });
+  } catch (error) {
+    console.error("portal/notifications/[id] POST failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

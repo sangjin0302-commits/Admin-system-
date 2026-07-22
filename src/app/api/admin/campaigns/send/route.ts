@@ -12,6 +12,7 @@ export async function POST(req: Request) {
     const result = await sendCampaign(id);
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json({ error: "failed", detail: String(error) }, { status: 500 });
+    console.error("admin/campaigns/send POST failed", error);
+    return NextResponse.json({ error: "failed" }, { status: 500 });
   }
 }

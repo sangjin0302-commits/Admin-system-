@@ -16,22 +16,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "사건과 분석 결과가 필요합니다." }, { status: 400 });
   }
 
-  const caseMatter = await prisma.caseMatter.findUnique({ where: { id: caseId }, select: { id: true } });
-  if (!caseMatter) return NextResponse.json({ ok: false, error: "사건을 찾을 수 없습니다." }, { status: 404 });
+  try {
+    const caseMatter = await prisma.caseMatter.findUnique({ where: { id: caseId }, select: { id: true } });
+    if (!caseMatter) return NextResponse.json({ ok: false, error: "사건을 찾을 수 없습니다." }, { status: 404 });
 
-  const summary = typeof analysis.summary === "string" ? analysis.summary : "AI 분석 결과";
-  const domain = typeof analysis.domain === "string" ? analysis.domain : "";
-  const message = `AI 분석 저장${domain ? ` [${domain}]` : ""}: ${summary}`.slice(0, 500);
+    const summary = typeof analysis.summary === "string" ? analysis.summary : "AI 분석 결과";
+    const domain = typeof analysis.domain === "string" ? analysis.domain : "";
+    const message = `AI 분석 저장${domain ? ` [${domain}]` : ""}: ${summary}`.slice(0, 500);
 
-  await prisma.caseEvent.create({
-    data: {
-      caseId,
-      eventType: "lawbot_analysis",
-      actorName: "관리자 (AI 분석)",
-      message,
-      payloadJson: JSON.stringify(analysis).slice(0, 12000)
-    }
-  });
+    await prisma.caseEvent.create({
+      data: {
+        caseId,
+        eventType: "lawbot_analysis",
+        actorName: "관리자 (AI 분석)",
+        message,
+        payloadJson: JSON.stringify(analysis).slice(0, 12000)
+      }
+    });
 
-  return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("admin/lawbot/save-to-case POST failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

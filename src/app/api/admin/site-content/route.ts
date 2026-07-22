@@ -24,7 +24,12 @@ export async function POST(request: Request) {
     if (typeof v === "string") values[key] = v;
   }
 
-  await saveSiteSettings(values);
-  const settings = await getSiteSettings();
-  return NextResponse.json({ ok: true, settings });
+  try {
+    await saveSiteSettings(values);
+    const settings = await getSiteSettings();
+    return NextResponse.json({ ok: true, settings });
+  } catch (error) {
+    console.error("admin/site-content POST failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

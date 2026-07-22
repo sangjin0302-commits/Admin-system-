@@ -14,12 +14,17 @@ export async function GET() {
     return NextResponse.json({ ok: false, error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const [items, unread] = await Promise.all([
-    listPortalNotifications(userId, { limit: 100 }),
-    countUnreadPortalNotifications(userId)
-  ]);
+  try {
+    const [items, unread] = await Promise.all([
+      listPortalNotifications(userId, { limit: 100 }),
+      countUnreadPortalNotifications(userId)
+    ]);
 
-  return NextResponse.json({ ok: true, items, unread });
+    return NextResponse.json({ ok: true, items, unread });
+  } catch (error) {
+    console.error("portal/notifications GET failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }
 
 export async function POST() {
@@ -30,6 +35,11 @@ export async function POST() {
   }
 
   // 전체 읽음 처리
-  const result = await markAllPortalNotificationsRead(userId);
-  return NextResponse.json({ ok: true, marked: result.count });
+  try {
+    const result = await markAllPortalNotificationsRead(userId);
+    return NextResponse.json({ ok: true, marked: result.count });
+  } catch (error) {
+    console.error("portal/notifications POST failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

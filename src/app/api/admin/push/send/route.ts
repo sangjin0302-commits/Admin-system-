@@ -33,8 +33,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (err) {
+    console.error("admin/push/send POST failed", err);
     return NextResponse.json(
-      { success: false, error: (err as Error).message },
+      { success: false, error: "SERVER_ERROR" },
       { status: 500 }
     );
   }

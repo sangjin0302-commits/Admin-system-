@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@generated/prisma-client/client";
 
 import { prisma } from "@/lib/prisma/client";
 import { PRACTICE_AREA_KEYS } from "@/lib/practice-areas";
@@ -17,13 +18,29 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   if (typeof body.note === "string") data.note = body.note.trim();
   if (typeof body.sortOrder === "number") data.sortOrder = body.sortOrder;
 
-  const updated = await prisma.feeItem.update({ where: { id }, data });
-  return NextResponse.json({ ok: true, item: updated });
+  try {
+    const updated = await prisma.feeItem.update({ where: { id }, data });
+    return NextResponse.json({ ok: true, item: updated });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
+    }
+    console.error("admin/fees/[id] PATCH failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }
 
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   if (!id) return NextResponse.json({ ok: false, error: "INVALID" }, { status: 400 });
-  await prisma.feeItem.delete({ where: { id } }).catch(() => undefined);
-  return NextResponse.json({ ok: true });
+  try {
+    await prisma.feeItem.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return NextResponse.json({ ok: true });
+    }
+    console.error("admin/fees/[id] DELETE failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

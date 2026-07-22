@@ -25,16 +25,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "분야/후기/작성자는 필수입니다." }, { status: 400 });
   }
 
-  const created = await prisma.testimonial.create({
-    data: {
-      category,
-      quote,
-      author,
-      context: context || "",
-      published: body.published !== false,
-      sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : 0
-    }
-  });
+  try {
+    const created = await prisma.testimonial.create({
+      data: {
+        category,
+        quote,
+        author,
+        context: context || "",
+        published: body.published !== false,
+        sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : 0
+      }
+    });
 
-  return NextResponse.json({ ok: true, item: created });
+    return NextResponse.json({ ok: true, item: created });
+  } catch (error) {
+    console.error("admin/testimonials POST failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }
