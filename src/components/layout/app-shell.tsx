@@ -14,7 +14,7 @@ import { ChannelTracker } from "@/components/public/channel-tracker";
 import { ScrollDepthTracker } from "@/components/public/scroll-depth-tracker";
 import { ReturningVisitorBadge } from "@/components/public/returning-visitor-badge";
 
-const PUBLIC_PATHS = ["/", "/about", "/services", "/cases", "/blog", "/track", "/intake", "/quick-check", "/contact", "/fees", "/privacy", "/terms", "/consult", "/en", "/ar", "/keyword"];
+const PUBLIC_PATHS = ["/", "/about", "/services", "/cases", "/blog", "/track", "/intake", "/quick-check", "/contact", "/fees", "/privacy", "/terms", "/consult", "/en", "/keyword"];
 
 function isPublicRoute(pathname: string) {
   if (pathname === "/") return true;

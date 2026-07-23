@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "ETHOS Administrative Attorney Office — Jean | English support",
   description:
-    "Korean administrative procedures for foreign nationals. Visa, business registration, contracts, administrative appeals — explained in English, Korean, and Arabic by Jean.",
-  alternates: { canonical: "/en", languages: { ko: "/", en: "/en", ar: "/ar" } },
+    "Korean administrative procedures for foreign nationals. Visa, business registration, contracts, administrative appeals — explained in English and Korean by Jean.",
+  alternates: { canonical: "/en", languages: { ko: "/", en: "/en", "x-default": "/" } },
   openGraph: {
     title: "ETHOS · Jean — English-friendly administrative attorney in Seoul",
     description:

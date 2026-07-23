@@ -277,9 +277,9 @@ export function AiChatWidget() {
             const { summary, category } = extractIntakeFromChat(messages);
             const params = new URLSearchParams({ from: "ai-chat", summary });
             if (category) params.set("cat", category);
-            // 현재 경로 로케일 유지 — /en, /ar 사용자가 한국어 페이지로 튕겨나가지 않도록.
+            // 현재 경로 로케일 유지 — /en 사용자가 한국어 페이지로 튕겨나가지 않도록.
             const path = typeof window !== "undefined" ? window.location.pathname : "";
-            const prefix = path.startsWith("/en") ? "/en" : path.startsWith("/ar") ? "/ar" : "";
+            const prefix = path.startsWith("/en") ? "/en" : "";
             window.location.href = `${prefix}/intake?${params.toString()}`;
           }}
           className="mx-3 mb-2 rounded-lg bg-gold-soft/50 px-3 py-2 text-xs font-bold text-gold-deep transition hover:bg-gold-soft"

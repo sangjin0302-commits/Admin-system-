@@ -28,3 +28,13 @@ test.describe("English public pages", () => {
     await expect(page.locator("body")).not.toContainText("Fee Guide — Reference Pricing by Area");
   });
 });
+
+// 웹은 국문·영문만 제공 — ar/jp/vn 폐지, 접근 시 404 고정.
+test.describe("Removed languages return 404", () => {
+  for (const path of ["/ar", "/jp", "/vn"]) {
+    test(`${path} → 404`, async ({ page }) => {
+      const res = await page.goto(path);
+      expect(res?.status()).toBe(404);
+    });
+  }
+});

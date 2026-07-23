@@ -245,8 +245,7 @@ function HeaderInner() {
             <div className="mt-3 flex gap-2">
               {[
                 { code: "ko", label: "한국어", href: "/" },
-                { code: "en", label: "English", href: "/en" },
-                { code: "ar", label: "العربية", href: "/ar" }
+                { code: "en", label: "English", href: "/en" }
               ].map((l) => (
                 <Link
                   key={l.code}

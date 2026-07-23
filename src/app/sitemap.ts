@@ -105,10 +105,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/keyword",
   ]);
 
-  // 영/아 별도 랜딩 추가
+  // 영문 별도 랜딩 추가 (웹은 국문·영문만 제공)
   staticRoutes.push(
-    { url: "/en", priority: 0.95 },
-    { url: "/ar", priority: 0.9 }
+    { url: "/en", priority: 0.95 }
   );
 
   const all = [
