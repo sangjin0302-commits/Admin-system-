@@ -51,10 +51,10 @@ export default async function AdminAdvisorPage() {
 
       {/* 조언 카드 */}
       <div className="mt-7 space-y-3">
-        {report.cards.map((card, i) => {
+        {report.cards.map((card) => {
           const s = PRIORITY_STYLE[card.priority];
           return (
-            <div key={i} className={`rounded-xl border border-line border-l-4 bg-surface-muted/40 p-4 ${s.ring}`}>
+            <div key={`${card.priority}-${card.title}`} className={`rounded-xl border border-line border-l-4 bg-surface-muted/40 p-4 ${s.ring}`}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${s.badge}`}>
                   {s.label}

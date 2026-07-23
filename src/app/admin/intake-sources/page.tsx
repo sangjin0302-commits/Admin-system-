@@ -122,7 +122,7 @@ function RecentSourceList({ analytics }: { analytics: IntakeSourceAnalytics }) {
             </thead>
             <tbody>
               {analytics.recentItems.map((item) => (
-                <tr key={`${item.detailHref}-${item.createdAt}`}>
+                <tr key={item.publicTrackingCode || `${item.detailHref}-${item.createdAt}`}>
                   <td>{formatDateTime(item.createdAt)}</td>
                   <td>{item.contactName}</td>
                   <td>{item.source}</td>

@@ -25,10 +25,14 @@ export function CredentialsManager({ initialItems }: { initialItems: Item[] }) {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [form, setForm] = useState({ ...EMPTY });
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const NET_ERR = "네트워크 오류입니다. 잠시 후 다시 시도해 주세요.";
 
   async function add() {
     if (!form.year.trim() || !form.title.trim()) return;
     setBusy(true);
+    setErr(null);
     try {
       const res = await fetch("/api/admin/credentials", {
         method: "POST",
@@ -39,25 +43,41 @@ export function CredentialsManager({ initialItems }: { initialItems: Item[] }) {
       if (res.ok && data.item) {
         setItems((prev) => [...prev, data.item]);
         setForm({ ...EMPTY });
+      } else {
+        setErr("항목 추가에 실패했습니다.");
       }
+    } catch {
+      setErr(NET_ERR);
     } finally {
       setBusy(false);
     }
   }
 
   async function togglePublish(item: Item) {
-    const res = await fetch(`/api/admin/credentials/${item.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ published: !item.published })
-    });
-    if (res.ok) setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, published: !i.published } : i)));
+    setErr(null);
+    try {
+      const res = await fetch(`/api/admin/credentials/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: !item.published })
+      });
+      if (res.ok) setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, published: !i.published } : i)));
+      else setErr("게시 상태 변경에 실패했습니다.");
+    } catch {
+      setErr(NET_ERR);
+    }
   }
 
   async function remove(id: string) {
     if (!confirm("이 항목을 삭제하시겠습니까?")) return;
-    const res = await fetch(`/api/admin/credentials/${id}`, { method: "DELETE" });
-    if (res.ok) setItems((prev) => prev.filter((i) => i.id !== id));
+    setErr(null);
+    try {
+      const res = await fetch(`/api/admin/credentials/${id}`, { method: "DELETE" });
+      if (res.ok) setItems((prev) => prev.filter((i) => i.id !== id));
+      else setErr("삭제에 실패했습니다.");
+    } catch {
+      setErr(NET_ERR);
+    }
   }
 
   function typeLabel(key: string) {
@@ -67,23 +87,35 @@ export function CredentialsManager({ initialItems }: { initialItems: Item[] }) {
   async function move(index: number, dir: -1 | 1) {
     const target = index + dir;
     if (target < 0 || target >= items.length) return;
+    const prev = items;
     const next = [...items];
     [next[index], next[target]] = [next[target], next[index]];
     setItems(next);
-    await Promise.all(
-      next.map((it, i) =>
-        fetch(`/api/admin/credentials/${it.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sortOrder: i })
-        })
-      )
-    ).catch(() => {});
+    setErr(null);
+    try {
+      const results = await Promise.all(
+        next.map((it, i) =>
+          fetch(`/api/admin/credentials/${it.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sortOrder: i })
+          })
+        )
+      );
+      if (results.some((r) => !r.ok)) {
+        setItems(prev); // 순서 저장 실패 → UI 롤백 (서버와 불일치 방지)
+        setErr("순서 저장에 실패했습니다. 원래 순서로 되돌립니다.");
+      }
+    } catch {
+      setItems(prev);
+      setErr(NET_ERR);
+    }
   }
 
   const [resumeBusy, setResumeBusy] = useState(false);
   async function downloadResume() {
     setResumeBusy(true);
+    setErr(null);
     try {
       const res = await fetch("/api/admin/credentials/resume", {
         method: "POST",
@@ -98,7 +130,11 @@ export function CredentialsManager({ initialItems }: { initialItems: Item[] }) {
         a.download = `resume-${new Date().toISOString().slice(0, 10)}.pdf`;
         a.click();
         URL.revokeObjectURL(url);
+      } else {
+        setErr("PDF 생성에 실패했습니다.");
       }
+    } catch {
+      setErr(NET_ERR);
     } finally {
       setResumeBusy(false);
     }
@@ -106,6 +142,11 @@ export function CredentialsManager({ initialItems }: { initialItems: Item[] }) {
 
   return (
     <div className="space-y-8">
+      {err && (
+        <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+          {err}
+        </div>
+      )}
       <div className="rounded-[16px] border border-line bg-surface-muted/40 p-5">
         <h3 className="text-sm font-semibold text-text-strong">경력 항목 추가</h3>
         <div className="mt-4 grid gap-3 lg:grid-cols-4">

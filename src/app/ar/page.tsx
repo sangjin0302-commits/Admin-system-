@@ -190,7 +190,7 @@ export default function ArabicLanding() {
                 <Link href="/links" className="inline-flex h-12 items-center rounded-lg bg-gold px-7 text-sm font-bold text-primary transition hover:bg-gold-soft">
                   جميع القنوات ←
                 </Link>
-                <Link href="/intake" className="inline-flex h-12 items-center rounded-lg border border-gold/60 px-7 text-sm font-semibold text-gold-soft transition hover:bg-gold/10">
+                <Link href="/intake?lang=ar" className="inline-flex h-12 items-center rounded-lg border border-gold/60 px-7 text-sm font-semibold text-gold-soft transition hover:bg-gold/10">
                   نموذج الويب
                 </Link>
               </div>

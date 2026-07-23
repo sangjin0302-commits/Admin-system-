@@ -652,6 +652,10 @@ export function IntakeFormSafeV3({
       const data = (await response.json().catch(() => null)) as IntakeResponse | null;
       setCompletedMessage(copy.completeMessage);
       setCompletedTrackingCode(data?.inquiry?.trackingCode ?? "");
+      // GA4 핵심 전환 이벤트 (generate_lead) — 접수 성공 시 발화. 중복접수는 신규 전환 아님.
+      if (ga4Enabled && !data?.deduplicated) {
+        trackIntakeSubmit(payload.category || "unknown");
+      }
       if (data?.deduplicated) {
         setNotice(copy.deduplicated);
       }
