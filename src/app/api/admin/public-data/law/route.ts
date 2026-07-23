@@ -9,8 +9,9 @@ export async function POST(req: Request) {
     const result = await searchLaw(String(keyword ?? ""), Number(limit ?? 10));
     return NextResponse.json({ ok: true, result });
   } catch (err) {
+    console.error("[admin/public-data/law] failed", err);
     return NextResponse.json(
-      { ok: false, error: String(err) },
+      { ok: false, error: "SERVER_ERROR" },
       { status: 500 }
     );
   }

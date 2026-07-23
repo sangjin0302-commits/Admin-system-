@@ -49,19 +49,24 @@ export async function POST() {
     take: 20,
   }).catch(() => []);
 
-  const subscribers = await listSubscribers();
-  const recipients = subscribers.slice(0, 3);
-  const html = buildHtml(posts);
+  try {
+    const subscribers = await listSubscribers();
+    const recipients = subscribers.slice(0, 3);
+    const html = buildHtml(posts);
 
-  let sent = 0;
-  for (const s of recipients) {
-    const res = await sendEmail({
-      to: s.email,
-      subject: "[ETHOS 테스트] 주간 뉴스레터",
-      html,
-    });
-    if (res.ok) sent++;
+    let sent = 0;
+    for (const s of recipients) {
+      const res = await sendEmail({
+        to: s.email,
+        subject: "[ETHOS 테스트] 주간 뉴스레터",
+        html,
+      });
+      if (res.ok) sent++;
+    }
+
+    return NextResponse.json({ ok: true, posts: posts.length, recipients: sent });
+  } catch (error) {
+    console.error("[admin/newsletter/test-digest] failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true, posts: posts.length, recipients: sent });
 }

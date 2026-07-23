@@ -24,8 +24,9 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ result });
   } catch (err) {
+    console.error("[admin/vision] failed", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "failed" },
+      { error: "failed" },
       { status: 500 },
     );
   }

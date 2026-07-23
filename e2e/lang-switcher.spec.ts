@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test.describe("Language Switcher", () => {
   test("영어 페이지 로드", async ({ page }) => {

@@ -11,7 +11,8 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  const caseMatter = await prisma.caseMatter.findUnique({
+  try {
+    const caseMatter = await prisma.caseMatter.findUnique({
     where: { id },
     include: {
       parties: {
@@ -70,11 +71,15 @@ export async function GET(
 
   const filename = `case-report-${caseMatter.caseNo ?? id}.pdf`;
 
-  return new NextResponse(new Uint8Array(pdfBuffer), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
-    },
-  });
+    return new NextResponse(new Uint8Array(pdfBuffer), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
+      },
+    });
+  } catch (error) {
+    console.error("[admin/cases/report] render failed", error);
+    return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

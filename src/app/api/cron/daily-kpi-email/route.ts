@@ -144,7 +144,7 @@ export async function GET(request: Request) {
     });
     if (error) {
       logger.error("[cron/daily-kpi-email] send error", error);
-      return NextResponse.json({ ok: false, error: error.message });
+      return NextResponse.json({ ok: false, error: "send-failed" });
     }
   } catch (err) {
     logger.error("[cron/daily-kpi-email] error", err);

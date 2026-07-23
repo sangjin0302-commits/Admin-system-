@@ -26,8 +26,9 @@ export async function POST(req: Request) {
       message: { ...msg, createdAt: msg.createdAt.toISOString() },
     }, { status: 201 });
   } catch (err) {
+    console.error("[admin/team-chat] POST failed", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Error" },
+      { error: "Error" },
       { status: 500 }
     );
   }

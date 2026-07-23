@@ -20,8 +20,9 @@ export async function GET(request: Request) {
       },
     });
   } catch (err) {
+    console.error("[admin/brochure/download] failed", err);
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      { ok: false, error: "SERVER_ERROR" },
       { status: 500 },
     );
   }

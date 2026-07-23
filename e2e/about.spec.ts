@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test.describe("About Page", () => {
   test("소개 페이지 로드 + 히어로", async ({ page }) => {

@@ -81,8 +81,9 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true });
   } catch (err) {
+    console.error("[admin/ab-experiments] save failed", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "저장 실패" },
+      { error: "저장 실패" },
       { status: 400 },
     );
   }

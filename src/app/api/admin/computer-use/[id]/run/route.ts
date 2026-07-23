@@ -13,8 +13,9 @@ export async function POST(
     const task = await executeTask(id);
     return NextResponse.json({ task });
   } catch (err) {
+    console.error("[admin/computer-use/run] failed", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "failed" },
+      { error: "failed" },
       { status: 500 },
     );
   }

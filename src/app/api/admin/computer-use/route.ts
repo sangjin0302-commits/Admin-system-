@@ -19,8 +19,9 @@ export async function POST(req: Request) {
     const task = createTask(body.title, body.instruction);
     return NextResponse.json({ task });
   } catch (err) {
+    console.error("[admin/computer-use] POST failed", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "failed" },
+      { error: "failed" },
       { status: 500 },
     );
   }

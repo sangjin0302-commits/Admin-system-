@@ -43,8 +43,9 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(r);
   } catch (err) {
+    console.error("[admin/cloudflare-images] failed", err);
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : "요청 실패" },
+      { ok: false, error: "요청 실패" },
       { status: 400 }
     );
   }

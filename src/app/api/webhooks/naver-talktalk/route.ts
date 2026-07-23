@@ -9,8 +9,9 @@ export async function POST(req: Request) {
     const result = await handleIncomingMessage(payload);
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
+    console.error("[webhooks/naver-talktalk] failed", err);
     return NextResponse.json(
-      { ok: false, error: String(err) },
+      { ok: false, error: "SERVER_ERROR" },
       { status: 500 }
     );
   }

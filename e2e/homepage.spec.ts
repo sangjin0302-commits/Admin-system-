@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test.describe("Homepage", () => {
   // 첫 방문 인트로 스플래시 + 온보딩 툴팁은 세션 최초 1회 노출되며 클릭을 가로챈다.

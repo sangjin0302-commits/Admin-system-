@@ -26,8 +26,9 @@ export async function POST(request: Request) {
     const result = predictWinRate(body as PredictionInput);
     return NextResponse.json(result);
   } catch (error) {
+    console.error("[admin/predict-win-rate] failed", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Unknown error" },
       { status: 500 }
     );
   }

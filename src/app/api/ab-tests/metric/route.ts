@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     recordMetric({ testKey, variant, event, sessionId });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json({ error: "failed", detail: String(error) }, { status: 500 });
+    console.error("[ab-tests/metric] failed", error);
+    return NextResponse.json({ error: "failed" }, { status: 500 });
   }
 }

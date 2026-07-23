@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { createTenant, listTenants } from "@/lib/services/tenant-service";
 
 export async function GET() {
-  return NextResponse.json({ tenants: await listTenants() });
+  try {
+    return NextResponse.json({ tenants: await listTenants() });
+  } catch (err) {
+    console.error("[admin/tenants] GET failed", err);
+    return NextResponse.json({ error: "Error" }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
@@ -18,8 +23,9 @@ export async function POST(req: Request) {
     const tenant = await createTenant({ name, subdomain, ownerEmail, plan });
     return NextResponse.json({ tenant }, { status: 201 });
   } catch (err) {
+    console.error("[admin/tenants] POST failed", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Error" },
+      { error: "Error" },
       { status: 500 }
     );
   }

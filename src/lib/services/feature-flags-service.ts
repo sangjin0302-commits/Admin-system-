@@ -279,7 +279,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "deploy_status_monitor", label: "배포 상태 모니터링", category: "operations", default: false, description: "Vercel 배포 상태 모니터링 + 실패 시 텔레그램 알림 (VERCEL_TOKEN env 필요)" },
   { key: "deploy_status_card", label: "배포 상태 카드", category: "operations", default: true, description: "관리자 설정 페이지에 최근 배포 상태 표시" },
   { key: "reply_tone_ab_tracking", label: "답장 톤 A/B 추적", category: "marketing", default: false, description: "답장 톤 선택 → WON 전환 추적 (어느 톤이 계약 전환율 높은지)" },
-  { key: "local_landing_nav", label: "지역 랜딩 네비 노출", category: "marketing", default: true, public: true, description: "홈페이지·사이드바에 지역 랜딩 링크 노출" },
+  { key: "local_landing_nav", label: "지역 랜딩 네비 노출", category: "marketing", default: true, public: true, description: "홈페이지·사이드바에 지역 랜딩 링크 노출", locked: true, lockReason: "지역 SEO 내부링크 — 안정 인프라, e2e 56/56 그린 잠금 2026-07-22" },
   { key: "kakao_retry_auto", label: "카카오 알림톡 재시도", category: "operations", default: false, description: "카카오 알림톡 발송 실패 자동 재시도 (최대 3회)" },
   { key: "daily_dashboard_email", label: "일일 KPI 이메일", category: "operations", default: false, description: "매일 KPI 스냅샷 이메일 (ADMIN_ALERT_EMAIL env 필요)" },
   { key: "macro_server_sync", label: "매크로 서버 동기화", category: "operations", default: false, description: "매크로 hotkey 서버 저장 (기기간 동기화)" },

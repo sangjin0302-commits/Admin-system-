@@ -35,25 +35,30 @@ export async function POST(req: Request) {
     .filter(Boolean)
     .join("\n");
 
-  const inquiry = await prisma.inquiry.create({
-    data: {
-      contactName: body.contactName,
-      organizationName: body.company,
-      email: body.email,
-      phone: body.phone,
-      title: `[B2B 문의] ${body.company}`,
-      description,
-      clientType: "COMPANY",
-      isCorporateRequest: true,
-      intakeSource: "b2b",
-      intakeChannel: "b2b-form",
-      generatedSummary: "",
-      generatedGuidance: "",
-      generatedReceiptMessage: "",
-      classificationReason: "",
-      recommendedNextStep: "",
-    },
-  });
+  try {
+    const inquiry = await prisma.inquiry.create({
+      data: {
+        contactName: body.contactName,
+        organizationName: body.company,
+        email: body.email,
+        phone: body.phone,
+        title: `[B2B 문의] ${body.company}`,
+        description,
+        clientType: "COMPANY",
+        isCorporateRequest: true,
+        intakeSource: "b2b",
+        intakeChannel: "b2b-form",
+        generatedSummary: "",
+        generatedGuidance: "",
+        generatedReceiptMessage: "",
+        classificationReason: "",
+        recommendedNextStep: "",
+      },
+    });
 
-  return NextResponse.json({ ok: true, id: inquiry.id });
+    return NextResponse.json({ ok: true, id: inquiry.id });
+  } catch (error) {
+    console.error("[public/b2b-inquiry] create failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

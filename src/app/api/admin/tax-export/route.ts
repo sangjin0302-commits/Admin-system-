@@ -32,17 +32,18 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const { start, end, key } = parseMonth(url.searchParams.get("month"));
 
-  const rows = await prisma.inquiry.findMany({
-    where: { status: "WON", updatedAt: { gte: start, lt: end } },
-    select: {
-      id: true, title: true, contactName: true, email: true,
-      phone: true, intakeChannel: true, intakePracticeArea: true,
-      createdAt: true, updatedAt: true,
-    },
-    orderBy: { updatedAt: "asc" },
-  });
+  try {
+    const rows = await prisma.inquiry.findMany({
+      where: { status: "WON", updatedAt: { gte: start, lt: end } },
+      select: {
+        id: true, title: true, contactName: true, email: true,
+        phone: true, intakeChannel: true, intakePracticeArea: true,
+        createdAt: true, updatedAt: true,
+      },
+      orderBy: { updatedAt: "asc" },
+    });
 
-  const header = [
+    const header = [
     "id", "title", "contactName", "contactEmail", "contactPhone",
     "intakeChannel", "practiceArea", "createdAt", "wonAt",
   ].join(",");
@@ -61,14 +62,18 @@ export async function GET(req: Request) {
     ].join(",")
   );
 
-  const csv = "﻿" + [header, ...lines].join("\r\n"); // BOM for Excel Korean
+    const csv = "﻿" + [header, ...lines].join("\r\n"); // BOM for Excel Korean
 
-  return new NextResponse(csv, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="tax-export-${key}.csv"`,
-      "Cache-Control": "no-store",
-    },
-  });
+    return new NextResponse(csv, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="tax-export-${key}.csv"`,
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (error) {
+    console.error("[admin/tax-export] failed", error);
+    return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

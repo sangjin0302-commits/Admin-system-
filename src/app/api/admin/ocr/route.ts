@@ -28,8 +28,9 @@ export async function POST(req: Request) {
     const result = await extractText(body.imageBase64, mimeType);
     return NextResponse.json({ type, result });
   } catch (err) {
+    console.error("[admin/ocr] failed", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "failed" },
+      { error: "failed" },
       { status: 500 }
     );
   }

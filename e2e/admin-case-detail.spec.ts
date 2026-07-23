@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test.describe("Admin Case Detail", () => {
   test("case detail requires auth", async ({ page }) => {

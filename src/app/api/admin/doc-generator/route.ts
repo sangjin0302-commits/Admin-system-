@@ -35,8 +35,9 @@ export async function POST(request: Request) {
     const draft = await generateDocumentDraft(body as DraftInput);
     return NextResponse.json(draft);
   } catch (error) {
+    console.error("[admin/doc-generator] failed", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
+      { error: "SERVER_ERROR" },
       { status: 500 }
     );
   }

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test.describe("Portal Case View", () => {
   test("portal home requires auth or redirects", async ({ page }) => {

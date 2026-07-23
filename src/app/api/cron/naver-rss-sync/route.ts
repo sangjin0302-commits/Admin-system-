@@ -25,7 +25,13 @@ export async function GET(request: Request) {
   //    처리되므로(page.tsx) 중복 콘텐츠 페널티 위험이 없다.
   // 주의: 한 번에 신규 글이 많으면(초기 대량 유입 등) 본문 통번역이 누적돼
   //   maxDuration(60s)을 넘길 수 있다. 그 경우 남은 글은 다음 실행에서 처리된다.
-  const result = await importNaverBlogPosts({ translate: true });
+  let result: Awaited<ReturnType<typeof importNaverBlogPosts>>;
+  try {
+    result = await importNaverBlogPosts({ translate: true });
+  } catch (error) {
+    console.error("[cron/naver-rss-sync] import failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
   logger.info("[cron/naver-rss-sync] done", result);
 
   // 신규 글 있을 때만 텔레그램 알림 (admin)

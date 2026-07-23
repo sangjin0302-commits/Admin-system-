@@ -9,8 +9,9 @@ export async function POST(req: Request) {
     const result = await lookupForeignerStatus(String(passportNo ?? ""));
     return NextResponse.json({ ok: true, result });
   } catch (err) {
+    console.error("[admin/public-data/foreigner] failed", err);
     return NextResponse.json(
-      { ok: false, error: String(err) },
+      { ok: false, error: "SERVER_ERROR" },
       { status: 500 }
     );
   }

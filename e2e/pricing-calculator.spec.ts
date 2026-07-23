@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test.describe("Pricing Calculator", () => {
   test("가격 계산기 페이지 로드", async ({ page }) => {

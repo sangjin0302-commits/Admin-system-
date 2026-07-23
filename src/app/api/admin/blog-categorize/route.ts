@@ -22,20 +22,25 @@ export async function POST(request: Request) {
       ? {}
       : { OR: [{ category: "naver" }, { category: "" }, { category: null as never }] };
 
-  const posts = await prisma.blogPost.findMany({
-    where,
-    select: { id: true, title: true, excerpt: true, body: true }
-  });
+  try {
+    const posts = await prisma.blogPost.findMany({
+      where,
+      select: { id: true, title: true, excerpt: true, body: true }
+    });
 
-  let updated = 0;
-  const counts: Record<string, number> = {};
-  for (const p of posts) {
-    const text = `${p.title}\n${p.excerpt ?? ""}\n${(p.body ?? "").slice(0, 4000)}`;
-    const cat = classifyBlogPost(text);
-    counts[cat] = (counts[cat] ?? 0) + 1;
-    await prisma.blogPost.update({ where: { id: p.id }, data: { category: cat } });
-    updated++;
+    let updated = 0;
+    const counts: Record<string, number> = {};
+    for (const p of posts) {
+      const text = `${p.title}\n${p.excerpt ?? ""}\n${(p.body ?? "").slice(0, 4000)}`;
+      const cat = classifyBlogPost(text);
+      counts[cat] = (counts[cat] ?? 0) + 1;
+      await prisma.blogPost.update({ where: { id: p.id }, data: { category: cat } });
+      updated++;
+    }
+
+    return NextResponse.json({ ok: true, updated, counts });
+  } catch (error) {
+    console.error("[admin/blog-categorize] failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true, updated, counts });
 }

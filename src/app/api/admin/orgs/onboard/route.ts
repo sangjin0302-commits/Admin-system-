@@ -45,15 +45,16 @@ export async function POST(req: Request) {
     );
   }
 
-  const existing = await prisma.organization.findUnique({ where: { subdomain } });
-  if (existing) {
-    return NextResponse.json({ error: "subdomain already taken" }, { status: 409 });
-  }
+  try {
+    const existing = await prisma.organization.findUnique({ where: { subdomain } });
+    if (existing) {
+      return NextResponse.json({ error: "subdomain already taken" }, { status: 409 });
+    }
 
-  // Ensure org context resolves cleanly (multi_org_mode-aware).
-  await getCurrentOrgId(req);
+    // Ensure org context resolves cleanly (multi_org_mode-aware).
+    await getCurrentOrgId(req);
 
-  const org = await prisma.organization.create({
+    const org = await prisma.organization.create({
     data: {
       name,
       subdomain,
@@ -89,13 +90,17 @@ export async function POST(req: Request) {
     });
   }
 
-  return NextResponse.json({
-    ok: true,
-    organization: {
-      id: org.id,
-      name: org.name,
-      subdomain: org.subdomain,
-      plan: org.plan,
-    },
-  });
+    return NextResponse.json({
+      ok: true,
+      organization: {
+        id: org.id,
+        name: org.name,
+        subdomain: org.subdomain,
+        plan: org.plan,
+      },
+    });
+  } catch (error) {
+    console.error("[admin/orgs/onboard] failed", error);
+    return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

@@ -10,8 +10,8 @@ import type { Locale } from "@/types/inquiry";
 export const dynamic = "force-dynamic";
 
 function normalizeIntakeLocale(value: unknown): Locale {
+  // 웹은 국문·영문만 제공 — ar 등은 국문으로 폴백.
   if (value === "en") return "en";
-  if (value === "ar") return "ar";
   return "ko";
 }
 
@@ -29,11 +29,9 @@ export default async function IntakePageSafe({
   const locale = normalizeIntakeLocale(lang);
   const intakeTracking = buildIntakeSourceTrackingFromSearchParams(params);
 
-  const prepChips = locale === "ar"
-    ? ["الوضع الحالي", "الهدف/الموعد", "المستندات المتوفرة", "الجهة المستهدفة"]
-    : locale === "ko"
-      ? ["현재 상황", "목표/마감", "보유 문서", "제출처"]
-      : ["Current status", "Goal & deadline", "Available documents", "Target authority"];
+  const prepChips = locale === "ko"
+    ? ["현재 상황", "목표/마감", "보유 문서", "제출처"]
+    : ["Current status", "Goal & deadline", "Available documents", "Target authority"];
 
   return (
     <div className="overflow-x-clip">

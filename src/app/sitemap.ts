@@ -128,7 +128,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         languages: {
           ko: koUrl,
           en: r.url === "/" ? `${SITE_URL}/en` : `${koUrl}?lang=en`,
-          ar: r.url === "/" ? `${SITE_URL}/ar` : undefined,
           "x-default": koUrl
         } as Record<string, string | undefined> as Record<string, string>,
       };

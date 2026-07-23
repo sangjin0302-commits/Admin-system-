@@ -21,8 +21,9 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true, id });
   } catch (err) {
+    console.error("[admin/vector-search] POST failed", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "failed" },
+      { error: "failed" },
       { status: 500 }
     );
   }
@@ -33,6 +34,11 @@ export async function GET(req: Request) {
   const q = url.searchParams.get("q") ?? "";
   const limit = Number(url.searchParams.get("limit") ?? "5");
   if (!q) return NextResponse.json({ results: [] });
-  const results = await searchSimilar(q, limit);
-  return NextResponse.json({ results });
+  try {
+    const results = await searchSimilar(q, limit);
+    return NextResponse.json({ results });
+  } catch (err) {
+    console.error("[admin/vector-search] GET failed", err);
+    return NextResponse.json({ error: "failed" }, { status: 500 });
+  }
 }

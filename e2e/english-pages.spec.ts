@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 // 외국인 방문 경로: 공개 페이지가 ?lang=en 에서 실제 영어 카피를 렌더하는지 검증.
 test.describe("English public pages", () => {

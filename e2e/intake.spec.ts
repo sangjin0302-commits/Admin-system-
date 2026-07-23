@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 // 첫 방문 인트로/온보딩 오버레이가 클릭을 가로채므로 재방문 상태로 세팅.
 test.beforeEach(async ({ context }) => {

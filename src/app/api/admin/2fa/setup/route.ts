@@ -30,10 +30,15 @@ export async function PUT(req: Request) {
     return NextResponse.json({ ok: false, error: "invalid token" }, { status: 400 });
   }
   const key = `admin.2fa.${email}`;
-  await prisma.siteSetting.upsert({
-    where: { key },
-    create: { key, value: secret, updatedBy: email },
-    update: { value: secret, updatedBy: email },
-  });
+  try {
+    await prisma.siteSetting.upsert({
+      where: { key },
+      create: { key, value: secret, updatedBy: email },
+      update: { value: secret, updatedBy: email },
+    });
+  } catch (error) {
+    console.error("[admin/2fa/setup] upsert failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

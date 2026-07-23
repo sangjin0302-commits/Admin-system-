@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       {
         ok: false,
         error: "BLOB_UPLOAD_FAILED",
-        message: `이미지 저장소 업로드 실패: ${msg}`,
+        message: "이미지 저장소 업로드에 실패했습니다.",
       },
       { status: 502 }
     );
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
       {
         ok: false,
         error: "DB_SAVE_FAILED",
-        message: `DB 저장 실패: ${msg}`,
+        message: "DB 저장에 실패했습니다.",
         blobUrl,
       },
       { status: 500 }

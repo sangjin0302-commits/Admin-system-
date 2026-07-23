@@ -29,7 +29,8 @@ export async function POST(req: Request) {
       entities: { parties, amounts, dates, clauses },
     });
   } catch (err) {
+    console.error("[v1/legal-entity-extract] failed", err);
     await auth.onFinish(false, Date.now() - started);
-    return NextResponse.json({ ok: false, error: "INTERNAL", detail: String(err) }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "INTERNAL" }, { status: 500 });
   }
 }

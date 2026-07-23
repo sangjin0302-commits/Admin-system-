@@ -100,7 +100,7 @@ export async function POST(req: Request) {
   } catch (err) {
     logger.error("[document-ocr] failed", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "ocr_failed" },
+      { error: "ocr_failed" },
       { status: 500 }
     );
   }

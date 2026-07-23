@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test.describe("Exit Intent Modal", () => {
   test("홈에서 상단 이탈 시 모달 후보 존재", async ({ page }) => {

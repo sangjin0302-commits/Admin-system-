@@ -17,32 +17,37 @@ export async function GET(req: Request) {
   const guard = await requireRole(req, ["SUPER", "MANAGER"]);
   if (!guard.ok) return guard.response;
 
-  const posts = await prisma.blogPost.findMany({
-    where: { published: true },
-    select: { id: true, slug: true, title: true, titleEn: true, bodyEn: true, publishedAt: true },
-    orderBy: { publishedAt: "desc" },
-    take: 50,
-  });
+  try {
+    const posts = await prisma.blogPost.findMany({
+      where: { published: true },
+      select: { id: true, slug: true, title: true, titleEn: true, bodyEn: true, publishedAt: true },
+      orderBy: { publishedAt: "desc" },
+      take: 50,
+    });
 
-  const zhKeys = posts.map((p) => `blog.translation.zh.${p.id}`);
-  const zhRows = await prisma.siteSetting.findMany({
-    where: { key: { in: zhKeys } },
-    select: { key: true },
-  });
-  const zhSet = new Set(zhRows.map((r) => r.key));
+    const zhKeys = posts.map((p) => `blog.translation.zh.${p.id}`);
+    const zhRows = await prisma.siteSetting.findMany({
+      where: { key: { in: zhKeys } },
+      select: { key: true },
+    });
+    const zhSet = new Set(zhRows.map((r) => r.key));
 
-  const status = posts.map((p) => ({
-    id: p.id,
-    slug: p.slug,
-    title: p.title,
-    hasEn: Boolean(p.titleEn && p.bodyEn),
-    hasZh: zhSet.has(`blog.translation.zh.${p.id}`),
-  }));
+    const status = posts.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      hasEn: Boolean(p.titleEn && p.bodyEn),
+      hasZh: zhSet.has(`blog.translation.zh.${p.id}`),
+    }));
 
-  return NextResponse.json({
-    posts: status,
-    pendingCount: status.filter((s) => !s.hasEn || !s.hasZh).length,
-  });
+    return NextResponse.json({
+      posts: status,
+      pendingCount: status.filter((s) => !s.hasEn || !s.hasZh).length,
+    });
+  } catch (error) {
+    console.error("[admin/blog-translate-batch] GET failed", error);
+    return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
@@ -53,7 +58,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "feature disabled" }, { status: 403 });
   }
 
-  const candidates = await prisma.blogPost.findMany({
+  try {
+    const candidates = await prisma.blogPost.findMany({
     where: { published: true },
     select: {
       id: true,
@@ -112,5 +118,9 @@ export async function POST(req: Request) {
     processed += 1;
   }
 
-  return NextResponse.json({ processed, results });
+    return NextResponse.json({ processed, results });
+  } catch (error) {
+    console.error("[admin/blog-translate-batch] POST failed", error);
+    return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
+  }
 }

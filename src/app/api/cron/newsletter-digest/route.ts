@@ -67,23 +67,28 @@ export async function GET(request: Request) {
     take: 20,
   }).catch(() => []);
 
-  const subscribers = await listSubscribers();
-  if (subscribers.length === 0) {
-    return NextResponse.json({ ok: true, sent: 0, note: "no subscribers" });
+  try {
+    const subscribers = await listSubscribers();
+    if (subscribers.length === 0) {
+      return NextResponse.json({ ok: true, sent: 0, note: "no subscribers" });
+    }
+
+    const html = buildHtml(posts);
+    const subject = `[ETHOS] 주간 소식 (${posts.length}편)`;
+
+    // Send in small batches (Resend recommends BCC or 1-per-message; we send individually to keep it simple).
+    let sent = 0;
+    let failed = 0;
+    for (const sub of subscribers) {
+      const res = await sendEmail({ to: sub.email, subject, html });
+      if (res.ok) sent++;
+      else failed++;
+    }
+
+    logger.info("[cron/newsletter-digest] complete", { total: subscribers.length, sent, failed, posts: posts.length });
+    return NextResponse.json({ ok: true, sent, failed, posts: posts.length });
+  } catch (error) {
+    console.error("[cron/newsletter-digest] failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
   }
-
-  const html = buildHtml(posts);
-  const subject = `[ETHOS] 주간 소식 (${posts.length}편)`;
-
-  // Send in small batches (Resend recommends BCC or 1-per-message; we send individually to keep it simple).
-  let sent = 0;
-  let failed = 0;
-  for (const sub of subscribers) {
-    const res = await sendEmail({ to: sub.email, subject, html });
-    if (res.ok) sent++;
-    else failed++;
-  }
-
-  logger.info("[cron/newsletter-digest] complete", { total: subscribers.length, sent, failed, posts: posts.length });
-  return NextResponse.json({ ok: true, sent, failed, posts: posts.length });
 }

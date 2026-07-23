@@ -16,9 +16,14 @@ export async function GET() {
     return NextResponse.json({ ok: false, error: "flag-off" }, { status: 404 });
   }
 
-  const row = await prisma.siteSetting.findUnique({ where: { key: SETTING_KEY } });
-  const macros: MacroSlot[] = row?.value ? JSON.parse(row.value) : [];
-  return NextResponse.json({ ok: true, macros });
+  try {
+    const row = await prisma.siteSetting.findUnique({ where: { key: SETTING_KEY } });
+    const macros: MacroSlot[] = row?.value ? JSON.parse(row.value) : [];
+    return NextResponse.json({ ok: true, macros });
+  } catch (error) {
+    console.error("[admin/macro-hotkeys] GET failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 }
 
 /** PUT: 매크로 hotkey 목록 저장 (upsert) */
@@ -27,8 +32,8 @@ export async function PUT(request: Request) {
     return NextResponse.json({ ok: false, error: "flag-off" }, { status: 404 });
   }
 
-  const body = await request.json();
-  const macros = body.macros as MacroSlot[];
+  const body = await request.json().catch(() => null);
+  const macros = body?.macros as MacroSlot[] | undefined;
 
   if (!Array.isArray(macros) || macros.length > MAX_SLOTS) {
     return NextResponse.json({ ok: false, error: "invalid" }, { status: 400 });
@@ -42,11 +47,16 @@ export async function PUT(request: Request) {
       text: String(m.text ?? "").slice(0, 1500),
     }));
 
-  await prisma.siteSetting.upsert({
-    where: { key: SETTING_KEY },
-    create: { key: SETTING_KEY, value: JSON.stringify(clean) },
-    update: { value: JSON.stringify(clean) },
-  });
+  try {
+    await prisma.siteSetting.upsert({
+      where: { key: SETTING_KEY },
+      create: { key: SETTING_KEY, value: JSON.stringify(clean) },
+      update: { value: JSON.stringify(clean) },
+    });
+  } catch (error) {
+    console.error("[admin/macro-hotkeys] PUT failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

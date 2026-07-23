@@ -36,12 +36,17 @@ export async function GET(request: Request) {
     return `· ${s.title} (${s.inquiryType}) — ${hours}h 경과`;
   });
 
-  await sendTelegramAlert({
-    kind: "system",
-    title: `미응답 의뢰 ${stale.length}건 (24h+)`,
-    lines,
-    url: process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/admin/inquiries` : undefined
-  });
+  try {
+    await sendTelegramAlert({
+      kind: "system",
+      title: `미응답 의뢰 ${stale.length}건 (24h+)`,
+      lines,
+      url: process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/admin/inquiries` : undefined
+    });
+  } catch (error) {
+    console.error("[cron/stale-inquiries-alert] alert failed", error);
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
 
   logger.info("[cron/stale-inquiries-alert]", { count: stale.length });
   return NextResponse.json({ ok: true, stale: stale.length });
