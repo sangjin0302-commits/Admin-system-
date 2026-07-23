@@ -4,7 +4,7 @@ import { RagChatWidget } from "@/components/public/rag-chat-widget";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "지식 챗봇 — ETHOS 행정사사무소",
+  title: "지식 챗봇 — 에토스 행정사사무소(ETHOS)",
   description: "블로그·판례·사례·FAQ 기반 실시간 AI 답변",
 };
 

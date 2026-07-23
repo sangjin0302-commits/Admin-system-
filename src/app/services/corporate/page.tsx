@@ -7,7 +7,7 @@ import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "법인 설립 — ETHOS 행정사사무소",
+  title: "법인 설립 — 에토스 행정사사무소(ETHOS)",
   description: "법인 설립 절차, 정관·등기 준비, 설립 후 인허가 연계까지 한 흐름으로 정리합니다."
 };
 

@@ -5,7 +5,7 @@ import { BookingWidget } from "@/components/public/booking-widget";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "상담 예약 — ETHOS 행정사사무소",
+  title: "상담 예약 — 에토스 행정사사무소(ETHOS)",
   description:
     "ETHOS 행정사사무소 상담 예약. 원하시는 날짜와 시간을 선택하시면 영업일 24시간 이내 회신드립니다.",
   alternates: { canonical: "/book-consultation" },

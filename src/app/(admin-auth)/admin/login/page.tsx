@@ -6,7 +6,7 @@ import { AdminLoginForm } from "./login-form";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "관리자 로그인 — ETHOS 행정사사무소",
+  title: "관리자 로그인 — 에토스 행정사사무소(ETHOS)",
   robots: { index: false, follow: false }
 };
 

@@ -128,7 +128,6 @@ export default function EnglishLanding() {
                   <div className="mt-7 flex flex-wrap justify-center gap-1.5">
                     <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-white/90">🇰🇷 한국어</span>
                     <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-white/90">🇬🇧 English</span>
-                    <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-white/90">🇸🇦 العربية</span>
                   </div>
                 </div>
               </div>

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 const COPY = {
   ko: {
-    metaTitle: "오시는 길 — ETHOS 행정사사무소",
+    metaTitle: "오시는 길 — 에토스 행정사사무소(ETHOS)",
     metaDescription: "에토스 행정사사무소 위치, 연락처, 운영시간 안내.",
     heroEyebrow: "Contact",
     heroTitle: "오시는 길",

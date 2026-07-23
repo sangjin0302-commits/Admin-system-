@@ -6,7 +6,7 @@ import { Reveal } from "@/components/public/reveal";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "키워드 가이드 — ETHOS 행정사사무소",
+  title: "키워드 가이드 — 에토스 행정사사무소(ETHOS)",
   description: "비자·행정심판·법인설립·귀화 등 행정사 핵심 키워드별 가이드."
 };
 

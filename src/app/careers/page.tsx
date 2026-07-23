@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 const COPY = {
   ko: {
-    metaTitle: "채용 · 멘토링 | ETHOS 행정사사무소",
+    metaTitle: "채용 · 멘토링 | 에토스 행정사사무소(ETHOS)",
     metaDescription:
       "ETHOS 행정사사무소와 함께할 정규직 · 파트타임 · 멘토링 파트너를 모십니다. 비자, 행정심판, 계약, 인허가 실무를 함께 성장시켜갈 분을 찾습니다.",
     kicker: "CAREERS · MENTORSHIP",

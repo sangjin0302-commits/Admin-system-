@@ -64,8 +64,7 @@ export function buildMessagePreview(input: BuildMessageInput) {
 export function buildMessagePreviewSet(input: BuildMessageInput) {
   return {
     ko: buildPreviewForLocale(input, "ko"),
-    en: buildPreviewForLocale(input, "en"),
-    ar: buildPreviewForLocale(input, "ar")
+    en: buildPreviewForLocale(input, "en")
   };
 }
 

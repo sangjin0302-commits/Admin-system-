@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "개인정보 처리방침 — ETHOS 행정사사무소",
+  title: "개인정보 처리방침 — 에토스 행정사사무소(ETHOS)",
   description: "에토스 행정사사무소의 개인정보 수집·이용·보관 처리방침."
 };
 

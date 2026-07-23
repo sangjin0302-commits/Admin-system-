@@ -33,7 +33,7 @@ import DynamicCtaButton from "@/components/public/dynamic-cta-button";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "ETHOS 행정사사무소 — 절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를",
+  title: "에토스 행정사사무소(ETHOS) — 절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를",
   description:
     "에토스 행정사사무소. 비자/외국인 체류, 행정심판, 계약서·사실조사, 인허가 업무를 Logos·Pathos·Ethos 철학으로 함께합니다."
 };
@@ -359,7 +359,7 @@ export default async function PublicMarketingHomePage({
                 {[
                   "주한 대사관 실무 3년",
                   "영업일 24시간 내 회신 안내",
-                  "한국어 · 영어 · 아랍어 상담"
+                  "한국어 · 영어 상담"
                 ].map((benefit) => (
                   <span
                     key={benefit}
@@ -428,7 +428,7 @@ export default async function PublicMarketingHomePage({
                   {holoLogoEnabled ? <HoloLogo label="ETHOS 3D 로고" /> : (
                   <Image
                     src={heroLogo}
-                    alt="ETHOS 행정사사무소 로고"
+                    alt="에토스 행정사사무소(ETHOS) 로고"
                     fill
                     className="object-contain p-2"
                     priority
@@ -448,7 +448,6 @@ export default async function PublicMarketingHomePage({
                 <div className="flex flex-wrap justify-center gap-2">
                   <span className="rounded-full bg-white/10 px-3 py-1 font-serif text-xs font-bold text-white ring-1 ring-gold/30">🇰🇷 한국어</span>
                   <span className="rounded-full bg-white/10 px-3 py-1 font-serif text-xs font-bold text-white ring-1 ring-gold/30">🇬🇧 English</span>
-                  <span className="rounded-full bg-white/10 px-3 py-1 font-serif text-xs font-bold text-white ring-1 ring-gold/30">🇸🇦 العربية</span>
                 </div>
 
                 {/* 권위 한 줄 */}
@@ -589,7 +588,7 @@ export default async function PublicMarketingHomePage({
                     "주한 대사관 비자·출입국 실무 3년",
                     "법무부 난민 판결문 공식 번역인",
                     "법원행정처 법정 통번역인 등록",
-                    "한국어 · 영어 · 아랍어 상담 가능"
+                    "한국어 · 영어 상담 가능"
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-3 text-sm text-text">
                       <span className="h-1.5 w-1.5 shrink-0 rotate-45 bg-gold" aria-hidden />

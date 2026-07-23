@@ -66,7 +66,7 @@ export async function generateMetadata({
   const { name } = await params;
   const decoded = decodeURIComponent(name);
   return {
-    title: `${decoded} — 블로그 | ETHOS 행정사사무소`,
+    title: `${decoded} — 블로그 | 에토스 행정사사무소(ETHOS)`,
     description: `${decoded} 카테고리의 행정사 실무·법령 해설 글 모음.`,
     alternates: { canonical: `/blog/category/${name}` },
   };

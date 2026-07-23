@@ -18,7 +18,7 @@ export async function generateMetadata({
         description: "Visa/stay, administrative appeal, contracts/fact-finding, and licensing — our five core practice areas."
       }
     : {
-        title: "업무 분야 — ETHOS 행정사사무소",
+        title: "업무 분야 — 에토스 행정사사무소(ETHOS)",
         description: "비자/체류, 행정심판, 계약서/사실조사, 인허가 — 다섯 가지 주력 분야를 안내합니다."
       };
 }

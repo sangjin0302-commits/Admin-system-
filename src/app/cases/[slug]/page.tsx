@@ -17,7 +17,7 @@ export async function generateMetadata({
   const c = getPublicCaseBySlug(slug) ?? (await getDbCaseStudyBySlug(slug));
   if (!c) return { title: "사례를 찾을 수 없습니다" };
   return {
-    title: `${c.title} — 처리 사례 | ETHOS 행정사사무소`,
+    title: `${c.title} — 처리 사례 | 에토스 행정사사무소(ETHOS)`,
     description: c.summary
   };
 }

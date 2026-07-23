@@ -137,11 +137,9 @@ const messages = {
     errors: {
       generic: "Something went wrong while submitting. Please review the form."
     }
-  },
-  ar: null
+  }
 } as const;
 
 export function getMessages(locale: Locale) {
-  if (locale === "ar") return messages.en;
   return messages[locale];
 }

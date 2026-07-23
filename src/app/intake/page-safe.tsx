@@ -100,17 +100,10 @@ export default async function IntakePageSafe({
               <div className="ethos-card h-full p-8">
                 <p className="ethos-eyebrow">Step 2</p>
                 <h2 className="ethos-display mt-3 text-2xl">
-                  {locale === "ar" ? "قبل التقديم" : locale === "ko" ? "접수 전 확인" : "Before you submit"}
+                  {locale === "ko" ? "접수 전 확인" : "Before you submit"}
                 </h2>
                 <ul className="mt-7 space-y-3">
-                  {(locale === "ar"
-                    ? [
-                        "إذا تلقيت إشعارًا أو قرارًا، تحقق من تواريخ القرار والإشعار والتسليم.",
-                        "قد تكون تواريخ انتهاء التأشيرة والمواعيد النهائية للتقديم مهمة.",
-                        "بعد التقديم، نرشدك إلى المواد المطلوبة حسب الحالة.",
-                        "لا نضمن النتائج؛ يجب التحقق من النماذج الرسمية ومتطلبات الجهات."
-                      ]
-                    : [
+                  {([
                     locale === "ko"
                       ? "처분서나 통지서를 받은 경우 처분일, 통지일, 송달일을 확인해 주세요."
                       : "If you received a notice or disposition, check the decision, notice, and delivery dates.",

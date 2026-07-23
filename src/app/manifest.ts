@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "ETHOS 행정사사무소",
+    name: "에토스 행정사사무소(ETHOS)",
     short_name: "ETHOS",
     description:
       "비자/체류, 행정심판, 계약서·사실조사, 인허가. 절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를.",

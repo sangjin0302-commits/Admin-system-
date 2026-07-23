@@ -14,7 +14,7 @@ export async function generateMetadata({
   const { id } = await params;
   const q = await getQuestion(id);
   if (!q || q.status !== "ANSWERED") {
-    return { title: "Q&A | ETHOS 행정사사무소" };
+    return { title: "Q&A | 에토스 행정사사무소(ETHOS)" };
   }
   const description = (q.answer ?? q.body).replace(/<[^>]+>/g, " ").slice(0, 160);
   return {

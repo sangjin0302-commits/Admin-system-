@@ -10,7 +10,6 @@ import type { ClientMessagePreview } from "@/lib/message-templates/types";
 type PreviewMap = {
   ko: ClientMessagePreview;
   en: ClientMessagePreview;
-  ar: ClientMessagePreview;
 };
 
 export function InquiryMessagePreview({ previews }: { previews: PreviewMap }) {
@@ -32,7 +31,7 @@ export function InquiryMessagePreview({ previews }: { previews: PreviewMap }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        {(["ko", "en", "ar"] as const).map((value) => (
+        {(["ko", "en"] as const).map((value) => (
           <Button
             key={value}
             type="button"
@@ -40,7 +39,7 @@ export function InquiryMessagePreview({ previews }: { previews: PreviewMap }) {
             size="sm"
             onClick={() => setLocale(value)}
           >
-            {value === "ko" ? "한국어" : value === "en" ? "English" : "Arabic"}
+            {value === "ko" ? "한국어" : "English"}
           </Button>
         ))}
       </div>

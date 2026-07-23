@@ -21,7 +21,7 @@ export async function generateMetadata({
           "OASIS 4 foreign founder startup support lecture series by Jean — visa, business registration, compliance for foreign entrepreneurs in Korea."
       }
     : {
-        title: "강연 · 활동 — ETHOS 행정사사무소",
+        title: "강연 · 활동 — 에토스 행정사사무소(ETHOS)",
         description: "OASIS 4 외국인 창업지원 프로그램 강의 등 행정사 지상진의 교육·강연 활동을 소개합니다."
       };
 }

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "ETHOS 행정사사무소 — 비자 · 행정심판 · 인허가, 2주 안에 해결 방향을 드립니다";
+export const alt = "에토스 행정사사무소(ETHOS) — 비자 · 행정심판 · 인허가, 2주 안에 해결 방향을 드립니다";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

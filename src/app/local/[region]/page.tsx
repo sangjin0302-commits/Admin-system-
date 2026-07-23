@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: { params: Promise<{ region: s
   const info = REGIONS[region];
   if (!info) return {};
   return {
-    title: `${info.name} 행정사 — 비자·행정심판·인허가 | ETHOS 행정사사무소`,
+    title: `${info.name} 행정사 — 비자·행정심판·인허가 | 에토스 행정사사무소(ETHOS)`,
     description: `${info.name} 및 인근 지역 비자/체류, 행정심판, 인허가, 계약서 업무. 무료 검토로 가능성과 예상 비용을 먼저 확인하세요. 영업일 24시간 내 회신.`,
     alternates: { canonical: `/local/${region}` },
   };

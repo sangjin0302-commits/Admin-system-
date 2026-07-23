@@ -28,51 +28,37 @@ const COMMON_DOCS: Record<Locale, string[]> = {
     "Scans or photos of related documents",
     "Target authority and purpose",
     "Preferred schedule or deadline"
-  ],
-  ar: [
-    "Applicant basic information",
-    "Passport or ID copy",
-    "Scans or photos of related documents",
-    "Target authority and purpose",
-    "Preferred schedule or deadline"
   ]
 };
 
 const TYPE_DOCS: Record<InquiryType, Record<Locale, string[]>> = {
   FOREIGNER_VISA: {
     ko: ["현재 체류자격 정보", "외국인등록증 사본", "고용 또는 초청 관련 서류", "학력/경력 입증자료"],
-    en: ["Current visa status", "ARC copy", "Employment or invitation documents", "Education or career proof"],
-    ar: ["Current visa status", "ARC copy", "Employment or invitation documents", "Education or career proof"]
+    en: ["Current visa status", "ARC copy", "Employment or invitation documents", "Education or career proof"]
   },
   IMMIGRATION_STAY: {
     ko: ["체류만료일", "최근 출입국 이력", "체류지 신고 관련 자료", "변경 또는 연장 사유 자료"],
-    en: ["Stay expiry date", "Recent immigration history", "Address reporting materials", "Reason for change or extension"],
-    ar: ["Stay expiry date", "Recent immigration history", "Address reporting materials", "Reason for change or extension"]
+    en: ["Stay expiry date", "Recent immigration history", "Address reporting materials", "Reason for change or extension"]
   },
   APOSTILLE_CONSULAR: {
     ko: ["원본 문서 발행국 정보", "원본 또는 공증본 여부", "한국 제출기관 정보", "영사확인 필요 여부"],
-    en: ["Issuing country of the original document", "Whether you have originals or notarized copies", "Target Korean authority", "Whether consular legalization may be required"],
-    ar: ["Issuing country of the original document", "Whether you have originals or notarized copies", "Target Korean authority", "Whether consular legalization may be required"]
+    en: ["Issuing country of the original document", "Whether you have originals or notarized copies", "Target Korean authority", "Whether consular legalization may be required"]
   },
   TRANSLATION_NOTARY: {
     ko: ["원문 파일", "번역 언어 방향", "공증 필요 여부", "페이지 수 또는 분량"],
-    en: ["Source document file", "Translation language direction", "Whether notarization is required", "Page count or volume"],
-    ar: ["Source document file", "Translation language direction", "Whether notarization is required", "Page count or volume"]
+    en: ["Source document file", "Translation language direction", "Whether notarization is required", "Page count or volume"]
   },
   GENERAL_ADMIN_CIVIL: {
     ko: ["신청 대상 기관", "민원 목적", "보유 중인 관련 허가/신고 문서", "기존 반려 또는 보완 이력"],
-    en: ["Target authority", "Purpose of the request", "Existing permits or filings", "Any rejection or supplement history"],
-    ar: ["Target authority", "Purpose of the request", "Existing permits or filings", "Any rejection or supplement history"]
+    en: ["Target authority", "Purpose of the request", "Existing permits or filings", "Any rejection or supplement history"]
   },
   CORPORATE_REQUEST: {
     ko: ["회사 기본정보", "담당자 정보", "프로젝트 범위", "국가별 제출 일정", "예상 건수"],
-    en: ["Company profile", "Contact person information", "Project scope", "Country-by-country filing schedule", "Expected case volume"],
-    ar: ["Company profile", "Contact person information", "Project scope", "Country-by-country filing schedule", "Expected case volume"]
+    en: ["Company profile", "Contact person information", "Project scope", "Country-by-country filing schedule", "Expected case volume"]
   },
   UNKNOWN: {
     ko: ["상세 문의 내용", "관련 문서", "희망 처리 방향"],
-    en: ["Detailed request description", "Related documents", "Preferred handling direction"],
-    ar: ["Detailed request description", "Related documents", "Preferred handling direction"]
+    en: ["Detailed request description", "Related documents", "Preferred handling direction"]
   }
 };
 

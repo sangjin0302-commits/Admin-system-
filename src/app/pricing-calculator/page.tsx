@@ -4,7 +4,7 @@ import { PricingCalculator } from "@/components/public/pricing-calculator";
 import { Reveal } from "@/components/public/reveal";
 
 export const metadata: Metadata = {
-  title: "예상 수임료 계산 — ETHOS 행정사사무소",
+  title: "예상 수임료 계산 — 에토스 행정사사무소(ETHOS)",
   description:
     "분야·복잡도·긴급도만 선택하면 행정사 예상 수임료 범위를 30초 만에 확인할 수 있습니다. 상담료는 수임 확정 시 전액 차감되며, 정확한 금액은 무료 검토 후 확정됩니다.",
 };

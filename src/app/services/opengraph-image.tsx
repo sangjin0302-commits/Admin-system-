@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "ETHOS 행정사사무소 — 업무 분야";
+export const alt = "에토스 행정사사무소(ETHOS) — 업무 분야";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

@@ -7,7 +7,7 @@ import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "비자/외국인 체류 — ETHOS 행정사사무소",
+  title: "비자/외국인 체류 — 에토스 행정사사무소(ETHOS)",
   description: "체류 자격 변경·연장, 사업/투자 비자, 강제퇴거 대응까지 한 흐름으로 정리합니다."
 };
 

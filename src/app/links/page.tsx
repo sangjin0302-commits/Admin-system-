@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma/client";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "모든 채널 — ETHOS 행정사사무소 지상진",
+  title: "모든 채널 — 에토스 행정사사무소(ETHOS) 지상진",
   description:
     "네이버 톡톡, 카카오, 이메일, 텔레그램, 네이버 엑스퍼트, 링크드인 — 한 곳에서 연결하세요.",
   openGraph: {
@@ -51,7 +51,7 @@ const LINKS: Link[] = [
   {
     url: CHANNELS.telegram.url,
     label: "Telegram",
-    sub: `${CHANNELS.telegram.value} · English / العربية`,
+    sub: `${CHANNELS.telegram.value} · English`,
     bg: "bg-[#0088CC]",
     fg: "text-white",
     icon: <TelegramIcon />,
@@ -127,7 +127,6 @@ export default async function LinksPage() {
           <div className="mt-4 flex flex-wrap justify-center gap-1.5">
             <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800">🇰🇷 한국어</span>
             <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800">🇬🇧 English</span>
-            <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800">🇸🇦 العربية</span>
           </div>
 
           <p className="mt-4 inline-block rounded-full bg-gold-soft/40 px-3 py-1 text-xs font-bold text-gold-deep">

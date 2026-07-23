@@ -7,7 +7,7 @@ import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "계약서 / 사실조사 — ETHOS 행정사사무소",
+  title: "계약서 / 사실조사 — 에토스 행정사사무소(ETHOS)",
   description: "계약 검토·작성, 분쟁 사실관계 조사, 조사보고서 작성을 지원합니다."
 };
 

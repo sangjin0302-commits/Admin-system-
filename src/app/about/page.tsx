@@ -12,7 +12,7 @@ import { listPublicCredentials, CREDENTIAL_TYPE_LABELS } from "@/lib/services/cr
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "사무소 소개 — ETHOS 행정사사무소",
+  title: "사무소 소개 — 에토스 행정사사무소(ETHOS)",
   description: "에토스 행정사사무소의 철학, 대표 행정사 소개, 운영 원칙을 안내합니다."
 };
 
@@ -54,7 +54,7 @@ const VALUES_EN = [
 
 const COPY = {
   ko: {
-    metaTitle: "사무소 소개 — ETHOS 행정사사무소",
+    metaTitle: "사무소 소개 — 에토스 행정사사무소(ETHOS)",
     metaDescription: "에토스 행정사사무소의 철학, 대표 행정사 소개, 운영 원칙을 안내합니다.",
     eyebrowAbout: "About ETHOS",
     heroTitle: "사무소 소개",
@@ -529,9 +529,6 @@ export default async function AboutPage({
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800">
                     🇬🇧 English
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800">
-                    🇸🇦 العربية
                   </span>
                 </div>
 

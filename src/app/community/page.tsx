@@ -4,7 +4,7 @@ import Link from "next/link";
 import { listQuestions, COMMUNITY_CATEGORIES } from "@/lib/services/community-service";
 
 export const metadata: Metadata = {
-  title: "행정 Q&A 커뮤니티 | ETHOS 행정사사무소",
+  title: "행정 Q&A 커뮤니티 | 에토스 행정사사무소(ETHOS)",
   description:
     "비자·행정심판·계약·인허가 등 실무 질문에 대한 행정사 답변을 모아둔 커뮤니티. 궁금한 점을 남기시면 확인 후 답변드립니다.",
 };

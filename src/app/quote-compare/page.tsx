@@ -5,7 +5,7 @@ import { QuoteCompare } from "@/components/public/quote-compare";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "비교 견적 요청 — ETHOS 행정사사무소",
+  title: "비교 견적 요청 — 에토스 행정사사무소(ETHOS)",
   description:
     "다른 곳에서 받으신 견적서를 보내주시면 ETHOS 견적과 항목별 비교 리포트를 무료로 보내드립니다."
 };

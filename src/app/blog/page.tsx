@@ -15,7 +15,7 @@ import { BlogTagCloud } from "@/components/public/blog-tag-cloud";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "법률 칼럼 — ETHOS 행정사사무소",
+  title: "법률 칼럼 — 에토스 행정사사무소(ETHOS)",
   description: "비자, 행정심판, 계약서, 인허가 관련 법률 칼럼."
 };
 

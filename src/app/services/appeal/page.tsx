@@ -7,7 +7,7 @@ import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "행정심판 — ETHOS 행정사사무소",
+  title: "행정심판 — 에토스 행정사사무소(ETHOS)",
   description: "처분 통지부터 청구·심리·재결까지 행정심판 절차를 함께 준비합니다."
 };
 

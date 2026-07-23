@@ -1,4 +1,4 @@
-﻿export const localeValues = ["ko", "en", "ar"] as const;
+﻿export const localeValues = ["ko", "en"] as const;
 export type Locale = (typeof localeValues)[number];
 
 export const formLocaleValues = ["ko", "en"] as const;
@@ -55,97 +55,90 @@ type LabeledMap<T extends string> = Record<T, Record<Locale, string>>;
 export const inquiryTypeLabels: LabeledMap<InquiryType> = {
   FOREIGNER_VISA: {
     ko: "외국인 비자",
-    en: "Foreigner Visa",
-    ar: "تأشيرة الأجانب"
+    en: "Foreigner Visa"
   },
   IMMIGRATION_STAY: {
     ko: "출입국·체류",
-    en: "Immigration / Stay",
-    ar: "الهجرة والإقامة"
+    en: "Immigration / Stay"
   },
   APOSTILLE_CONSULAR: {
     ko: "아포스티유·영사확인",
-    en: "Apostille / Consular",
-    ar: "الأبوستيل / التصديق القنصلي"
+    en: "Apostille / Consular"
   },
   TRANSLATION_NOTARY: {
     ko: "번역·공증",
-    en: "Translation / Notary",
-    ar: "الترجمة / التوثيق"
+    en: "Translation / Notary"
   },
   GENERAL_ADMIN_CIVIL: {
     ko: "일반 행정민원",
-    en: "General Administrative Service",
-    ar: "الخدمات الإدارية العامة"
+    en: "General Administrative Service"
   },
   CORPORATE_REQUEST: {
     ko: "기업 의뢰",
-    en: "Corporate Request",
-    ar: "طلبات الشركات"
+    en: "Corporate Request"
   },
   UNKNOWN: {
     ko: "기타·추가 확인",
-    en: "Needs Review",
-    ar: "يحتاج إلى مراجعة"
+    en: "Needs Review"
   }
 };
 
 export const inquiryStatusLabels: LabeledMap<InquiryStatus> = {
-  NEW: { ko: "신규", en: "New", ar: "جديد" },
-  PRE_DIAGNOSED: { ko: "사전진단 완료", en: "Pre-diagnosed", ar: "تم التشخيص الأولي" },
-  CONSULTATION_REQUIRED: { ko: "상담 필요", en: "Consultation Required", ar: "تحتاج إلى استشارة" },
-  QUOTE_DRAFTED: { ko: "견적 초안 생성", en: "Quote Drafted", ar: "تم إعداد عرض السعر" },
-  QUOTE_PENDING: { ko: "견적 발송 대기", en: "Quote Pending", ar: "بانتظار إرسال العرض" },
-  ON_HOLD: { ko: "진행 보류", en: "On Hold", ar: "معلق" },
-  IN_REVIEW: { ko: "검토 중", en: "In Review", ar: "قيد المراجعة" },
-  WAITING_CONSULTATION: { ko: "상담 대기", en: "Waiting Consultation", ar: "بانتظار الاستشارة" },
-  QUOTE_SENT: { ko: "견적 발송", en: "Quote Sent", ar: "تم إرسال العرض" },
-  WON: { ko: "수임", en: "Won", ar: "تم التعاقد" },
-  CLOSED: { ko: "종결", en: "Closed", ar: "مغلق" }
+  NEW: { ko: "신규", en: "New" },
+  PRE_DIAGNOSED: { ko: "사전진단 완료", en: "Pre-diagnosed" },
+  CONSULTATION_REQUIRED: { ko: "상담 필요", en: "Consultation Required" },
+  QUOTE_DRAFTED: { ko: "견적 초안 생성", en: "Quote Drafted" },
+  QUOTE_PENDING: { ko: "견적 발송 대기", en: "Quote Pending" },
+  ON_HOLD: { ko: "진행 보류", en: "On Hold" },
+  IN_REVIEW: { ko: "검토 중", en: "In Review" },
+  WAITING_CONSULTATION: { ko: "상담 대기", en: "Waiting Consultation" },
+  QUOTE_SENT: { ko: "견적 발송", en: "Quote Sent" },
+  WON: { ko: "수임", en: "Won" },
+  CLOSED: { ko: "종결", en: "Closed" }
 };
 
 export const inquiryStatusGroupLabels: LabeledMap<InquiryStatusGroup> = {
-  INTAKE: { ko: "초기 분류", en: "Intake", ar: "الفرز الأولي" },
-  CONSULTATION: { ko: "상담 연결", en: "Consultation", ar: "مسار الاستشارة" },
-  QUOTE: { ko: "견적 진행", en: "Quote", ar: "مسار عرض السعر" },
-  REVIEW: { ko: "검토·보류", en: "Review / Hold", ar: "المراجعة / التعليق" },
-  WON: { ko: "수임", en: "Won", ar: "تم التعاقد" },
-  RISK: { ko: "리스크 우선", en: "Risk Focus", ar: "مخاطر أولوية" }
+  INTAKE: { ko: "초기 분류", en: "Intake" },
+  CONSULTATION: { ko: "상담 연결", en: "Consultation" },
+  QUOTE: { ko: "견적 진행", en: "Quote" },
+  REVIEW: { ko: "검토·보류", en: "Review / Hold" },
+  WON: { ko: "수임", en: "Won" },
+  RISK: { ko: "리스크 우선", en: "Risk Focus" }
 };
 
 export const urgencyLabels: LabeledMap<UrgencyLevel> = {
-  LOW: { ko: "낮음", en: "Low", ar: "منخفض" },
-  MEDIUM: { ko: "보통", en: "Medium", ar: "متوسط" },
-  HIGH: { ko: "높음", en: "High", ar: "مرتفع" },
-  CRITICAL: { ko: "매우 긴급", en: "Critical", ar: "عاجل جدًا" }
+  LOW: { ko: "낮음", en: "Low" },
+  MEDIUM: { ko: "보통", en: "Medium" },
+  HIGH: { ko: "높음", en: "High" },
+  CRITICAL: { ko: "매우 긴급", en: "Critical" }
 };
 
 export const clientTypeLabels: LabeledMap<ClientType> = {
-  INDIVIDUAL: { ko: "개인", en: "Individual", ar: "فرد" },
-  COMPANY: { ko: "기업", en: "Company", ar: "شركة" }
+  INDIVIDUAL: { ko: "개인", en: "Individual" },
+  COMPANY: { ko: "기업", en: "Company" }
 };
 
 export const languageCodeLabels: LabeledMap<LanguageCode> = {
-  KO: { ko: "한국어", en: "Korean", ar: "الكورية" },
-  EN: { ko: "영어", en: "English", ar: "الإنجليزية" },
-  AR: { ko: "아랍어", en: "Arabic", ar: "العربية" }
+  KO: { ko: "한국어", en: "Korean" },
+  EN: { ko: "영어", en: "English" },
+  AR: { ko: "아랍어", en: "Arabic" }
 };
 
 export const adminSortLabels: Record<AdminSort, Record<Locale, string>> = {
-  latest: { ko: "최신순", en: "Latest", ar: "الأحدث" },
-  urgency: { ko: "긴급도순", en: "Urgency", ar: "الأولوية" }
+  latest: { ko: "최신순", en: "Latest" },
+  urgency: { ko: "긴급도순", en: "Urgency" }
 };
 
 export function toLanguageCode(locale: Locale): LanguageCode {
   if (locale === "ko") return "KO";
   if (locale === "en") return "EN";
-  return "AR";
+  return "KO";
 }
 
 export function toLocale(languageCode: LanguageCode): Locale {
   if (languageCode === "KO") return "ko";
   if (languageCode === "EN") return "en";
-  return "ar";
+  return "ko";
 }
 
 export function getUrgencyRank(level: UrgencyLevel) {

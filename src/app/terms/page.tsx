@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "이용약관 — ETHOS 행정사사무소",
+  title: "이용약관 — 에토스 행정사사무소(ETHOS)",
   description: "에토스 행정사사무소 웹사이트 이용약관."
 };
 

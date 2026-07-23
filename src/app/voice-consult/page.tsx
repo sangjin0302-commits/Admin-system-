@@ -7,7 +7,7 @@ import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "AI 음성 상담 — ETHOS 행정사사무소",
+  title: "AI 음성 상담 — 에토스 행정사사무소(ETHOS)",
   description: "실시간 AI 음성 상담으로 행정 문의를 나눕니다.",
 };
 

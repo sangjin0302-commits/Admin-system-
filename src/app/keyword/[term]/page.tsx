@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<{ term: str
   const k = KEYWORDS[decoded];
   if (!k) return { title: "키워드 — ETHOS" };
   return {
-    title: `${k.label} — ETHOS 행정사사무소`,
+    title: `${k.label} — 에토스 행정사사무소(ETHOS)`,
     description: k.description,
     alternates: { canonical: `/keyword/${encodeURIComponent(decoded)}` }
   };

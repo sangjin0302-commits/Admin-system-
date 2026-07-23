@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "ETHOS 행정사사무소 — 운영 현황",
+  title: "에토스 행정사사무소(ETHOS) — 운영 현황",
   description: "ETHOS 행정사사무소의 실시간 운영 현황을 확인하세요.",
 };
 

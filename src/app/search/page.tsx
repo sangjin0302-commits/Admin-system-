@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SearchClient } from "./search-client";
 
 export const metadata: Metadata = {
-  title: "통합 검색 | ETHOS 행정사사무소",
+  title: "통합 검색 | 에토스 행정사사무소(ETHOS)",
   description: "업무분야, 사례, 블로그 글을 한 번에 검색합니다.",
   alternates: { canonical: "/search" },
 };

@@ -139,7 +139,7 @@ function normalizeText(input: ClassificationInput) {
 function localeFromLanguageCode(languageCode: ClassificationInput["preferredLanguage"]): Locale {
   if (languageCode === "KO") return "ko";
   if (languageCode === "EN") return "en";
-  return "ar";
+  return "en";
 }
 
 function scoreRules(text: string, input: ClassificationInput) {

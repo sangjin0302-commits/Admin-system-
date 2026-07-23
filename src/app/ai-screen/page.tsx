@@ -5,7 +5,7 @@ import { AiIntakeScreener } from "@/components/public/ai-intake-screener";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "빠른 진단 — ETHOS 행정사사무소",
+  title: "빠른 진단 — 에토스 행정사사무소(ETHOS)",
   description:
     "5개 문항으로 사안 유형, 예상 견적 범위, 필요 서류, 진행 절차를 초기 안내해 드립니다."
 };
