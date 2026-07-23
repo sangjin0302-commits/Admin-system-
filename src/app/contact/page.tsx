@@ -6,12 +6,78 @@ import { getSiteSettings } from "@/lib/services/site-settings";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "오시는 길 — ETHOS 행정사사무소",
-  description: "에토스 행정사사무소 위치, 연락처, 운영시간 안내."
-};
+const COPY = {
+  ko: {
+    metaTitle: "오시는 길 — ETHOS 행정사사무소",
+    metaDescription: "에토스 행정사사무소 위치, 연락처, 운영시간 안내.",
+    heroEyebrow: "Contact",
+    heroTitle: "오시는 길",
+    heroSubtitle: "상담은 사전 예약을 권장드립니다.",
+    responseBadge: "평균 1시간 내 응답 · 영업일 기준",
+    contactEyebrow: "Contact",
+    contactTitle: "연락처",
+    phoneLabel: "전화",
+    emailLabel: "이메일",
+    kakaoLabel: "카카오톡",
+    kakaoButton: "카카오 채널 상담",
+    hoursLabel: "운영시간",
+    hoursNote: "주말 / 공휴일 휴무 (사전 예약 시 가능)",
+    intakeButton: "온라인 상담 신청",
+    locationEyebrow: "Location",
+    locationTitle: "사무소 위치",
+    addressLabel: "주소",
+    transitNote: "교통편은 상담 예약 시 안내드립니다.",
+    mapPlaceholderTitle: "사무소 위치",
+    mapPlaceholderNote: "상담 예약 시 상세 위치를 안내드립니다",
+    kakaoMapButton: "오시는 길 (카카오맵) →",
+    kakaoMapShort: "카카오맵 보기",
+    naverMapShort: "네이버 지도"
+  },
+  en: {
+    metaTitle: "Directions — ETHOS Administrative Attorney Office",
+    metaDescription: "Location, contact details, and office hours for ETHOS Administrative Attorney Office.",
+    heroEyebrow: "Contact",
+    heroTitle: "Directions",
+    heroSubtitle: "We recommend booking a consultation in advance.",
+    responseBadge: "Average reply within 1 hour · Business days",
+    contactEyebrow: "Contact",
+    contactTitle: "Contact",
+    phoneLabel: "Phone",
+    emailLabel: "Email",
+    kakaoLabel: "KakaoTalk",
+    kakaoButton: "Chat via Kakao Channel",
+    hoursLabel: "Office Hours",
+    hoursNote: "Closed weekends / holidays (available by appointment)",
+    intakeButton: "Request a Consultation Online",
+    locationEyebrow: "Location",
+    locationTitle: "Office Location",
+    addressLabel: "Address",
+    transitNote: "Directions are provided when you book a consultation.",
+    mapPlaceholderTitle: "Office Location",
+    mapPlaceholderNote: "The exact location is shared when you book a consultation",
+    kakaoMapButton: "Directions (Kakao Map) →",
+    kakaoMapShort: "View on Kakao Map",
+    naverMapShort: "Naver Map"
+  }
+} as const;
 
-export default async function ContactPage() {
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}): Promise<Metadata> {
+  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const t = COPY[lang];
+  return { title: t.metaTitle, description: t.metaDescription };
+}
+
+export default async function ContactPage({
+  searchParams
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}) {
+  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const t = COPY[lang];
   const site = await getSiteSettings();
   const phone = site["contact.phone"];
   const phoneTel = phone.replace(/[^0-9]/g, "");
@@ -29,13 +95,13 @@ export default async function ContactPage() {
         <div className="absolute inset-0 -z-10 ethos-grid-pattern" aria-hidden />
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <Reveal>
-            <p className="ethos-eyebrow">Contact</p>
+            <p className="ethos-eyebrow">{t.heroEyebrow}</p>
           </Reveal>
           <Reveal delay={1}>
-            <h1 className="ethos-display mt-5 text-4xl sm:text-[3.6rem]">오시는 길</h1>
+            <h1 className="ethos-display mt-5 text-4xl sm:text-[3.6rem]">{t.heroTitle}</h1>
           </Reveal>
           <Reveal delay={2}>
-            <p className="ethos-quote mt-5 text-base text-gold-deep">상담은 사전 예약을 권장드립니다.</p>
+            <p className="ethos-quote mt-5 text-base text-gold-deep">{t.heroSubtitle}</p>
           </Reveal>
           <Reveal delay={3}>
             <div className="mt-6 flex justify-center">
@@ -44,7 +110,7 @@ export default async function ContactPage() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 </span>
-                평균 1시간 내 응답 · 영업일 기준
+                {t.responseBadge}
               </span>
             </div>
           </Reveal>
@@ -58,45 +124,45 @@ export default async function ContactPage() {
             {/* 연락처 — DARK card */}
             <Reveal>
               <div className="ethos-band-dark ethos-grain rounded-[24px] p-9 text-white shadow-floating" style={{ backgroundColor: "rgb(22 50 80)" }}>
-                <p className="ethos-eyebrow text-gold-soft">Contact</p>
-                <h2 className="ethos-display mt-3 text-2xl text-white">연락처</h2>
+                <p className="ethos-eyebrow text-gold-soft">{t.contactEyebrow}</p>
+                <h2 className="ethos-display mt-3 text-2xl text-white">{t.contactTitle}</h2>
 
                 <div className="mt-8 space-y-6">
                   <div>
-                    <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">전화</p>
+                    <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">{t.phoneLabel}</p>
                     <a href={`tel:${phoneTel}`} className="mt-1 block font-serif text-3xl font-bold text-white">
                       {phone}
                     </a>
                   </div>
                   <div>
-                    <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">이메일</p>
+                    <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">{t.emailLabel}</p>
                     <a href={`mailto:${email}`} className="mt-1 block text-base text-white hover:text-gold-soft">
                       {email}
                     </a>
                   </div>
                   <div>
-                    <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">카카오톡</p>
+                    <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">{t.kakaoLabel}</p>
                     <a
                       href={kakaoUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="mt-2 inline-flex items-center gap-2 rounded-lg bg-[#FEE500] px-4 py-2 text-sm font-bold text-[#3C1E1E]"
                     >
-                      카카오 채널 상담
+                      {t.kakaoButton}
                     </a>
                   </div>
                   <div>
-                    <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">운영시간</p>
+                    <p className="font-serif text-xs uppercase tracking-wider text-gold-soft">{t.hoursLabel}</p>
                     <p className="mt-1 text-base text-white">{hours}</p>
-                    <p className="text-xs text-white/60">주말 / 공휴일 휴무 (사전 예약 시 가능)</p>
+                    <p className="text-xs text-white/60">{t.hoursNote}</p>
                   </div>
                 </div>
 
                 <Link
-                  href="/intake"
+                  href={`/intake${lang === "en" ? "?lang=en" : ""}`}
                   className="mt-10 inline-flex h-11 w-full items-center justify-center rounded-lg bg-gold text-sm font-bold text-primary transition hover:bg-gold-soft"
                 >
-                  온라인 상담 신청
+                  {t.intakeButton}
                 </Link>
               </div>
             </Reveal>
@@ -104,12 +170,12 @@ export default async function ContactPage() {
             {/* 주소 + 지도 */}
             <Reveal delay={1}>
               <div className="ethos-card p-9">
-                <p className="ethos-eyebrow">Location</p>
-                <h2 className="ethos-display mt-3 text-2xl">사무소 위치</h2>
+                <p className="ethos-eyebrow">{t.locationEyebrow}</p>
+                <h2 className="ethos-display mt-3 text-2xl">{t.locationTitle}</h2>
                 <div className="mt-7 space-y-2">
-                  <p className="font-serif text-xs uppercase tracking-wider text-gold-deep">주소</p>
+                  <p className="font-serif text-xs uppercase tracking-wider text-gold-deep">{t.addressLabel}</p>
                   <p className="text-base text-text-strong">{address}</p>
-                  <p className="text-sm text-text-muted">교통편은 상담 예약 시 안내드립니다.</p>
+                  <p className="text-sm text-text-muted">{t.transitNote}</p>
                 </div>
 
                 <div className="mt-7 flex aspect-video items-center justify-center rounded-xl border border-gold/30 bg-gradient-to-br from-primary/5 to-gold/5">
@@ -119,8 +185,8 @@ export default async function ContactPage() {
                       <circle cx="24" cy="19" r="5" />
                     </svg>
                     <div>
-                      <p className="font-serif text-sm font-bold text-text-muted">사무소 위치</p>
-                      <p className="mt-0.5 text-xs text-text-muted">상담 예약 시 상세 위치를 안내드립니다</p>
+                      <p className="font-serif text-sm font-bold text-text-muted">{t.mapPlaceholderTitle}</p>
+                      <p className="mt-0.5 text-xs text-text-muted">{t.mapPlaceholderNote}</p>
                     </div>
                   </div>
                 </div>
@@ -136,7 +202,7 @@ export default async function ContactPage() {
                       <path d="M12 2C7.6 2 4 5.4 4 9.5 4 15.5 12 22 12 22s8-6.5 8-12.5C20 5.4 16.4 2 12 2z" />
                       <circle cx="12" cy="9.5" r="2.5" />
                     </svg>
-                    오시는 길 (카카오맵) →
+                    {t.kakaoMapButton}
                   </a>
                 )}
 
@@ -147,7 +213,7 @@ export default async function ContactPage() {
                     rel="noreferrer"
                     className="inline-flex h-11 items-center justify-center rounded-lg border border-gold/40 bg-surface text-xs font-bold text-primary transition hover:bg-gold-soft/30"
                   >
-                    카카오맵 보기
+                    {t.kakaoMapShort}
                   </a>
                   <a
                     href="https://map.naver.com"
@@ -155,7 +221,7 @@ export default async function ContactPage() {
                     rel="noreferrer"
                     className="inline-flex h-11 items-center justify-center rounded-lg border border-gold/40 bg-surface text-xs font-bold text-primary transition hover:bg-gold-soft/30"
                   >
-                    네이버 지도
+                    {t.naverMapShort}
                   </a>
                 </div>
               </div>
