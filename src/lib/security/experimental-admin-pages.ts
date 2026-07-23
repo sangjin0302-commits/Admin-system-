@@ -39,7 +39,6 @@ export const EXPERIMENTAL_ADMIN_PAGES: ReadonlySet<string> = new Set([
   "tax-partners",
   "lawyer-referrals",
   "international",
-  "international-sites",
   "onsite",
   "jobs",
   "careers",

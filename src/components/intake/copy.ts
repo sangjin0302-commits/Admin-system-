@@ -138,80 +138,10 @@ const copy = {
     adminLink: "Admin Dashboard",
     emptyResult: "After submission, this panel will show the generated category, urgency, and client guidance.",
     errorGeneric: "There was an error while submitting. Please review the form."
-  },
-  ar: {
-    pageKicker: "مكتب الخدمات الإدارية",
-    pageTitle: "نموذج الاستشارة",
-    pageDescription:
-      "بمجرد إرسال الاستفسار، يتم إنشاء تصنيف أولي ودرجة استعجال ومسودة إرشادات تلقائيًا. يتم تأكيد الإجراء النهائي بعد مراجعة المسؤول.",
-    infoTitle: "ملاحظات",
-    infoItems: [
-      "يمكنك تقديم استفسارات حول التأشيرات، الهجرة، التصديق، الترجمة، الشؤون الإدارية المدنية، وطلبات الشركات.",
-      "يتم تصنيف الفئة والاستعجال تلقائيًا، لكن الجدوى النهائية تُؤكد بعد المراجعة.",
-      "يمكنك الكتابة باللغة العربية أو الإنجليزية."
-    ],
-    formTitle: "طلب مراجعة مجانية",
-    resultTitle: "المسودة المُنشأة",
-    resultDescription: "يتم إنشاء هذه المسودة فور الإرسال وتخضع لمراجعة المسؤول.",
-    labels: {
-      preferredLocale: "لغة الرد",
-      clientType: "نوع العميل",
-      contactName: "الاسم",
-      organizationName: "اسم الشركة",
-      email: "البريد الإلكتروني",
-      phone: "رقم الهاتف",
-      title: "عنوان الاستفسار",
-      requestedInquiryType: "نوع الاستفسار (اختياري)",
-      description: "تفاصيل الحالة",
-      requestedOutcome: "النتيجة المرجوة",
-      declaredUrgency: "درجة الاستعجال",
-      nationality: "الجنسية",
-      currentStatus: "حالة الإقامة أو التقدم الحالية",
-      documentCountry: "بلد إصدار المستند",
-      targetAgency: "الجهة المستهدفة أو الوجهة",
-      dueDate: "التاريخ المفضل أو الموعد النهائي",
-      isCorporateRequest: "طلب شركة",
-      needsTranslation: "مطلوب ترجمة",
-      hasPreparedDocuments: "المستندات المتوفرة حاليًا",
-      wantsCallback: "طلب استشارة هاتفية",
-      consentToPrivacy: "أوافق على جمع واستخدام المعلومات الشخصية لأغراض الاستشارة."
-    },
-    placeholders: {
-      contactName: "مثال: أحمد محمد",
-      organizationName: "مثال: شركة ABC العالمية",
-      email: "example@email.com",
-      phone: "+966-50-000-0000",
-      title: "مثال: استفسار عن تغيير تأشيرة E-7",
-      description: "يرجى وصف وضعك الحالي والنتيجة المرجوة والموعد النهائي والمستندات المتوفرة والجهة المستهدفة.",
-      requestedOutcome: "مثال: تقديم طلب تغيير التأشيرة خلال أسبوعين",
-      nationality: "مثال: السعودية، الإمارات، مصر",
-      currentStatus: "مثال: إقامة D-10 / المستندات الأصلية متوفرة / مطلوب ترجمة",
-      documentCountry: "مثال: السعودية، الإمارات",
-      targetAgency: "مثال: مكتب الهجرة، البنك، المدرسة"
-    },
-    buttons: {
-      submit: "إرسال",
-      submitting: "جاري الإرسال...",
-      resetResult: "إغلاق النتيجة"
-    },
-    clientTypeOptions: {
-      INDIVIDUAL: "فرد",
-      COMPANY: "شركة"
-    },
-    callbackHelp: "الحالات العاجلة أو المعقدة يمكن تحديدها للمتابعة الهاتفية ذات الأولوية بعد مراجعة المسؤول.",
-    optionLabels: {
-      corporateYes: "هذا طلب شركة",
-      translationYes: "مطلوب ترجمة",
-      documentsReady: "لدي مستندات أساسية جاهزة"
-    },
-    adminLink: "لوحة المسؤول",
-    emptyResult: "بعد الإرسال، ستظهر هنا الفئة المُنشأة ودرجة الاستعجال وإرشادات العميل.",
-    errorGeneric: "حدث خطأ أثناء الإرسال. يرجى مراجعة النموذج."
   }
 } as const;
 
 export function getIntakeCopy(locale: Locale) {
   if (locale === "en") return copy.en;
-  if (locale === "ar") return copy.ar;
   return copy.ko;
 }

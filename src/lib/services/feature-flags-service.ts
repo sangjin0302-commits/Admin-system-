@@ -82,7 +82,6 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "api_marketplace", label: "API 마켓플레이스", category: "operations", default: false, description: "Lawbot/AI 초안을 유료 API로 외부 판매" },
   { key: "dataset_marketplace", label: "AI 학습 데이터셋 판매", category: "operations", default: false, description: "익명화 사건 데이터를 ML 학습용 데이터셋으로 판매" },
   { key: "certification_courses", label: "행정사 자격증 강의", category: "marketing", default: false, description: "커리큘럼·퀴즈·수료증 확장 강의 시스템" },
-  { key: "international_regions", label: "국제 진출 (JP/VN)", category: "marketing", default: false, description: "일본·베트남 다국어 지역 사이트" },
   { key: "naver_kin_auto_answer", label: "네이버 지식iN 자동 답변", category: "marketing", default: false, description: "네이버 지식iN 관련 질문 자동 감지·답변 초안 생성" },
   { key: "youtube_content_gen", label: "유튜브 컨텐츠 자동 생성", category: "marketing", default: false, description: "블로그 글을 유튜브용 스크립트·TTS·슬라이드로 변환" },
   { key: "podcast_series", label: "팟캐스트 시리즈", category: "marketing", default: false, description: "주간 팟캐스트 에피소드 자동 생성 및 RSS 피드 배포" },

@@ -19,9 +19,6 @@ import { Suspense, useEffect } from "react";
 
 function resolveLang(pathname: string, langParam: string | null): string {
   if (pathname === "/en" || pathname.startsWith("/en/")) return "en";
-  if (pathname === "/ar" || pathname.startsWith("/ar/")) return "ar";
-  if (pathname === "/jp" || pathname.startsWith("/jp/")) return "ja";
-  if (pathname === "/vn" || pathname.startsWith("/vn/")) return "vi";
   if (langParam === "en") return "en";
   return "ko";
 }
