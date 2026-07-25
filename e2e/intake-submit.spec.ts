@@ -13,7 +13,9 @@ test.describe("Intake 제출", () => {
   // 병렬로 돌리면 이 비용이 폼의 12초 클라이언트 타임아웃을 넘긴다(제품 문제 아님).
   // 빈 본문으로 한 번 때려 라우트를 미리 컴파일해 둔다(400 응답이어도 목적 달성).
   test.beforeAll(async ({ request }) => {
-    await request.post("/api/inquiries", { data: {}, failOnStatusCode: false }).catch(() => undefined);
+    await request
+      .post("/api/inquiries", { data: {}, failOnStatusCode: false, timeout: 120_000 })
+      .catch(() => undefined);
   });
 
   test("필수 항목 입력 후 접수 성공", async ({ page }) => {
