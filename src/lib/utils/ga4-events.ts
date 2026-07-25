@@ -35,6 +35,20 @@ export function trackQuoteRequest() {
   trackGA4Event("request_quote", { event_category: "conversion" });
 }
 
+export function trackBookingSubmit(category: string) {
+  trackGA4Event("book_consultation", {
+    event_category: "conversion",
+    category,
+  });
+}
+
+export function trackQuickCheckComplete(category: string) {
+  trackGA4Event("quick_check_complete", {
+    event_category: "engagement",
+    category,
+  });
+}
+
 export function trackConsultFormSubmit() {
   trackGA4Event("submit_consult_form", { event_category: "conversion" });
 }

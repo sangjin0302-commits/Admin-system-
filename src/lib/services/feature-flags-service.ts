@@ -294,7 +294,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "weekly_pdf_report", label: "주간 리포트 자동 생성", category: "operations", default: false, description: "주간 운영 리포트 HTML 이메일 자동 발송" },
   { key: "case_fee_tracking", label: "사건 수임료 수금 추적", category: "operations", default: true, description: "사건별 수임료 수금 현황 추적 및 관리" },
   { key: "satisfaction_survey_auto", label: "고객 만족도 설문 자동 발송", category: "operations", default: true, description: "사건 종결 3일 후 고객 만족도 설문 자동 발송" },
-  { key: "ga4_conversion_tracking", label: "GA4 전환 이벤트 추적", category: "marketing", default: true, description: "접수/전화/카톡/견적/상담폼 GA4 전환 이벤트 전송", public: true, locked: true, lockReason: "마케팅 성과 측정 필수 — 끄면 전환 데이터 소실 잠금 2026-07-22" },
+  { key: "ga4_conversion_tracking", label: "GA4 전환 이벤트 추적", category: "marketing", default: true, description: "접수/예약/사전진단/비교견적/전화/카톡/상담폼 GA4 전환 이벤트 전송", public: true, locked: true, lockReason: "마케팅 성과 측정 필수 — 끄면 전환 데이터 소실. 예약·사전진단·비교견적 이벤트 추가 후 e2e 58/58 그린 재검증 2026-07-25" },
   { key: "prompt_ab_testing", label: "AI 프롬프트 A/B 테스트", category: "operations", default: false, description: "답장 초안 등 AI 생성 태스크에 프롬프트 변형(A/B) 적용 및 결과 로깅" },
   { key: "ga4_page_view_enhanced", label: "GA4 전환 이벤트 트래킹", category: "marketing", default: true, description: "GA4 page_view 향상 이벤트 + 스크롤 깊이 자동 추적", public: true, locked: true, lockReason: "GA4 전환 경로 end-to-end 검증(intake generate_lead 발화 + 플래그 존중 수정) — e2e 49/49 그린 잠금 2026-07-22" },
   { key: "portal_timeline_live", label: "포털 타임라인 실데이터", category: "portal", default: true, description: "고객 포털 사건 타임라인에 CaseEvent 실데이터 표시" },

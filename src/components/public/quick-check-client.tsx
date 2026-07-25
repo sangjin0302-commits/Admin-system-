@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { Card } from "@/components/ui/card";
+import { useFeatureFlag } from "@/lib/hooks/use-feature-flag";
+import { trackQuickCheckComplete } from "@/lib/utils/ga4-events";
 
 // 분석은 20~40초 소요 — 사용자가 멈춘 것으로 오해하지 않도록 진행 메시지를 순환 표시
 const PROGRESS_STEPS = [
@@ -44,6 +46,7 @@ export function QuickCheckClient() {
   const [result, setResult] = useState<AnalyzeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progressStep, setProgressStep] = useState(0);
+  const ga4Enabled = useFeatureFlag("ga4_conversion_tracking") !== false;
 
   // 로딩 중 진행 메시지를 6초 간격으로 다음 단계로 넘김 (마지막 단계에서 정지)
   useEffect(() => {
@@ -79,6 +82,10 @@ export function QuickCheckClient() {
         setError(data.error);
       } else {
         setResult(data);
+        // GA4 참여 이벤트 (quick_check_complete) — 진단 성공 시 발화.
+        if (ga4Enabled) {
+          trackQuickCheckComplete(data.keyIssues[0] ?? "unknown");
+        }
       }
     } catch {
       setError("일시적인 통신 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");

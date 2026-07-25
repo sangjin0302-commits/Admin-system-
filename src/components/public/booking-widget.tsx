@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { useFeatureFlag } from "@/lib/hooks/use-feature-flag";
+import { trackBookingSubmit } from "@/lib/utils/ga4-events";
+
 /**
  * Cal.com 스타일 예약 위젯 — 14일 캘린더 + 시간 슬롯 + 접수 폼.
  *
@@ -58,6 +61,7 @@ export function BookingWidget() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const ga4Enabled = useFeatureFlag("ga4_conversion_tracking") !== false;
 
   useEffect(() => {
     let cancelled = false;
@@ -114,6 +118,10 @@ export function BookingWidget() {
       });
       const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
       if (res.ok && json.ok) {
+        // GA4 전환 이벤트 (book_consultation) — 예약 접수 성공 시 발화.
+        if (ga4Enabled) {
+          trackBookingSubmit(category);
+        }
         setResult("success");
       } else {
         setErrorMsg(json.error ?? "예약에 실패했습니다.");

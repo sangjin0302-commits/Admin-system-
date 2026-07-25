@@ -2,6 +2,9 @@
 
 import { useCallback, useRef, useState } from "react";
 
+import { useFeatureFlag } from "@/lib/hooks/use-feature-flag";
+import { trackQuoteRequest } from "@/lib/utils/ga4-events";
+
 /**
  * 다른 곳 견적서를 업로드해 비교 리포트를 요청하는 폼.
  * 드래그·드롭 지원 + 이름·연락처만 받는 최소 필드.
@@ -17,6 +20,7 @@ function formatSize(bytes: number) {
 }
 
 export function QuoteCompare() {
+  const ga4Enabled = useFeatureFlag("ga4_conversion_tracking") !== false;
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -75,6 +79,10 @@ export function QuoteCompare() {
       if (!res.ok || !data.ok) {
         setError(data.error ?? "제출 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
         return;
+      }
+      // GA4 전환 이벤트 (request_quote) — 비교 견적 요청 성공 시 발화.
+      if (ga4Enabled) {
+        trackQuoteRequest();
       }
       setDone(true);
     } catch {
