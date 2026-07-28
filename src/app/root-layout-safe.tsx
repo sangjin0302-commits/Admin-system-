@@ -37,8 +37,10 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   applicationName: SITE_TITLE,
   metadataBase: new URL(SITE_URL),
+  // canonical 은 페이지별로 지정한다. 여기서 "/"로 고정하면 하위 페이지가 상속받아
+  // 전부 홈으로 canonical 이 걸리고 GSC 가 "적절한 표준 태그가 포함된 대체 페이지"로
+  // 색인에서 제외한다. 홈 canonical 은 아래 alternates.languages 로만 안내한다.
   alternates: {
-    canonical: "/",
     languages: { ko: "/", en: "/en", "x-default": "/" }
   },
   openGraph: {
