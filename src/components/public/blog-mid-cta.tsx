@@ -13,7 +13,8 @@ import Link from "next/link";
 
 const SS_KEY = "blog.mid_cta.shown";
 
-export function BlogMidCta({ category }: { category?: string }) {
+export function BlogMidCta({ category, lang = "ko" }: { category?: string; lang?: "ko" | "en" }) {
+  const en = lang === "en";
   const [enabled, setEnabled] = useState(false);
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -59,31 +60,33 @@ export function BlogMidCta({ category }: { category?: string }) {
       <style>{`@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: none; opacity: 1; } }`}</style>
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-bold text-text-strong">
-          이 글이 내 상황과 비슷하다면?
+          {en ? "Sounds like your situation?" : "이 글이 내 상황과 비슷하다면?"}
         </p>
         <button
           onClick={() => setDismissed(true)}
           className="text-sm text-text-muted hover:text-text"
-          aria-label="닫기"
+          aria-label={en ? "Close" : "닫기"}
         >
           ×
         </button>
       </div>
       <p className="mt-1 text-xs leading-5 text-text-muted">
-        {category ? `${category} 사안, ` : ""}무료 검토로 가능성과 예상 비용을 먼저 확인하세요. 영업일 24시간 내 회신.
+        {en
+          ? `${category ? `${category} — ` : ""}Get a free review of your options and likely cost. Reply within 24 business hours.`
+          : `${category ? `${category} 사안, ` : ""}무료 검토로 가능성과 예상 비용을 먼저 확인하세요. 영업일 24시간 내 회신.`}
       </p>
       <div className="mt-3 flex gap-2">
         <Link
-          href="/intake"
+          href={en ? "/intake?lang=en" : "/intake"}
           className="flex-1 rounded-full bg-primary px-4 py-2 text-center text-xs font-bold text-white hover:brightness-110"
         >
-          무료 검토 신청
+          {en ? "Free review" : "무료 검토 신청"}
         </Link>
         <Link
-          href="/quick-check"
+          href={en ? "/quick-check?lang=en" : "/quick-check"}
           className="rounded-full border border-gold/50 px-4 py-2 text-xs font-medium text-primary hover:bg-gold-soft/30"
         >
-          30초 진단
+          {en ? "30-sec check" : "30초 진단"}
         </Link>
       </div>
     </div>

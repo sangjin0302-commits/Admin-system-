@@ -3,12 +3,21 @@ import { getCtaForCategory } from "@/lib/services/blog-cta-service";
 import { toPublicCategory } from "@/lib/services/blog-categorizer";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
-export async function BlogCategoryCta({ category }: { category: string }) {
+export async function BlogCategoryCta({ category, lang = "ko" }: { category: string; lang?: "ko" | "en" }) {
   const enabled = await isFeatureEnabled("blog_category_cta");
   if (!enabled) return null;
 
+  const en = lang === "en";
   const publicCat = toPublicCategory(category);
-  const cta = getCtaForCategory(publicCat);
+  const ctaKo = getCtaForCategory(publicCat);
+  const cta = en
+    ? {
+        title: "Start with a free review",
+        description:
+          "Tell us your situation briefly — we review it and let you know whether we can proceed and the likely cost.",
+        href: `/intake?cat=${publicCat}&from=blog-cta&lang=en`
+      }
+    : ctaKo;
 
   return (
     <div
@@ -27,7 +36,7 @@ export async function BlogCategoryCta({ category }: { category: string }) {
         className="text-xs font-bold uppercase tracking-[0.2em]"
         style={{ color: "#c9a961" }}
       >
-        상담 안내
+        {en ? "Consultation" : "상담 안내"}
       </p>
 
       <h3
@@ -55,7 +64,7 @@ export async function BlogCategoryCta({ category }: { category: string }) {
           className="inline-flex h-11 items-center justify-center rounded-lg px-6 text-sm font-bold transition hover:brightness-95"
           style={{ backgroundColor: "#c9a961", color: "#1a3c5f" }}
         >
-          무료 검토 요청 →
+          {en ? "Request a free review →" : "무료 검토 요청 →"}
         </Link>
         <Link
           href="/consult"
@@ -63,7 +72,7 @@ export async function BlogCategoryCta({ category }: { category: string }) {
           className="inline-flex h-11 items-center justify-center rounded-lg border px-6 text-sm font-semibold transition hover:bg-white/10"
           style={{ borderColor: "rgba(201,169,97,0.5)", color: "rgba(255,255,255,0.8)" }}
         >
-          상담 안내 보기
+          {en ? "How it works" : "상담 안내 보기"}
         </Link>
       </div>
     </div>

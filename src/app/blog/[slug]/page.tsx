@@ -194,7 +194,7 @@ export default async function BlogDetailPage({
     <div className="relative mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
       <ScrollProgress />
       <BlogScrollTracker slug={post.slug} />
-      <BlogMidCta category={PUBLIC_CATEGORY_LABEL[toPublicCategory(post.category)]} />
+      <BlogMidCta category={PUBLIC_CATEGORY_LABEL[toPublicCategory(post.category)]} lang={lang} />
       <ArticleJsonLd
         title={post.title}
         description={post.excerpt}
@@ -324,7 +324,7 @@ export default async function BlogDetailPage({
           dangerouslySetInnerHTML={{ __html: autoLinkKeywords(sanitizeHtml(post.contentHtml)) }}
         />
 
-        <BlogInlineCta category={post.category} />
+        <BlogInlineCta category={post.category} lang={lang} />
 
         {dbRelated.length > 0 && (
           <section className="my-10 rounded-xl border border-gold/20 bg-surface p-5">
@@ -380,8 +380,8 @@ export default async function BlogDetailPage({
       })()}
 
       <RelatedKeywords category={post.category} />
-      <BlogCta category={post.category} />
-      <BlogCategoryCta category={post.category} />
+      <BlogCta category={post.category} lang={lang} />
+      <BlogCategoryCta category={post.category} lang={lang} />
 
       <p className="mt-8 rounded-lg border border-gold/30 bg-surface-muted/40 px-4 py-3 text-xs italic text-text-muted">
         ※ 본 칼럼은 일반적 안내이며, 개별 사안에 대한 법률 자문이 아닙니다.

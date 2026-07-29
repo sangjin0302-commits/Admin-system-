@@ -16,7 +16,12 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "법률 칼럼 — 에토스 행정사사무소(ETHOS)",
-  description: "비자, 행정심판, 계약서, 인허가 관련 법률 칼럼."
+  description: "비자, 행정심판, 계약서, 인허가 관련 법률 칼럼.",
+  // 국문 목록과 영문 목록(?lang=en)을 hreflang 로 서로 연결한다.
+  alternates: {
+    canonical: "/blog",
+    languages: { ko: "/blog", en: "/blog?lang=en", "x-default": "/blog" }
+  }
 };
 
 type Lang = "ko" | "en";
@@ -224,7 +229,7 @@ export default async function BlogPage({
                 : "칼럼은 일반 안내이며, 개별 사안은 상담 신청 후 사실관계를 확인하며 검토합니다."}
             </p>
             <Link
-              href="/intake"
+              href={lang === "en" ? "/intake?lang=en" : "/intake"}
               className="mt-9 inline-flex h-12 items-center rounded-lg bg-primary px-8 text-sm font-bold text-white transition hover:bg-text-strong"
             >
               {lang === "en" ? "Request Consultation" : "상담 신청하기"}

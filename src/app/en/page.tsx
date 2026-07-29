@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "ETHOS · Jean — English-friendly administrative attorney in Seoul",
     description:
-      "Free initial review · Paid consultation deducted upon engagement · Korean / English / Arabic"
+      "Free initial review · Paid consultation deducted upon engagement · Korean & English"
   }
 };
 
@@ -86,7 +86,7 @@ export default function EnglishLanding() {
               <Reveal delay={2}>
                 <p className="mt-7 max-w-xl text-base leading-8 text-text">
                   Visa, business registration, contracts, administrative appeals — handled by an attorney who has actually
-                  worked the visa desk inside an embassy in Seoul. Available in Korean, English, and Arabic.
+                  worked the visa desk inside an embassy in Seoul. Available in Korean and English.
                 </p>
               </Reveal>
               <Reveal delay={3}>

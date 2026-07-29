@@ -40,10 +40,10 @@ const KO: Copy = {
 const EN: Copy = {
   eyebrow: "Writing",
   heading: "Read before you reach out",
-  columnTitle: "Legal Columns (Korean)",
+  columnTitle: "Legal Guides in English",
   columnDesc:
-    "Practical notes on visas, administrative appeals, contracts, permits, and company formation — organized around real procedures and deadlines.",
-  columnCta: "Read the columns",
+    "Practical guides on visas, administrative appeals, contracts, permits, and company formation — translated into English and organized around real procedures and deadlines.",
+  columnCta: "Read in English",
   linkedinTitle: "LinkedIn · English writing",
   linkedinDesc:
     "Korean administrative procedures explained in English — written for foreign residents, founders, and overseas partners.",

@@ -35,7 +35,13 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "에토스 행정사사무소(ETHOS) — 절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를",
   description:
-    "에토스 행정사사무소. 비자/외국인 체류, 행정심판, 계약서·사실조사, 인허가 업무를 Logos·Pathos·Ethos 철학으로 함께합니다."
+    "에토스 행정사사무소. 비자/외국인 체류, 행정심판, 계약서·사실조사, 인허가 업무를 Logos·Pathos·Ethos 철학으로 함께합니다.",
+  // 홈은 자기 자신을 canonical 로 명시하고, 영어판(/en)을 hreflang 로 안내한다.
+  // (루트 레이아웃에서 canonical 을 걷어냈기 때문에 페이지별로 지정한다.)
+  alternates: {
+    canonical: "/",
+    languages: { ko: "/", en: "/en", "x-default": "/" }
+  }
 };
 
 type PracticeArea = {
