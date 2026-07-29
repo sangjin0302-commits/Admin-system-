@@ -7,6 +7,7 @@ interface Scopes {
   calendar: boolean;
   drive: boolean;
   docs: boolean;
+  sheets: boolean;
 }
 
 interface StatusResponse {
@@ -115,6 +116,19 @@ export function GoogleServicesClient() {
     });
   }
 
+  async function onTestSheets() {
+    const j = await post("test-sheets");
+    if (!j?.ok) {
+      setMessage(`Sheets 테스트 실패: ${(j?.error as string) ?? "unknown"}`);
+      return;
+    }
+    const url = j.url as string | undefined;
+    setResult({
+      label: "Sheets 테스트 성공",
+      links: url ? [{ label: "테스트 시트 열기", href: url }] : [],
+    });
+  }
+
   async function onTestMeet() {
     const j = await post("test-meet");
     if (!j?.ok) {
@@ -148,6 +162,7 @@ export function GoogleServicesClient() {
               <ScopeBadge label="Calendar" granted={scopes.calendar} />
               <ScopeBadge label="Drive" granted={scopes.drive} />
               <ScopeBadge label="Docs" granted={scopes.docs} />
+              <ScopeBadge label="Sheets" granted={scopes.sheets} />
             </>
           )}
         </div>
@@ -168,7 +183,7 @@ export function GoogleServicesClient() {
           </button>
         </div>
         <p className="mt-3 text-xs text-text-muted">
-          재연결 시 Calendar · Drive · Docs 스코프에 대한 동의를 다시 요청합니다.
+          재연결 시 Calendar · Drive · Docs · Sheets 스코프에 대한 동의를 다시 요청합니다.
         </p>
       </Card>
 
@@ -188,6 +203,13 @@ export function GoogleServicesClient() {
             className="rounded-lg border border-line px-4 py-2 text-sm disabled:opacity-50"
           >
             Docs 테스트
+          </button>
+          <button
+            disabled={busy}
+            onClick={onTestSheets}
+            className="rounded-lg border border-line px-4 py-2 text-sm disabled:opacity-50"
+          >
+            Sheets 테스트
           </button>
           <button
             disabled={busy}

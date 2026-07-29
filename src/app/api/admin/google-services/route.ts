@@ -48,6 +48,7 @@ function scopesFrom(scope: string | null | undefined) {
     calendar: s.includes("https://www.googleapis.com/auth/calendar"),
     drive: s.includes("https://www.googleapis.com/auth/drive.file"),
     docs: s.includes("https://www.googleapis.com/auth/documents"),
+    sheets: s.includes("https://www.googleapis.com/auth/spreadsheets"),
   };
 }
 
@@ -124,6 +125,19 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: "not_connected_or_failed" });
       }
       return NextResponse.json({ ok: true, documentId: doc.documentId, url: doc.url });
+    }
+
+    case "test-sheets": {
+      const { exportRowsToSheet } = await import("@/lib/services/google-sheets-service");
+      const sheet = await exportRowsToSheet({
+        title: "ETHOS 연결 테스트 시트",
+        headers: ["항목", "값"],
+        rows: [["연동", "정상"], ["작성", "연결 테스트"]],
+      });
+      if (!sheet) {
+        return NextResponse.json({ ok: false, error: "not_connected_or_failed" });
+      }
+      return NextResponse.json({ ok: true, spreadsheetId: sheet.spreadsheetId, url: sheet.url });
     }
 
     case "test-meet": {

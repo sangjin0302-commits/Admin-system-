@@ -5,6 +5,7 @@ import { CaseMatterActionSections } from "@/components/admin/case-matter-action-
 import { type CaseRow } from "@/components/admin/cases-table";
 import { CasesTableWithFilters } from "@/components/admin/cases-table-with-filters";
 import { DeadlineScanButton } from "@/components/admin/deadline-scan-button";
+import { SheetsExportButton } from "@/components/admin/sheets-export-button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
 import { SavedFilters } from "@/components/admin/saved-filters";
@@ -101,6 +102,7 @@ export default async function AdminCasesPage({
             >
               Excel 내보내기
             </a>
+            <SheetsExportButton category={activeCategory ?? undefined} query={query || undefined} />
             <div className="rounded-full bg-surface-muted px-4 py-2 text-sm font-semibold text-text-strong">
               {t("totalCases")}: {cases.length}
             </div>

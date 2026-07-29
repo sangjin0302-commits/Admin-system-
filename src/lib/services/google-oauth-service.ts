@@ -23,6 +23,7 @@ const SCOPE = [
   "https://www.googleapis.com/auth/calendar",
   "https://www.googleapis.com/auth/drive.file",
   "https://www.googleapis.com/auth/documents",
+  "https://www.googleapis.com/auth/spreadsheets",
 ].join(" ");
 const DEFAULT_USER_ID = "default-admin";
 
