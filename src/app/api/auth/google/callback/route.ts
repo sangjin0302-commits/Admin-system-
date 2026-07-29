@@ -42,9 +42,14 @@ export async function GET(req: Request) {
 
   await storeToken({ token });
 
-  const res = NextResponse.redirect(
-    new URL("/admin/calendar?google=connected", req.url)
-  );
+  const from = req.headers.get("cookie")?.match(/g_oauth_from=([^;]+)/)?.[1];
+  const redirectTo =
+    from === "google-services"
+      ? "/admin/integrations/google-services?google=connected"
+      : "/admin/calendar?google=connected";
+
+  const res = NextResponse.redirect(new URL(redirectTo, req.url));
   res.cookies.delete("g_oauth_state");
+  res.cookies.delete("g_oauth_from");
   return res;
 }

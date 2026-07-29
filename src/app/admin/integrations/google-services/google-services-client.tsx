@@ -74,13 +74,8 @@ export function GoogleServicesClient() {
     }
   }
 
-  async function onConnect() {
-    const j = await post("connect-url");
-    if (j?.ok && typeof j.url === "string") {
-      window.location.href = j.url;
-    } else {
-      setMessage("연결 URL 생성 실패 — GOOGLE_CLIENT_ID 등 환경변수를 확인하세요.");
-    }
+  function onConnect() {
+    window.location.href = "/api/auth/google/start?from=google-services";
   }
 
   async function onDisconnect() {

@@ -8,7 +8,7 @@ import {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(req: Request) {
   if (!isGoogleOAuthConfigured()) {
     return NextResponse.json(
       {
@@ -19,6 +19,9 @@ export async function GET() {
       { status: 503 }
     );
   }
+
+  const reqUrl = new URL(req.url);
+  const from = reqUrl.searchParams.get("from") ?? "";
   const state = randomBytes(16).toString("hex");
   const url = buildAuthorizeUrl(state);
   if (!url) {
@@ -33,5 +36,14 @@ export async function GET() {
     maxAge: 600,
     path: "/",
   });
+  if (from) {
+    res.cookies.set("g_oauth_from", from, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 600,
+      path: "/",
+    });
+  }
   return res;
 }
