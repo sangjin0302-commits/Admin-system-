@@ -44,3 +44,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "collect failed" }, { status: 500 });
   }
 }
+
+// 배치 디스패처·Vercel Cron 은 GET 으로 호출한다.
+export const GET = POST;

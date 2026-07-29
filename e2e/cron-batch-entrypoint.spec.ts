@@ -24,3 +24,26 @@ test.describe("Cron 배치 진입점", () => {
     expect([401, 200]).toContain(res.status());
   });
 });
+
+/**
+ * 배치 디스패처(cron-dispatcher-service)는 각 태스크 라우트를 GET 으로 호출한다.
+ * 태스크 라우트가 GET 을 안 받으면 405 로 조용히 죽어 자동화가 멈춘다(회귀).
+ * 대부분 GET-only 지만 market-collect·law-health 는 원래 POST-only 라
+ * GET alias 를 달았다 — 그 alias 가 유지되는지 잠근다.
+ * 미인증(Bearer 없음)이므로 정상 응답은 401. 핵심은 "405 가 아님".
+ */
+test.describe("Cron 태스크 라우트 GET 수용", () => {
+  const TASKS = [
+    "/api/cron/market-collect", // 원래 POST-only → GET alias
+    "/api/cron/law-health", //     원래 POST-only → GET alias
+    "/api/cron/deadline-scan", //  원래 GET-only (대조군)
+  ];
+
+  for (const task of TASKS) {
+    test(`GET ${task} → 405 아님 (디스패처가 실제 호출 가능)`, async ({ request }) => {
+      const res = await request.get(task, { failOnStatusCode: false, timeout: 120_000 });
+      expect(res.status()).not.toBe(405);
+      expect([401, 200]).toContain(res.status());
+    });
+  }
+});

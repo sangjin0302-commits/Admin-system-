@@ -90,11 +90,14 @@ export async function runCronGroup(
   for (const task of tasks) {
     const start = Date.now();
     try {
+      // GET 으로 호출한다. 태스크 라우트는 대부분 GET 만 export 하고,
+      // Vercel Cron 자체도 GET 으로 부르므로 통일한다. POST 로 부르면
+      // GET-only 라우트가 405 로 조용히 죽는다(회귀). POST-only 라우트에는
+      // GET alias 를 달아 두었다.
       const res = await fetch(`${baseUrl}${task}`, {
-        method: "POST",
+        method: "GET",
         headers: {
           Authorization: `Bearer ${cronSecret}`,
-          "Content-Type": "application/json",
         },
       });
       results.push({

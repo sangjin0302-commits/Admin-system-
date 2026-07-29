@@ -1,4 +1,5 @@
 import { ZodError } from "zod";
+import { after } from "next/server";
 
 import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { createAdminRequestContext, firstZodMessage, safeReadJsonBody } from "@/lib/http/admin-api";
@@ -8,6 +9,25 @@ import {
   listCaseMattersForInquiry
 } from "@/lib/services/case-matter-service";
 import { convertInquiryToCaseMatterSchema } from "@/lib/validation/case-matter";
+import { prisma } from "@/lib/prisma/client";
+
+/** 생성된 Drive 사건폴더 링크를 SiteSetting 에 기록(포털/사건화면에서 재사용). */
+async function recordCaseFolder(
+  caseId: string,
+  folder: { folderId: string; webViewLink?: string }
+) {
+  const key = `case.drivefolder.${caseId}`;
+  const value = JSON.stringify({
+    folderId: folder.folderId,
+    webViewLink: folder.webViewLink ?? null,
+    createdAt: new Date().toISOString()
+  });
+  await prisma.siteSetting.upsert({
+    where: { key },
+    create: { key, value },
+    update: { value }
+  });
+}
 
 function toSafeCaseMatterSummary(caseMatter: {
   id: string;
@@ -82,6 +102,27 @@ export async function POST(
       inquiryId,
       ...payload
     });
+
+    // 새 사건이면 구글 Drive 사건폴더 자동 생성. 미연결/실패해도 사건 생성은 이미
+    // 커밋됐으므로 응답을 막지 않는다. after()로 응답 후 실행하되 서버리스에서
+    // 함수가 얼지 않고 완료되도록 보장한다(bare floating promise 는 유실 위험).
+    if (result.created) {
+      const cm = result.caseMatter;
+      const label = `${cm.caseNo ?? cm.id} ${cm.title}`.trim().slice(0, 120);
+      after(async () => {
+        try {
+          const { getOrCreateCaseFolder } = await import(
+            "@/lib/services/google-drive-service"
+          );
+          const folder = await getOrCreateCaseFolder(label);
+          if (folder?.folderId) {
+            await recordCaseFolder(cm.id, folder);
+          }
+        } catch {
+          /* Drive 폴더 생성은 best-effort */
+        }
+      });
+    }
 
     return api.ok(
       {

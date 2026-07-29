@@ -46,3 +46,6 @@ export async function POST(req: Request) {
     );
   }
 }
+
+// 배치 디스패처·Vercel Cron 은 GET 으로 호출한다.
+export const GET = POST;

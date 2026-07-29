@@ -113,12 +113,38 @@ async function createZoomMeeting(input: CreateMeetingInput): Promise<MeetingResu
 
 // ── Google Calendar Meet ─────────────────────────────────────
 async function createGoogleMeetMeeting(input: CreateMeetingInput): Promise<MeetingResult | null> {
+  const start = toDate(input.startAt);
+  const end = new Date(start.getTime() + Math.max(15, input.durationMin) * 60_000);
+
+  // 1순위: OAuth 토큰 흐름(자동 갱신). 관리자가 /admin/integrations/google-services
+  // 에서 연결해 두면 access token 만료돼도 refresh 로 자동 재발급된다.
+  try {
+    const { createCalendarEventWithMeet } = await import("./google-calendar-sync-service");
+    const ev = await createCalendarEventWithMeet({
+      summary: input.topic.slice(0, 200),
+      description: (input.attendees || []).filter(Boolean).length
+        ? `참석자: ${(input.attendees || []).filter(Boolean).join(", ")}`
+        : undefined,
+      start,
+      end,
+    });
+    if (ev?.meetLink && ev.eventId) {
+      return {
+        joinUrl: ev.meetLink,
+        hostUrl: ev.htmlLink,
+        meetingId: ev.eventId,
+        provider: "google",
+      };
+    }
+  } catch (err) {
+    logger.warn("[video-meeting] google oauth path failed, fallback to static token", err);
+  }
+
+  // 2순위: 정적 GOOGLE_CALENDAR_ACCESS_TOKEN(구 방식, 만료 시 수동 교체).
   const token = process.env.GOOGLE_CALENDAR_ACCESS_TOKEN?.trim();
   const calendarId = process.env.GOOGLE_CALENDAR_ID?.trim() || "primary";
   if (!token) return null;
 
-  const start = toDate(input.startAt);
-  const end = new Date(start.getTime() + Math.max(15, input.durationMin) * 60_000);
   const requestId = crypto.randomBytes(8).toString("hex");
 
   try {

@@ -256,8 +256,10 @@ export async function bookSlot(input: BookingInput): Promise<BookingResult> {
     select: { id: true },
   });
 
-  // Fire-and-forget: create video meeting and stash URL for portal + client email
-  (async () => {
+  // 응답 후 화상 상담 생성 + URL 저장 + 의뢰인 메일. 서버리스에서 함수가 얼어
+  // 유실되지 않도록 after()로 스케줄하되, 요청 스코프 밖(스크립트/테스트)에서
+  // 호출되면 after()가 던지므로 floating promise 로 폴백한다.
+  const meetingJob = async () => {
     try {
       const { createMeeting } = await import("./video-meeting-service");
       const [h, m] = input.time.split(":").map(Number);
@@ -314,7 +316,13 @@ export async function bookSlot(input: BookingInput): Promise<BookingResult> {
         } catch { /* best-effort */ }
       }
     } catch { /* meeting creation is best-effort */ }
-  })();
+  };
+  try {
+    const { after } = await import("next/server");
+    after(meetingJob);
+  } catch {
+    void meetingJob();
+  }
 
   return { ok: true, inquiryId: created.id };
 }
