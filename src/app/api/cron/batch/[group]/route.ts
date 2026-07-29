@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { runCronGroup, CRON_GROUPS } from "@/lib/services/cron-dispatcher-service";
 import { logger } from "@/lib/utils/logger";
 
-export async function POST(
+export const dynamic = "force-dynamic";
+export const maxDuration = 300;
+
+async function handle(
   request: NextRequest,
-  { params }: { params: Promise<{ group: string }> },
+  paramsPromise: Promise<{ group: string }>,
 ) {
-  const { group } = await params;
+  const { group } = await paramsPromise;
 
   // Auth check
   const cronSecret = process.env.CRON_SECRET;
@@ -55,4 +58,21 @@ export async function POST(
       failed: failed.length,
     },
   });
+}
+
+// Vercel Cron Jobs invoke the path with a GET request, so GET is the entry point
+// that actually runs on schedule. POST is kept for manual/internal triggers.
+// (Previously only POST existed — the scheduled crons were 405-ing and never ran.)
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ group: string }> },
+) {
+  return handle(request, params);
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ group: string }> },
+) {
+  return handle(request, params);
 }

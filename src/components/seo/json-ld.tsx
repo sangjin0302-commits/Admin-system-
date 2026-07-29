@@ -176,6 +176,8 @@ export function FAQJsonLd({
 export function EventJsonLd({
   name,
   description,
+  startDate,
+  endDate,
   performerName = "Jean",
   organizerName = "KISED — Korea Institute of Startup & Entrepreneurship Development",
   eventStatus = "EventScheduled",
@@ -183,16 +185,25 @@ export function EventJsonLd({
 }: {
   name: string;
   description?: string;
+  /** ISO 8601 (e.g. "2025-06-01" or full datetime). schema.org Event 는 startDate 가 필수다. */
+  startDate?: string;
+  endDate?: string;
   performerName?: string;
   organizerName?: string;
   eventStatus?: "EventScheduled" | "EventCancelled" | "EventPostponed" | "EventRescheduled";
   attendanceMode?: "OfflineEventAttendanceMode" | "OnlineEventAttendanceMode" | "MixedEventAttendanceMode";
 }) {
+  // startDate 없는 Event 는 Google 리치결과에서 "필수 항목 누락"으로 무효 처리된다.
+  // 날짜를 특정할 수 없는 경우 아예 마크업을 내보내지 않는다(무효 스키마 노출 방지).
+  if (!startDate) return null;
+
   return jsonLdScript({
     "@context": "https://schema.org",
     "@type": "Event",
     name,
     description,
+    startDate,
+    ...(endDate ? { endDate } : {}),
     eventStatus: `https://schema.org/${eventStatus}`,
     eventAttendanceMode: `https://schema.org/${attendanceMode}`,
     location: {
