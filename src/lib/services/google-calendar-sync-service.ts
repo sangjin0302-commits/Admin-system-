@@ -239,3 +239,94 @@ export async function syncToGoogleCalendar(
   logger.info("[google-cal-sync]", result);
   return { ok: true, ...result };
 }
+
+// ---------------------------------------------------------------------------
+// Google Meet — 단발성 이벤트 + 화상회의 링크 생성 (기존 동기와 무관, 독립 함수)
+// ---------------------------------------------------------------------------
+
+/** 결정적 requestId — summary + start ISO 로부터 파생(Date.now/Math.random 금지). */
+function deriveMeetRequestId(summary: string, startIso: string): string {
+  const seed = `${summary}|${startIso}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  return `ethos-meet-${(hash >>> 0).toString(36)}`;
+}
+
+/**
+ * Google Meet 링크가 포함된 캘린더 이벤트를 생성한다.
+ * 미연결·실패 시 null (throw 안 함).
+ */
+export async function createCalendarEventWithMeet(params: {
+  summary: string;
+  description?: string;
+  start: Date;
+  end: Date;
+  calendarId?: string;
+  userId?: string;
+}): Promise<{ eventId: string; htmlLink?: string; meetLink?: string } | null> {
+  const token = await getValidAccessToken(params.userId);
+  if (!token) {
+    logger.warn("[google-meet] createCalendarEventWithMeet: no token (미연결)");
+    return null;
+  }
+
+  try {
+    const calendarId = params.calendarId || "primary";
+    const startIso = params.start.toISOString();
+    const requestId = deriveMeetRequestId(params.summary, startIso);
+
+    const body = {
+      summary: params.summary,
+      description: params.description,
+      start: { dateTime: startIso },
+      end: { dateTime: params.end.toISOString() },
+      conferenceData: {
+        createRequest: {
+          requestId,
+          conferenceSolutionKey: { type: "hangoutsMeet" },
+        },
+      },
+    };
+
+    const res = await fetch(
+      `${GCAL_BASE}/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      }
+    );
+    if (!res.ok) {
+      logger.warn("[google-meet] event create failed", res.status);
+      return null;
+    }
+
+    const data = (await res.json()) as {
+      id?: string;
+      htmlLink?: string;
+      hangoutLink?: string;
+      conferenceData?: {
+        entryPoints?: Array<{ entryPointType?: string; uri?: string }>;
+      };
+    };
+    if (!data.id) return null;
+
+    const videoEntry = data.conferenceData?.entryPoints?.find(
+      (e) => e.entryPointType === "video"
+    );
+    const meetLink = data.hangoutLink ?? videoEntry?.uri;
+
+    return { eventId: data.id, htmlLink: data.htmlLink, meetLink };
+  } catch (err) {
+    captureError(err instanceof Error ? err : new Error(String(err)), {
+      scope: "google-meet:createCalendarEventWithMeet",
+      summary: params.summary,
+    });
+    return null;
+  }
+}

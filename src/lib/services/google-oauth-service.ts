@@ -17,7 +17,13 @@ import { captureError } from "@/lib/services/error-monitor-service";
 const GOOGLE_OAUTH_BASE = "https://oauth2.googleapis.com";
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 
-const SCOPE = "https://www.googleapis.com/auth/calendar";
+// Calendar + Drive(앱 생성 파일 한정) + Docs 를 한 번의 동의로 요청.
+// drive.file 은 이 앱이 만든 파일만 접근 — 의뢰인 PII 보호에 더 안전(전체 drive 스코프 아님).
+const SCOPE = [
+  "https://www.googleapis.com/auth/calendar",
+  "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/documents",
+].join(" ");
 const DEFAULT_USER_ID = "default-admin";
 
 function getConfig() {
