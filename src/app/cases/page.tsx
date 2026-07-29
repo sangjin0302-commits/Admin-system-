@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { Reveal } from "@/components/public/reveal";
 import { CaseSearch } from "@/components/public/case-search";
 import { CHANNELS } from "@/lib/constants/channels";
-import { EventJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -137,10 +136,12 @@ export default async function LecturesPage({
 
   return (
     <div className="overflow-x-clip">
-      <EventJsonLd
-        name="OASIS 4 — 외국인 창업지원 프로그램 강의"
-        description="외국인 창업가를 위한 비자·법인설립·인허가 절차 실무 가이드. 행정사 지상진 진행."
-      />
+      {/*
+        Event JSON-LD 를 뺐다. 이 페이지는 "지난 강의·활동" 소개라 특정 일시·티켓·등록
+        URL 이 없어 schema.org Event 필수/권장 필드(startDate·offers·organizer.url 등)를
+        채울 수 없다. 불완전한 Event 는 GSC 에서 오류/경고만 낳고 리치결과에 뜨지도 않는다.
+        실제 예정 강의(일시+등록링크+포스터)가 생기면 그때 EventJsonLd 를 완전한 형태로 넣는다.
+      */}
       {/* HERO */}
       <section className="relative overflow-hidden pt-20 pb-12 sm:pt-28 sm:pb-16">
         <div className="ethos-aurora ethos-aurora-animated" aria-hidden />

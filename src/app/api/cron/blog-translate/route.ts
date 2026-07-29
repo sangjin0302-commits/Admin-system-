@@ -104,15 +104,31 @@ export async function GET(req: Request) {
   }
 
   const totalTranslated = enCount + zhCount;
-  if (totalTranslated > 0) {
+  const hasErrors = enErrors.length > 0 || zhErrors.length > 0;
+
+  // 커버리지: 이번 실행 후 아직 영어 번역이 없는 공개 글 수.
+  const [publishedTotal, enRemaining] = await Promise.all([
+    prisma.blogPost.count({ where: { published: true } }),
+    prisma.blogPost.count({
+      where: { published: true, OR: [{ titleEn: null }, { titleEn: "" }] },
+    }),
+  ]);
+  const enDone = publishedTotal - enRemaining;
+  const coveragePct = publishedTotal > 0 ? Math.round((enDone / publishedTotal) * 100) : 100;
+
+  // 성공했을 때뿐 아니라 실패가 있을 때도 반드시 알린다(과거엔 실패가 조용히 묻혔다).
+  if (totalTranslated > 0 || hasErrors) {
     const lines: string[] = [];
-    if (untranslated.length) lines.push(`EN: ${enCount}/${untranslated.length}`);
-    if (isZhEnabled()) lines.push(`ZH: ${zhCount}/${zhCandidates}`);
-    if (enErrors.length) lines.push(`EN 실패: ${enErrors.join(", ")}`);
-    if (zhErrors.length) lines.push(`ZH 실패: ${zhErrors.join(", ")}`);
+    if (untranslated.length) lines.push(`EN 번역: ${enCount}/${untranslated.length}`);
+    if (isZhEnabled()) lines.push(`ZH 번역: ${zhCount}/${zhCandidates}`);
+    lines.push(`EN 커버리지: ${enDone}/${publishedTotal} (${coveragePct}%) · 미번역 ${enRemaining}편`);
+    if (enErrors.length) lines.push(`⚠️ EN 실패: ${enErrors.join(", ")}`);
+    if (zhErrors.length) lines.push(`⚠️ ZH 실패: ${zhErrors.join(", ")}`);
     await sendTelegramAlert({
       kind: "system",
-      title: `🌐 블로그 자동 번역 완료 (총 ${totalTranslated}편)`,
+      title: hasErrors
+        ? `⚠️ 블로그 자동 번역 — 실패 ${enErrors.length + zhErrors.length}건 (성공 ${totalTranslated}편)`
+        : `🌐 블로그 자동 번역 완료 (총 ${totalTranslated}편)`,
       lines,
     }).catch(() => {});
   }
@@ -122,5 +138,6 @@ export async function GET(req: Request) {
     zh: isZhEnabled()
       ? { translated: zhCount, total: zhCandidates, errors: zhErrors }
       : { skipped: true, hint: "set BLOG_TRANSLATE_ZH=1 to enable" },
+    coverage: { enDone, publishedTotal, enRemaining, coveragePct },
   });
 }
