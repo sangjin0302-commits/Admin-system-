@@ -8,7 +8,7 @@
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
 import { translateBlogPost } from "@/lib/services/blog-translation-service";
-import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
+import { NAVER_BLOG_SOURCE, extractCoverImage } from "@/lib/services/naver-rss-importer";
 import { classifyBlogPost } from "@/lib/services/blog-categorizer";
 
 const BASE = "https://blog.naver.com";
@@ -67,19 +67,21 @@ async function fetchTitleList(blogId: string, page: number): Promise<ListEntry[]
   }));
 }
 
-async function fetchPostBody(blogId: string, logNo: string): Promise<string> {
+async function fetchPostBody(blogId: string, logNo: string): Promise<{ body: string; cover: string | null }> {
   const url = `${MOBILE_BASE}/PostView.naver?blogId=${encodeURIComponent(blogId)}&logNo=${encodeURIComponent(logNo)}`;
   const res = await fetch(url, {
     headers: { "User-Agent": "Mozilla/5.0" },
     cache: "no-store"
   });
-  if (!res.ok) return "";
+  if (!res.ok) return { body: "", cover: null };
   const html = await res.text();
   // 본문 영역 추출 — se-main-container 또는 postViewArea
   const main = html.match(/<div[^>]+class="[^"]*se-main-container[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<div|<\/section|<\/article)/i)?.[1]
     ?? html.match(/<div[^>]+id="postViewArea[^"]*"[^>]*>([\s\S]*?)<\/div>/i)?.[1]
     ?? "";
-  return main;
+  // 커버(카드뉴스 표지): head 의 og:image → 본문 첫 이미지 순.
+  const cover = extractCoverImage(html) ?? extractCoverImage(main);
+  return { body: main, cover };
 }
 
 function makeExcerpt(body: string): string {
@@ -138,7 +140,7 @@ export async function bulkImportNaverBlog(options: {
         continue;
       }
 
-      const body = await fetchPostBody(blogId, entry.logNo);
+      const { body, cover: coverImage } = await fetchPostBody(blogId, entry.logNo);
       if (!body) {
         skipped++;
         continue;
@@ -173,6 +175,7 @@ export async function bulkImportNaverBlog(options: {
           excerptEn,
           bodyEn,
           category,
+          coverImage,
           source: NAVER_BLOG_SOURCE,
           originalUrl: link,
           importedAt: new Date(),

@@ -57,6 +57,22 @@ function stripHtml(s: string): string {
   return s.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 }
 
+/**
+ * 네이버 글 HTML 에서 커버 이미지(카드뉴스 표지) 추출.
+ * 우선순위: og:image 메타 → 본문 첫 <img>. 없으면 null.
+ * 프로토콜 상대경로(//...)는 https 로 보정.
+ */
+export function extractCoverImage(html: string | null | undefined): string | null {
+  if (!html) return null;
+  const og = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1];
+  const first = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1];
+  const url = (og || first || "").trim();
+  if (!url) return null;
+  if (url.startsWith("//")) return `https:${url}`;
+  if (!/^https?:\/\//i.test(url)) return null;
+  return url;
+}
+
 function generateSlug(title: string): string {
   const base = stripHtml(title)
     .replace(/[^\p{L}\p{N}\s-]/gu, "")
@@ -109,6 +125,7 @@ export async function importNaverBlogPosts(options?: {
       const title = stripHtml(p.title);
       const body = p.contentEncoded ?? p.description;
       const excerpt = makeExcerpt(p.description);
+      const coverImage = extractCoverImage(p.contentEncoded ?? p.description);
       const publishedAt = p.pubDate ? new Date(p.pubDate) : new Date();
       const safePublishedAt = isNaN(publishedAt.getTime()) ? new Date() : publishedAt;
 
@@ -135,6 +152,7 @@ export async function importNaverBlogPosts(options?: {
           excerptEn,
           bodyEn,
           category: classifyBlogPost(`${title}\n${excerpt}\n${(body ?? "").slice(0, 4000)}`),
+          coverImage,
           source: NAVER_BLOG_SOURCE,
           originalUrl: p.link,
           importedAt: new Date(),
