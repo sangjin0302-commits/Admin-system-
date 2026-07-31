@@ -57,6 +57,7 @@ export async function GET(request: Request) {
 
   // 신규 글 있을 때만 텔레그램 알림 (admin)
   if (result.imported > 0) {
+    const untranslated = Math.max(0, result.imported - result.translated);
     await sendTelegramAlert({
       kind: "system",
       title: `네이버 블로그 신규 ${result.imported}편 import`,
@@ -66,6 +67,24 @@ export async function GET(request: Request) {
       ],
       url: process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/blog` : undefined
     }).catch(() => undefined);
+
+    // EN 번역 결과 별도 알림 — 성공/미번역 둘 다 통지.
+    if (untranslated > 0) {
+      await sendTelegramAlert({
+        kind: "blog_sync_failed",
+        title: `EN 번역 미완료 (${untranslated}/${result.imported}편)`,
+        lines: [
+          `번역 완료: ${result.translated}건 · 미번역: ${untranslated}건`,
+          "ANTHROPIC_API_KEY 확인 또는 /admin/blog-translate 에서 재번역 필요.",
+        ],
+      }).catch(() => undefined);
+    } else {
+      await sendTelegramAlert({
+        kind: "system",
+        title: `EN 번역 완료 (${result.translated}/${result.imported}편)`,
+        lines: ["신규 글 영문 번역이 모두 완료되었습니다."],
+      }).catch(() => undefined);
+    }
 
     // Public Telegram 채널에도 자동 share (env 설정 시)
     if (process.env.TELEGRAM_CHANNEL_ID) {

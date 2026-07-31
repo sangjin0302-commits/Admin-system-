@@ -61,6 +61,25 @@ function main(): void {
   }
 
   console.log("[blog-source-guard] OK — 네이버 외 blogPost.create 는 모두 정책 가드로 보호됨.");
+
+  // ── 정기 갱신(스케줄) + 실패 알림 잠금 — 사용자 요구로 회귀 금지 ──
+  const dispatcher = readFileSync(join(SRC, "lib/services/cron-dispatcher-service.ts"), "utf8");
+  const syncRoute = readFileSync(join(SRC, "app/api/cron/naver-rss-sync/route.ts"), "utf8");
+  const lockFails: string[] = [];
+  // #4: naver-rss-sync 가 크론 그룹에 등록되어 정기 실행되어야 함.
+  if (!dispatcher.includes("/api/cron/naver-rss-sync")) {
+    lockFails.push("cron-dispatcher-service.ts 에서 /api/cron/naver-rss-sync 등록이 사라짐 (정기 갱신 중단됨)");
+  }
+  // #3: 동기화 실패 시 텔레그램 알림이 있어야 함.
+  if (!syncRoute.includes("blog_sync_failed")) {
+    lockFails.push("naver-rss-sync/route.ts 에서 실패 텔레그램 알림(blog_sync_failed)이 사라짐");
+  }
+  if (lockFails.length > 0) {
+    console.error("[blog-source-guard] 잠금 위반 (정기 갱신/실패 알림):");
+    for (const v of lockFails) console.error("  - " + v);
+    process.exit(1);
+  }
+  console.log("[blog-source-guard] OK — 정기 갱신 등록 + 실패 알림 잠금 유지.");
 }
 
 main();
