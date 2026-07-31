@@ -76,13 +76,35 @@ async function fetchPostBody(blogId: string, logNo: string): Promise<{ body: str
   });
   if (!res.ok) return { body: "", cover: null };
   const html = await res.text();
-  // 본문 영역 추출 — se-main-container 또는 postViewArea
-  const main = html.match(/<div[^>]+class="[^"]*se-main-container[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<div|<\/section|<\/article)/i)?.[1]
-    ?? html.match(/<div[^>]+id="postViewArea[^"]*"[^>]*>([\s\S]*?)<\/div>/i)?.[1]
-    ?? "";
+  // 본문 영역 추출 — se-main-container 여는 태그부터 "그리디"로 잡고,
+  // 뒤따르는 댓글/버튼/스크립트 영역 앞에서 자른다.
+  // (기존 non-greedy 는 네이버 minified HTML 의 첫 </div><div> 에서 끊겨 본문이 잘렸다.)
+  const main = extractPostMain(html);
   // 커버(카드뉴스 표지): head 의 og:image → 본문 첫 이미지 순.
   const cover = extractCoverImage(html) ?? extractCoverImage(main);
   return { body: main, cover };
+}
+
+function extractPostMain(html: string): string {
+  const open = html.match(/<div[^>]+class="[^"]*se-main-container[^"]*"[^>]*>/i);
+  if (open && open.index != null) {
+    const rest = html.slice(open.index + open[0].length);
+    const endMarkers = [
+      /<div[^>]+class="[^"]*area_comment/i,
+      /<div[^>]+id="comment/i,
+      /<div[^>]+class="[^"]*post_footer/i,
+      /<div[^>]+class="[^"]*wrap_postbtn/i,
+      /<div[^>]+class="[^"]*btn_area/i,
+      /<script/i
+    ];
+    let cut = rest.length;
+    for (const re of endMarkers) {
+      const m = rest.match(re);
+      if (m && m.index != null && m.index < cut) cut = m.index;
+    }
+    return rest.slice(0, cut).trim();
+  }
+  return (html.match(/<div[^>]+id="postViewArea[^"]*"[^>]*>([\s\S]*)/i)?.[1] ?? "").trim();
 }
 
 function makeExcerpt(body: string): string {

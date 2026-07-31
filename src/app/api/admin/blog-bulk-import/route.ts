@@ -13,7 +13,8 @@ export async function POST(request: Request) {
 
   const blogId = (await getSiteSetting("naver.blogId")) || "attorney_jean";
   const url = new URL(request.url);
-  const max = Number(url.searchParams.get("max") ?? 100);
+  const maxRaw = Number(url.searchParams.get("max") ?? 100);
+  const max = Number.isFinite(maxRaw) && maxRaw > 0 ? Math.min(300, Math.floor(maxRaw)) : 100;
   const translate = url.searchParams.get("translate") === "1";
   // 게시판별 수입: 네이버 categoryNo + 지정 사이트 카테고리(선택).
   const categoryNo = url.searchParams.get("categoryNo") ?? undefined;

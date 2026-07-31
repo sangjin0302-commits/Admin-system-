@@ -180,6 +180,9 @@ export async function notifyNewlyPublishedPosts(
 
   let emails = 0;
   let stopped: string | undefined;
+  // 완전히(모든 구독자) 발송을 마친 마지막 글의 발행시각 — watermark 는 여기까지만 전진.
+  // (중단 시 미발송 글이 통째로 건너뛰어지는 것을 방지 — 부분발송 글은 다음 실행에서 재시도)
+  let lastFullyDoneAt: Date | null = null;
 
   outer: for (const post of posts) {
     for (const sub of subscribers) {
@@ -197,12 +200,13 @@ export async function notifyNewlyPublishedPosts(
         break outer;
       }
     }
+    // 이 글은 모든 구독자에게 발송 완료.
+    if (post.publishedAt) lastFullyDoneAt = post.publishedAt;
   }
 
-  // watermark 전진(중단됐어도) — 마지막으로 대상에 포함된 글 기준
-  const lastPublishedAt = posts[posts.length - 1]?.publishedAt;
-  if (lastPublishedAt) {
-    await writeJson(KEY_LAST_POST_NOTIFY, lastPublishedAt.toISOString());
+  // watermark 는 "완전히 발송 끝난 마지막 글"까지만 전진. 하나도 못 끝냈으면 유지(다음에 재시도).
+  if (lastFullyDoneAt) {
+    await writeJson(KEY_LAST_POST_NOTIFY, lastFullyDoneAt.toISOString());
   }
 
   logger.info("[newsletter] notifyNewlyPublishedPosts", {

@@ -8,7 +8,7 @@ import { Toaster as SonnerToaster } from "sonner";
 import { AppShellSafe } from "@/components/layout/app-shell-safe";
 import { HtmlLangSync } from "@/components/layout/html-lang-sync";
 import { Analytics } from "@/components/public/analytics";
-import { AiChatWidget } from "@/components/public/ai-chat-widget";
+import { KakaoChannelFab } from "@/components/public/kakao-channel-fab";
 import { BottomSheetMount } from "@/components/public/bottom-sheet-mount";
 import { LiveChat } from "@/components/public/live-chat";
 import { LocalBusinessJsonLd } from "@/components/public/json-ld";
@@ -138,7 +138,8 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
           }}
         />
         <PublicOnly>
-          <AiChatWidget />
+          {/* AI 챗 미작동 → 카카오톡 채널 상담으로 안내(플로팅) */}
+          <KakaoChannelFab />
           <LiveChat />
         </PublicOnly>
         <GA4ConversionTracker enabled={true} />

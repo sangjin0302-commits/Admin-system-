@@ -61,6 +61,11 @@ export default async function BlogListPage() {
           <span>발행 <strong className="text-success">{publishedCount}</strong></span>
           <span>초안 <strong className="text-warning">{posts.length - publishedCount}</strong></span>
         </div>
+        <div className="mt-3 rounded-lg border border-line bg-surface px-3 py-2 text-xs leading-6 text-text-muted">
+          <strong className="text-text-strong">⏱ 자동 수입 일정</strong> — 매일 새벽 <strong>01:00 (KST)</strong> 네이버 RSS 최신 <strong>10편</strong>을
+          <strong> 국문 수입 + 영문 자동 번역</strong>(ANTHROPIC_API_KEY 필요). 신규 글은 구독자·텔레그램 알림.
+          과거글/전체·게시판별은 아래에서 수동 수입. RSS는 최신 10편만이라 <strong>전체는 대량 가져오기 필수</strong>.
+        </div>
       </Card>
 
       {/* 수입 · 동기화 · 번역 · 분류 (한 곳) */}

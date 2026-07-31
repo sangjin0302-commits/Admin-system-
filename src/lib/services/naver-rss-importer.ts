@@ -57,6 +57,17 @@ function stripHtml(s: string): string {
   return s.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 }
 
+/** HTML 엔티티 디코드(제목·발췌에 &amp; 등이 그대로 남는 문제 대응). */
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+}
+
 /**
  * 네이버 글 HTML 에서 커버 이미지(카드뉴스 표지) 추출.
  * 우선순위: og:image 메타 → 본문 첫 <img>. 없으면 null.
@@ -122,9 +133,9 @@ export async function importNaverBlogPosts(options?: {
         continue;
       }
 
-      const title = stripHtml(p.title);
+      const title = decodeEntities(stripHtml(p.title));
       const body = p.contentEncoded ?? p.description;
-      const excerpt = makeExcerpt(p.description);
+      const excerpt = decodeEntities(makeExcerpt(p.description));
       const coverImage = extractCoverImage(p.contentEncoded ?? p.description);
       const publishedAt = p.pubDate ? new Date(p.pubDate) : new Date();
       const safePublishedAt = isNaN(publishedAt.getTime()) ? new Date() : publishedAt;

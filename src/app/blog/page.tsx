@@ -30,7 +30,9 @@ export default async function BlogPage({
 }) {
   const sp = (await searchParams) ?? {};
   const lang: Lang = sp.lang === "en" ? "en" : "ko";
-  const activeCat = (sp.cat as PublicCategory | undefined) ?? null;
+  // ?cat= 값은 공개 카테고리 키만 허용(잘못된 값이면 전체로 폴백).
+  const activeCat: PublicCategory | null =
+    sp.cat && sp.cat in PUBLIC_CATEGORY_LABEL ? (sp.cat as PublicCategory) : null;
 
   const posts = await listBlogPosts();
 
@@ -106,6 +108,16 @@ export default async function BlogPage({
   const board = activeCat ? allCards.filter((c) => c.publicCat === activeCat) : allCards;
   const featured = board[0];
   const rest = board.slice(1);
+
+  // 인기글 위젯 — 조회수 상위(social proof). 조회 0뿐이면 숨김.
+  const popularRows = await prisma.blogPost
+    .findMany({
+      where: { published: true, viewCount: { gt: 0 } },
+      orderBy: { viewCount: "desc" },
+      take: 5,
+      select: { slug: true, title: true, titleEn: true, viewCount: true }
+    })
+    .catch(() => []);
 
   return (
     <div className="overflow-x-clip">
@@ -217,11 +229,11 @@ export default async function BlogPage({
             </div>
           )}
 
-          {rest.length === 0 ? (
+          {board.length === 0 ? (
             <p className="mt-10 text-sm text-text-muted">
               {lang === "en" ? "No posts yet." : "아직 등록된 글이 없습니다."}
             </p>
-          ) : (
+          ) : rest.length === 0 ? null : (
             <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {rest.map((c) => (
                 <Link
@@ -257,6 +269,31 @@ export default async function BlogPage({
           )}
         </div>
       </section>
+
+      {/* 인기글 — 조회수 상위(social proof) */}
+      {popularRows.length > 0 && (
+        <section className="py-8">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <h2 className="ethos-eyebrow">{lang === "en" ? "Most read" : "많이 본 칼럼"}</h2>
+            <ol className="mt-4 divide-y divide-line rounded-2xl border border-line bg-surface">
+              {popularRows.map((p, i) => (
+                <li key={p.slug}>
+                  <Link
+                    href={`/blog/${p.slug}${lang === "en" ? "?lang=en" : ""}`}
+                    className="flex items-center gap-4 px-5 py-3 transition hover:bg-surface-muted"
+                  >
+                    <span className="font-serif text-lg font-bold text-gold-deep">{i + 1}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-text-strong">
+                      {lang === "en" ? p.titleEn || p.title : p.title}
+                    </span>
+                    <span className="shrink-0 text-xs text-text-muted">{p.viewCount.toLocaleString()} views</span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      )}
 
       {/* 태그 클라우드 */}
       <BlogTagCloud />

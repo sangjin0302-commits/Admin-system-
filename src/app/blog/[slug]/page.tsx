@@ -11,7 +11,17 @@ import { ScrollProgress } from "@/components/public/scroll-progress";
 import { BlogScrollTracker } from "@/components/public/blog-scroll-tracker";
 import { BlogMidCta } from "@/components/public/blog-mid-cta";
 import { BlogCategoryCta } from "@/components/public/blog-category-cta";
-import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
+import { PUBLIC_CATEGORY_LABEL, toPublicCategoryLoose, type PublicCategory } from "@/lib/services/blog-categorizer";
+
+/** 공개 카테고리 → 서비스 페이지 매핑(블로그 하단 서비스별 CTA). */
+const CATEGORY_SERVICE: Record<PublicCategory, { href: string; ko: string; en: string }> = {
+  visa: { href: "/services/immigration", ko: "비자·체류 서비스", en: "Visa & Residence services" },
+  appeal: { href: "/services/appeal", ko: "행정심판 서비스", en: "Administrative appeal services" },
+  contract: { href: "/services/contract", ko: "계약·사실조사 서비스", en: "Contract & investigation services" },
+  license: { href: "/services/license", ko: "인허가 서비스", en: "Licensing & permit services" },
+  corporate: { href: "/services/corporate", ko: "법인설립 서비스", en: "Corporate formation services" },
+  other: { href: "/services", ko: "전체 서비스", en: "All services" }
+};
 import { sanitizeHtml } from "@/lib/utils/sanitize-html";
 import { autoLinkKeywords, extractKeywords } from "@/lib/utils/keyword-linker";
 import { getBlogPostBySlug, listBlogPosts } from "@/lib/blog-posts";
@@ -216,7 +226,7 @@ export default async function BlogDetailPage({
     <div className="relative mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
       <ScrollProgress />
       <BlogScrollTracker slug={post.slug} />
-      <BlogMidCta category={PUBLIC_CATEGORY_LABEL[toPublicCategory(post.category)]} lang={lang} />
+      <BlogMidCta category={PUBLIC_CATEGORY_LABEL[toPublicCategoryLoose(post.category)]} lang={lang} />
       <ArticleJsonLd
         title={post.title}
         description={post.excerpt}
@@ -289,7 +299,7 @@ export default async function BlogDetailPage({
 
       <article className="mt-8">
         <span className="rounded-full bg-gold-soft/60 px-3 py-1 font-serif text-xs font-bold text-gold-deep">
-          {PUBLIC_CATEGORY_LABEL[toPublicCategory(post.category)]}
+          {PUBLIC_CATEGORY_LABEL[toPublicCategoryLoose(post.category)]}
         </span>
         <h1 className="mt-4 font-serif text-3xl font-bold leading-tight text-primary sm:text-4xl">
           {post.title}
@@ -370,6 +380,35 @@ export default async function BlogDetailPage({
         )}
 
         <ShareButtons title={post.title} />
+
+        {/* 하단 서비스별 CTA — 이 글 분야의 서비스 페이지 + 상담 연결 */}
+        {(() => {
+          const svc = CATEGORY_SERVICE[toPublicCategoryLoose(post.category)];
+          return (
+            <div className="mt-10 rounded-2xl border border-gold/30 bg-gold-soft/10 p-6 text-center">
+              <p className="ethos-eyebrow text-gold-deep">
+                {lang === "en" ? "Need help with this?" : "이 분야, 도움이 필요하세요?"}
+              </p>
+              <h3 className="ethos-display mt-2 text-xl text-primary sm:text-2xl">
+                {lang === "en" ? svc.en : svc.ko}
+              </h3>
+              <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href={lang === "en" ? "/intake?lang=en" : "/intake"}
+                  className="inline-flex h-11 items-center rounded-lg bg-primary px-6 text-sm font-bold text-white transition hover:bg-text-strong"
+                >
+                  {lang === "en" ? "Free review" : "무료 검토 신청"}
+                </Link>
+                <Link
+                  href={lang === "en" ? `${svc.href}?lang=en` : svc.href}
+                  className="inline-flex h-11 items-center rounded-lg border border-primary/40 px-6 text-sm font-semibold text-primary transition hover:bg-primary/5"
+                >
+                  {lang === "en" ? "See service →" : `${svc.ko} 보기 →`}
+                </Link>
+              </div>
+            </div>
+          );
+        })()}
       </article>
 
       {related.length > 0 && (

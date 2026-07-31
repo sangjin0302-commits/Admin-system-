@@ -69,6 +69,25 @@ export function toPublicCategory(c: string): PublicCategory {
   return "other";
 }
 
+/**
+ * key(visa…)·internal(naturalization…)뿐 아니라 **한글 라벨**("비자·체류")도 인식.
+ * 마크다운 글은 category 가 라벨로 저장돼 toPublicCategory 로는 항상 "기타"가 되던 문제 대응.
+ */
+export function toPublicCategoryLoose(c: string): PublicCategory {
+  const direct = toPublicCategory(c);
+  if (direct !== "other") return direct;
+  const byLabel = (Object.entries(PUBLIC_CATEGORY_LABEL) as [PublicCategory, string][]).find(
+    ([, label]) => label === c
+  );
+  if (byLabel) return byLabel[0];
+  // 내부 라벨("귀화·국적" 등)도 시도
+  const byInternalLabel = (Object.entries(INTERNAL_CATEGORY_LABEL) as [InternalCategory, string][]).find(
+    ([, label]) => label === c
+  );
+  if (byInternalLabel) return INTERNAL_TO_PUBLIC[byInternalLabel[0]];
+  return "other";
+}
+
 // ── 카테고리 → 추천 채널 ─────────────────────────────
 export const CATEGORY_CHANNEL: Record<PublicCategory, "naverTalk" | "kakao" | "email" | "telegram"> = {
   visa: "naverTalk",

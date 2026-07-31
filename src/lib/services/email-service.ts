@@ -56,10 +56,13 @@ export async function sendEmail(input: EmailInput): Promise<{ ok: boolean; id?: 
     }
 
     const data = await res.json();
-    // 발송 성공 → 무료 한도 카운트 증가(best-effort)
-    void import("@/lib/services/email-quota-service")
-      .then((mod) => mod.recordEmailSent())
-      .catch(() => undefined);
+    // 발송 성공 → 무료 한도 카운트 증가. await 로 확정(누락 카운트로 유료전환 방지).
+    try {
+      const { recordEmailSent } = await import("@/lib/services/email-quota-service");
+      await recordEmailSent();
+    } catch {
+      /* 카운트 실패해도 발송은 성공 처리 */
+    }
     return { ok: true, id: data.id };
   } catch (err) {
     logger.warn("[email] exception", err);
