@@ -5,6 +5,7 @@ import { onBlogPublished } from "@/lib/services/pr-syndication-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { generateSeoMeta } from "@/lib/services/blog-seo-service";
 import { ensureDisclaimer } from "@/lib/services/blog-disclaimer-service";
+import { assertBlogCreateAllowed, BlogContentPolicyError } from "@/lib/services/blog-content-policy";
 
 async function maybeApplyDisclaimer(body: string, published: boolean): Promise<string> {
   if (!published) return body;
@@ -68,6 +69,15 @@ async function applyBlogSeoAuto(postId: string): Promise<void> {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
+    // 정책: 네이버 수입글 외 임의 생성 차단.
+    try {
+      assertBlogCreateAllowed(data.source);
+    } catch (e) {
+      if (e instanceof BlogContentPolicyError) {
+        return NextResponse.json({ error: e.message, code: e.code }, { status: 403 });
+      }
+      throw e;
+    }
     const finalBody = await maybeApplyDisclaimer(data.body ?? "", Boolean(data.published));
     const post = await prisma.blogPost.create({
       data: {

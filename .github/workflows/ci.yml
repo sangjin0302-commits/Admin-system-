@@ -56,6 +56,8 @@ jobs:
       - run: npm run db:push:sqlite
       - run: npm run test:case-phase1
         continue-on-error: true
+      # 블로그 콘텐츠 정책 잠금 — 위반(네이버 외 임의 생성) 시 CI 실패로 차단.
+      - run: npm run test:blog-source-guard
 
   env-check:
     name: Production env check (dry-run)

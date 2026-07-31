@@ -10,6 +10,7 @@ import {
   getQuestion,
 } from "@/lib/services/community-service";
 import { prisma } from "@/lib/prisma/client";
+import { assertBlogCreateAllowed, BlogContentPolicyError } from "@/lib/services/blog-content-policy";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -117,6 +118,15 @@ export async function POST(req: Request) {
         }
         suffix += 1;
         if (suffix > 20) break;
+      }
+      // 정책: 네이버 수입글 외 임의 생성 차단.
+      try {
+        assertBlogCreateAllowed(undefined);
+      } catch (e) {
+        if (e instanceof BlogContentPolicyError) {
+          return api.error(403, e.message, { code: e.code });
+        }
+        throw e;
       }
       const post = await prisma.blogPost.create({
         data: {

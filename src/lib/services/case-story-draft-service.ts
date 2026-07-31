@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { smartInvoke } from "@/lib/services/smart-ai-client";
+import { assertBlogCreateAllowed, BlogContentPolicyError } from "@/lib/services/blog-content-policy";
 
 function stripPII(text: string): string {
   if (!text) return "";
@@ -25,6 +26,17 @@ function toSlug(title: string): string {
 
 export async function generateCaseStoryDraft(caseId: string): Promise<{ blogPostId: string } | null> {
   if (!(await isFeatureEnabled("case_close_story_draft"))) return null;
+
+  // 정책: 네이버 수입글 외 임의/AI 생성 차단. AI 호출 전에 막아 비용도 아낀다.
+  try {
+    assertBlogCreateAllowed("ai-case-story-draft");
+  } catch (e) {
+    if (e instanceof BlogContentPolicyError) {
+      logger.warn("[case-story-draft] blocked by blog content policy", { caseId });
+      return null;
+    }
+    throw e;
+  }
 
   try {
     const caseMatter = await prisma.caseMatter.findUnique({

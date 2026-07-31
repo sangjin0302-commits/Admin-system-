@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { assertBlogCreateAllowed, BlogContentPolicyError } from "@/lib/services/blog-content-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,16 @@ export async function POST(request: Request) {
     // ignore
   }
   if (!term) return NextResponse.json({ ok: false, error: "MISSING_TERM" }, { status: 400 });
+
+  // 정책: 네이버 수입글 외 임의 생성 차단(검색트렌드 → 자동 글 생성 금지).
+  try {
+    assertBlogCreateAllowed("search-trend");
+  } catch (e) {
+    if (e instanceof BlogContentPolicyError) {
+      return NextResponse.json({ ok: false, error: e.message, code: e.code }, { status: 403 });
+    }
+    throw e;
+  }
 
   let slug = slugify(term);
   let suffix = 0;

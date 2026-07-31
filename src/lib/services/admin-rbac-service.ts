@@ -135,6 +135,37 @@ async function resolveActor(req: Request): Promise<{
     }
   }
 
+  // 관리자 세션 쿠키 폴백 — 세션 로그인 사용자 인식.
+  // (미들웨어는 세션 쿠키를 인정하지만 RBAC 는 그동안 Basic Auth 만 봤다 → 세션 로그인 시
+  //  모든 requireRole 라우트가 401. 이 분기가 그 갭을 메운다.)
+  // 서명된 JWT 라 스푸핑 불가하며, 미등록 사용자는 env 기본 관리자와 일치할 때만 SUPER 로
+  // 인정한다(사무소 소유자 1인). 임의 사용자에게 권한을 주지 않는다.
+  try {
+    const { cookies } = await import("next/headers");
+    const { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } = await import(
+      "@/lib/security/admin-session"
+    );
+    const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value;
+    const username = await verifyAdminSessionToken(token);
+    if (username) {
+      const user = await prisma.adminUser
+        .findUnique({ where: { email: username } })
+        .catch(() => null);
+      if (user && user.active) {
+        return { email: user.email, role: user.role as AdminRoleName };
+      }
+      const primaryAdmin = process.env.ADMIN_BASIC_AUTH_USER?.trim();
+      if (primaryAdmin && username === primaryAdmin) {
+        return { email: username, role: "SUPER" };
+      }
+      logger.warn("[rbac] valid session but user not registered and not primary admin", {
+        username,
+      });
+    }
+  } catch {
+    // ignore
+  }
+
   return null;
 }
 
