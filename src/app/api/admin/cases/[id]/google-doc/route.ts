@@ -9,11 +9,14 @@
  *   → { ok, url }
  */
 
+import { NextResponse } from "next/server";
+
 import { createAdminRequestContext, safeReadJsonBody } from "@/lib/http/admin-api";
 import { normalizeAdminEntityId } from "@/lib/http/admin-id";
 import { getCaseMatterById } from "@/lib/services/case-matter-service";
 import { getOrCreateCaseFolder } from "@/lib/services/google-drive-service";
-import { createDoc } from "@/lib/services/google-docs-service";
+import { createDoc, exportFile, generateFromTemplate } from "@/lib/services/google-docs-service";
+import { buildReplacements, getTemplate } from "@/lib/services/google-doc-template-service";
 import { prisma } from "@/lib/prisma/client";
 
 type DocType = "power_of_attorney" | "consult_summary";
@@ -125,8 +128,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (!caseId) return api.error(400, "Invalid case id.", { code: "INVALID_CASE_ID" });
 
   const parsed = await safeReadJsonBody(request);
-  const body = (parsed.ok ? parsed.body : {}) as { docType?: DocType };
-  const docType: DocType = body.docType === "consult_summary" ? "consult_summary" : "power_of_attorney";
+  const body = (parsed.ok ? parsed.body : {}) as {
+    docType?: DocType;
+    templateSlug?: string;
+    format?: "doc" | "pdf";
+  };
+  const wantPdf = body.format === "pdf";
 
   try {
     const cm = await getCaseMatterById(caseId);
@@ -140,19 +147,74 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       if (folder?.folderId) await recordCaseFolder(caseId, folder);
     }
 
-    const { title, body: bodyText } = buildBody(docType, {
-      caseNo: cm.caseNo,
-      title: cm.title,
-      matterType: cm.matterType,
-      category: cm.category,
-      summary: cm.summary ?? null,
-      parties: cm.parties.map((p) => ({ role: p.role, name: p.name }))
-    });
+    const partiesFull = cm.parties.map((p) => ({
+      role: p.role,
+      name: p.name,
+      phone: p.phone ?? null,
+      email: p.email ?? null,
+      organization: p.organization ?? null,
+      nationality: p.nationality ?? null
+    }));
 
-    const doc = await createDoc({ title, bodyText, folderId: folder?.folderId });
+    let doc: { documentId: string; url: string } | null = null;
+    let docTitle: string;
+
+    if (body.templateSlug) {
+      // 등록된 서식 → 복사 + 플레이스홀더 치환.
+      const tpl = await getTemplate(body.templateSlug);
+      if (!tpl) return api.error(404, "서식을 찾을 수 없습니다.", { code: "TEMPLATE_NOT_FOUND" });
+      const replacements = buildReplacements({
+        caseNo: cm.caseNo,
+        title: cm.title,
+        matterType: cm.matterType,
+        category: cm.category,
+        summary: cm.summary ?? null,
+        parties: partiesFull
+      });
+      docTitle = `${tpl.name} - ${replacements["의뢰인"]} (${replacements["사건번호"]})`;
+      doc = await generateFromTemplate({
+        templateDocId: tpl.templateDocId,
+        title: docTitle,
+        replacements,
+        folderId: folder?.folderId
+      });
+    } else {
+      // 내장 서식(위임장 / 상담요약).
+      const docType: DocType =
+        body.docType === "consult_summary" ? "consult_summary" : "power_of_attorney";
+      const built = buildBody(docType, {
+        caseNo: cm.caseNo,
+        title: cm.title,
+        matterType: cm.matterType,
+        category: cm.category,
+        summary: cm.summary ?? null,
+        parties: partiesFull.map((p) => ({ role: p.role, name: p.name }))
+      });
+      docTitle = built.title;
+      doc = await createDoc({ title: built.title, bodyText: built.body, folderId: folder?.folderId });
+    }
+
     if (!doc) {
       return api.error(409, "구글 미연결 또는 문서 생성 실패. 구글 연결을 확인하세요.", {
         code: "NOT_CONNECTED_OR_FAILED"
+      });
+    }
+
+    // PDF 요청이면 문서를 PDF 로 내보내 바이트 스트림 반환.
+    if (wantPdf) {
+      const exported = await exportFile({ fileId: doc.documentId, mimeType: "application/pdf" });
+      if (!exported) {
+        // PDF 실패해도 편집용 문서는 만들어졌으니 URL 은 준다.
+        return api.ok({ ok: true, url: doc.url, documentId: doc.documentId, pdf: false });
+      }
+      const safeName = docTitle.replace(/[\\/:*?"<>|]/g, "_").slice(0, 100);
+      return new NextResponse(new Uint8Array(exported.data), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${encodeURIComponent(safeName)}.pdf"`,
+          "Cache-Control": "no-store"
+        }
       });
     }
 
