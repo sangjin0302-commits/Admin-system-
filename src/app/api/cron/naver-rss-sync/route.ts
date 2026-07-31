@@ -68,5 +68,16 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, ...result });
+  // 뉴스레터 구독자에게 신규 글 알림(발행 즉시). best-effort — 실패해도 sync 성공 처리.
+  //  - watermark 기반이라 admin 수동발행 글도 다음 sync 때 함께 커버됨.
+  //  - 무료한도 가드에 걸리면 내부에서 중단(유료전환 방지).
+  let notify: Awaited<ReturnType<typeof import("@/lib/services/newsletter-service").notifyNewlyPublishedPosts>> | null = null;
+  try {
+    const { notifyNewlyPublishedPosts } = await import("@/lib/services/newsletter-service");
+    notify = await notifyNewlyPublishedPosts();
+  } catch (err) {
+    logger.warn("[cron/naver-rss-sync] subscriber notify failed", err);
+  }
+
+  return NextResponse.json({ ok: true, ...result, notify });
 }

@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma/client";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 import { CATEGORY_LABEL, PUBLIC_CATEGORY_LABEL, toPublicCategory, type PublicCategory, type BlogCategory } from "@/lib/services/blog-categorizer";
 import { BlogTagCloud } from "@/components/public/blog-tag-cloud";
+import { NewsletterSubscribeForm } from "@/components/public/newsletter-subscribe-form";
 
 export const dynamic = "force-dynamic";
 
@@ -215,6 +216,17 @@ export default async function BlogPage({
 
       {/* 태그 클라우드 */}
       <BlogTagCloud />
+
+      {/* 뉴스레터 구독 */}
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <Reveal>
+            <div className="rounded-3xl border border-line bg-surface-muted/50 px-6 py-12 sm:px-12">
+              <NewsletterSubscribeForm lang={lang} />
+            </div>
+          </Reveal>
+        </div>
+      </section>
 
       <section className="ethos-band ethos-band-soft py-24 sm:py-28">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">

@@ -10,6 +10,7 @@
 import { randomUUID } from "crypto";
 
 import { prisma } from "@/lib/prisma/client";
+import { sendNewBlogNotification } from "@/lib/services/email-service";
 import { logger } from "@/lib/utils/logger";
 
 export type Subscriber = {
@@ -27,7 +28,9 @@ export type PendingConfirmation = {
 
 const KEY_SUBSCRIBERS = "newsletter.subscribers";
 const KEY_PENDING = "newsletter.pending";
+const KEY_LAST_POST_NOTIFY = "newsletter.lastPostNotifyAt"; // ISO watermark
 const PENDING_TTL_MS = 48 * 60 * 60 * 1000; // 48h
+const MAX_POSTS_PER_RUN = 5; // 한 실행에서 알림 보낼 최대 신규 글 수(백로그 폭주 방지)
 
 async function readJson<T>(key: string, fallback: T): Promise<T> {
   try {
@@ -144,4 +147,69 @@ export async function listPending(): Promise<PendingConfirmation[]> {
  */
 export async function subscribe(email: string, categories?: string[]) {
   return beginSubscribe(email, categories);
+}
+
+/**
+ * 새로 발행된 블로그 글을 확인된 구독자에게 개별 알림 발송.
+ * (주간 digest 와 별개 — 발행 즉시 알림. RSS·수동발행 모두 커버.)
+ *
+ * - watermark(마지막 알림 시각) 이후 published 된 글만 대상 → 중복 발송 방지.
+ * - 구독자별 개별 발송(to 배열에 한 명씩) → 수신자 간 이메일 노출 없음.
+ * - sendEmail 의 무료한도 가드에 걸리면 발송이 실패로 돌아오므로 즉시 중단.
+ * - watermark 는 처리 후 항상 전진 → 한도로 중간 중단돼도 다음 실행에서 재발송 안 함
+ *   (일부 구독자가 그 글을 놓칠 순 있으나 중복 스팸보다 안전).
+ */
+export async function notifyNewlyPublishedPosts(
+  limit = MAX_POSTS_PER_RUN
+): Promise<{ ok: boolean; posts: number; emails: number; stopped?: string }> {
+  const subscribers = await listSubscribers();
+  if (subscribers.length === 0) return { ok: true, posts: 0, emails: 0 };
+
+  const watermarkIso = await readJson<string>(KEY_LAST_POST_NOTIFY, "");
+  const since = watermarkIso
+    ? new Date(watermarkIso)
+    : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 최초 실행: 최근 7일치만
+
+  const posts = await prisma.blogPost.findMany({
+    where: { published: true, publishedAt: { gt: since } },
+    orderBy: { publishedAt: "asc" },
+    take: limit,
+    select: { title: true, slug: true, excerpt: true, publishedAt: true }
+  });
+  if (posts.length === 0) return { ok: true, posts: 0, emails: 0 };
+
+  let emails = 0;
+  let stopped: string | undefined;
+
+  outer: for (const post of posts) {
+    for (const sub of subscribers) {
+      const res = await sendNewBlogNotification({
+        to: [sub.email],
+        postTitle: post.title,
+        postSlug: post.slug,
+        postDescription: post.excerpt || undefined
+      });
+      if (res.ok) {
+        emails++;
+      } else {
+        // 미설정/한도초과 등 시스템적 실패 → 더 보내지 말고 중단
+        stopped = "send_failed_or_quota";
+        break outer;
+      }
+    }
+  }
+
+  // watermark 전진(중단됐어도) — 마지막으로 대상에 포함된 글 기준
+  const lastPublishedAt = posts[posts.length - 1]?.publishedAt;
+  if (lastPublishedAt) {
+    await writeJson(KEY_LAST_POST_NOTIFY, lastPublishedAt.toISOString());
+  }
+
+  logger.info("[newsletter] notifyNewlyPublishedPosts", {
+    posts: posts.length,
+    subscribers: subscribers.length,
+    emails,
+    stopped
+  });
+  return { ok: true, posts: posts.length, emails, stopped };
 }
