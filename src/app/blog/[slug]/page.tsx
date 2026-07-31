@@ -210,8 +210,9 @@ export default async function BlogDetailPage({
       <ArticleJsonLd
         title={post.title}
         description={post.excerpt}
-        url={`/blog/${post.slug}`}
+        url={lang === "en" ? `/blog/${post.slug}?lang=en` : `/blog/${post.slug}`}
         publishedAt={post.date}
+        inLanguage={lang === "en" ? "en" : "ko"}
       />
       {blogPostingSchema && (
         <script

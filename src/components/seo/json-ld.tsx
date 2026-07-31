@@ -228,6 +228,7 @@ export function ArticleJsonLd({
   publishedAt,
   modifiedAt,
   authorName,
+  inLanguage,
 }: {
   title: string;
   description?: string;
@@ -236,6 +237,7 @@ export function ArticleJsonLd({
   publishedAt?: string | Date;
   modifiedAt?: string | Date;
   authorName?: string;
+  inLanguage?: string;
 }) {
   const siteUrl = getSiteUrl();
   return jsonLdScript({
@@ -244,6 +246,7 @@ export function ArticleJsonLd({
     headline: title,
     description,
     image: imageUrl,
+    inLanguage,
     url: url.startsWith("http") ? url : `${siteUrl}${url}`,
     datePublished: publishedAt
       ? new Date(publishedAt).toISOString()
