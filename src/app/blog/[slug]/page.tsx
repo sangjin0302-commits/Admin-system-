@@ -58,6 +58,16 @@ type ResolvedPost = {
   translationMissing?: boolean;
 };
 
+/** %-인코딩된 제목(과거 수입 데이터 오류)을 방어적 디코드. 실패 시 원문. */
+function decodeTitle(s: string): string {
+  if (!s.includes("%")) return s;
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
 async function resolvePost(slug: string, lang: Lang): Promise<ResolvedPost | null> {
   const md = await getBlogPostBySlug(slug);
   if (md) {
@@ -82,7 +92,7 @@ async function resolvePost(slug: string, lang: Lang): Promise<ResolvedPost | nul
   return {
     source: "db",
     slug: db.slug,
-    title: useEn && titleEn ? titleEn : db.title,
+    title: decodeTitle(useEn && titleEn ? titleEn : db.title),
     excerpt: useEn && excerptEn ? excerptEn : db.excerpt,
     contentHtml: useEn && bodyEn ? bodyEn : db.body,
     category: db.category,

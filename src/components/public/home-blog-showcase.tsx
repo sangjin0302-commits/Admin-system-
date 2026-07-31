@@ -2,6 +2,16 @@ import Link from "next/link";
 
 import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
 
+/** %-인코딩된 제목(과거 수입 데이터 오류)을 표시용으로 방어적 디코드. 실패 시 원문. */
+function decodeTitle(s: string): string {
+  if (!s.includes("%")) return s;
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
 export type ShowcasePost = {
   slug: string;
   title: string;
@@ -52,7 +62,7 @@ export function HomeBlogShowcase({
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((p) => {
-            const title = en ? p.titleEn || p.title : p.title;
+            const title = decodeTitle(en ? p.titleEn || p.title : p.title);
             const excerpt = en ? p.excerptEn || p.excerpt : p.excerpt;
             return (
               <Link
@@ -66,6 +76,7 @@ export function HomeBlogShowcase({
                     <img
                       src={p.coverImage}
                       alt=""
+                      referrerPolicy="no-referrer"
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       loading="lazy"
                     />

@@ -70,11 +70,19 @@ export default async function BlogPage({
     dateLabel: string;
     publicCat: PublicCategory;
   };
+  const decodeTitle = (s: string): string => {
+    if (!s.includes("%")) return s;
+    try {
+      return decodeURIComponent(s);
+    } catch {
+      return s;
+    }
+  };
   const allCards: BoardCard[] = [
     ...importedPosts.map((p) => ({
       key: p.id,
       href: `/blog/${p.slug}${lang === "en" ? "?lang=en" : ""}`,
-      title: lang === "en" ? p.titleEn || p.title : p.title,
+      title: decodeTitle(lang === "en" ? p.titleEn || p.title : p.title),
       excerpt: lang === "en" ? p.excerptEn || p.excerpt : p.excerpt,
       cover: p.coverImage ?? null,
       dateMs: p.publishedAt ? p.publishedAt.getTime() : 0,
@@ -84,7 +92,7 @@ export default async function BlogPage({
     ...posts.map((p) => ({
       key: `md-${p.slug}`,
       href: `/blog/${p.slug}${lang === "en" ? "?lang=en" : ""}`,
-      title: p.title,
+      title: decodeTitle(p.title),
       excerpt: p.excerpt,
       cover: null,
       dateMs: p.date ? new Date(p.date).getTime() : 0,
@@ -173,6 +181,7 @@ export default async function BlogPage({
                       <img
                         src={featured.cover}
                         alt=""
+                        referrerPolicy="no-referrer"
                         className="h-full w-full object-cover"
                         loading="lazy"
                       />
@@ -226,6 +235,7 @@ export default async function BlogPage({
                       <img
                         src={c.cover}
                         alt=""
+                        referrerPolicy="no-referrer"
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                         loading="lazy"
                       />
