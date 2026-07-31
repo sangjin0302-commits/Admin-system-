@@ -43,6 +43,11 @@ export const metadata: Metadata = {
   alternates: {
     languages: { ko: "/", en: "/en", "x-default": "/" }
   },
+  // Google Search Console HTML 태그 검증. GSC 에서 받은 코드를
+  // Vercel env GOOGLE_SITE_VERIFICATION 에 넣으면 <meta google-site-verification> 자동 삽입.
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
