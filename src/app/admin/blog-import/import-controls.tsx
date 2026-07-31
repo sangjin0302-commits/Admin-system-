@@ -59,14 +59,14 @@ export function ImportControls() {
       {/* 대량 import */}
       <div className="rounded-lg border border-gold/30 bg-gold-soft/10 p-4">
         <p className="font-serif text-sm font-bold text-primary">대량 가져오기 (PostTitleListAsync)</p>
-        <p className="mt-1 text-xs text-text-muted">RSS 한계(~10편)를 넘어 페이징으로 최대 N편 가져옵니다. 중복은 자동 스킵.</p>
+        <p className="mt-1 text-xs text-text-muted">RSS 한계(~10편)를 넘어 페이징으로 최대 N편 가져옵니다. 중복은 자동 스킵. ⚠️ 서버 60초 제한 — 번역 켜면 20~30편, 끄면 50편 이하 권장. 많으면 나눠서 여러 번(중복 스킵됨).</p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <label className="text-xs font-semibold text-primary">
             최대 글수:
             <input
               type="number"
-              value={max}
-              onChange={(e) => setMax(Number(e.target.value) || 100)}
+              value={maxInput}
+              onChange={(e) => setMaxInput(e.target.value)}
               min={1}
               max={300}
               className="ml-2 w-20 rounded border border-line bg-surface px-2 py-1 text-sm"
