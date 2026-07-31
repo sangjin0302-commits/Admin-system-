@@ -266,7 +266,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "macro_hotkeys", label: "매크로 hotkey (Ctrl+1~9)", category: "ux", default: true, description: "Ctrl+1~9로 매크로 즉시 삽입/복사. /admin/macro-hotkeys에서 편집" },
   { key: "case_event_timeline", label: "사건 진행 timeline", category: "ux", default: true, description: "사건 상세 상단에 CaseEvent 최근 20건 timeline 표시" },
   { key: "hero_image_rotation", label: "히어로 이미지 로테이션", category: "marketing", default: false, description: 'SiteSetting "image.hero.rotation" JSON 배열을 일자별 순환. 미설정 시 기본 로고' },
-  { key: "public_dark_mode_toggle", label: "public 다크모드 토글", category: "ux", default: true, public: true, description: "public footer에 라이트/자동/다크 토글", locked: true, lockReason: "접근성 기본 기능 — e2e 44/44 그린 잠금 2026-07-22" },
+  { key: "public_dark_mode_toggle", label: "public 다크모드 토글", category: "ux", default: false, public: true, description: "public footer 다크모드 토글 — 야간모드 색상 깨짐으로 비활성 고정", locked: true, lockReason: "다크모드 색상 깨짐 → 사용자 요청으로 영구 비활성 2026-07-31" },
   { key: "returning_visitor_badge", label: "재방문자 배지", category: "marketing", default: true, public: true, description: '홈에서 재방문자에게 "지난번 본 서비스 이어보기" 칩 (localStorage, 30일)' },
   { key: "intake_progress_chip", label: "intake 필수항목 진행 칩", category: "ux", default: true, description: "접수 폼 상단 sticky 4단계 필수항목 완료 표시" },
   { key: "blog_mid_cta", label: "블로그 50% CTA", category: "marketing", default: true, public: true, description: "블로그 글 50% 스크롤 시 무료검토 슬라이드인 CTA (세션당 1회)" },

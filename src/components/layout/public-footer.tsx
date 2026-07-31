@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 
 import { CHANNELS } from "@/lib/constants/channels";
 import { usePublicFlags } from "@/lib/hooks/use-public-flags";
-import { PublicDarkModeToggle } from "@/components/public/public-dark-mode-toggle";
 
 const FALLBACK = { phone: "02-0000-0000", email: "a.attorneyjean@gmail.com", hours: "평일 09:00 - 18:00" };
 
@@ -240,7 +239,6 @@ export function PublicFooter() {
         <div className="mt-6 flex flex-col items-start justify-between gap-3 border-t border-white/15 pt-6 text-xs text-white/50 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
             <p>© 2026 ETHOS 행정사사무소. All rights reserved.</p>
-            <PublicDarkModeToggle />
           </div>
           <div className="flex gap-4">
             <Link href="/privacy" className="transition-colors duration-200 hover:text-gold-soft">개인정보 처리방침</Link>

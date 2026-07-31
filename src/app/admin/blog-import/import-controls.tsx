@@ -16,7 +16,9 @@ export function ImportControls() {
   const [loading, setLoading] = useState<"rss" | "bulk" | null>(null);
   const [result, setResult] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [max, setMax] = useState(100);
+  // 문자열로 보관해 자유롭게 편집(지우기/줄이기) 가능. 사용 시 숫자로 파싱.
+  const [maxInput, setMaxInput] = useState("30");
+  const max = Math.min(300, Math.max(1, Number.parseInt(maxInput, 10) || 30));
   const [translate, setTranslate] = useState(false);
   const [naverCategoryNo, setNaverCategoryNo] = useState("");
   const [targetCategory, setTargetCategory] = useState("");
