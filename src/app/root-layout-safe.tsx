@@ -101,7 +101,8 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('ethos.theme');if(t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.dataset.theme='dark';}}catch(e){}`,
+            // 공개 사이트는 라이트 고정(다크 색상 깨짐 — 사용자 요청). 다크는 admin 에서 명시 선택 시에만.
+            __html: `try{var p=location.pathname;var isAdmin=/^\\/admin(\\/|$)/.test(p);var t=localStorage.getItem('ethos.theme');if(isAdmin&&t==='dark'){document.documentElement.dataset.theme='dark';}else{document.documentElement.dataset.theme='light';}}catch(e){}`,
           }}
         />
         {/*

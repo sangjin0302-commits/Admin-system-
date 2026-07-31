@@ -153,7 +153,7 @@ export function AiChatWidget() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg transition hover:scale-105 sm:bottom-8 sm:right-8"
+        className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg transition hover:scale-105 sm:bottom-28 sm:right-6"
         aria-label="AI 상담 열기"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
