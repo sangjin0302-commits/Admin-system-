@@ -15,7 +15,16 @@ export async function POST(request: Request) {
   const url = new URL(request.url);
   const max = Number(url.searchParams.get("max") ?? 100);
   const translate = url.searchParams.get("translate") === "1";
+  // 게시판별 수입: 네이버 categoryNo + 지정 사이트 카테고리(선택).
+  const categoryNo = url.searchParams.get("categoryNo") ?? undefined;
+  const categoryLabel = url.searchParams.get("category") ?? undefined;
 
-  const result = await bulkImportNaverBlog({ blogId, maxPosts: max, translate });
-  return NextResponse.json({ ok: true, blogId, ...result });
+  const result = await bulkImportNaverBlog({
+    blogId,
+    maxPosts: max,
+    translate,
+    categoryNo,
+    categoryLabel,
+  });
+  return NextResponse.json({ ok: true, blogId, categoryNo: categoryNo ?? null, ...result });
 }

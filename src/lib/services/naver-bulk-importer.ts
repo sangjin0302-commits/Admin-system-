@@ -33,8 +33,9 @@ function stripHtml(s: string): string {
   return s.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 }
 
-async function fetchTitleList(blogId: string, page: number): Promise<ListEntry[]> {
-  const url = `${BASE}/PostTitleListAsync.naver?blogId=${encodeURIComponent(blogId)}&viewdate=&currentPage=${page}&categoryNo=&parentCategoryNo=&countPerPage=30`;
+async function fetchTitleList(blogId: string, page: number, categoryNo?: string): Promise<ListEntry[]> {
+  const cat = (categoryNo ?? "").trim();
+  const url = `${BASE}/PostTitleListAsync.naver?blogId=${encodeURIComponent(blogId)}&viewdate=&currentPage=${page}&categoryNo=${encodeURIComponent(cat)}&parentCategoryNo=&countPerPage=30`;
   const res = await fetch(url, {
     headers: {
       "User-Agent": "Mozilla/5.0",
@@ -102,10 +103,16 @@ export async function bulkImportNaverBlog(options: {
   blogId: string;
   maxPosts?: number;
   translate?: boolean;
+  /** 특정 네이버 게시판(카테고리)만 수입. 비우면 전체. */
+  categoryNo?: string;
+  /** 수입 글에 강제 지정할 사이트 카테고리(공개/내부 키). 비우면 내용 기반 자동분류. */
+  categoryLabel?: string;
 }): Promise<{ imported: number; skipped: number; translated: number; errors: string[] }> {
   const { blogId } = options;
   const maxPosts = options.maxPosts ?? 100;
   const translate = options.translate ?? false; // 50편 번역은 API 비용 큼 → 기본 끔
+  const categoryNo = options.categoryNo?.trim() || undefined;
+  const categoryLabel = options.categoryLabel?.trim() || undefined;
   const errors: string[] = [];
   let imported = 0;
   let skipped = 0;
@@ -114,7 +121,7 @@ export async function bulkImportNaverBlog(options: {
   let allEntries: ListEntry[] = [];
   for (let page = 1; page <= 10; page++) {
     try {
-      const batch = await fetchTitleList(blogId, page);
+      const batch = await fetchTitleList(blogId, page, categoryNo);
       if (batch.length === 0) break;
       allEntries.push(...batch);
       if (allEntries.length >= maxPosts) break;
@@ -164,7 +171,8 @@ export async function bulkImportNaverBlog(options: {
         }
       }
 
-      const category = classifyBlogPost(`${title}\n${excerpt}\n${body.slice(0, 4000)}`);
+      // 게시판별 수입 시 지정 카테고리 우선, 아니면 내용 기반 자동분류.
+      const category = categoryLabel ?? classifyBlogPost(`${title}\n${excerpt}\n${body.slice(0, 4000)}`);
       await prisma.blogPost.create({
         data: {
           slug: generateSlug(title, entry.logNo),

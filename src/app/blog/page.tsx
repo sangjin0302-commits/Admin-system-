@@ -274,12 +274,20 @@ export default async function BlogPage({
                 ? "Columns are general guidance. Individual cases are reviewed after consultation."
                 : "칼럼은 일반 안내이며, 개별 사안은 상담 신청 후 사실관계를 확인하며 검토합니다."}
             </p>
-            <Link
-              href={lang === "en" ? "/intake?lang=en" : "/intake"}
-              className="mt-9 inline-flex h-12 items-center rounded-lg bg-primary px-8 text-sm font-bold text-white transition hover:bg-text-strong"
-            >
-              {lang === "en" ? "Request Consultation" : "상담 신청하기"}
-            </Link>
+            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                href={lang === "en" ? "/intake?lang=en" : "/intake"}
+                className="inline-flex h-12 items-center rounded-lg bg-primary px-8 text-sm font-bold text-white transition hover:bg-text-strong"
+              >
+                {lang === "en" ? "Request Consultation" : "상담 신청하기"}
+              </Link>
+              <Link
+                href="/quick-check"
+                className="inline-flex h-12 items-center rounded-lg border border-primary/40 px-8 text-sm font-semibold text-primary transition hover:bg-primary/5"
+              >
+                {lang === "en" ? "Free AI case check" : "무료 AI 사전진단"}
+              </Link>
+            </div>
           </Reveal>
         </div>
       </section>

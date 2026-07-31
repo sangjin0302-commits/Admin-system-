@@ -18,6 +18,8 @@ export function ImportControls() {
   const [error, setError] = useState<string | null>(null);
   const [max, setMax] = useState(100);
   const [translate, setTranslate] = useState(false);
+  const [naverCategoryNo, setNaverCategoryNo] = useState("");
+  const [targetCategory, setTargetCategory] = useState("");
 
   async function run(endpoint: string, mode: "rss" | "bulk") {
     setLoading(mode);
@@ -83,6 +85,56 @@ export function ImportControls() {
             className="rounded-lg bg-gold-deep px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
           >
             {loading === "bulk" ? `가져오는 중... (최대 ${max}편)` : `대량 가져오기 시작`}
+          </button>
+        </div>
+      </div>
+
+      {/* 게시판별 수입 — 네이버 실게시판 → 사이트 카테고리 지정 */}
+      <div className="rounded-lg border border-gold/30 bg-gold-soft/10 p-4">
+        <p className="font-serif text-sm font-bold text-primary">게시판별 가져오기 (네이버 카테고리 → 사이트 카테고리)</p>
+        <p className="mt-1 text-xs text-text-muted">
+          네이버 특정 게시판만 골라 수입하고, 사이트 카테고리를 강제 지정합니다. 네이버 게시판 번호(categoryNo)는
+          해당 게시판 URL 의 <code>categoryNo=</code> 값. 비우면 전체·자동분류.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <label className="text-xs font-semibold text-primary">
+            네이버 게시판 번호:
+            <input
+              type="text"
+              value={naverCategoryNo}
+              onChange={(e) => setNaverCategoryNo(e.target.value.trim())}
+              placeholder="예: 7"
+              className="ml-2 w-24 rounded border border-line bg-surface px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="text-xs font-semibold text-primary">
+            사이트 카테고리:
+            <select
+              value={targetCategory}
+              onChange={(e) => setTargetCategory(e.target.value)}
+              className="ml-2 rounded border border-line bg-surface px-2 py-1 text-sm"
+            >
+              <option value="">자동분류</option>
+              <option value="visa">비자·체류</option>
+              <option value="appeal">행정심판</option>
+              <option value="contract">계약·사실조사</option>
+              <option value="license">인허가</option>
+              <option value="corporate">법인설립</option>
+              <option value="other">기타</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            onClick={() => {
+              const params = new URLSearchParams({ max: String(max), translate: translate ? "1" : "0" });
+              if (naverCategoryNo) params.set("categoryNo", naverCategoryNo);
+              if (targetCategory) params.set("category", targetCategory);
+              return run(`/api/admin/blog-bulk-import?${params.toString()}`, "bulk");
+            }}
+            disabled={loading !== null}
+            className="rounded-lg bg-gold-deep px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
+          >
+            {loading === "bulk" ? "가져오는 중..." : "게시판별 가져오기"}
           </button>
         </div>
       </div>
