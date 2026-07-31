@@ -104,18 +104,6 @@ export function OnboardingTour() {
   const current = STEPS[step];
   if (!current) return null;
 
-  // 툴팁 위치 계산 — 하이라이트 아래(공간이 부족하면 위)
-  const tooltipTop = rect
-    ? rect.top + rect.height + 12
-    : typeof window !== "undefined"
-      ? window.scrollY + window.innerHeight / 2 - 80
-      : 0;
-  const tooltipLeft = rect
-    ? Math.max(16, Math.min(rect.left, (typeof window !== "undefined" ? window.innerWidth : 800) - 320))
-    : typeof window !== "undefined"
-      ? window.innerWidth / 2 - 160
-      : 0;
-
   return (
     <div
       aria-live="polite"
@@ -157,18 +145,20 @@ export function OnboardingTour() {
           }}
         />
       )}
-      {/* 툴팁 카드 */}
+      {/* 툴팁 카드 — 화면 정중앙 고정(옆이 아니라 가운데에서 안내) */}
       <div
         style={{
-          position: "absolute",
-          top: tooltipTop,
-          left: tooltipLeft,
-          width: 300,
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: 320,
+          maxWidth: "calc(100vw - 32px)",
           background: "white",
           color: "#0f172a",
-          borderRadius: 14,
-          padding: "16px 18px",
-          boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
+          borderRadius: 16,
+          padding: "20px 22px",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.35)",
           pointerEvents: "auto",
           animation: "ethosTourSlideIn 260ms ease-out"
         }}

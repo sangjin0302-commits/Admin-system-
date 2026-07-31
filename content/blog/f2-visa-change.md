@@ -1,7 +1,7 @@
 ---
 title: "F-2 거주 자격 변경 — 요건과 준비 서류"
 excerpt: "F-2 자격 변경 요건, 점수제 평가 항목, 신청 시 자주 누락되는 서류를 살펴봅니다."
-category: "비자/체류"
+category: "비자·체류"
 date: "2026-06-05"
 readMin: 6
 slug: "f2-visa-change"
