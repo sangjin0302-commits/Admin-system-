@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import type { Metadata } from "next";
 
 import { BlogToc } from "@/components/public/blog-toc";
@@ -174,6 +175,17 @@ export default async function BlogDetailPage({
   const lang: Lang = sp.lang === "en" ? "en" : "ko";
   const post = await resolvePost(slug, lang);
   if (!post) notFound();
+
+  // 조회수 증가(인기글 위젯용) — DB 글만, 렌더 비차단(best-effort).
+  if (post.source === "db") {
+    after(async () => {
+      try {
+        await prisma.blogPost.update({ where: { slug }, data: { viewCount: { increment: 1 } } });
+      } catch {
+        /* best-effort */
+      }
+    });
+  }
 
   const all = await listBlogPosts();
   const [blogRelatedAutoEnabled, faqSchemaAutoEnabled, blogSeoAutoEnabled] = await Promise.all([

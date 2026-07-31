@@ -15,9 +15,10 @@ test.describe("공개 플래그 표면", () => {
     );
   });
 
-  test("ai_chatbot — 공개 페이지에 AI 상담 버튼 노출", async ({ page }) => {
+  test("상담 플로팅 — 카카오톡 채널 안내 버튼 노출", async ({ page }) => {
+    // AI 챗은 미작동으로 카카오 채널 플로팅으로 교체됨(2026-07-31).
     await page.goto("/");
-    await expect(page.getByRole("button", { name: "AI 상담 열기" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "카카오톡 채널로 상담하기" })).toBeVisible();
   });
 
   test("ai_chatbot — 플래그 API가 공개 플래그를 내려줌", async ({ request }) => {
