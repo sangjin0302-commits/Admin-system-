@@ -31,6 +31,7 @@ export type SiteSettingsKey =
   | "home.stat2"
   | "home.stat3"
   | "home.stat4"
+  | "home.pricingHint"
   | "services.immigration.desc"
   | "services.appeal.desc"
   | "services.contract.desc"
@@ -71,9 +72,10 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "seo.googleVerification": "",
   "seo.naverVerification": "",
   "home.stat1": "2년+ 대사관 비자 실무 | 주한 대사관 비자·출입국 경력",
-  "home.stat2": "3개 언어 | 한국어·영어·아랍어 응대",
+  "home.stat2": "한국어·영어 | 이중언어 상담 지원",
   "home.stat3": "5대 전문 분야 | 비자·심판·계약·인허가·법인설립",
   "home.stat4": "24h 검토 회신 | 영업일 기준 무료 검토",
+  "home.pricingHint": "",
   "services.immigration.desc": "",
   "services.appeal.desc": "",
   "services.contract.desc": "",
@@ -138,6 +140,7 @@ export const SITE_SETTINGS_LABELS: Record<
   "home.stat2": { label: "홈 통계 ②", hint: "형식: 숫자+단위 | 제목 | 설명" },
   "home.stat3": { label: "홈 통계 ③", hint: "형식: 숫자+단위 | 제목 | 설명" },
   "home.stat4": { label: "홈 통계 ④", hint: "형식: 숫자+단위 | 제목 | 설명" },
+  "home.pricingHint": { label: "홈 요금 안내 문구", hint: "히어로 CTA 아래 노출. 예: 무료 검토 · 상담 3.3~5.5만원(수임 시 차감). 비우면 숨김" },
   "services.immigration.desc": { label: "서비스: 비자/체류 소개글", hint: "비우면 기본 문구 사용", multiline: true },
   "services.appeal.desc": { label: "서비스: 행정심판 소개글", hint: "비우면 기본 문구 사용", multiline: true },
   "services.contract.desc": { label: "서비스: 계약서/사실조사 소개글", hint: "비우면 기본 문구 사용", multiline: true },

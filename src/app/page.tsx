@@ -16,6 +16,7 @@ import { ParallaxAurora } from "@/components/public/parallax-aurora";
 import { NewsletterWidget } from "@/components/public/newsletter-widget";
 import { NaverReviewBand } from "@/components/public/naver-review-band";
 import { WritingChannels } from "@/components/public/writing-channels";
+import { HomeBlogShowcase } from "@/components/public/home-blog-showcase";
 import { HeroCtaSubtitleVariants } from "@/components/public/hero-cta-variants";
 import { HoloLogo } from "@/components/public/holo-logo";
 import { PersonalizedHero } from "@/components/public/personalized-hero";
@@ -237,6 +238,24 @@ export default async function PublicMarketingHomePage({
   const naverBlogId = site["naver.blogId"];
   const naverPosts = naverBlogId ? await fetchNaverBlogPosts(naverBlogId, 6) : [];
 
+  // 홈 블로그 쇼케이스 — 자사 수입 최신글(커버 포함). 자사 도메인 링크로 SEO/전환.
+  const showcasePosts = await prisma.blogPost
+    .findMany({
+      where: { published: true },
+      orderBy: { publishedAt: "desc" },
+      take: 3,
+      select: {
+        slug: true,
+        title: true,
+        titleEn: true,
+        excerpt: true,
+        excerptEn: true,
+        category: true,
+        coverImage: true
+      }
+    })
+    .catch(() => []);
+
   // 로고 (DB → /logo.webp fallback)
   const heroLogoRow = await prisma.siteSetting.findUnique({ where: { key: "image.logo" } }).catch(() => null);
   let heroLogo = heroLogoRow?.value || "/logo.webp";
@@ -404,6 +423,15 @@ export default async function PublicMarketingHomePage({
                 </Link>
               </div>
             </Reveal>
+
+            {/* 요금 안내 힌트 (admin 편집: home.pricingHint) — 비우면 숨김 */}
+            {site["home.pricingHint"]?.trim() && (
+              <Reveal delay={3}>
+                <p className="mt-4 inline-flex items-center rounded-full bg-gold-soft/40 px-4 py-1.5 text-xs font-semibold text-gold-deep">
+                  {site["home.pricingHint"]!.trim()}
+                </p>
+              </Reveal>
+            )}
 
             {/* 사회적 증거 에코 */}
             <Reveal delay={4}>
@@ -822,6 +850,9 @@ export default async function PublicMarketingHomePage({
       {/* 예전의 '네이버 블로그 최신글'은 /blog(법률 칼럼)와 같은 글을 실시간으로
           다시 보여줘 중복이었고, 방문자를 네이버로 내보내 자사 도메인 SEO 자산을
           깎았다. 글은 /blog 하나로 모으고 영문 독자용 LinkedIn 을 함께 안내한다. */}
+      {/* 홈 블로그 쇼케이스 — 네이버 자동수입 최신글 + 카드뉴스 커버(자사 도메인) */}
+      <HomeBlogShowcase posts={showcasePosts} lang={lang === "en" ? "en" : "ko"} />
+
       <WritingChannels lang={lang === "en" ? "en" : "ko"} />
 
       {/* ═══════════════ 신뢰 뱃지 벨트 (기능 플래그: trust_belt) ═══════════════ */}
