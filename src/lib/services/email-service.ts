@@ -18,6 +18,21 @@ export async function sendEmail(input: EmailInput): Promise<{ ok: boolean; id?: 
     return { ok: false, error: "Email service not configured" };
   }
 
+  // 무료 한도 가드 — 초과 시 자동 발송 중단(유료 전환 방지). 관리자가 직접 발송.
+  try {
+    const { canSendFreeEmail } = await import("@/lib/services/email-quota-service");
+    const quota = await canSendFreeEmail();
+    if (!quota.ok) {
+      logger.warn(`[email] free quota reached (${quota.reason}) — skip auto-send`, {
+        to: input.to,
+        subject: input.subject
+      });
+      return { ok: false, error: `free_quota_reached:${quota.reason}` };
+    }
+  } catch (err) {
+    logger.warn("[email] quota check failed, proceeding", err);
+  }
+
   try {
     const res = await fetch(RESEND_API_URL, {
       method: "POST",
@@ -41,6 +56,10 @@ export async function sendEmail(input: EmailInput): Promise<{ ok: boolean; id?: 
     }
 
     const data = await res.json();
+    // 발송 성공 → 무료 한도 카운트 증가(best-effort)
+    void import("@/lib/services/email-quota-service")
+      .then((mod) => mod.recordEmailSent())
+      .catch(() => undefined);
     return { ok: true, id: data.id };
   } catch (err) {
     logger.warn("[email] exception", err);

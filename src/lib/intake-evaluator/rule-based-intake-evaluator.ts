@@ -77,9 +77,7 @@ export class RuleBasedIntakeEvaluator implements IntakeEvaluator {
       recommendedDocuments.push(
         locale === "ko"
           ? "번역 대상 원문 파일과 언어 방향"
-          : locale === "en"
-            ? "Source files and target translation direction"
-            : "[Arabic placeholder] Source files and translation direction"
+          : "Source files and target translation direction"
       );
     }
 
@@ -87,9 +85,7 @@ export class RuleBasedIntakeEvaluator implements IntakeEvaluator {
       recommendedDocuments.push(
         locale === "ko"
           ? "현재 보유 문서 목록(없으면 없음으로 표기)"
-          : locale === "en"
-            ? "Current document inventory (or indicate none)"
-            : "[Arabic placeholder] Current document inventory"
+          : "Current document inventory (or indicate none)"
       );
     }
 

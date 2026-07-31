@@ -327,6 +327,16 @@ export async function POST(request: Request) {
           message: String(payload.message ?? ""),
         }).catch(() => {})
       );
+      // 고객 접수 확인 이메일 (Resend, RESEND_API_KEY 미설정 시 graceful no-op)
+      if (payload.email) {
+        import("@/lib/services/email-service").then((mod) =>
+          mod.sendIntakeConfirmation({
+            to: String(payload.email),
+            contactName: inquiry.contactName || String(payload.name ?? "고객"),
+            trackingCode: inquiry.publicTrackingCode || undefined,
+          }).catch(() => {})
+        ).catch(() => undefined);
+      }
       // 카카오 알림톡 (고객 접수 확인)
       import("@/lib/services/kakao-notification-service").then((mod) => {
         if (mod.isAlimtalkConnected() && inquiry.phone) {
