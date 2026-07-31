@@ -310,7 +310,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "multi_org_admin", label: "멀티사무소 관리 페이지", category: "admin", default: false, description: "멀티사무소 관리 페이지 노출 (/admin/organizations)" },
   { key: "site_content_editor", label: "웹페이지 콘텐츠 편집", category: "operations", default: true, description: "홈/서비스/푸터 주요 문구를 관리자 CMS(/admin/content-editor)에서 인라인 편집", locked: true, lockReason: "사이트 콘텐츠 직접 편집 핵심 기능 — 항상 활성 잠금 2026-07-22" },
   { key: "ai_prediction_accuracy", label: "AI 승소예측 정확도", category: "ai", default: false, description: "AI 승소 예측 신뢰도와 실제 결과 비교 트래킹" },
-  { key: "blog_auto_translate", label: "블로그 자동 번역 실행", category: "marketing", default: false, description: "미번역 블로그 포스트 일괄 자동 번역 (EN/ZH)" },
+  { key: "blog_auto_translate", label: "블로그 자동 번역 실행", category: "marketing", default: true, description: "미번역 블로그 포스트 일괄 자동 번역 (EN 전용, 정책상 한글+영어 고정)" },
   { key: "inquiry_label_retrain", label: "문의 라벨링 재학습", category: "ai", default: false, description: "자동 라벨링 정답/오답 피드백을 축적해 프롬프트 튜닝에 활용" },
   { key: "org_onboarding_wizard", label: "사무소 온보딩 마법사", category: "platform", default: true, description: "신규 사무소 다단계 온보딩 위저드" },
   { key: "seo_audit", label: "사이트 SEO 감사", category: "marketing", default: true, description: "URL 입력 시 SEO 요소(타이틀·메타·H1·OG·JSON-LD) DIY 감사" },

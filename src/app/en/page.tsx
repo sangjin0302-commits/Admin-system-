@@ -211,14 +211,20 @@ export default function EnglishLanding() {
                 Any channel works — Naver Talk, Kakao, Telegram, or email. You'll get a free initial review within 24 business hours.
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link href="/links" className="inline-flex h-12 items-center rounded-lg bg-gold px-7 text-sm font-bold text-primary transition hover:bg-gold-soft">
-                  All channels →
+                <Link href="/intake?lang=en" className="inline-flex h-12 items-center rounded-lg bg-gold px-7 text-sm font-bold text-primary transition hover:bg-gold-soft">
+                  Request consultation →
                 </Link>
-                <Link href="/intake?lang=en" className="inline-flex h-12 items-center rounded-lg border border-gold/60 px-7 text-sm font-semibold text-gold-soft transition hover:bg-gold/10">
-                  Web form
+                <Link href="/quick-check" className="inline-flex h-12 items-center rounded-lg border border-gold/60 px-7 text-sm font-semibold text-gold-soft transition hover:bg-gold/10">
+                  Free case check
+                </Link>
+                <Link href="/links" className="inline-flex h-12 items-center rounded-lg border border-gold/60 px-7 text-sm font-semibold text-gold-soft transition hover:bg-gold/10">
+                  All channels
                 </Link>
               </div>
               <p className="mt-7 text-[11px] text-white/55">
+                Read our columns in English · <Link href="/blog?lang=en" className="underline">English blog →</Link>
+              </p>
+              <p className="mt-2 text-[11px] text-white/55">
                 한국어로 보기 · <Link href="/" className="underline">/ ← Korean homepage</Link>
               </p>
             </div>

@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/services/admin-rbac-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { prisma } from "@/lib/prisma/client";
-import {
-  translateBlogPostTo,
-  saveBlogTranslationZh,
-  getBlogTranslationZh,
-} from "@/lib/services/blog-translation-service";
+import { translateBlogPostTo } from "@/lib/services/blog-translation-service";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,24 +21,17 @@ export async function GET(req: Request) {
       take: 50,
     });
 
-    const zhKeys = posts.map((p) => `blog.translation.zh.${p.id}`);
-    const zhRows = await prisma.siteSetting.findMany({
-      where: { key: { in: zhKeys } },
-      select: { key: true },
-    });
-    const zhSet = new Set(zhRows.map((r) => r.key));
-
+    // 정책: 웹은 한글+영어 고정 → EN 커버리지만 추적(중국어 제외).
     const status = posts.map((p) => ({
       id: p.id,
       slug: p.slug,
       title: p.title,
       hasEn: Boolean(p.titleEn && p.bodyEn),
-      hasZh: zhSet.has(`blog.translation.zh.${p.id}`),
     }));
 
     return NextResponse.json({
       posts: status,
-      pendingCount: status.filter((s) => !s.hasEn || !s.hasZh).length,
+      pendingCount: status.filter((s) => !s.hasEn).length,
     });
   } catch (error) {
     console.error("[admin/blog-translate-batch] GET failed", error);
@@ -74,44 +63,29 @@ export async function POST(req: Request) {
     take: 100,
   });
 
-  const results: Array<{ postId: string; en?: boolean; zh?: boolean; error?: string }> = [];
+  const results: Array<{ postId: string; en?: boolean; error?: string }> = [];
   let processed = 0;
 
   for (const post of candidates) {
     if (processed >= BATCH_SIZE) break;
 
+    // 정책: EN 만 백필(중국어 제외). 이미 EN 있으면 스킵.
     const needsEn = !(post.titleEn && post.bodyEn);
-    const zhExisting = await getBlogTranslationZh(post.id);
-    const needsZh = !zhExisting;
-
-    if (!needsEn && !needsZh) continue;
+    if (!needsEn) continue;
 
     const input = { title: post.title, excerpt: post.excerpt, body: post.body };
-    const entry: { postId: string; en?: boolean; zh?: boolean; error?: string } = { postId: post.id };
+    const entry: { postId: string; en?: boolean; error?: string } = { postId: post.id };
 
-    if (needsEn) {
-      const en = await translateBlogPostTo(input, "en");
-      if (en) {
-        await prisma.blogPost.update({
-          where: { id: post.id },
-          data: { titleEn: en.title, excerptEn: en.excerpt, bodyEn: en.body },
-        });
-        entry.en = true;
-      } else {
-        entry.en = false;
-        entry.error = "en translation failed";
-      }
-    }
-
-    if (needsZh) {
-      const zh = await translateBlogPostTo(input, "zh");
-      if (zh) {
-        await saveBlogTranslationZh(post.id, zh);
-        entry.zh = true;
-      } else {
-        entry.zh = false;
-        entry.error = (entry.error ? entry.error + "; " : "") + "zh translation failed";
-      }
+    const en = await translateBlogPostTo(input, "en");
+    if (en) {
+      await prisma.blogPost.update({
+        where: { id: post.id },
+        data: { titleEn: en.title, excerptEn: en.excerpt, bodyEn: en.body },
+      });
+      entry.en = true;
+    } else {
+      entry.en = false;
+      entry.error = "en translation failed";
     }
 
     results.push(entry);
