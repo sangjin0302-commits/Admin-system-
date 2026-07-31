@@ -106,21 +106,33 @@ export async function generateMetadata({
   const post = await resolvePost(slug, lang);
   if (!post) return { title: "글을 찾을 수 없습니다" };
   const slugPath = `/blog/${slug}`;
+  const enPath = `${slugPath}?lang=en`;
+  const isImported = Boolean(post.originalUrl);
+  // 네이버 수입글의 EN 번역은 네이버에 없는 고유 콘텐츠 → 구글 색인 허용(국제 유입).
+  // 반대로 KO 수입글은 네이버 원문과 중복 → noindex + canonical 을 네이버로.
+  const enIndexable = isImported && lang === "en" && !post.translationMissing;
+
+  if (isImported && !enIndexable) {
+    // 한국어 수입글(또는 EN 번역 없음): 정본은 네이버, 색인 제외.
+    return {
+      title: `${post.title} — 법률 칼럼 | ETHOS`,
+      description: post.excerpt,
+      alternates: { canonical: post.originalUrl ?? slugPath },
+      robots: { index: false, follow: true }
+    };
+  }
+
+  // 색인 대상: (1) 자체 작성 원본글, (2) 수입글의 EN 번역.
+  const canonical = enIndexable ? enPath : slugPath;
+  const languages = isImported
+    ? { en: enPath, ko: post.originalUrl ?? slugPath, "x-default": enPath } // 수입글: 한국어 정본은 네이버
+    : { ko: slugPath, en: enPath, "x-default": slugPath };
   return {
     title: `${post.title} — 법률 칼럼 | ETHOS`,
     description: post.excerpt,
-    alternates: post.originalUrl
-      ? { canonical: post.originalUrl }
-      : {
-          canonical: slugPath,
-          languages: {
-            ko: slugPath,
-            en: `${slugPath}?lang=en`,
-            "x-default": slugPath
-          }
-        },
-    robots: post.originalUrl ? { index: false, follow: true } : undefined,
-    openGraph: post.originalUrl ? undefined : {
+    alternates: { canonical, languages },
+    robots: undefined,
+    openGraph: {
       title: post.title,
       description: post.excerpt,
       type: "article",

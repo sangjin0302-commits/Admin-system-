@@ -13,16 +13,22 @@ async function loadDynamicRoutes(): Promise<
   try {
     const blogs = await prisma.blogPost.findMany({
       where: { published: true },
-      select: { slug: true, updatedAt: true, publishedAt: true },
+      select: { slug: true, updatedAt: true, publishedAt: true, originalUrl: true, bodyEn: true },
       take: 500,
       orderBy: { publishedAt: "desc" },
     });
     for (const b of blogs) {
-      out.push({
-        url: `/blog/${b.slug}`,
-        priority: 0.65,
-        lastModified: b.updatedAt ?? b.publishedAt ?? undefined,
-      });
+      const lastModified = b.updatedAt ?? b.publishedAt ?? undefined;
+      if (b.originalUrl) {
+        // 네이버 수입글: KO 는 noindex(정본=네이버) → sitemap 제외.
+        // EN 번역만 색인 대상(고유 콘텐츠)이므로 있으면 그 URL 을 등재.
+        if (b.bodyEn) {
+          out.push({ url: `/blog/${b.slug}?lang=en`, priority: 0.6, lastModified });
+        }
+      } else {
+        // 자체 작성 원본글: KO 색인 대상.
+        out.push({ url: `/blog/${b.slug}`, priority: 0.65, lastModified });
+      }
     }
   } catch {
     // ignore
