@@ -30,9 +30,30 @@ export async function GET(request: Request) {
     result = await importNaverBlogPosts({ translate: true });
   } catch (error) {
     console.error("[cron/naver-rss-sync] import failed", error);
+    // 실패 시 관리자 텔레그램 알림(정기 갱신 중단 감지).
+    await sendTelegramAlert({
+      kind: "blog_sync_failed",
+      title: "네이버 블로그 동기화 실패",
+      lines: [
+        "RSS 가져오기 중 오류로 이번 갱신을 건너뛰었습니다.",
+        error instanceof Error ? error.message.slice(0, 300) : String(error).slice(0, 300),
+      ],
+    }).catch(() => undefined);
     return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
   }
   logger.info("[cron/naver-rss-sync] done", result);
+
+  // 일부 글 가져오기 실패(부분 오류) 시에도 관리자 알림.
+  if (result.errors.length > 0) {
+    await sendTelegramAlert({
+      kind: "blog_sync_failed",
+      title: `네이버 블로그 동기화 부분 오류 (${result.errors.length}건)`,
+      lines: [
+        `성공: ${result.imported} · 건너뜀: ${result.skipped}`,
+        ...result.errors.slice(0, 3),
+      ],
+    }).catch(() => undefined);
+  }
 
   // 신규 글 있을 때만 텔레그램 알림 (admin)
   if (result.imported > 0) {
