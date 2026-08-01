@@ -293,8 +293,9 @@ export async function getSignatureStatus(
 export function verifyModusignWebhook(rawBody: string, signature: string | null): boolean {
   const secret = process.env.MODUSIGN_WEBHOOK_SECRET?.trim();
   if (!secret) {
-    logger.warn("[e-signature] MODUSIGN_WEBHOOK_SECRET 미설정 — 시그니처 검증 건너뜀");
-    return true;
+    // fail-closed: 시크릿 없으면 위조 웹훅으로 서명상태 조작 가능 → 거부.
+    logger.warn("[e-signature] MODUSIGN_WEBHOOK_SECRET 미설정 — 웹훅 거부(fail-closed)");
+    return false;
   }
   if (!signature) return false;
   try {

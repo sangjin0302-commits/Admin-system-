@@ -7,6 +7,7 @@ type EmailInput = {
   subject: string;
   html: string;
   replyTo?: string;
+  headers?: Record<string, string>;
 };
 
 const FROM_ADDRESS = process.env.RESEND_FROM_EMAIL ?? "ETHOS 행정사사무소 <noreply@ethosattorney.com>";
@@ -46,6 +47,7 @@ export async function sendEmail(input: EmailInput): Promise<{ ok: boolean; id?: 
         subject: input.subject,
         html: input.html,
         reply_to: input.replyTo,
+        headers: input.headers,
       }),
     });
 
@@ -110,9 +112,13 @@ export async function sendNewBlogNotification(input: {
   postSlug: string;
   postDescription?: string;
 }): Promise<{ ok: boolean }> {
+  // 정보통신망법: 광고성 정보는 (광고) 표기 + 수신거부 수단 필수.
+  const recipient = input.to[0] ?? "";
+  const unsubUrl = `https://ethosattorney.com/newsletter/unsubscribe?email=${encodeURIComponent(recipient)}`;
   return sendEmail({
     to: input.to,
-    subject: `[ETHOS 칼럼] ${input.postTitle}`,
+    subject: `(광고) [ETHOS 칼럼] ${input.postTitle}`,
+    headers: { "List-Unsubscribe": `<${unsubUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
     html: `
       <div style="font-family:'Pretendard',sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;">
         <div style="text-align:center;margin-bottom:24px;">
@@ -124,7 +130,9 @@ export async function sendNewBlogNotification(input: {
           글 읽기
         </a>
         <hr style="border:none;border-top:1px solid #e5e3da;margin:24px 0;" />
-        <p style="font-size:11px;color:#999;">
+        <p style="font-size:11px;color:#999;line-height:1.6;">
+          본 메일은 뉴스레터를 구독하신 분께 발송되는 광고성 정보입니다.<br>
+          수신을 원치 않으시면 <a href="${unsubUrl}" style="color:#b8963e;">무료 수신거부</a> 하실 수 있습니다.<br>
           <a href="https://ethosattorney.com" style="color:#b8963e;">ethosattorney.com</a>
         </p>
       </div>

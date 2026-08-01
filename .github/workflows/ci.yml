@@ -60,6 +60,8 @@ jobs:
       - run: npm run test:blog-source-guard
       # 텔레그램 알림 전송 계약 잠금 — 발송 로직 회귀 시 CI 실패로 차단.
       - run: npm run test:telegram
+      # 보안 회귀 잠금 — 웹훅/이스케이프/export RBAC/수신거부 되돌아가면 CI 실패.
+      - run: npm run test:security-guard
 
   env-check:
     name: Production env check (dry-run)

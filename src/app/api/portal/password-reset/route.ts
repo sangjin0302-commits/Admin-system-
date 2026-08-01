@@ -3,8 +3,24 @@ import { NextResponse } from "next/server";
 import { hashPassword, validatePasswordStrength } from "@/lib/auth/password";
 import { hashResetToken } from "@/lib/auth/reset-token";
 import { prisma } from "@/lib/prisma/client";
+import { consumeRateLimit, getClientIpFromHeaders } from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
+  // 토큰 추측 방지 — IP 기준 rate-limit.
+  const ip = getClientIpFromHeaders(request.headers) ?? "unknown";
+  const rl = consumeRateLimit({
+    namespace: "public:password-reset",
+    key: ip,
+    windowMs: 60 * 60 * 1000,
+    max: 20
+  });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { ok: false, error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
+      { status: 429 }
+    );
+  }
+
   let body: { token?: string; password?: string };
   try {
     body = await request.json();

@@ -29,6 +29,14 @@ export async function Analytics() {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
+              // 개인정보/쿠키 동의 전까지 저장 거부(Consent Mode). 동의 배너에서 update.
+              var __c = null; try { __c = localStorage.getItem('ethos.cookieConsent'); } catch(e){}
+              gtag('consent', 'default', {
+                analytics_storage: __c === 'granted' ? 'granted' : 'denied',
+                ad_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied'
+              });
               gtag('config', '${gaId}', { anonymize_ip: true });
             `}
           </Script>

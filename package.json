@@ -28,6 +28,7 @@
     "test:flag-cache": "tsx scripts/tests/feature-flags-cache-race-check.ts",
     "test:telegram": "tsx scripts/tests/telegram-notify-check.ts",
     "test:blog-source-guard": "tsx scripts/tests/blog-source-guard-check.ts",
+    "test:security-guard": "tsx scripts/tests/security-guard-check.ts",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "clean": "node scripts/clean-build.mjs",

@@ -249,7 +249,7 @@ export default async function BlogDetailPage({
       {blogPostingSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema).replace(/</g, "\\u003c") }}
         />
       )}
       <BreadcrumbJsonLd
@@ -274,7 +274,7 @@ export default async function BlogDetailPage({
                   text: faq.answer,
                 },
               })),
-            }),
+            }).replace(/</g, "\\u003c"),
           }}
         />
       )}

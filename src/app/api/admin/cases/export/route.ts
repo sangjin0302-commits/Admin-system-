@@ -1,5 +1,6 @@
 import { createAdminRequestContext } from "@/lib/http/admin-api";
 import { prisma } from "@/lib/prisma/client";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 
 function csvEscape(value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -9,6 +10,10 @@ function csvEscape(value: unknown): string {
 }
 
 export async function GET(request: Request) {
+  // PII 대량 반출 → SUPER/MANAGER 만 허용.
+  const guard = await requireRole(request, ["SUPER", "MANAGER"]);
+  if (!guard.ok) return guard.response;
+
   const api = createAdminRequestContext("admin.cases.export.csv");
   const url = new URL(request.url);
   const category = url.searchParams.get("category");

@@ -1,14 +1,14 @@
 {
   "name": "ETHOS 행정사사무소",
   "short_name": "ETHOS",
-  "description": "외국인 행정·체류·인허가 전문 · 관리자 콘솔",
-  "start_url": "/admin",
+  "description": "외국인 행정·체류·인허가 전문 행정사사무소 — 비자·행정심판·계약·인허가·법인설립",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#1a3c5f",
-  "categories": ["business", "productivity"],
+  "categories": ["business", "legal", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-192.svg",
@@ -43,19 +43,19 @@
   ],
   "shortcuts": [
     {
-      "name": "새 문의",
-      "url": "/admin/inquiries",
-      "description": "문의함 열기"
+      "name": "무료 검토 신청",
+      "url": "/intake",
+      "description": "온라인 상담 신청"
     },
     {
-      "name": "사건 진행",
-      "url": "/admin/cases",
-      "description": "사건 목록"
+      "name": "진행 조회",
+      "url": "/track",
+      "description": "접수 현황 확인"
     },
     {
-      "name": "블로그",
-      "url": "/admin/blog",
-      "description": "블로그 관리"
+      "name": "법률 칼럼",
+      "url": "/blog",
+      "description": "비자·행정 실무 칼럼"
     }
   ]
 }

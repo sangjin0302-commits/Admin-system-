@@ -7,7 +7,8 @@ import { useEffect, useState } from "react";
 import { CHANNELS } from "@/lib/constants/channels";
 import { usePublicFlags } from "@/lib/hooks/use-public-flags";
 
-const FALLBACK = { phone: "02-0000-0000", email: "a.attorneyjean@gmail.com", hours: "평일 09:00 - 18:00" };
+// 미입력 시 가짜 번호(02-0000-0000)를 보이지 않게 함(오인 방지). 실제 값은 admin contact 설정.
+const FALLBACK = { phone: "", email: "a.attorneyjean@gmail.com", hours: "평일 09:00 - 18:00" };
 
 type TrustInfo = {
   bizRegNo: string;

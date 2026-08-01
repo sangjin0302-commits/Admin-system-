@@ -9,6 +9,16 @@ const resend = process.env.RESEND_API_KEY
 const FROM_EMAIL = process.env.NOTIFICATION_FROM_EMAIL ?? "noreply@ethosattorney.com";
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL ?? "";
 
+/** 공개 입력 PII 를 HTML 이메일에 넣기 전 이스케이프(인젝션·피싱 방지). */
+function esc(s: string): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export async function sendNewInquiryNotification(inquiry: {
   name: string;
   email: string;
@@ -22,7 +32,7 @@ export async function sendNewInquiryNotification(inquiry: {
     const { data, error } = await resend.emails.send({
       from: `ETHOS 알림 <${FROM_EMAIL}>`,
       to: ADMIN_EMAIL,
-      subject: `[ETHOS] 새 문의 접수 — ${inquiry.name} (${inquiry.inquiryType})`,
+      subject: `[ETHOS] 새 문의 접수 — ${esc(inquiry.name)} (${esc(inquiry.inquiryType)})`,
       html: `
         <div style="font-family: 'Pretendard', sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #1a3c5f; padding: 24px 32px; border-radius: 12px 12px 0 0;">
@@ -34,23 +44,23 @@ export async function sendNewInquiryNotification(inquiry: {
             <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; width: 100px;">이름</td>
-                <td style="padding: 8px 0; color: #1a3c5f; font-weight: 600;">${inquiry.name}</td>
+                <td style="padding: 8px 0; color: #1a3c5f; font-weight: 600;">${esc(inquiry.name)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280;">이메일</td>
-                <td style="padding: 8px 0;">${inquiry.email}</td>
+                <td style="padding: 8px 0;">${esc(inquiry.email)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280;">전화</td>
-                <td style="padding: 8px 0;">${inquiry.phone}</td>
+                <td style="padding: 8px 0;">${esc(inquiry.phone)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280;">유형</td>
-                <td style="padding: 8px 0;">${inquiry.inquiryType}</td>
+                <td style="padding: 8px 0;">${esc(inquiry.inquiryType)}</td>
               </tr>
             </table>
             <div style="margin-top: 16px; padding: 16px; background: white; border-radius: 8px; border: 1px solid #e8e0d4;">
-              <p style="margin: 0; font-size: 14px; color: #374151; white-space: pre-wrap;">${inquiry.message}</p>
+              <p style="margin: 0; font-size: 14px; color: #374151; white-space: pre-wrap;">${esc(inquiry.message)}</p>
             </div>
             <div style="margin-top: 24px; text-align: center;">
               <a href="${getSiteUrl()}/admin/inquiries" style="display: inline-block; background: #1a3c5f; color: #faf6ef; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">

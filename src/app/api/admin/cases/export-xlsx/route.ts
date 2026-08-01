@@ -2,12 +2,16 @@ import ExcelJS from "exceljs";
 
 import { createAdminRequestContext } from "@/lib/http/admin-api";
 import { prisma } from "@/lib/prisma/client";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 
 const NAVY = "FF1A3C5F";
 const GOLD = "FFC9A961";
 const IVORY = "FFF5EDE0";
 
 export async function GET(request: Request) {
+  const guard = await requireRole(request, ["SUPER", "MANAGER"]);
+  if (!guard.ok) return guard.response;
+
   const api = createAdminRequestContext("admin.cases.export.xlsx");
   const url = new URL(request.url);
   const category = url.searchParams.get("category");

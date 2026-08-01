@@ -9,6 +9,7 @@ import { AppShellSafe } from "@/components/layout/app-shell-safe";
 import { HtmlLangSync } from "@/components/layout/html-lang-sync";
 import { Analytics } from "@/components/public/analytics";
 import { KakaoChannelFab } from "@/components/public/kakao-channel-fab";
+import { CookieConsent } from "@/components/public/cookie-consent";
 import { BottomSheetMount } from "@/components/public/bottom-sheet-mount";
 import { LiveChat } from "@/components/public/live-chat";
 import { LocalBusinessJsonLd } from "@/components/public/json-ld";
@@ -141,6 +142,7 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
           {/* AI 챗 미작동 → 카카오톡 채널 상담으로 안내(플로팅) */}
           <KakaoChannelFab />
           <LiveChat />
+          <CookieConsent />
         </PublicOnly>
         <GA4ConversionTracker enabled={true} />
         <Analytics />

@@ -318,13 +318,14 @@ export async function POST(request: Request) {
 
     const deduplicated = inquiry.createdAt.getTime() < requestStartedAt;
     if (!deduplicated) {
+      // 저장된 inquiry 레코드 기준(요청 바디 키와 스키마 키가 달라 payload 로 읽으면 빈칸됨).
       import("@/lib/services/email-notification-service").then((mod) =>
         mod.sendNewInquiryNotification({
-          name: String(payload.name ?? ""),
-          email: String(payload.email ?? ""),
-          phone: String(payload.phone ?? ""),
-          inquiryType: String(payload.inquiryType ?? ""),
-          message: String(payload.message ?? ""),
+          name: inquiry.contactName ?? "",
+          email: inquiry.email ?? "",
+          phone: inquiry.phone ?? "",
+          inquiryType: inquiry.inquiryType ?? "",
+          message: inquiry.description ?? "",
         }).catch(() => {})
       );
       // 고객 접수 확인 이메일 (Resend, RESEND_API_KEY 미설정 시 graceful no-op)
@@ -356,9 +357,9 @@ export async function POST(request: Request) {
             ? await siteMod.getSiteSetting("contact.kakaoUrl").catch(() => "")
             : "";
           const reply = await mod.generateAfterHoursResponse({
-            contactName: String(payload.name ?? inquiry.contactName ?? ""),
-            inquiryType: String(payload.inquiryType ?? inquiry.inquiryType ?? ""),
-            message: String(payload.message ?? ""),
+            contactName: inquiry.contactName ?? "",
+            inquiryType: inquiry.inquiryType ?? "",
+            message: inquiry.description ?? "",
             kakaoUrl: kakaoUrl || undefined,
           });
           // Send via email if configured

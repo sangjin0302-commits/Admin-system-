@@ -10,6 +10,7 @@
 import { createAdminRequestContext } from "@/lib/http/admin-api";
 import { prisma } from "@/lib/prisma/client";
 import { exportRowsToSheet } from "@/lib/services/google-sheets-service";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 
 const HEADERS = [
   "사건번호",
@@ -30,6 +31,9 @@ const HEADERS = [
 ];
 
 export async function POST(request: Request) {
+  const guard = await requireRole(request, ["SUPER", "MANAGER"]);
+  if (!guard.ok) return guard.response;
+
   const api = createAdminRequestContext("admin.cases.export.sheets");
   const url = new URL(request.url);
   const category = url.searchParams.get("category");

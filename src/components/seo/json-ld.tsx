@@ -29,10 +29,12 @@ const SAME_AS = [
 ];
 
 function jsonLdScript(data: unknown) {
+  // `<` 를 이스케이프해 제목/발췌에 </script> 가 있어도 스크립트 태그를 탈출하지 못하게 한다.
+  const json = JSON.stringify(data).replace(/</g, "\\u003c");
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: json }}
     />
   );
 }

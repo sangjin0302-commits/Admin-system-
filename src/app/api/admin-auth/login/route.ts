@@ -46,10 +46,22 @@ function constantTimeEquals(a: string, b: string): boolean {
 }
 
 export async function POST(req: Request) {
-  // 브루트포스 방어: IP당 10분에 10회.
-  const rl = rateLimit(`admin-login:${clientIp(req)}`, 10, 10 * 60 * 1000);
+  // 브루트포스 방어: IP당 10분에 10회(인메모리) + Upstash 분산(다중 인스턴스 공유).
+  const ip = clientIp(req);
+  const rl = rateLimit(`admin-login:${ip}`, 10, 10 * 60 * 1000);
   if (!rl.allowed) {
     return NextResponse.json({ ok: false, error: KO_RATE_LIMITED }, { status: 429 });
+  }
+  try {
+    const { checkAdminAuthLimit, isUpstashConfigured } = await import("@/lib/security/upstash-ratelimit");
+    if (isUpstashConfigured()) {
+      const dist = await checkAdminAuthLimit(ip);
+      if (!dist.ok) {
+        return NextResponse.json({ ok: false, error: KO_RATE_LIMITED }, { status: 429 });
+      }
+    }
+  } catch {
+    /* Upstash 오류 시 인메모리 가드로 계속 */
   }
 
   if (!isAdminSessionConfigured()) {
