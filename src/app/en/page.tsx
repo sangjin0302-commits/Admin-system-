@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
-import { WritingChannels } from "@/components/public/writing-channels";
 import { CHANNELS } from "@/lib/constants/channels";
 
 export const dynamic = "force-dynamic";
@@ -196,9 +195,6 @@ export default function EnglishLanding() {
           </div>
         </div>
       </section>
-
-      {/* Writing channels — Korean columns + English LinkedIn */}
-      <WritingChannels lang="en" />
 
       {/* CTA */}
       <section className="py-20 sm:py-24">

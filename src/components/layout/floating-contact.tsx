@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { CHANNELS, CONSULT_TAGLINE } from "@/lib/constants/channels";
 
 export function FloatingContact() {
-  const [expanded, setExpanded] = useState(false);
+  // 기본 펼침 — 상담 채널을 말풍선 안에 숨기지 않고 바로 노출.
+  const [expanded, setExpanded] = useState(true);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

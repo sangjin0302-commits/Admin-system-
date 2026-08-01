@@ -15,7 +15,6 @@ import { HeroScrollIndicator } from "@/components/public/hero-scroll-indicator";
 import { ParallaxAurora } from "@/components/public/parallax-aurora";
 import { NewsletterWidget } from "@/components/public/newsletter-widget";
 import { NaverReviewBand } from "@/components/public/naver-review-band";
-import { WritingChannels } from "@/components/public/writing-channels";
 import { HomeBlogShowcase } from "@/components/public/home-blog-showcase";
 import { HeroCtaSubtitleVariants } from "@/components/public/hero-cta-variants";
 import { HoloLogo } from "@/components/public/holo-logo";
@@ -852,8 +851,6 @@ export default async function PublicMarketingHomePage({
           깎았다. 글은 /blog 하나로 모으고 영문 독자용 LinkedIn 을 함께 안내한다. */}
       {/* 홈 블로그 쇼케이스 — 네이버 자동수입 최신글 + 카드뉴스 커버(자사 도메인) */}
       <HomeBlogShowcase posts={showcasePosts} lang={lang === "en" ? "en" : "ko"} />
-
-      <WritingChannels lang={lang === "en" ? "en" : "ko"} />
 
       {/* ═══════════════ 신뢰 뱃지 벨트 (기능 플래그: trust_belt) ═══════════════ */}
       {trustBeltEnabled && <TrustBelt />}
