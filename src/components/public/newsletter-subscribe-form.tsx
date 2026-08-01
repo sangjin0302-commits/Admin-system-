@@ -16,6 +16,8 @@ const COPY: Record<Lang, {
   rate: string;
   fail: string;
   privacy: string;
+  consent: string;
+  consentRequired: string;
 }> = {
   ko: {
     heading: "새 칼럼을 이메일로 받아보세요",
@@ -28,7 +30,9 @@ const COPY: Record<Lang, {
     invalid: "이메일 형식을 확인해주세요.",
     rate: "요청이 많습니다. 잠시 후 다시 시도해주세요.",
     fail: "신청에 실패했습니다. 잠시 후 다시 시도해주세요.",
-    privacy: "구독은 언제든 해지할 수 있으며, 이메일은 뉴스레터 발송에만 사용됩니다."
+    privacy: "구독은 언제든 해지할 수 있으며, 이메일은 뉴스레터 발송에만 사용됩니다.",
+    consent: "[필수] 개인정보 수집·이용 및 마케팅 정보(뉴스레터) 수신에 동의합니다.",
+    consentRequired: "개인정보 수집·이용 및 수신에 동의해주세요."
   },
   en: {
     heading: "Get new columns by email",
@@ -41,7 +45,9 @@ const COPY: Record<Lang, {
     invalid: "Please check the email format.",
     rate: "Too many requests. Please try again shortly.",
     fail: "Subscription failed. Please try again later.",
-    privacy: "You can unsubscribe anytime; your email is used only for the newsletter."
+    privacy: "You can unsubscribe anytime; your email is used only for the newsletter.",
+    consent: "[Required] I agree to the collection/use of my personal data and to receiving marketing (newsletter) emails.",
+    consentRequired: "Please agree to the data collection and email receipt."
   }
 };
 
@@ -52,10 +58,16 @@ export function NewsletterSubscribeForm({ lang = "ko" }: { lang?: Lang }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<State>("idle");
   const [message, setMessage] = useState<string | null>(null);
+  const [agreed, setAgreed] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (state === "sending") return;
+    if (!agreed) {
+      setState("error");
+      setMessage(t.consentRequired);
+      return;
+    }
     setState("sending");
     setMessage(null);
     try {
@@ -110,6 +122,21 @@ export function NewsletterSubscribeForm({ lang = "ko" }: { lang?: Lang }) {
           {state === "sending" ? t.sending : t.button}
         </button>
       </form>
+
+      <label className="mt-3 flex items-start justify-center gap-2 text-left text-xs leading-5 text-text-muted">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-line"
+        />
+        <span>
+          {t.consent}{" "}
+          <a href="/privacy" target="_blank" rel="noreferrer" className="text-primary underline">
+            {lang === "en" ? "Privacy Policy" : "개인정보처리방침"}
+          </a>
+        </span>
+      </label>
       {message && (
         <p
           className={`mt-3 text-sm ${state === "error" ? "text-danger" : "text-success"}`}
