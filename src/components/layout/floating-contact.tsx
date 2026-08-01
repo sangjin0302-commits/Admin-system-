@@ -7,14 +7,39 @@ import { CHANNELS, CONSULT_TAGLINE } from "@/lib/constants/channels";
 export function FloatingContact() {
   // 기본 펼침 — 상담 채널을 말풍선 안에 숨기지 않고 바로 노출.
   const [expanded, setExpanded] = useState(true);
+  const [isEn, setIsEn] = useState(false);
 
   useEffect(() => {
+    // 루트 init 스크립트가 경로/lang 에 따라 <html lang> 을 세팅함 → 영문 여부 판정.
+    setIsEn(document.documentElement.lang === "en");
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setExpanded(false);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  const L = isEn
+    ? {
+        heading: "Talk to us",
+        tagline: "Free review · Paid consultation · Credited on engagement",
+        naver: ["Naver Talk", "Fastest free review"],
+        kakao: ["KakaoTalk", "Request a review via Kakao"],
+        telegram: ["Telegram", CHANNELS.telegram.value],
+        email: ["Email", CHANNELS.email.value],
+        expert: ["Naver Expert", "Paid consultation · ₩33,000–55,000"],
+        linkedin: ["LinkedIn", "English columns & profile"]
+      }
+    : {
+        heading: "검토 · 상담 연결",
+        tagline: CONSULT_TAGLINE,
+        naver: ["네이버 톡톡", "가장 빠른 무료 검토"],
+        kakao: ["카카오 채팅", "카카오로 검토 요청"],
+        telegram: ["텔레그램", CHANNELS.telegram.value],
+        email: ["이메일", CHANNELS.email.value],
+        expert: ["네이버 엑스퍼트", "유료 상담 · 33,000~55,000원"],
+        linkedin: ["LinkedIn", "영문 칼럼 · 프로필"]
+      };
 
   return (
     <>
@@ -23,14 +48,15 @@ export function FloatingContact() {
         {expanded && (
           <div className="flex w-72 flex-col gap-2 rounded-2xl border border-gold/40 bg-surface p-4 shadow-floating">
             <div className="mb-1 border-b border-gold/20 pb-2">
-              <p className="font-serif text-sm font-bold text-primary">검토 · 상담 연결</p>
-              <p className="mt-0.5 text-[11px] text-text-muted">{CONSULT_TAGLINE}</p>
+              <p className="font-serif text-sm font-bold text-primary">{L.heading}</p>
+              <p className="mt-0.5 text-[11px] text-text-muted">{L.tagline}</p>
             </div>
-            <ChannelButton url={CHANNELS.naverTalk.url} bg="bg-[#03C75A]" fg="text-white" label="네이버 톡톡" sub="가장 빠른 무료 검토" icon={<NaverIcon />} />
-            <ChannelButton url={CHANNELS.kakao.url} bg="bg-[#FEE500]" fg="text-[#3C1E1E]" label="카카오 채팅" sub="카카오로 검토 요청" icon={<KakaoIcon />} />
-            <ChannelButton url={CHANNELS.telegram.url} bg="bg-[#0088CC]" fg="text-white" label="텔레그램" sub={CHANNELS.telegram.value} icon={<TelegramIcon />} />
-            <ChannelButton url={CHANNELS.email.url} bg="bg-primary" fg="text-white" label="이메일" sub={CHANNELS.email.value} icon={<MailIcon />} />
-            <ChannelButton url={CHANNELS.naverExpert.url} bg="bg-surface border border-gold/40" fg="text-primary" label="네이버 엑스퍼트" sub="유료 상담 · 33,000~55,000원" icon={<ExpertIcon />} />
+            <ChannelButton url={CHANNELS.naverTalk.url} bg="bg-[#03C75A]" fg="text-white" label={L.naver[0]} sub={L.naver[1]} icon={<NaverIcon />} />
+            <ChannelButton url={CHANNELS.kakao.url} bg="bg-[#FEE500]" fg="text-[#3C1E1E]" label={L.kakao[0]} sub={L.kakao[1]} icon={<KakaoIcon />} />
+            <ChannelButton url={CHANNELS.telegram.url} bg="bg-[#0088CC]" fg="text-white" label={L.telegram[0]} sub={L.telegram[1]} icon={<TelegramIcon />} />
+            <ChannelButton url={CHANNELS.linkedin.url} bg="bg-[#0A66C2]" fg="text-white" label={L.linkedin[0]} sub={L.linkedin[1]} icon={<LinkedInIcon />} />
+            <ChannelButton url={CHANNELS.email.url} bg="bg-primary" fg="text-white" label={L.email[0]} sub={L.email[1]} icon={<MailIcon />} />
+            <ChannelButton url={CHANNELS.naverExpert.url} bg="bg-surface border border-gold/40" fg="text-primary" label={L.expert[0]} sub={L.expert[1]} icon={<ExpertIcon />} />
           </div>
         )}
 
@@ -136,6 +162,13 @@ function ExpertIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M12 2l2.5 6.5L21 9l-5 4.5L17.5 21 12 17l-5.5 4L8 13.5 3 9l6.5-.5z" />
+    </svg>
+  );
+}
+function LinkedInIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05C20.3 8.65 21 10.9 21 14v7h-4v-6.2c0-1.48-.03-3.38-2.06-3.38-2.06 0-2.38 1.6-2.38 3.27V21H9z" />
     </svg>
   );
 }

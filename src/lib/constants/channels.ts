@@ -17,7 +17,8 @@ export const CHANNELS = {
   },
   email: { label: "이메일", url: "mailto:a.attorneyjean@gmail.com", value: "a.attorneyjean@gmail.com", short: "이메일" },
   telegram: { label: "텔레그램", url: "https://t.me/EthosAdmin", value: "@EthosAdmin", short: "텔레그램" },
-  naverExpert: { label: "네이버 엑스퍼트", url: "https://m.expert.naver.com/expert/profile/home?storeId=100060507", short: "엑스퍼트" }
+  naverExpert: { label: "네이버 엑스퍼트", url: "https://m.expert.naver.com/expert/profile/home?storeId=100060507", short: "엑스퍼트" },
+  linkedin: { label: "LinkedIn", url: "https://www.linkedin.com/in/sang-jin-ji-052419212", value: "sang-jin-ji", short: "LinkedIn" }
 } as const;
 
 export const CONSULT_TAGLINE = "무료 검토 · 상담 유료 · 수임 시 차감";
