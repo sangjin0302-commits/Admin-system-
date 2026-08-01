@@ -58,6 +58,26 @@ for (const rel of [
 must("src/lib/services/email-service.ts", "무료 수신거부", "마케팅 메일 수신거부 링크 사라짐");
 must("src/lib/services/email-service.ts", "List-Unsubscribe", "List-Unsubscribe 헤더 사라짐");
 
+// 6) PII 수집 폼 개인정보 동의 체크박스 (PIPA)
+for (const rel of [
+  "src/components/public/newsletter-subscribe-form.tsx",
+  "src/components/public/booking-widget.tsx",
+  "src/app/portal/signup/page.tsx",
+  "src/app/b2b/inquiry/form.tsx",
+  "src/app/community/ask/ask-form.tsx",
+  "src/components/public/careers-form.tsx"
+]) {
+  must(rel, "agreed", "개인정보 수집 동의 체크박스(agreed) 사라짐");
+}
+
+// 7) 개인정보처리방침 — 거짓 문구 금지 + 필수 조항 존재
+mustNot("src/app/privacy/page.tsx", "현재 외부 위탁은 없", "방침이 다시 거짓(외부위탁 없음)으로 되돌아감");
+must("src/app/privacy/page.tsx", "국외", "방침 국외이전 고지 사라짐");
+must("src/app/privacy/page.tsx", "파기", "방침 파기 조항 사라짐");
+
+// 8) 쿠키 동의 (Consent Mode)
+must("src/components/public/analytics.tsx", "consent", "GA Consent Mode 사라짐");
+
 if (fails.length > 0) {
   console.error("[security-guard] 보안 회귀 감지:");
   for (const f of fails) console.error("  - " + f);

@@ -9,10 +9,16 @@ export function CommunityAskForm({ categories }: { categories: string[] }) {
   const [askerName, setAskerName] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [agreed, setAgreed] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (status === "submitting") return;
+    if (!agreed) {
+      setStatus("error");
+      setError("개인정보 수집·이용에 동의해 주세요.");
+      return;
+    }
     setStatus("submitting");
     setError(null);
     try {
@@ -102,6 +108,19 @@ export function CommunityAskForm({ categories }: { categories: string[] }) {
           className="w-full rounded-lg border border-border px-3 py-2 text-sm"
         />
       </div>
+
+      <label className="flex items-start gap-2 text-xs leading-5 text-text-muted">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-border"
+        />
+        <span>
+          [필수] 질문 내용·표시명의 공개 게시 및 개인정보 수집·이용에 동의합니다.{" "}
+          <a href="/privacy" target="_blank" rel="noreferrer" className="text-primary underline">개인정보처리방침</a>
+        </span>
+      </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 

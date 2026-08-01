@@ -13,9 +13,14 @@ export function B2BInquiryForm() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [agreed, setAgreed] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!agreed) {
+      setError("개인정보 수집·이용에 동의해 주세요.");
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
@@ -121,6 +126,18 @@ export function B2BInquiryForm() {
           onChange={(e) => setTimeline(e.target.value)}
           className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
         />
+      </label>
+      <label className="flex items-start gap-2 text-xs leading-5 text-text-muted">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-line"
+        />
+        <span>
+          [필수] 개인정보(담당자명·이메일·전화) 수집·이용에 동의합니다.{" "}
+          <a href="/privacy" target="_blank" rel="noreferrer" className="text-primary underline">개인정보처리방침</a>
+        </span>
       </label>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button

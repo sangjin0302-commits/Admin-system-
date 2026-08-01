@@ -55,10 +55,16 @@ export function CareersForm({ lang = "ko" }: { lang?: Lang }) {
   const [cover, setCover] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [agreed, setAgreed] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (status === "submitting") return;
+    if (!agreed) {
+      setStatus("error");
+      setError(lang === "en" ? "Please agree to the collection of personal data." : "개인정보 수집·이용에 동의해 주세요.");
+      return;
+    }
     setStatus("submitting");
     setError(null);
     try {
@@ -170,6 +176,23 @@ export function CareersForm({ lang = "ko" }: { lang?: Lang }) {
         rows={6}
         className="w-full rounded-lg border border-border px-3 py-2 text-sm"
       />
+
+      <label className="flex items-start gap-2 text-xs leading-5 text-text-muted">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-line"
+        />
+        <span>
+          {lang === "en"
+            ? "[Required] I agree to the collection/use of my personal data (name, email, phone, resume) for recruitment. "
+            : "[필수] 채용 검토를 위한 개인정보(이름·이메일·전화·이력서) 수집·이용에 동의합니다. "}
+          <a href="/privacy" target="_blank" rel="noreferrer" className="text-primary underline">
+            {lang === "en" ? "Privacy Policy" : "개인정보처리방침"}
+          </a>
+        </span>
+      </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
