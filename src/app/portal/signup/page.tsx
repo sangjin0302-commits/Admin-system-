@@ -10,6 +10,7 @@ export default function SignUpPage() {
   const [form, setForm] = useState({ email: "", password: "", name: "", phone: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   function set(k: keyof typeof form, v: string) {
     setForm((prev) => ({ ...prev, [k]: v }));
@@ -17,6 +18,10 @@ export default function SignUpPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!agreed) {
+      setError("개인정보 수집·이용에 동의해 주세요.");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -75,6 +80,19 @@ export default function SignUpPage() {
               />
             </div>
           ))}
+
+          <label className="flex items-start gap-2 text-xs leading-5 text-text-muted">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-gold/40"
+            />
+            <span>
+              [필수] 계정 생성을 위한 개인정보(이름·이메일·연락처) 수집·이용에 동의합니다.{" "}
+              <Link href="/privacy" target="_blank" className="text-primary underline">개인정보처리방침</Link>
+            </span>
+          </label>
 
           {error && (
             <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>

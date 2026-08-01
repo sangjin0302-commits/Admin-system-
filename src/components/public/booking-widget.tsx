@@ -61,6 +61,7 @@ export function BookingWidget() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [agreedPrivacy, setAgreedPrivacy] = useState(false);
   const ga4Enabled = useFeatureFlag("ga4_conversion_tracking") !== false;
 
   useEffect(() => {
@@ -97,6 +98,11 @@ export function BookingWidget() {
     if (!name.trim() || !phone.trim()) {
       setResult("error");
       setErrorMsg("이름과 연락처는 필수입니다.");
+      return;
+    }
+    if (!agreedPrivacy) {
+      setResult("error");
+      setErrorMsg("개인정보 수집·이용에 동의해 주세요.");
       return;
     }
     setSubmitting(true);
@@ -279,6 +285,19 @@ export function BookingWidget() {
               />
             </label>
           </div>
+
+          <label className="flex items-start gap-2 text-xs leading-5 text-text-muted">
+            <input
+              type="checkbox"
+              checked={agreedPrivacy}
+              onChange={(e) => setAgreedPrivacy(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-gold/30"
+            />
+            <span>
+              [필수] 상담 예약을 위한 개인정보(성명·연락처·상담내용) 수집·이용에 동의합니다.{" "}
+              <a href="/privacy" target="_blank" rel="noreferrer" className="text-primary underline">개인정보처리방침</a>
+            </span>
+          </label>
 
           <button
             type="submit"
