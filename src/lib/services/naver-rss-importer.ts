@@ -89,12 +89,115 @@ function decodeEntities(s: string): string {
 export function extractCoverImage(html: string | null | undefined): string | null {
   if (!html) return null;
   const og = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1];
+  const lazy = html.match(/<img[^>]+data-lazy-src=["']([^"']+)["']/i)?.[1];
   const first = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1];
-  const url = (og || first || "").trim();
+  const url = (og || lazy || first || "").trim();
   if (!url) return null;
   if (url.startsWith("//")) return `https:${url}`;
   if (!/^https?:\/\//i.test(url)) return null;
   return url;
+}
+
+// ── 네이버 원문 페이지에서 본문 전문(全文) 스크레이프 ──────────────────
+//
+// 네이버 RSS 의 <description> 은 미리보기 요약뿐이고 <content:encoded> 는 없다.
+// 그래서 전문을 얻으려면 실제 글 페이지(PostView)를 받아 본문 컨테이너를 꺼내야 한다.
+// (attorney_jean 은 자사 블로그 — 자사 콘텐츠 스크레이프.)
+
+/** 네이버 링크에서 blogId·logNo 추출. path형(/id/logNo)·query형 모두 지원. */
+function parseNaverIds(link: string): { blogId: string; logNo: string } | null {
+  try {
+    const u = new URL(link);
+    const qBlog = u.searchParams.get("blogId");
+    const qLog = u.searchParams.get("logNo");
+    if (qBlog && qLog) return { blogId: qBlog, logNo: qLog };
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (parts.length >= 2 && /^\d{6,}$/.test(parts[1])) {
+      return { blogId: parts[0], logNo: parts[1] };
+    }
+    const logNo = link.match(/(\d{6,})/)?.[1];
+    if (parts.length >= 1 && logNo) return { blogId: parts[0], logNo };
+  } catch {
+    /* 무시 — 아래에서 null 반환 */
+  }
+  return null;
+}
+
+/**
+ * `<div class="...se-main-container...">` 같은 여는 태그부터 **짝이 맞는** 닫는
+ * `</div>` 까지의 inner HTML 을 반환. 중첩 div 때문에 단순 정규식으론 못 잡으므로
+ * div 깊이를 세며 스캔한다.
+ */
+function extractBalancedDiv(html: string, startRe: RegExp): string | null {
+  const m = startRe.exec(html);
+  if (!m) return null;
+  const contentStart = m.index + m[0].length;
+  let depth = 1;
+  const tagRe = /<\/?div\b[^>]*>/gi;
+  tagRe.lastIndex = contentStart;
+  let t: RegExpExecArray | null;
+  while ((t = tagRe.exec(html)) !== null) {
+    if (t[0].startsWith("</")) {
+      depth--;
+      if (depth === 0) return html.slice(contentStart, t.index);
+    } else if (!t[0].endsWith("/>")) {
+      depth++;
+    }
+  }
+  return null;
+}
+
+/** 네이버 lazy 이미지(placeholder src + data-lazy-src) 를 실제 src 로 승격. */
+function promoteLazyImages(html: string): string {
+  return html.replace(/<img\b[^>]*>/gi, (tag) => {
+    const lazy = tag.match(/data-lazy-src=["']([^"']+)["']/i)?.[1];
+    if (!lazy) return tag;
+    if (/\bsrc=["'][^"']*["']/i.test(tag)) {
+      return tag.replace(/\bsrc=["'][^"']*["']/i, `src="${lazy}"`);
+    }
+    return tag.replace(/<img\b/i, `<img src="${lazy}"`);
+  });
+}
+
+/**
+ * 네이버 글 원문 페이지에서 본문 전문 HTML 을 가져온다. 실패 시 null(→ 호출부가 요약으로 폴백).
+ * 모바일 PostView 가 SmartEditor 본문을 인라인으로 내려줘 파싱이 쉽다.
+ */
+export async function fetchNaverPostBody(link: string): Promise<string | null> {
+  const ids = parseNaverIds(link);
+  if (!ids) return null;
+  const url = `https://m.blog.naver.com/PostView.naver?blogId=${encodeURIComponent(ids.blogId)}&logNo=${encodeURIComponent(ids.logNo)}`;
+  const timeoutMs = Number(process.env.NAVER_FETCH_TIMEOUT_MS ?? "10000");
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1",
+        Accept: "text/html,application/xhtml+xml,*/*",
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      logger.warn("[naver-rss] post body fetch non-ok", res.status, { link });
+      return null;
+    }
+    const html = await res.text();
+    const inner =
+      extractBalancedDiv(html, /<div[^>]*class=["'][^"']*se-main-container[^"']*["'][^>]*>/i) ??
+      extractBalancedDiv(html, /<div[^>]*id=["']postViewArea["'][^>]*>/i) ??
+      extractBalancedDiv(html, /<div[^>]*id=["']viewTypeSelector["'][^>]*>/i);
+    if (!inner) return null;
+    const cleaned = promoteLazyImages(inner).trim();
+    return stripHtml(cleaned).length > 0 ? cleaned : null;
+  } catch (err) {
+    logger.warn("[naver-rss] post body fetch failed", err, { link });
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 function generateSlug(title: string): string {
@@ -149,9 +252,16 @@ export async function importNaverBlogPosts(options?: {
       }
 
       const title = normalizeTitle(decodeEntities(stripHtml(p.title)));
-      const body = p.contentEncoded ?? p.description;
-      const excerpt = decodeEntities(makeExcerpt(p.description));
-      const coverImage = extractCoverImage(p.contentEncoded ?? p.description);
+      // 전문 확보 우선순위: RSS content:encoded → 원문 페이지 스크레이프 → description(요약).
+      // 네이버 RSS 는 요약만 주므로, 짧으면 실제 글 페이지에서 전문을 가져온다.
+      let body = p.contentEncoded ?? null;
+      if (!body || stripHtml(body).length < 400) {
+        const full = await fetchNaverPostBody(p.link);
+        if (full) body = full;
+      }
+      if (!body) body = p.description;
+      const excerpt = decodeEntities(makeExcerpt(p.description || stripHtml(body)));
+      const coverImage = extractCoverImage(body) ?? extractCoverImage(p.description);
       const publishedAt = p.pubDate ? new Date(p.pubDate) : new Date();
       const safePublishedAt = isNaN(publishedAt.getTime()) ? new Date() : publishedAt;
 
@@ -197,4 +307,53 @@ export async function importNaverBlogPosts(options?: {
 
   logger.info("[naver-rss] import done", { imported, skipped, translated, errorCount: errors.length });
   return { imported, skipped, translated, errors };
+}
+
+/**
+ * 기존 잘린 본문 백필.
+ *
+ * 이미 저장된 네이버 수입글 중 본문이 짧은(요약만 저장된) 것들을 골라, 원문 페이지에서
+ * 전문을 다시 가져와 갱신한다. 재수입은 logNo 중복으로 스킵되므로 기존 글은 이 도구로만 고쳐진다.
+ * 서버 시간제한 때문에 1회 처리량을 제한 — 여러 번 실행하면 계속 이어서 처리된다.
+ */
+export async function backfillNaverPostBodies(options?: {
+  max?: number;
+}): Promise<{ scanned: number; updated: number; remaining: number; errors: string[] }> {
+  const max = Math.min(20, Math.max(1, options?.max ?? 8));
+  const errors: string[] = [];
+  let updated = 0;
+  let scanned = 0;
+
+  const candidates = await prisma.blogPost.findMany({
+    where: { source: NAVER_BLOG_SOURCE },
+    orderBy: { publishedAt: "desc" },
+    select: { id: true, body: true, originalUrl: true, coverImage: true },
+    take: 500,
+  });
+  // 본문이 짧은(≈요약뿐인) 글만 대상.
+  const short = candidates.filter(
+    (c) => c.originalUrl && stripHtml(c.body ?? "").length < 400
+  );
+
+  for (const c of short) {
+    if (scanned >= max) break;
+    scanned++;
+    try {
+      const full = await fetchNaverPostBody(c.originalUrl as string);
+      // 더 길어질 때만 교체(스크레이프 실패·역효과 방지).
+      if (!full || stripHtml(full).length <= stripHtml(c.body ?? "").length) continue;
+      await prisma.blogPost.update({
+        where: { id: c.id },
+        data: { body: full, coverImage: c.coverImage ?? extractCoverImage(full) },
+      });
+      updated++;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      errors.push(`${c.originalUrl}: ${msg}`);
+    }
+  }
+
+  const remaining = Math.max(0, short.length - scanned);
+  logger.info("[naver-rss] body backfill done", { scanned, updated, remaining, errorCount: errors.length });
+  return { scanned, updated, remaining, errors };
 }

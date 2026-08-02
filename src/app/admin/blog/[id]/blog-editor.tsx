@@ -4,6 +4,19 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
+import { PUBLIC_CATEGORY_LABEL, type PublicCategory } from "@/lib/services/blog-categorizer";
+
+/** tags 는 DB에 JSON 문자열로 저장된다. 표시용 배열로 파싱(구형 콤마문자열도 흡수). */
+function parseTags(raw: string): string[] {
+  try {
+    const a = JSON.parse(raw);
+    if (Array.isArray(a)) return a.filter((x): x is string => typeof x === "string");
+  } catch {
+    /* JSON 아니면 콤마 분리로 폴백 */
+  }
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
 type PostData = {
   id: string;
   title: string;
@@ -22,9 +35,16 @@ export function BlogEditor({ post }: { post: PostData }) {
   const [slug, setSlug] = useState(post?.slug ?? "");
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [body, setBody] = useState(post?.body ?? "");
-  const [category, setCategory] = useState(post?.category ?? "general");
+  const [category, setCategory] = useState(post?.category ?? "other");
   const [tags, setTags] = useState(post?.tags ?? "[]");
+  // 쉼표로 편하게 입력 → 내부 tags(JSON)로 동기화.
+  const [tagText, setTagText] = useState(parseTags(post?.tags ?? "[]").join(", "));
   const [published, setPublished] = useState(post?.published ?? false);
+
+  const onTagTextChange = (v: string) => {
+    setTagText(v);
+    setTags(JSON.stringify(v.split(",").map((s) => s.trim()).filter(Boolean)));
+  };
 
   const autoSlug = (t: string) =>
     t
@@ -99,22 +119,33 @@ export function BlogEditor({ post }: { post: PostData }) {
               onChange={(e) => setCategory(e.target.value)}
               className="mt-1 w-full rounded-lg border border-line bg-surface-muted px-3 py-2 text-sm"
             >
-              <option value="general">일반</option>
-              <option value="visa">비자/체류</option>
-              <option value="appeal">행정심판</option>
-              <option value="contract">계약/사실조사</option>
-              <option value="license">인허가</option>
-              <option value="news">뉴스</option>
+              {/* 공개 사이트가 쓰는 5대 분야 + 기타 (라벨은 공개 페이지와 동일하게 유지) */}
+              {(Object.entries(PUBLIC_CATEGORY_LABEL) as [PublicCategory, string][]).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+              {/* 현재 값이 위 6개에 없으면(구형 general/news 등) 잃지 않도록 노출 */}
+              {!(category in PUBLIC_CATEGORY_LABEL) && <option value={category}>{category}</option>}
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-text-muted">태그 (JSON)</label>
+            <label className="text-xs font-semibold text-text-muted">키워드/태그 (쉼표로 구분)</label>
             <input
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-line bg-surface-muted px-3 py-2 text-sm font-mono"
-              placeholder='["비자", "체류"]'
+              value={tagText}
+              onChange={(e) => onTagTextChange(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-line bg-surface-muted px-3 py-2 text-sm"
+              placeholder="비자, 체류, D-2"
             />
+            {parseTags(tags).length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {parseTags(tags).map((t) => (
+                  <span key={t} className="rounded-full bg-gold-soft/40 px-2 py-0.5 text-[11px] font-semibold text-gold-deep">
+                    #{t}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

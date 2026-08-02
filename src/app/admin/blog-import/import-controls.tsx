@@ -11,6 +11,8 @@ type SyncResult = {
   counts?: Record<string, number>;
   titlesFixed?: number;
   duplicatesRemoved?: number;
+  scanned?: number;
+  remaining?: number;
   errors?: string[];
 };
 
@@ -160,6 +162,23 @@ export function ImportControls() {
         </button>
       </div>
 
+      {/* 본문 전문 백필 — 요약만 저장된 기존 글 원문 재수집 */}
+      <div className="rounded-lg border border-danger/30 bg-danger/5 p-4">
+        <p className="font-serif text-sm font-bold text-primary">본문 전문 백필 (요약만 저장된 기존 글 복구)</p>
+        <p className="mt-1 text-xs text-text-muted">
+          네이버 RSS 는 요약만 줘서 과거 수입글 본문이 잘려 있습니다. 원문 페이지에서 전문을 다시 가져와 채웁니다.
+          재수입은 중복(logNo)으로 스킵되므로 이 도구로만 고쳐집니다. ⚠️ 서버 60초 제한 — 1회 8편씩. 남으면 여러 번 실행.
+        </p>
+        <button
+          type="button"
+          onClick={() => run("/api/admin/blog-backfill-body?max=8", "bulk")}
+          disabled={loading !== null}
+          className="mt-3 rounded-lg bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
+        >
+          {loading === "bulk" ? "복구 중..." : "전문 백필 실행 (8편)"}
+        </button>
+      </div>
+
       {/* 블로그 메타 description batch (Anthropic) */}
       <div className="rounded-lg border border-line bg-surface p-4">
         <p className="font-serif text-sm font-bold text-primary">메타 description batch (Anthropic Haiku)</p>
@@ -215,11 +234,14 @@ export function ImportControls() {
           {result.imported !== undefined && (
             <p>가져옴: <strong>{result.imported}</strong> · 건너뜀: <strong>{result.skipped}</strong> · 번역됨: <strong>{result.translated}</strong></p>
           )}
-          {result.updated !== undefined && (
-            <p>분류됨: <strong>{result.updated}</strong>건 — {result.counts && Object.entries(result.counts).map(([k, v]) => `${k}:${v}`).join(" · ")}</p>
+          {result.updated !== undefined && result.counts !== undefined && (
+            <p>분류됨: <strong>{result.updated}</strong>건 — {Object.entries(result.counts).map(([k, v]) => `${k}:${v}`).join(" · ")}</p>
           )}
           {(result.titlesFixed !== undefined || result.duplicatesRemoved !== undefined) && (
             <p>제목 교정: <strong>{result.titlesFixed ?? 0}</strong>건 · 중복 제거: <strong>{result.duplicatesRemoved ?? 0}</strong>건</p>
+          )}
+          {result.scanned !== undefined && result.imported === undefined && (
+            <p>전문 복구: <strong>{result.updated ?? 0}</strong>건 (검사 {result.scanned}건) · 남은 대상: <strong>{result.remaining ?? 0}</strong>건</p>
           )}
           {result.errors && result.errors.length > 0 && (
             <ul className="mt-2 list-disc pl-5 text-danger">

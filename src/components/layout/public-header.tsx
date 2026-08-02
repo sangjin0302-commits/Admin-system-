@@ -245,14 +245,18 @@ function HeaderInner() {
             </div>
             <div className="mt-3 flex gap-2">
               {[
-                { code: "ko", label: "한국어", href: "/" },
-                { code: "en", label: "English", href: "/en" }
+                // 현재 페이지를 유지한 채 언어만 토글(데스크탑 LangSwitcher와 동일 동작).
+                // 전엔 /·/en 으로 이동해 보던 글을 잃었다.
+                { code: "ko", label: "한국어", href: pathname || "/" },
+                { code: "en", label: "English", href: `${pathname || "/"}?lang=en` }
               ].map((l) => (
                 <Link
                   key={l.code}
                   href={l.href}
                   onClick={() => setMobileOpen(false)}
-                  className="flex-1 rounded-xl border border-gold/40 bg-surface px-3 py-2 text-center font-serif text-sm font-bold text-primary"
+                  className={`flex-1 rounded-xl border px-3 py-2 text-center font-serif text-sm font-bold ${
+                    lang === l.code ? "border-primary bg-primary text-white" : "border-gold/40 bg-surface text-primary"
+                  }`}
                 >
                   {l.label}
                 </Link>

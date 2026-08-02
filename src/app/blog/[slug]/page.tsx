@@ -91,6 +91,8 @@ async function resolvePost(slug: string, lang: Lang): Promise<ResolvedPost | nul
       category: md.category,
       date: md.date,
       readMin: md.readMin,
+      // 마크다운 글은 EN 번역본이 없다 → EN 요청 시 한글 원문임을 배너로 알린다(무단 한글 노출 방지).
+      translationMissing: lang === "en",
     };
   }
   const db = await prisma.blogPost.findUnique({ where: { slug } });
@@ -328,7 +330,7 @@ export default async function BlogDetailPage({
           if (kw.length === 0) return null;
           return (
             <div className="mt-5 flex flex-wrap items-center gap-2">
-              <span className="font-serif text-[10px] font-bold uppercase tracking-wider text-gold-deep">키워드</span>
+              <span className="font-serif text-[10px] font-bold uppercase tracking-wider text-gold-deep">{lang === "en" ? "Keywords" : "키워드"}</span>
               {kw.map((k) => (
                 <Link
                   key={k.term}
@@ -357,12 +359,12 @@ export default async function BlogDetailPage({
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              원본 보기 (Naver Blog) ↗
+              {lang === "en" ? "View original (Naver Blog) ↗" : "원본 보기 (Naver Blog) ↗"}
             </a>
           </p>
         )}
 
-        <div className="ethos-rule my-8">{post.category}</div>
+        <div className="ethos-rule my-8">{publicCategoryLabel(toPublicCategoryLoose(post.category), lang)}</div>
 
         <div
           className="prose prose-sm max-w-none font-serif text-base leading-8 text-text [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-2 [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-5xl [&>p:first-of-type]:first-letter:font-extrabold [&>p:first-of-type]:first-letter:leading-[0.8] [&>p:first-of-type]:first-letter:text-gold-deep [&_h2]:font-serif [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-primary [&_h2]:mt-8 [&_h2]:mb-3 [&_p]:my-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_strong]:text-primary"
@@ -380,7 +382,7 @@ export default async function BlogDetailPage({
               {dbRelated.map((r) => (
                 <li key={r.slug}>
                   <Link
-                    href={`/blog/${r.slug}`}
+                    href={`/blog/${r.slug}${lang === "en" ? "?lang=en" : ""}`}
                     className="text-sm font-medium text-primary hover:text-gold-deep hover:underline"
                   >
                     {r.title}
@@ -432,11 +434,11 @@ export default async function BlogDetailPage({
             {related.map((r) => (
               <Link
                 key={r.slug}
-                href={`/blog/${r.slug}`}
+                href={`/blog/${r.slug}${lang === "en" ? "?lang=en" : ""}`}
                 className="group block rounded-xl border border-gold/20 bg-surface p-5 transition hover:border-gold/50 hover:shadow-panel"
               >
                 <span className="inline-block rounded-full bg-gold-soft/50 px-2.5 py-0.5 font-serif text-[11px] font-bold text-gold-deep">
-                  {r.category}
+                  {publicCategoryLabel(toPublicCategoryLoose(r.category), lang)}
                 </span>
                 <h3 className="mt-3 font-serif text-sm font-bold leading-snug text-primary group-hover:text-gold-deep">
                   {r.title}
@@ -450,7 +452,7 @@ export default async function BlogDetailPage({
 
       {await isFeatureEnabled("blog_related_posts") && await (async () => {
         const relatedPosts = await getRelatedPosts(post.slug, post.category);
-        return <BlogRelatedPosts posts={relatedPosts} />;
+        return <BlogRelatedPosts posts={relatedPosts} lang={lang} />;
       })()}
 
       <RelatedKeywords category={post.category} />
@@ -458,7 +460,9 @@ export default async function BlogDetailPage({
       <BlogCategoryCta category={post.category} lang={lang} />
 
       <p className="mt-8 rounded-lg border border-gold/30 bg-surface-muted/40 px-4 py-3 text-xs italic text-text-muted">
-        ※ 본 칼럼은 일반적 안내이며, 개별 사안에 대한 법률 자문이 아닙니다.
+        {lang === "en"
+          ? "* This column is general information, not legal advice for a specific case."
+          : "※ 본 칼럼은 일반적 안내이며, 개별 사안에 대한 법률 자문이 아닙니다."}
       </p>
     </div>
   );
