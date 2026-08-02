@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma/client";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 import { extractTags } from "@/lib/services/blog-tag-extractor";
 
-export async function BlogTagCloud() {
+export async function BlogTagCloud({ lang = "ko" }: { lang?: "ko" | "en" }) {
   const posts = await prisma.blogPost.findMany({
     where: { published: true, source: NAVER_BLOG_SOURCE },
     select: { title: true, excerpt: true, body: true },
@@ -24,7 +24,7 @@ export async function BlogTagCloud() {
     <section className="ethos-band ethos-band-soft py-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <p className="font-serif text-[11px] font-bold uppercase tracking-[0.3em] text-gold-deep">Tags</p>
-        <h3 className="ethos-display mt-2 text-xl">자주 다룬 주제</h3>
+        <h3 className="ethos-display mt-2 text-xl">{lang === "en" ? "Frequent topics" : "자주 다룬 주제"}</h3>
         <div className="mt-5 flex flex-wrap gap-2">
           {entries.map(([tag, count]) => {
             const ratio = count / max;

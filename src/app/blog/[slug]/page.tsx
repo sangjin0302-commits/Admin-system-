@@ -67,7 +67,23 @@ type ResolvedPost = {
   readMin: number;
   originalUrl?: string | null;
   translationMissing?: boolean;
+  /** EN 번역본(bodyEn) 존재 여부 — hreflang 에 EN 대체본을 광고할지 판단. */
+  hasEn?: boolean;
+  /** 관리자가 지정한 태그(공개 표시용). db.tags(JSON) 파싱. */
+  tags?: string[];
 };
+
+/** blogPost.tags(JSON 문자열)를 표시용 배열로 파싱. */
+function parseTags(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const a = JSON.parse(raw);
+    if (Array.isArray(a)) return a.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
+  } catch {
+    /* 구형 콤마문자열 폴백 */
+  }
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+}
 
 /** %-인코딩된 제목(과거 수입 데이터 오류)을 방어적 디코드. 실패 시 원문. */
 function decodeTitle(s: string): string {
@@ -113,6 +129,8 @@ async function resolvePost(slug: string, lang: Lang): Promise<ResolvedPost | nul
     readMin: Math.max(1, Math.round(db.body.length / 800)),
     originalUrl: db.originalUrl,
     translationMissing: wantEn && !bodyEn,
+    hasEn: !!bodyEn,
+    tags: parseTags(db.tags),
   };
 }
 
@@ -147,9 +165,12 @@ export async function generateMetadata({
 
   // 색인 대상: (1) 자체 작성 원본글, (2) 수입글의 EN 번역.
   const canonical = enIndexable ? enPath : slugPath;
+  // EN 번역본이 실제로 있을 때만 en 대체본을 광고(없으면 구글에 잘못된 대체 URL 신호 방지).
   const languages = isImported
     ? { en: enPath, ko: post.originalUrl ?? slugPath, "x-default": enPath } // 수입글: 한국어 정본은 네이버
-    : { ko: slugPath, en: enPath, "x-default": slugPath };
+    : post.hasEn
+      ? { ko: slugPath, en: enPath, "x-default": slugPath }
+      : { ko: slugPath, "x-default": slugPath };
   return {
     title: `${post.title} — 법률 칼럼 | ETHOS`,
     description: post.excerpt,
@@ -324,13 +345,27 @@ export default async function BlogDetailPage({
           <span>{post.readMin}{lang === "en" ? " min read" : "분 소요"}</span>
         </div>
 
-        {/* 글 키워드 badges */}
-        {(() => {
+        {/* 관리자 지정 태그 — 저장된 tags 를 공개 표시(링크 없음, 국·영 공통) */}
+        {post.tags && post.tags.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-1.5">
+            {post.tags.map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center rounded-full bg-gold-soft/40 px-2.5 py-0.5 text-[11px] font-semibold text-gold-deep"
+              >
+                #{t}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* 글 키워드 badges — /keyword/* 는 국문 전용이라 EN 에선 숨김 */}
+        {lang !== "en" && (() => {
           const kw = extractKeywords(`${post.title} ${post.contentHtml}`);
           if (kw.length === 0) return null;
           return (
             <div className="mt-5 flex flex-wrap items-center gap-2">
-              <span className="font-serif text-[10px] font-bold uppercase tracking-wider text-gold-deep">{lang === "en" ? "Keywords" : "키워드"}</span>
+              <span className="font-serif text-[10px] font-bold uppercase tracking-wider text-gold-deep">키워드</span>
               {kw.map((k) => (
                 <Link
                   key={k.term}
@@ -455,7 +490,7 @@ export default async function BlogDetailPage({
         return <BlogRelatedPosts posts={relatedPosts} lang={lang} />;
       })()}
 
-      <RelatedKeywords category={post.category} />
+      <RelatedKeywords category={post.category} lang={lang} />
       <BlogCta category={post.category} lang={lang} />
       <BlogCategoryCta category={post.category} lang={lang} />
 

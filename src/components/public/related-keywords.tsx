@@ -26,7 +26,9 @@ const CAT_KEYWORDS: Record<string, Array<{ term: string; label: string }>> = {
   ]
 };
 
-export function RelatedKeywords({ category }: { category: string }) {
+export function RelatedKeywords({ category, lang = "ko" }: { category: string; lang?: "ko" | "en" }) {
+  // 키워드 가이드(/keyword/*)는 국문 전용 SEO 퍼널 → EN 방문자를 한글 페이지로 보내지 않는다.
+  if (lang === "en") return null;
   const pub = toPublicCategory(category);
   const items = CAT_KEYWORDS[pub] ?? [];
   if (items.length === 0) return null;

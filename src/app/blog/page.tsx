@@ -296,7 +296,7 @@ export default async function BlogPage({
       )}
 
       {/* 태그 클라우드 */}
-      <BlogTagCloud />
+      <BlogTagCloud lang={lang} />
 
       {/* 뉴스레터 구독 */}
       <section className="py-16 sm:py-20">
