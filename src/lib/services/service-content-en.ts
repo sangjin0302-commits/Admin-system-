@@ -5,6 +5,7 @@
  */
 
 export type ServiceEnContent = {
+  title: string;
   tagline: string;
   description: string;
   whoFor: readonly string[];
@@ -16,6 +17,7 @@ export type ServiceEnContent = {
 
 export const SERVICE_EN: Record<string, ServiceEnContent> = {
   immigration: {
+    title: "Visa & Immigration",
     tagline: "Organize your stay in Korea, end to end",
     description:
       "From status changes, extensions, and invitations to permanent residence, naturalization, and removal defense — we handle the full immigration journey, starting with the facts and required documents.",
@@ -53,6 +55,7 @@ export const SERVICE_EN: Record<string, ServiceEnContent> = {
     ]
   },
   appeal: {
+    title: "Administrative Appeal",
     tagline: "From disposition notice to the final ruling",
     description:
       "We review the disposition, notice date, and claim deadline, then organize the grounds and evidence to prepare your administrative appeal through the hearing and ruling.",
@@ -89,6 +92,7 @@ export const SERVICE_EN: Record<string, ServiceEnContent> = {
     ]
   },
   contract: {
+    title: "Contracts & Fact-finding",
     tagline: "Clear contracts, verified facts",
     description:
       "Contract review and drafting, dispute fact-finding, and investigation reports — we organize the facts by timeline so you can respond with confidence.",
@@ -125,6 +129,7 @@ export const SERVICE_EN: Record<string, ServiceEnContent> = {
     ]
   },
   corporate: {
+    title: "Company Formation",
     tagline: "From formation to your first permit",
     description:
       "We guide company formation end to end — entity type, articles of incorporation, registration prep — and connect it to the licenses your business needs after launch.",
@@ -161,6 +166,7 @@ export const SERVICE_EN: Record<string, ServiceEnContent> = {
     ]
   },
   license: {
+    title: "Licenses & Permits",
     tagline: "Permits, supplements, and appeals — together",
     description:
       "Business, construction, food, and medical permits — we handle applications, supplement responses, and appeals, checking permit types and likely supplements in advance.",

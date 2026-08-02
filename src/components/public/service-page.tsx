@@ -88,7 +88,7 @@ export function ServicePage({
   const en = lang === "en" && serviceKey ? SERVICE_EN[serviceKey] : undefined;
 
   // admin override(있으면 우선) → EN → 기본 데이터. desc 와 동일 패턴.
-  const title = titleOverride?.trim() ? titleOverride : data.title;
+  const title = titleOverride?.trim() ? titleOverride : en?.title ?? data.title;
   const tagline = taglineOverride?.trim() ? taglineOverride : en?.tagline ?? data.tagline;
   const whoFor = en?.whoFor ?? data.whoFor;
   const process = en?.process ?? data.process;
