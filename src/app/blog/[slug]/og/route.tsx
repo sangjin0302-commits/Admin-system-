@@ -43,7 +43,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   let title = md?.title ?? (en ? "Legal Column" : "법률 칼럼");
   let category = md?.category ?? "other";
   if (!md) {
-    const db = await prisma.blogPost.findUnique({ where: { slug } }).catch(() => null);
+    const db = await prisma.blogPost
+      .findUnique({ where: { slug }, select: { title: true, titleEn: true, category: true } })
+      .catch(() => null);
     if (db) {
       title = en ? db.titleEn || db.title : db.title;
       category = db.category || category;
@@ -103,6 +105,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 8, background: theme.tint }} />
       </div>
     ),
-    { ...SIZE }
+    {
+      ...SIZE,
+      // Satori 렌더는 CPU 비용이 크므로 소셜 재스크레이프용으로 장기 캐시.
+      headers: { "Cache-Control": "public, max-age=86400, s-maxage=604800, immutable" }
+    }
   );
 }

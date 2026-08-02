@@ -4,7 +4,8 @@ export function maskEmail(email: string): string {
   if (at <= 0) return "***";
   const local = email.slice(0, at);
   const domain = email.slice(at); // "@gmail.com"
-  if (local.length <= 2) return `${local[0] ?? "*"}*${domain}`;
+  // 로컬파트가 2자 이하면 아무것도 노출하지 않는다(짧은 아이디 전체노출 방지).
+  if (local.length <= 2) return `**${domain}`;
   const shown = local.slice(0, 2);
   return `${shown}${"*".repeat(Math.max(3, local.length - 2))}${domain}`;
 }

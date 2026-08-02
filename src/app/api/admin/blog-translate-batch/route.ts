@@ -65,6 +65,7 @@ export async function POST(req: Request) {
 
   const results: Array<{ postId: string; en?: boolean; error?: string }> = [];
   let processed = 0;
+  let succeeded = 0;
 
   for (const post of candidates) {
     if (processed >= BATCH_SIZE) break;
@@ -83,6 +84,7 @@ export async function POST(req: Request) {
         data: { titleEn: en.title, excerptEn: en.excerpt, bodyEn: en.body },
       });
       entry.en = true;
+      succeeded += 1;
     } else {
       entry.en = false;
       entry.error = "en translation failed";
@@ -92,7 +94,8 @@ export async function POST(req: Request) {
     processed += 1;
   }
 
-    return NextResponse.json({ processed, results });
+    // succeeded: 실제 번역 성공 수. 실패만 반복되면 succeeded=0 → 클라이언트가 루프 중단.
+    return NextResponse.json({ processed, succeeded, results });
   } catch (error) {
     console.error("[admin/blog-translate-batch] POST failed", error);
     return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });

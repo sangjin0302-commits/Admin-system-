@@ -69,10 +69,12 @@ export default function BlogTranslatePage() {
           setMessage(`중단 — 오류: ${err.error ?? res.statusText} (누적 ${total}건)`);
           break;
         }
-        const data = (await res.json()) as { processed: number };
-        total += data.processed;
+        const data = (await res.json()) as { processed: number; succeeded?: number };
+        const succeeded = data.succeeded ?? data.processed;
+        total += succeeded;
         setMessage(`번역 중… 누적 ${total}건`);
-        if (data.processed === 0) break; // 더 처리할 게 없음
+        // 이번 배치에서 성공 0 → 남은 건 번역 실패(재시도해도 동일) → 무한반복 방지 중단.
+        if (succeeded === 0) break;
         await refresh();
       }
       await refresh();

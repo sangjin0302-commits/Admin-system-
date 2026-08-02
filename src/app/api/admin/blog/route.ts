@@ -90,7 +90,7 @@ export async function POST(request: Request) {
         published: data.published ?? false,
         publishedAt: data.published ? new Date() : null,
         pinned: Boolean(data.pinned),
-        sortOrder: Number.isFinite(data.sortOrder) ? Math.trunc(data.sortOrder) : 0,
+        sortOrder: Math.max(0, Number.parseInt(String(data.sortOrder), 10) || 0),
       },
     });
     if (post.published) {
@@ -123,7 +123,7 @@ export async function PUT(request: Request) {
         published: data.published ?? false,
         publishedAt: data.published && !existing?.publishedAt ? new Date() : existing?.publishedAt,
         pinned: Boolean(data.pinned),
-        sortOrder: Number.isFinite(data.sortOrder) ? Math.trunc(data.sortOrder) : 0,
+        sortOrder: Math.max(0, Number.parseInt(String(data.sortOrder), 10) || 0),
       },
     });
     if (post.published && !existing?.published) {

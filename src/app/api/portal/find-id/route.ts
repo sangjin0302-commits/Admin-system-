@@ -42,12 +42,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, found: false });
   }
 
-  // 이름 일치 후보를 받아 전화(숫자만) 비교 — 저장 포맷 차이를 흡수.
+  // 전화 정규화 — 국가코드(+82)·형식 차이를 흡수하기 위해 마지막 8자리로 비교.
+  // (국내 휴대폰 가입번호는 뒤 8자리가 고유.)
+  const tail = (d: string) => d.slice(-8);
+  const inputTail = tail(phoneDigits);
+
+  // 이름 일치 후보만(상한). name 인덱스는 없으나 법무사무소 회원 수 소규모 → take로 상한.
   const candidates = await prisma.portalClient.findMany({
     where: { name },
-    select: { email: true, phone: true }
+    select: { email: true, phone: true },
+    take: 50
   });
-  const match = candidates.find((c) => (c.phone ?? "").replace(/\D/g, "") === phoneDigits);
+  const match = candidates.find((c) => tail((c.phone ?? "").replace(/\D/g, "")) === inputTail);
 
   if (!match) {
     return NextResponse.json({ ok: true, found: false });
