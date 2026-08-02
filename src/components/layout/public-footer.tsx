@@ -38,7 +38,8 @@ export function PublicFooter() {
   const pathname = usePathname();
   const [langEn, setLangEn] = useState(false);
   useEffect(() => {
-    setLangEn(pathname.startsWith("/en") || document.documentElement.lang === "en");
+    const q = new URLSearchParams(window.location.search).get("lang");
+    setLangEn(pathname.startsWith("/en") || q === "en" || document.documentElement.lang === "en");
   }, [pathname]);
   const L = (ko: string, en: string) => (langEn ? en : ko);
   const qs = langEn ? "?lang=en" : "";

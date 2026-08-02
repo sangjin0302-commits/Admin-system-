@@ -23,7 +23,11 @@ export function StickyCta() {
   const ga4Enabled = useFeatureFlag("ga4_conversion_tracking") !== false;
 
   useEffect(() => {
-    setLangEn(pathname.startsWith("/en") || document.documentElement.lang === "en");
+    setLangEn(
+      pathname.startsWith("/en") ||
+        new URLSearchParams(window.location.search).get("lang") === "en" ||
+        document.documentElement.lang === "en"
+    );
   }, [pathname]);
 
   useEffect(() => {

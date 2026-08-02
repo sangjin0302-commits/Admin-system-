@@ -30,7 +30,10 @@ export function StickyCta() {
   const [langEn, setLangEn] = useState(false);
 
   useEffect(() => {
-    const en = pathname.startsWith("/en") || document.documentElement.lang === "en";
+    const en =
+      pathname.startsWith("/en") ||
+      new URLSearchParams(window.location.search).get("lang") === "en" ||
+      document.documentElement.lang === "en";
     setLangEn(en);
     setHint(getResponseHint(en));
   }, [pathname]);

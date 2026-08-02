@@ -64,7 +64,11 @@ export function ExitIntent() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setLangEn(window.location.pathname.startsWith("/en") || document.documentElement.lang === "en");
+    setLangEn(
+      window.location.pathname.startsWith("/en") ||
+        new URLSearchParams(window.location.search).get("lang") === "en" ||
+        document.documentElement.lang === "en"
+    );
     const p = window.location.pathname;
     if (HIDDEN_PATHS.some((h) => p.startsWith(h))) return;
 
