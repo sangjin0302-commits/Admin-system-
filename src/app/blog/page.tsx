@@ -52,6 +52,7 @@ export default async function BlogPage({
       originalUrl: true,
       category: true,
       coverImage: true,
+      tags: true,
     },
   });
 
@@ -71,6 +72,17 @@ export default async function BlogPage({
     dateMs: number;
     dateLabel: string;
     publicCat: PublicCategory;
+    tags: string[];
+  };
+  const parseTags = (raw: string | null | undefined): string[] => {
+    if (!raw) return [];
+    try {
+      const a = JSON.parse(raw);
+      if (Array.isArray(a)) return a.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
+    } catch {
+      /* 구형 콤마문자열 폴백 */
+    }
+    return raw.split(",").map((s) => s.trim()).filter(Boolean);
   };
   const decodeTitle = (s: string): string => {
     if (!s.includes("%") && !s.includes("+")) return s;
@@ -90,6 +102,7 @@ export default async function BlogPage({
       dateMs: p.publishedAt ? p.publishedAt.getTime() : 0,
       dateLabel: p.publishedAt?.toLocaleDateString(lang === "en" ? "en-US" : "ko-KR") ?? "",
       publicCat: toPublicCategory(p.category),
+      tags: parseTags(p.tags),
     })),
     ...posts.map((p) => ({
       key: `md-${p.slug}`,
@@ -100,6 +113,7 @@ export default async function BlogPage({
       dateMs: p.date ? new Date(p.date).getTime() : 0,
       dateLabel: p.date,
       publicCat: labelToPublic(p.category),
+      tags: [],
     })),
   ].sort((a, b) => b.dateMs - a.dateMs);
   const boardCounts = (Object.keys(PUBLIC_CATEGORY_LABEL) as PublicCategory[])
@@ -261,6 +275,15 @@ export default async function BlogPage({
                       {c.title}
                     </h3>
                     <p className="mt-2 line-clamp-3 text-xs leading-6 text-text-muted">{c.excerpt}</p>
+                    {c.tags.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1">
+                        {c.tags.slice(0, 3).map((t) => (
+                          <span key={t} className="rounded-full bg-gold-soft/30 px-2 py-0.5 text-[10px] font-semibold text-gold-deep">
+                            #{t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <p className="mt-3 text-[11px] text-text-muted">{c.dateLabel}</p>
                   </div>
                 </Link>

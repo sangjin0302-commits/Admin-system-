@@ -132,6 +132,19 @@ function extractArray(body: unknown): { arr: unknown[]; total: number | null } {
 }
 
 /**
+ * 봇 응답 몸통 → 정규화·정렬된 GazetteItem[]. 네트워크와 분리(테스트 가능).
+ * 배열/{items}/{data}/{results} 모두 허용하고, 제목 없는 항목은 버린다.
+ */
+export function normalizeGazetteResponse(body: unknown, limit = 60): GazetteItem[] {
+  const { arr } = extractArray(body);
+  return arr
+    .map((r, i) => normalizeItem(r, i))
+    .filter((x): x is GazetteItem => x !== null)
+    .sort((a, b) => b.dateMs - a.dateMs)
+    .slice(0, limit);
+}
+
+/**
  * 관보 목록 조회.
  * @param limit 최대 건수(기본 60). 봇이 지원하면 쿼리로도 전달.
  */
@@ -162,12 +175,8 @@ export async function fetchGazetteList(limit = 60): Promise<GazetteOutcome> {
     }
 
     const body = (await response.json()) as unknown;
-    const { arr, total } = extractArray(body);
-    const items = arr
-      .map((r, i) => normalizeItem(r, i))
-      .filter((x): x is GazetteItem => x !== null)
-      .sort((a, b) => b.dateMs - a.dateMs)
-      .slice(0, limit);
+    const { total } = extractArray(body);
+    const items = normalizeGazetteResponse(body, limit);
 
     return { status: "ok", items, total: total ?? items.length };
   } catch (error) {
