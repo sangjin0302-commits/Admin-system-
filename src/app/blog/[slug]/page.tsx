@@ -284,9 +284,9 @@ export default async function BlogDetailPage({
       )}
       <BreadcrumbJsonLd
         items={[
-          { name: "홈", url: "/" },
-          { name: "블로그", url: "/blog" },
-          { name: post.title, url: `/blog/${post.slug}` },
+          { name: lang === "en" ? "Home" : "홈", url: lang === "en" ? "/?lang=en" : "/" },
+          { name: lang === "en" ? "Blog" : "블로그", url: lang === "en" ? "/blog?lang=en" : "/blog" },
+          { name: post.title, url: `/blog/${post.slug}${lang === "en" ? "?lang=en" : ""}` },
         ]}
       />
       {faqPairs.length > 0 && (
