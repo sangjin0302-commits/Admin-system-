@@ -43,11 +43,17 @@ export type GazetteOutcome =
   | { status: "not_configured" }
   | { status: "error"; reason: string };
 
-/** GWANBO_API_URL 을 `.../gazette` 로 정규화. base 만 주면 `/gazette` 를 붙인다. */
+/**
+ * GWANBO_API_URL 을 관보봇의 실제 읽기 엔드포인트 `/items/latest` 로 정규화.
+ *
+ * 봇(Gwanbo-bot FastAPI)은 `GET /items/latest`(최신 10건, list[GazetteItemRead])를
+ * 제공한다. `/gazette` 는 없다. base·구 `/gazette` 경로·이미 올바른 경로 모두 흡수.
+ */
 export function toGazetteUrl(rawUrl: string): string {
-  const trimmed = rawUrl.trim().replace(/\/+$/, "");
-  if (trimmed.endsWith("/gazette")) return trimmed;
-  return `${trimmed}/gazette`;
+  let t = rawUrl.trim().replace(/\/+$/, "");
+  if (t.endsWith("/items/latest")) return t;
+  if (t.endsWith("/gazette")) t = t.slice(0, -"/gazette".length); // 구 설정 보정
+  return `${t}/items/latest`;
 }
 
 function resolveGazetteUrl(): string | null {
@@ -96,9 +102,10 @@ function normalizeItem(raw: unknown, index: number): GazetteItem | null {
   const title = pickString(o, ["title", "subject", "name", "안건명", "제목"]);
   if (!title) return null; // 제목 없는 항목은 버린다.
 
-  const url = pickString(o, ["url", "link", "href", "detailUrl", "pdfUrl", "원문링크"]) || null;
+  // original_url = Gwanbo-bot(GazetteItemRead) 실제 필드.
+  const url = pickString(o, ["original_url", "url", "link", "href", "detailUrl", "pdfUrl", "원문링크"]) || null;
   const dateMs = toDateMs(
-    o.publishedAt ?? o.published_at ?? o.date ?? o.publishedDate ?? o.published_date ?? o.게시일 ?? o.발령일
+    o.publication_date ?? o.publishedAt ?? o.published_at ?? o.date ?? o.publishedDate ?? o.published_date ?? o.게시일 ?? o.발령일
   );
   const id =
     pickString(o, ["id", "uid", "gazetteId", "관보호수", "seq"]) ||
@@ -108,7 +115,8 @@ function normalizeItem(raw: unknown, index: number): GazetteItem | null {
   return {
     id,
     title,
-    agency: pickString(o, ["agency", "department", "ministry", "기관", "부처", "발령기관"]),
+    // issuing_agency = 봇 필드. category 는 봇에 동명 존재.
+    agency: pickString(o, ["issuing_agency", "agency", "department", "ministry", "기관", "부처", "발령기관"]),
     category: pickString(o, ["category", "type", "section", "구분", "종류"]),
     dateMs,
     url,

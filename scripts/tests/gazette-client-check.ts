@@ -21,12 +21,39 @@ function check(name: string, fn: () => void) {
   }
 }
 
-// 1) URL 정규화: base 만 주면 /gazette 부착, 이미 /gazette 면 유지.
-check("toGazetteUrl base→/gazette", () => {
-  assert.equal(toGazetteUrl("https://bot.example.com"), "https://bot.example.com/gazette");
-  assert.equal(toGazetteUrl("https://bot.example.com/"), "https://bot.example.com/gazette");
-  assert.equal(toGazetteUrl("https://bot.example.com/gazette"), "https://bot.example.com/gazette");
-  assert.equal(toGazetteUrl("https://bot.example.com/gazette/"), "https://bot.example.com/gazette");
+// 1) URL 정규화: 봇의 실제 엔드포인트 /items/latest 로. base·구 /gazette·정경로 모두 흡수.
+check("toGazetteUrl → /items/latest", () => {
+  assert.equal(toGazetteUrl("https://bot.example.com"), "https://bot.example.com/items/latest");
+  assert.equal(toGazetteUrl("https://bot.example.com/"), "https://bot.example.com/items/latest");
+  assert.equal(toGazetteUrl("https://bot.example.com/gazette"), "https://bot.example.com/items/latest");
+  assert.equal(toGazetteUrl("https://bot.example.com/items/latest"), "https://bot.example.com/items/latest");
+});
+
+// 1b) Gwanbo-bot 실제 응답(GazetteItemRead) 매핑 검증.
+check("Gwanbo-bot GazetteItemRead 매핑", () => {
+  const items = normalizeGazetteResponse([
+    {
+      id: 42,
+      source_type: "law",
+      title: "행정사법 일부개정법률",
+      issuing_agency: "법무부",
+      publication_date: "2026-07-30",
+      category: "법률",
+      legal_basis: null,
+      summary: "개정 요지…",
+      content: "본문…",
+      original_url: "https://gwanbo.go.kr/x/42"
+    }
+  ]);
+  assert.equal(items.length, 1);
+  const i = items[0];
+  assert.equal(i.title, "행정사법 일부개정법률");
+  assert.equal(i.agency, "법무부");
+  assert.equal(i.category, "법률");
+  assert.equal(i.url, "https://gwanbo.go.kr/x/42");
+  assert.equal(i.summary, "개정 요지…");
+  assert.ok(i.dateMs > 0, "publication_date 파싱");
+  assert.equal(i.id, "42");
 });
 
 // 2) 배열 형태 + 필드명 변형 흡수.
