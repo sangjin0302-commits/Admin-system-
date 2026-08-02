@@ -111,11 +111,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/services/contract",
     "/services/license",
     "/services/corporate",
-    "/services/visa",
-    "/services/corporation",
-    "/services/administrative-appeal",
-    "/services/fact-contract",
-    "/services/permit-license",
+    // 리다이렉트되는 CMS 슬러그는 제외(중복 방지). 고유 서비스만 등재.
     "/services/arabic-interpretation",
     "/services/civil-petition",
     "/gazette",

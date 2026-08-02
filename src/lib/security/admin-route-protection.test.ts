@@ -7,7 +7,7 @@ import { isAdminAuthRoute, isProtectedAdminRoute, isPublicRoute } from "../../mi
 const publicRoutes = [
   "/",
   "/services",
-  "/services/visa",
+  "/services/immigration",
   "/intake",
   "/intake?lang=en",
   "/track",

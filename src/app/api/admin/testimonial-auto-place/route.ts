@@ -5,12 +5,13 @@ import { prisma } from "@/lib/prisma/client";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+// canonical(legacy) 서비스 URL 사용 — visa/corporation 은 redirect 대상이라 immigration/corporate 로.
 const SERVICE_CATEGORIES: Record<string, string> = {
-  VISA_STAY: "/services/visa",
+  VISA_STAY: "/services/immigration",
   ADMIN_APPEAL: "/services/appeal",
   CONTRACT_INVESTIGATION: "/services/contract",
   LICENSE_PERMIT: "/services/license",
-  CORP_FORMATION: "/services/corporation",
+  CORP_FORMATION: "/services/corporate",
 };
 
 export async function GET() {
