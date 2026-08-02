@@ -44,7 +44,7 @@ export default function FindIdPage() {
 
       <div className="ethos-card mt-8 p-7">
         {result ? (
-          <div className="text-center">
+          <div className="text-center" role="status" aria-live="polite">
             {result.found ? (
               <>
                 <p className="text-sm text-text">회원님의 가입 이메일은</p>

@@ -30,6 +30,7 @@
     "test:blog-source-guard": "tsx scripts/tests/blog-source-guard-check.ts",
     "test:gazette": "tsx scripts/tests/gazette-client-check.ts",
     "test:mask-email": "tsx scripts/tests/mask-email-check.ts",
+    "test:blog-portal-helpers": "tsx scripts/tests/blog-portal-helpers-check.ts",
     "test:security-guard": "tsx scripts/tests/security-guard-check.ts",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",

@@ -37,6 +37,22 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  async redirects() {
+    // 서비스 상세 중복 정리: CMS 슬러그 → nav 연결된 legacy 상세로 영구(308) 리다이렉트.
+    // (컴포넌트 redirect()는 dev 렌더 캐시 이슈가 있어 config 레벨로 확정 처리.)
+    const map: Record<string, string> = {
+      visa: "immigration",
+      corporation: "corporate",
+      "administrative-appeal": "appeal",
+      "fact-contract": "contract",
+      "permit-license": "license"
+    };
+    return Object.entries(map).map(([from, to]) => ({
+      source: `/services/${from}`,
+      destination: `/services/${to}`,
+      permanent: true
+    }));
+  },
   async headers() {
     // 전역 보안 헤더 (클릭재킹/MIME 스니핑/HTTPS 강제/정보 누출 방어)
     const securityHeaders = [

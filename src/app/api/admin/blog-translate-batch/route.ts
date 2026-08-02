@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   try {
     const posts = await prisma.blogPost.findMany({
       where: { published: true },
-      select: { id: true, slug: true, title: true, titleEn: true, bodyEn: true, publishedAt: true },
+      select: { id: true, slug: true, title: true, titleEn: true, bodyEn: true, publishedAt: true, enTranslationAttempts: true },
       orderBy: { publishedAt: "desc" },
       take: 50,
     });
@@ -27,11 +27,14 @@ export async function GET(req: Request) {
       slug: p.slug,
       title: p.title,
       hasEn: Boolean(p.titleEn && p.bodyEn),
+      // 3회 이상 실패한 글은 pending 에서 제외(무한재시도 방지). 수동 검토 대상.
+      exhausted: p.enTranslationAttempts >= 3,
     }));
 
     return NextResponse.json({
       posts: status,
-      pendingCount: status.filter((s) => !s.hasEn).length,
+      pendingCount: status.filter((s) => !s.hasEn && !s.exhausted).length,
+      stuckCount: status.filter((s) => !s.hasEn && s.exhausted).length,
     });
   } catch (error) {
     console.error("[admin/blog-translate-batch] GET failed", error);
@@ -49,7 +52,7 @@ export async function POST(req: Request) {
 
   try {
     const candidates = await prisma.blogPost.findMany({
-    where: { published: true },
+    where: { published: true, enTranslationAttempts: { lt: 3 } },
     select: {
       id: true,
       title: true,
@@ -81,11 +84,16 @@ export async function POST(req: Request) {
     if (en) {
       await prisma.blogPost.update({
         where: { id: post.id },
-        data: { titleEn: en.title, excerptEn: en.excerpt, bodyEn: en.body },
+        data: { titleEn: en.title, excerptEn: en.excerpt, bodyEn: en.body, enTranslationAttempts: 0, enTranslationFailedAt: null },
       });
       entry.en = true;
       succeeded += 1;
     } else {
+      // 실패 카운트 증가 → 3회 도달 시 이후 배치에서 제외(무한재시도·API 폭주 방지).
+      await prisma.blogPost.update({
+        where: { id: post.id },
+        data: { enTranslationAttempts: { increment: 1 }, enTranslationFailedAt: new Date() },
+      });
       entry.en = false;
       entry.error = "en translation failed";
     }

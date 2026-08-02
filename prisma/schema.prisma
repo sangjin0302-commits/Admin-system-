@@ -1270,6 +1270,8 @@ model BlogPost {
   importedAt   DateTime?
   pinned       Boolean  @default(false)
   sortOrder    Int      @default(0)
+  enTranslationAttempts Int      @default(0)
+  enTranslationFailedAt DateTime?
 
   @@index([published, publishedAt])
   @@index([published, pinned, sortOrder])

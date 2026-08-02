@@ -10,7 +10,16 @@ import {
   PUBLIC_MARKETING_SERVICES
 } from "@/lib/services/public-marketing-pages";
 
-export const dynamic = "force-dynamic";
+// 중복 정리: 아래 CMS 슬러그는 nav 연결된 legacy 상세 페이지와 내용이 겹친다
+// (예: visa ≈ /services/immigration). SEO 중복을 없애려고 canonical(legacy)로 리다이렉트.
+// legacy 등가물이 없는 arabic-interpretation·civil-petition 만 이 동적 라우트가 직접 렌더.
+const LEGACY_REDIRECT: Record<string, string> = {
+  visa: "immigration",
+  corporation: "corporate",
+  "administrative-appeal": "appeal",
+  "fact-contract": "contract",
+  "permit-license": "license"
+};
 
 type ServiceDetailPageProps = {
   params: Promise<{
@@ -20,7 +29,10 @@ type ServiceDetailPageProps = {
 };
 
 export function generateStaticParams() {
-  return PUBLIC_MARKETING_SERVICES.map((service) => ({ slug: service.slug }));
+  // 리다이렉트되는 슬러그는 정적 생성 제외 — 고유 서비스만 직접 렌더.
+  return PUBLIC_MARKETING_SERVICES.filter((s) => !LEGACY_REDIRECT[s.slug]).map((service) => ({
+    slug: service.slug
+  }));
 }
 
 export async function generateMetadata({ params, searchParams }: ServiceDetailPageProps): Promise<Metadata> {
@@ -67,6 +79,7 @@ function InfoList({ title, items }: { title: string; items: string[] }) {
 export default async function ServiceDetailPage({ params, searchParams }: ServiceDetailPageProps) {
   const { slug } = await params;
   const lang = (await searchParams)?.lang === "en" ? "en" : "ko";
+  // 겹치는 슬러그는 next.config redirects()가 legacy 로 308 리다이렉트하므로 여기 도달 안 함.
   const t = (ko: string, en: string) => (lang === "en" ? en : ko);
   const service = getPublicMarketingService(slug);
 

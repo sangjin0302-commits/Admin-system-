@@ -9,12 +9,12 @@ type PostStatus = {
   slug: string;
   title: string;
   hasEn: boolean;
-  hasZh: boolean;
 };
 
 export default function BlogTranslatePage() {
   const [posts, setPosts] = useState<PostStatus[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
+  const [stuckCount, setStuckCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -23,9 +23,10 @@ export default function BlogTranslatePage() {
     try {
       const res = await fetch("/api/admin/blog-translate-batch", { cache: "no-store" });
       if (res.ok) {
-        const data = (await res.json()) as { posts: PostStatus[]; pendingCount: number };
+        const data = (await res.json()) as { posts: PostStatus[]; pendingCount: number; stuckCount?: number };
         setPosts(data.posts);
         setPendingCount(data.pendingCount);
+        setStuckCount(data.stuckCount ?? 0);
       }
     } finally {
       setLoading(false);
@@ -78,7 +79,9 @@ export default function BlogTranslatePage() {
         await refresh();
       }
       await refresh();
-      setMessage(`전체 번역 완료 — 누적 ${total}건 처리`);
+      setMessage(
+        `전체 번역 종료 — 누적 ${total}건 번역. 남은 미번역이 있으면 번역 실패 글(3회 초과)이니 수동 검토하세요.`
+      );
     } finally {
       setRunningAll(false);
     }
@@ -89,7 +92,7 @@ export default function BlogTranslatePage() {
       <AdminPageHeader
         kicker="Blog"
         title="블로그 자동 번역"
-        description="미번역 블로그 포스트 (EN/ZH)를 배치로 자동 번역합니다. 최대 5건씩 실행."
+        description="미번역 블로그 포스트를 영문(EN)으로 자동 번역합니다. '전체 번역'은 남은 글이 없을 때까지 자동 반복(1회 5건 상한)."
       />
 
       <Card className="p-5">
@@ -97,6 +100,9 @@ export default function BlogTranslatePage() {
           <div>
             <div className="text-sm text-text-muted">미번역 포스트</div>
             <div className="mt-1 text-2xl font-semibold text-text-strong">{pendingCount}건</div>
+            {stuckCount > 0 && (
+              <div className="mt-1 text-xs text-amber-600">3회 실패 {stuckCount}건 — 수동 검토 필요</div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -125,7 +131,6 @@ export default function BlogTranslatePage() {
             <tr className="border-b border-border">
               <th className="py-2 text-left">제목</th>
               <th className="py-2 text-center">EN</th>
-              <th className="py-2 text-center">ZH</th>
             </tr>
           </thead>
           <tbody>
@@ -133,7 +138,6 @@ export default function BlogTranslatePage() {
               <tr key={p.id} className="border-b border-border/50">
                 <td className="py-2">{p.title}</td>
                 <td className="py-2 text-center">{p.hasEn ? "✓" : "—"}</td>
-                <td className="py-2 text-center">{p.hasZh ? "✓" : "—"}</td>
               </tr>
             ))}
           </tbody>

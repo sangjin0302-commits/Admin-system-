@@ -6,6 +6,7 @@ import { listBlogPosts } from "@/lib/blog-posts";
 import { prisma } from "@/lib/prisma/client";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 import { PUBLIC_CATEGORY_LABEL, publicCategoryLabel, toPublicCategory, type PublicCategory } from "@/lib/services/blog-categorizer";
+import { compareBoardCards } from "@/lib/blog/board-sort";
 import { BlogTagCloud } from "@/components/public/blog-tag-cloud";
 import { NewsletterSubscribeForm } from "@/components/public/newsletter-subscribe-form";
 
@@ -56,7 +57,7 @@ export default async function BlogPage({
       pinned: true,
       sortOrder: true,
     },
-  });
+  }).catch(() => [] as never[]);
 
   // ── 단일 게시판: 네이버 수입글 + 레거시 마크다운글을 하나로 통합 ──
   const labelToPublic = (label: string): PublicCategory => {
@@ -123,11 +124,7 @@ export default async function BlogPage({
       pinned: false,
       sortOrder: 0,
     })),
-  ].sort(
-    (a, b) =>
-      // 고정 글 먼저 → 정렬순서(작을수록 앞) → 최신순.
-      Number(b.pinned) - Number(a.pinned) || a.sortOrder - b.sortOrder || b.dateMs - a.dateMs
-  );
+  ].sort(compareBoardCards);
   const boardCounts = (Object.keys(PUBLIC_CATEGORY_LABEL) as PublicCategory[])
     .map((c) => ({ cat: c, count: allCards.filter((x) => x.publicCat === c).length }))
     .filter((x) => x.count > 0);

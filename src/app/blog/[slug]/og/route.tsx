@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 
 import { getBlogPostBySlug } from "@/lib/blog-posts";
 import { prisma } from "@/lib/prisma/client";
+import { publicCategoryLabel, toPublicCategoryLoose } from "@/lib/services/blog-categorizer";
 
 /**
  * 블로그 OG 공유 이미지 — 언어별(`?lang=en`) 생성.
@@ -26,14 +27,6 @@ const CATEGORY_THEME: Record<string, { tint: string; chipBg: string }> = {
   other: { tint: "linear-gradient(135deg, #4a4a4a 0%, #6b6b6b 100%)", chipBg: "#4a4a4a" }
 };
 
-const CHIP_KO: Record<string, string> = {
-  visa: "비자·체류", naturalization: "귀화·국적", refugee: "난민", appeal: "행정심판",
-  contract: "계약·사실조사", license: "인허가", corporate: "법인설립", other: "법률 칼럼"
-};
-const CHIP_EN: Record<string, string> = {
-  visa: "Visa", naturalization: "Naturalization", refugee: "Refugee", appeal: "Appeal",
-  contract: "Contract", license: "License", corporate: "Corporate", other: "Legal Column"
-};
 
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -51,8 +44,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
       category = db.category || category;
     }
   }
-  const theme = CATEGORY_THEME[category] ?? CATEGORY_THEME.other;
-  const chipLabel = (en ? CHIP_EN : CHIP_KO)[category] ?? category;
+  // 내부 카테고리·마크다운 한글라벨도 공개 5분류로 정규화(상세 페이지와 동일 라벨).
+  const pubCat = toPublicCategoryLoose(category);
+  const theme = CATEGORY_THEME[pubCat] ?? CATEGORY_THEME.other;
+  const chipLabel = publicCategoryLabel(pubCat, en ? "en" : "ko");
   const brand = en ? "Administrative Attorney" : "행정사사무소";
 
   return new ImageResponse(

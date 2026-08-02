@@ -66,10 +66,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: "/services/contract", priority: 0.8 },
     { url: "/services/license", priority: 0.8 },
     { url: "/services/corporate", priority: 0.8 },
-    // CMS 서비스 상세(국·영) — /services/[slug]
+    // CMS 서비스 상세(국·영) — legacy 와 겹치는 슬러그는 리다이렉트되므로 제외.
+    // 고유 서비스만 등재(arabic-interpretation·civil-petition).
     ...[
-      "visa", "corporation", "administrative-appeal", "fact-contract",
-      "permit-license", "arabic-interpretation", "civil-petition",
+      "arabic-interpretation", "civil-petition",
     ].map((s) => ({ url: `/services/${s}`, priority: 0.7 })),
     { url: "/quick-check", priority: 0.85 },
     { url: "/consult", priority: 0.75 },

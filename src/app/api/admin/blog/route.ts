@@ -6,6 +6,7 @@ import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { generateSeoMeta } from "@/lib/services/blog-seo-service";
 import { ensureDisclaimer } from "@/lib/services/blog-disclaimer-service";
 import { assertBlogCreateAllowed, BlogContentPolicyError } from "@/lib/services/blog-content-policy";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 
 async function maybeApplyDisclaimer(body: string, published: boolean): Promise<string> {
   if (!published) return body;
@@ -67,6 +68,8 @@ async function applyBlogSeoAuto(postId: string): Promise<void> {
 }
 
 export async function POST(request: Request) {
+  const guard = await requireRole(request, ["SUPER", "MANAGER"]);
+  if (!guard.ok) return guard.response;
   try {
     const data = await request.json();
     // 정책: 네이버 수입글 외 임의 생성 차단.
@@ -105,6 +108,8 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const guard = await requireRole(request, ["SUPER", "MANAGER"]);
+  if (!guard.ok) return guard.response;
   try {
     const data = await request.json();
     if (!data.id) return NextResponse.json({ error: "ID 필요" }, { status: 400 });
