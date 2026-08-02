@@ -16,6 +16,7 @@ type ServiceDetailPageProps = {
   params: Promise<{
     slug: string;
   }>;
+  searchParams?: Promise<{ lang?: string }>;
 };
 
 export function generateStaticParams() {
@@ -34,7 +35,15 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
 
   return {
     title: `${service.title} 안내`,
-    description: service.summary
+    description: service.summary,
+    alternates: {
+      canonical: `/services/${slug}`,
+      languages: {
+        ko: `/services/${slug}`,
+        en: `/services/${slug}?lang=en`,
+        "x-default": `/services/${slug}`
+      }
+    }
   };
 }
 
@@ -54,8 +63,10 @@ function InfoList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-export default async function ServiceDetailPage({ params }: ServiceDetailPageProps) {
+export default async function ServiceDetailPage({ params, searchParams }: ServiceDetailPageProps) {
   const { slug } = await params;
+  const lang = (await searchParams)?.lang === "en" ? "en" : "ko";
+  const t = (ko: string, en: string) => (lang === "en" ? en : ko);
   const service = getPublicMarketingService(slug);
 
   if (!service) {
@@ -68,7 +79,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     <main className="mx-auto max-w-6xl space-y-8">
       <section className="grid gap-5 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
         <div className="space-y-4">
-          <p className="ui-kicker">업무 분야 안내</p>
+          <p className="ui-kicker">{t("업무 분야 안내", "Practice Area")}</p>
           <h1 className="ui-page-title">{service.title}</h1>
           <p className="max-w-3xl text-base leading-7 text-text-muted">{service.summary}</p>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -76,18 +87,18 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
               href={intakeHref}
               className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-[#143d5d]"
             >
-              접수하기
+              {t("접수하기", "Request")}
             </Link>
             <Link
               href="/track"
               className="inline-flex h-11 items-center justify-center rounded-md border border-line-strong bg-surface px-5 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
             >
-              진행상황 조회
+              {t("진행상황 조회", "Track status")}
             </Link>
           </div>
         </div>
         <Card muted className="p-5">
-          <h2 className="ui-section-title">유의사항</h2>
+          <h2 className="ui-section-title">{t("유의사항", "Please note")}</h2>
           <p className="mt-3 text-sm leading-6 text-text-muted">{PUBLIC_MARKETING_SAFE_NOTICE}</p>
           <ul className="mt-4 space-y-2 text-sm leading-6 text-text-muted">
             {service.cautions.map((caution) => (
@@ -98,25 +109,28 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <InfoList title="이런 분에게 필요합니다" items={service.audience} />
-        <InfoList title="지원 범위" items={service.scope} />
-        <InfoList title="준비하면 좋은 자료" items={service.preparation} />
-        <InfoList title="진행 절차" items={service.process} />
+        <InfoList title={t("이런 분에게 필요합니다", "Who it's for")} items={service.audience} />
+        <InfoList title={t("지원 범위", "Scope")} items={service.scope} />
+        <InfoList title={t("준비하면 좋은 자료", "Documents to prepare")} items={service.preparation} />
+        <InfoList title={t("진행 절차", "Process")} items={service.process} />
       </section>
 
       <Card className="p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="ui-section-title">상담 접수</h2>
+            <h2 className="ui-section-title">{t("상담 접수", "Submit a request")}</h2>
             <p className="mt-2 text-sm leading-6 text-text-muted">
-              접수 시 유입 경로가 함께 기록되어 상담 흐름을 더 정확히 확인할 수 있습니다.
+              {t(
+                "접수 시 유입 경로가 함께 기록되어 상담 흐름을 더 정확히 확인할 수 있습니다.",
+                "Your referral path is recorded on intake so we can track the consultation flow more accurately."
+              )}
             </p>
           </div>
           <Link
             href={intakeHref}
             className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition hover:bg-[#143d5d]"
           >
-            접수하기
+            {t("접수하기", "Request")}
           </Link>
         </div>
       </Card>

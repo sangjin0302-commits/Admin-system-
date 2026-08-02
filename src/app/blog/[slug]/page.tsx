@@ -181,7 +181,14 @@ export async function generateMetadata({
       description: post.excerpt,
       type: "article",
       locale: lang === "en" ? "en_US" : "ko_KR",
-      alternateLocale: lang === "en" ? ["ko_KR"] : ["en_US"]
+      alternateLocale: lang === "en" ? ["ko_KR"] : ["en_US"],
+      // 언어별 OG 이미지 — 파일 컨벤션은 ?lang 을 못 받아 항상 한글이라, 쿼리를 읽는
+      // 라우트(/blog/[slug]/og)로 지정해 EN 공유카드가 영문 제목으로 나오게 한다.
+      images: [{ url: `${slugPath}/og?lang=${lang}`, width: 1200, height: 630 }]
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: [`${slugPath}/og?lang=${lang}`]
     }
   };
 }
