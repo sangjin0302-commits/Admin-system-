@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { CHANNELS } from "@/lib/constants/channels";
@@ -32,6 +33,15 @@ export function PublicFooter() {
   const [contact, setContact] = useState(FALLBACK);
   const [trust, setTrust] = useState<TrustInfo>(EMPTY_TRUST);
   const flags = usePublicFlags();
+
+  // 언어 감지 — 경로(/en) + html lang(?lang=en 반영). useSearchParams(Suspense) 회피.
+  const pathname = usePathname();
+  const [langEn, setLangEn] = useState(false);
+  useEffect(() => {
+    setLangEn(pathname.startsWith("/en") || document.documentElement.lang === "en");
+  }, [pathname]);
+  const L = (ko: string, en: string) => (langEn ? en : ko);
+  const qs = langEn ? "?lang=en" : "";
 
   useEffect(() => {
     let cancelled = false;
@@ -84,38 +94,40 @@ export function PublicFooter() {
             <p className="mt-4 font-serif text-xs italic text-gold-soft">
               Reason in Process · Empathy for People · Trust in Every Step
             </p>
-            <p className="mt-6 font-serif text-sm italic leading-7 text-gold-soft">
-              절차에는 이성을, 사람에게는 공감을,<br />일에는 신뢰를.
-            </p>
+            {!langEn && (
+              <p className="mt-6 font-serif text-sm italic leading-7 text-gold-soft">
+                절차에는 이성을, 사람에게는 공감을,<br />일에는 신뢰를.
+              </p>
+            )}
           </div>
 
           {/* 업무 분야 */}
           <div>
             <p className="font-serif text-sm font-bold uppercase tracking-wider text-gold-soft">
-              업무 분야
+              {L("업무 분야", "Practice Areas")}
             </p>
             <ul className="mt-4 space-y-2 text-sm text-white/80">
-              <li><Link href="/services/immigration" className="transition-colors duration-200 hover:text-gold-soft">비자/체류</Link></li>
-              <li><Link href="/services/appeal" className="transition-colors duration-200 hover:text-gold-soft">행정심판</Link></li>
-              <li><Link href="/services/contract" className="transition-colors duration-200 hover:text-gold-soft">계약서/사실조사</Link></li>
-              <li><Link href="/services/license" className="transition-colors duration-200 hover:text-gold-soft">인허가</Link></li>
-              <li><Link href="/services/corporate" className="transition-colors duration-200 hover:text-gold-soft">법인 설립</Link></li>
-              <li><Link href="/portal" className="transition-colors duration-200 hover:text-gold-soft">의뢰인 포털</Link></li>
+              <li><Link href={`/services/immigration${qs}`} className="transition-colors duration-200 hover:text-gold-soft">{L("비자/체류", "Visa / Immigration")}</Link></li>
+              <li><Link href={`/services/appeal${qs}`} className="transition-colors duration-200 hover:text-gold-soft">{L("행정심판", "Administrative Appeal")}</Link></li>
+              <li><Link href={`/services/contract${qs}`} className="transition-colors duration-200 hover:text-gold-soft">{L("계약서/사실조사", "Contract / Investigation")}</Link></li>
+              <li><Link href={`/services/license${qs}`} className="transition-colors duration-200 hover:text-gold-soft">{L("인허가", "Licenses & Permits")}</Link></li>
+              <li><Link href={`/services/corporate${qs}`} className="transition-colors duration-200 hover:text-gold-soft">{L("법인 설립", "Company Formation")}</Link></li>
+              <li><Link href="/portal" className="transition-colors duration-200 hover:text-gold-soft">{L("의뢰인 포털", "Client Portal")}</Link></li>
             </ul>
           </div>
 
           {/* 사무소 */}
           <div>
             <p className="font-serif text-sm font-bold uppercase tracking-wider text-gold-soft">
-              사무소
+              {L("사무소", "Office")}
             </p>
             <ul className="mt-4 space-y-2 text-sm text-white/80">
-              <li><Link href="/about" className="transition-colors duration-200 hover:text-gold-soft">대표 소개</Link></li>
-              <li><Link href="/cases" className="transition-colors duration-200 hover:text-gold-soft">강연 · 활동</Link></li>
-              <li><Link href="/blog" className="transition-colors duration-200 hover:text-gold-soft">법률 칼럼</Link></li>
-              <li><Link href="/keyword" className="transition-colors duration-200 hover:text-gold-soft">키워드 가이드</Link></li>
-              <li><Link href="/law-lookup" className="transition-colors duration-200 hover:text-gold-soft">법령 참고</Link></li>
-              <li><Link href="/portal" className="transition-colors duration-200 hover:text-gold-soft">포털 · 진행조회</Link></li>
+              <li><Link href={`/about${qs}`} className="transition-colors duration-200 hover:text-gold-soft">{L("대표 소개", "About")}</Link></li>
+              <li><Link href={`/cases${qs}`} className="transition-colors duration-200 hover:text-gold-soft">{L("강연 · 활동", "Lectures")}</Link></li>
+              <li><Link href={`/blog${qs}`} className="transition-colors duration-200 hover:text-gold-soft">{L("법률 칼럼", "Legal Columns")}</Link></li>
+              {!langEn && <li><Link href="/keyword" className="transition-colors duration-200 hover:text-gold-soft">키워드 가이드</Link></li>}
+              <li><Link href="/law-lookup" className="transition-colors duration-200 hover:text-gold-soft">{L("법령 참고", "Statutes")}</Link></li>
+              <li><Link href="/portal" className="transition-colors duration-200 hover:text-gold-soft">{L("포털 · 진행조회", "Portal / Track")}</Link></li>
             </ul>
           </div>
 
@@ -123,7 +135,7 @@ export function PublicFooter() {
           {flags?.footer_local_links === true && (
             <div>
               <p className="font-serif text-sm font-bold uppercase tracking-wider text-gold-soft">
-                지역 서비스
+                {L("지역 서비스", "Local Services")}
               </p>
               <ul className="mt-4 space-y-2 text-sm text-white/80">
                 <li><Link href="/local/gangnam" className="transition-colors duration-200 hover:text-gold-soft">강남구</Link></li>
@@ -142,24 +154,24 @@ export function PublicFooter() {
           {/* 연락 */}
           <div>
             <p className="font-serif text-sm font-bold uppercase tracking-wider text-gold-soft">
-              상담 안내
+              {L("상담 안내", "Consultation")}
             </p>
             <ul className="mt-4 space-y-3 text-sm text-white/80">
               <li>
-                <p className="text-xs text-white/60">전화</p>
-                <a href={`tel:${phoneTel}`} className="font-serif text-base font-bold text-white" aria-label={`전화 상담 ${phone}`}>
+                <p className="text-xs text-white/60">{L("전화", "Phone")}</p>
+                <a href={`tel:${phoneTel}`} className="font-serif text-base font-bold text-white" aria-label={`${L("전화 상담", "Call")} ${phone}`}>
                   {phone}
                 </a>
               </li>
               <li>
-                <p className="text-xs text-white/60">이메일</p>
+                <p className="text-xs text-white/60">{L("이메일", "Email")}</p>
                 <a href={`mailto:${email}`} className="text-sm text-white">
                   {email}
                 </a>
               </li>
               <li>
-                <p className="text-xs text-white/60">운영시간</p>
-                <p className="text-sm">{hours}</p>
+                <p className="text-xs text-white/60">{L("운영시간", "Hours")}</p>
+                <p className="text-sm">{hours === FALLBACK.hours ? L("평일 09:00 - 18:00", "Weekdays 09:00 - 18:00") : hours}</p>
               </li>
             </ul>
           </div>
@@ -242,8 +254,8 @@ export function PublicFooter() {
             <p>© 2026 ETHOS 행정사사무소. All rights reserved.</p>
           </div>
           <div className="flex gap-4">
-            <Link href="/privacy" className="transition-colors duration-200 hover:text-gold-soft">개인정보 처리방침</Link>
-            <Link href="/terms" className="transition-colors duration-200 hover:text-gold-soft">이용약관</Link>
+            <Link href={`/privacy${qs}`} className="transition-colors duration-200 hover:text-gold-soft">{L("개인정보 처리방침", "Privacy Policy")}</Link>
+            <Link href={`/terms${qs}`} className="transition-colors duration-200 hover:text-gold-soft">{L("이용약관", "Terms")}</Link>
             <Link href="/sitemap.xml" className="transition-colors duration-200 hover:text-gold-soft">Sitemap</Link>
             <Link href="/feed.xml" className="transition-colors duration-200 hover:text-gold-soft">RSS</Link>
           </div>

@@ -4,17 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-function getResponseHint(): string {
+function getResponseHint(en: boolean): string {
   // KST 기준 시간대 메시지
   const now = new Date();
   const utcHour = now.getUTCHours();
   const kstHour = (utcHour + 9) % 24;
   const day = now.getUTCDay(); // 0=Sun, 6=Sat
   const isWeekend = day === 0 || day === 6;
-  if (isWeekend) return "다음 영업일 회신";
-  if (kstHour >= 9 && kstHour < 18) return "오늘 회신 가능";
-  if (kstHour >= 18 || kstHour < 9) return "내일 영업시간 회신";
-  return "24h 이내 회신";
+  if (isWeekend) return en ? "Reply next business day" : "다음 영업일 회신";
+  if (kstHour >= 9 && kstHour < 18) return en ? "Reply today" : "오늘 회신 가능";
+  if (kstHour >= 18 || kstHour < 9) return en ? "Reply next business hours" : "내일 영업시간 회신";
+  return en ? "Reply within 24h" : "24h 이내 회신";
 }
 
 /**
@@ -27,10 +27,13 @@ export function StickyCta() {
   const pathname = usePathname();
   const [show, setShow] = useState(false);
   const [hint, setHint] = useState("");
+  const [langEn, setLangEn] = useState(false);
 
   useEffect(() => {
-    setHint(getResponseHint());
-  }, []);
+    const en = pathname.startsWith("/en") || document.documentElement.lang === "en";
+    setLangEn(en);
+    setHint(getResponseHint(en));
+  }, [pathname]);
 
   useEffect(() => {
     function onScroll() {
@@ -51,14 +54,14 @@ export function StickyCta() {
       }`}
     >
       <Link
-        href="/intake"
+        href={langEn ? "/intake?lang=en" : "/intake"}
         className="ethos-cta-shine ethos-cta-pulse group flex items-center gap-3 rounded-full bg-primary py-3 pl-5 pr-4 text-white shadow-floating transition hover:bg-text-strong"
       >
         <span className="flex flex-col leading-tight">
           <span className="font-serif text-[11px] tracking-wide text-gold-soft">
-            {hint || "무료 검토 · 수임 시 차감"}
+            {hint || (langEn ? "Free review" : "무료 검토 · 수임 시 차감")}
           </span>
-          <span className="text-sm font-bold">검토 요청하기</span>
+          <span className="text-sm font-bold">{langEn ? "Request review" : "검토 요청하기"}</span>
         </span>
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gold text-primary transition-transform group-hover:translate-x-0.5">
           <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="2.2">

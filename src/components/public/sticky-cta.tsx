@@ -19,7 +19,12 @@ const FALLBACK_PHONE = "02-0000-0000";
 export function StickyCta() {
   const pathname = usePathname();
   const [phone, setPhone] = useState(FALLBACK_PHONE);
+  const [langEn, setLangEn] = useState(false);
   const ga4Enabled = useFeatureFlag("ga4_conversion_tracking") !== false;
+
+  useEffect(() => {
+    setLangEn(pathname.startsWith("/en") || document.documentElement.lang === "en");
+  }, [pathname]);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,7 +64,7 @@ export function StickyCta() {
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
             </svg>
-            전화
+            {langEn ? "Call" : "전화"}
           </a>
           <a
             href={CHANNELS.naverTalk.url}
@@ -73,10 +78,10 @@ export function StickyCta() {
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            톡톡 상담
+            {langEn ? "Chat" : "톡톡 상담"}
           </a>
           <Link
-            href="/intake"
+            href={langEn ? "/intake?lang=en" : "/intake"}
             className="flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-2.5 py-2.5 font-serif text-sm font-bold transition hover:bg-text-strong"
             style={{ color: "rgb(232 208 145)" }}
           >
@@ -84,11 +89,11 @@ export function StickyCta() {
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <path d="M14 2v6h6M8 13h8M8 17h5" />
             </svg>
-            온라인 신청
+            {langEn ? "Apply" : "온라인 신청"}
           </Link>
         </div>
         <p className="mt-1.5 text-center text-[11px] font-medium text-text-muted">
-          영업시간 내 4시간 안에 답변 · 비용 발생 없음
+          {langEn ? "Reply within 4 business hours · No cost" : "영업시간 내 4시간 안에 답변 · 비용 발생 없음"}
         </p>
       </div>
     </div>
