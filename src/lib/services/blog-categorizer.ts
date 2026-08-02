@@ -19,6 +19,21 @@ export const PUBLIC_CATEGORY_LABEL: Record<PublicCategory, string> = {
   other: "기타"
 };
 
+// 영문 사이트(?lang=en)용 라벨. 영문 블로그에서도 카테고리가 한글로 나오던 문제 대응.
+export const PUBLIC_CATEGORY_LABEL_EN: Record<PublicCategory, string> = {
+  visa: "Visa & Residency",
+  appeal: "Administrative Appeal",
+  contract: "Contracts & Fact-finding",
+  license: "Licensing & Permits",
+  corporate: "Company Formation",
+  other: "Other"
+};
+
+/** 언어별 공개 카테고리 라벨. lang 미지정이면 한글. */
+export function publicCategoryLabel(cat: PublicCategory, lang: "ko" | "en" = "ko"): string {
+  return lang === "en" ? PUBLIC_CATEGORY_LABEL_EN[cat] : PUBLIC_CATEGORY_LABEL[cat];
+}
+
 // ── 내부 세분류 (admin 전용) ─────────────────────────
 export type InternalCategory =
   | "naturalization"     // 귀화·국적

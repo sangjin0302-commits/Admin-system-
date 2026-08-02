@@ -12,7 +12,7 @@ import { ScrollProgress } from "@/components/public/scroll-progress";
 import { BlogScrollTracker } from "@/components/public/blog-scroll-tracker";
 import { BlogMidCta } from "@/components/public/blog-mid-cta";
 import { BlogCategoryCta } from "@/components/public/blog-category-cta";
-import { PUBLIC_CATEGORY_LABEL, toPublicCategoryLoose, type PublicCategory } from "@/lib/services/blog-categorizer";
+import { publicCategoryLabel, toPublicCategoryLoose, type PublicCategory } from "@/lib/services/blog-categorizer";
 
 /** 공개 카테고리 → 서비스 페이지 매핑(블로그 하단 서비스별 CTA). */
 const CATEGORY_SERVICE: Record<PublicCategory, { href: string; ko: string; en: string }> = {
@@ -238,7 +238,7 @@ export default async function BlogDetailPage({
     <div className="relative mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
       <ScrollProgress />
       <BlogScrollTracker slug={post.slug} />
-      <BlogMidCta category={PUBLIC_CATEGORY_LABEL[toPublicCategoryLoose(post.category)]} lang={lang} />
+      <BlogMidCta category={publicCategoryLabel(toPublicCategoryLoose(post.category), lang)} lang={lang} />
       <ArticleJsonLd
         title={post.title}
         description={post.excerpt}
@@ -311,7 +311,7 @@ export default async function BlogDetailPage({
 
       <article className="mt-8">
         <span className="rounded-full bg-gold-soft/60 px-3 py-1 font-serif text-xs font-bold text-gold-deep">
-          {PUBLIC_CATEGORY_LABEL[toPublicCategoryLoose(post.category)]}
+          {publicCategoryLabel(toPublicCategoryLoose(post.category), lang)}
         </span>
         <h1 className="mt-4 font-serif text-3xl font-bold leading-tight text-primary sm:text-4xl">
           {post.title}

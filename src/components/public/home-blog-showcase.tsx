@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
+import { publicCategoryLabel, toPublicCategory } from "@/lib/services/blog-categorizer";
 
 /** %-인코딩된 제목(과거 수입 데이터 오류)을 표시용으로 방어적 디코드. 실패 시 원문. */
 function decodeTitle(s: string): string {
@@ -88,7 +88,7 @@ export function HomeBlogShowcase({
                 )}
                 <div className="flex flex-1 flex-col p-6">
                   <span className="inline-block w-fit rounded-full bg-gold-soft/50 px-2.5 py-0.5 font-serif text-[11px] font-bold text-gold-deep">
-                    {PUBLIC_CATEGORY_LABEL[toPublicCategory(p.category)]}
+                    {publicCategoryLabel(toPublicCategory(p.category), lang)}
                   </span>
                   <h3 className="mt-3 font-serif text-base font-bold leading-snug text-primary group-hover:text-gold-deep line-clamp-2">
                     {title}

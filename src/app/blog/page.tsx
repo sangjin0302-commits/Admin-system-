@@ -5,7 +5,7 @@ import { Reveal } from "@/components/public/reveal";
 import { listBlogPosts } from "@/lib/blog-posts";
 import { prisma } from "@/lib/prisma/client";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
-import { PUBLIC_CATEGORY_LABEL, toPublicCategory, type PublicCategory } from "@/lib/services/blog-categorizer";
+import { PUBLIC_CATEGORY_LABEL, publicCategoryLabel, toPublicCategory, type PublicCategory } from "@/lib/services/blog-categorizer";
 import { BlogTagCloud } from "@/components/public/blog-tag-cloud";
 import { NewsletterSubscribeForm } from "@/components/public/newsletter-subscribe-form";
 
@@ -173,7 +173,7 @@ export default async function BlogPage({
                 <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
                   <div>
                     <span className="rounded-full bg-gold/30 px-3 py-1 text-xs font-bold text-gold-soft">
-                      {PUBLIC_CATEGORY_LABEL[featured.publicCat]}
+                      {publicCategoryLabel(featured.publicCat, lang)}
                     </span>
                     <h2 className="ethos-display mt-6 text-3xl leading-tight text-white sm:text-[2.4rem] line-clamp-3">
                       {featured.title}
@@ -223,7 +223,7 @@ export default async function BlogPage({
                   href={`/blog?cat=${cat}${lang === "en" ? "&lang=en" : ""}`}
                   className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${activeCat === cat ? "bg-primary text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
                 >
-                  {PUBLIC_CATEGORY_LABEL[cat]} <span className="opacity-70">({count})</span>
+                  {publicCategoryLabel(cat, lang)} <span className="opacity-70">({count})</span>
                 </Link>
               ))}
             </div>
@@ -255,7 +255,7 @@ export default async function BlogPage({
                   )}
                   <div className="flex flex-1 flex-col p-5">
                     <span className="inline-block w-fit rounded-full bg-gold-soft/50 px-2.5 py-0.5 font-serif text-[11px] font-bold text-gold-deep">
-                      {PUBLIC_CATEGORY_LABEL[c.publicCat]}
+                      {publicCategoryLabel(c.publicCat, lang)}
                     </span>
                     <h3 className="mt-3 font-serif text-sm font-bold leading-snug text-primary group-hover:text-gold-deep line-clamp-2">
                       {c.title}

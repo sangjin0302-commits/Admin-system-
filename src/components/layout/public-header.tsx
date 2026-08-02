@@ -36,7 +36,8 @@ const NAV_ITEMS = [
   { href: "/quick-check", label: "사전진단", labelEn: "Pre-check", flagKey: "nav_quick_check" },
   { href: "/ai-screen", label: "자가진단", labelEn: "Self-check", flagKey: "nav_ai_screen" },
   { href: "/cases", label: "강연·활동", labelEn: "Lectures", flagKey: "nav_cases" },
-  { href: "/blog", label: "법률 칼럼", labelEn: "Legal Columns", flagKey: "nav_blog" }
+  { href: "/blog", label: "법률 칼럼", labelEn: "Legal Columns", flagKey: "nav_blog" },
+  { href: "/gazette", label: "관보", labelEn: "Gazette", flagKey: "nav_gazette" }
 ] as const;
 
 function HeaderInner() {
