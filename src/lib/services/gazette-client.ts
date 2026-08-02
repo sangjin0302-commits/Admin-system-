@@ -161,7 +161,8 @@ export async function fetchGazetteList(limit = 60): Promise<GazetteOutcome> {
   if (!base) return { status: "not_configured" };
 
   const url = `${base}?limit=${encodeURIComponent(String(limit))}`;
-  const timeoutMs = Number(process.env.GWANBO_API_TIMEOUT_MS ?? "8000");
+  // 봇(Railway)이 sleep 상태면 첫 요청에서 wake 시간이 걸리므로 여유(15s).
+  const timeoutMs = Number(process.env.GWANBO_API_TIMEOUT_MS ?? "15000");
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 

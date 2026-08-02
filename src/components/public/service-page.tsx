@@ -73,6 +73,7 @@ export function ServicePage({
   descriptionOverride,
   titleOverride,
   taglineOverride,
+  whoForOverride,
   lang = "ko",
   serviceKey
 }: {
@@ -80,6 +81,7 @@ export function ServicePage({
   descriptionOverride?: string;
   titleOverride?: string;
   taglineOverride?: string;
+  whoForOverride?: string;
   lang?: "ko" | "en";
   serviceKey?: string;
 }) {
@@ -90,7 +92,12 @@ export function ServicePage({
   // admin override(있으면 우선) → EN → 기본 데이터. desc 와 동일 패턴.
   const title = titleOverride?.trim() ? titleOverride : en?.title ?? data.title;
   const tagline = taglineOverride?.trim() ? taglineOverride : en?.tagline ?? data.tagline;
-  const whoFor = en?.whoFor ?? data.whoFor;
+  // whoFor override: 줄당 1항목(빈 줄 제외). 있으면 우선(desc/title 패턴과 동일).
+  const whoForLines = whoForOverride
+    ?.split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const whoFor = whoForLines && whoForLines.length > 0 ? whoForLines : en?.whoFor ?? data.whoFor;
   const process = en?.process ?? data.process;
   const documents = en?.documents ?? data.documents;
   const deadlines = en?.deadlines ?? data.deadlines;
@@ -273,7 +280,7 @@ export function ServicePage({
                 검토는 어느 채널(톡톡·카카오·이메일·텔레그램)로 요청하셔도 동일하게 무료입니다.
               </p>
               <ul className="mt-5 space-y-2.5">
-                {data.whoFor.slice(0, 4).map((item) => (
+                {whoFor.slice(0, 4).map((item) => (
                   <li key={item} className="flex items-start gap-3 text-sm leading-7 text-text">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800">✓</span>
                     {item}

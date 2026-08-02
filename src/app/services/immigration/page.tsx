@@ -17,10 +17,11 @@ export default async function VisaPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
-  const [descOverride, titleOverride, taglineOverride] = await Promise.all([
+  const [descOverride, titleOverride, taglineOverride, whoForOverride] = await Promise.all([
     getSiteSetting("services.immigration.desc"),
     getSiteSetting("services.immigration.title"),
     getSiteSetting("services.immigration.tagline"),
+    getSiteSetting("services.immigration.whoFor"),
   ]);
   return (
     <>
@@ -42,6 +43,7 @@ export default async function VisaPage({
       descriptionOverride={descOverride}
       titleOverride={titleOverride}
       taglineOverride={taglineOverride}
+      whoForOverride={whoForOverride}
       data={{
         kicker: "Visa & Immigration",
         title: "비자 / 외국인 체류",
