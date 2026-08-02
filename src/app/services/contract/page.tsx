@@ -17,7 +17,11 @@ export default async function ContractPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
-  const descOverride = await getSiteSetting("services.contract.desc");
+  const [descOverride, titleOverride, taglineOverride] = await Promise.all([
+    getSiteSetting("services.contract.desc"),
+    getSiteSetting("services.contract.title"),
+    getSiteSetting("services.contract.tagline"),
+  ]);
   return (
     <>
       <LegalServiceJsonLd
@@ -36,6 +40,8 @@ export default async function ContractPage({
       lang={lang}
       serviceKey="contract"
       descriptionOverride={descOverride}
+      titleOverride={titleOverride}
+      taglineOverride={taglineOverride}
       data={{
         kicker: "Contract & Investigation",
         title: "계약서 / 사실조사",

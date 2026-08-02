@@ -71,11 +71,15 @@ const DEFAULT_RISKS: readonly string[] = [
 export function ServicePage({
   data,
   descriptionOverride,
+  titleOverride,
+  taglineOverride,
   lang = "ko",
   serviceKey
 }: {
   data: ServicePageData;
   descriptionOverride?: string;
+  titleOverride?: string;
+  taglineOverride?: string;
   lang?: "ko" | "en";
   serviceKey?: string;
 }) {
@@ -83,8 +87,9 @@ export function ServicePage({
   const L = LABELS[lang];
   const en = lang === "en" && serviceKey ? SERVICE_EN[serviceKey] : undefined;
 
-  // lang=en이면 영문 데이터로 치환 (없으면 한글 fallback)
-  const tagline = en?.tagline ?? data.tagline;
+  // admin override(있으면 우선) → EN → 기본 데이터. desc 와 동일 패턴.
+  const title = titleOverride?.trim() ? titleOverride : data.title;
+  const tagline = taglineOverride?.trim() ? taglineOverride : en?.tagline ?? data.tagline;
   const whoFor = en?.whoFor ?? data.whoFor;
   const process = en?.process ?? data.process;
   const documents = en?.documents ?? data.documents;
@@ -117,7 +122,7 @@ export function ServicePage({
             </div>
           </Reveal>
           <Reveal delay={2}>
-            <h1 className="ethos-display mt-8 text-4xl sm:text-[3.4rem]">{data.title}</h1>
+            <h1 className="ethos-display mt-8 text-4xl sm:text-[3.4rem]">{title}</h1>
           </Reveal>
           <Reveal delay={3}>
             <p className="ethos-quote mt-4 text-base text-gold-deep">{tagline}</p>

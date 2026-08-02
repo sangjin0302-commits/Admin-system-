@@ -17,7 +17,11 @@ export default async function CorporatePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
-  const descOverride = await getSiteSetting("services.corporate.desc");
+  const [descOverride, titleOverride, taglineOverride] = await Promise.all([
+    getSiteSetting("services.corporate.desc"),
+    getSiteSetting("services.corporate.title"),
+    getSiteSetting("services.corporate.tagline"),
+  ]);
   return (
     <>
       <LegalServiceJsonLd
@@ -36,6 +40,8 @@ export default async function CorporatePage({
       lang={lang}
       serviceKey="corporate"
       descriptionOverride={descOverride}
+      titleOverride={titleOverride}
+      taglineOverride={taglineOverride}
       data={{
         kicker: "Corporate Formation",
         title: "법인 설립",

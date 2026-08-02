@@ -17,7 +17,11 @@ export default async function AppealPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
-  const descOverride = await getSiteSetting("services.appeal.desc");
+  const [descOverride, titleOverride, taglineOverride] = await Promise.all([
+    getSiteSetting("services.appeal.desc"),
+    getSiteSetting("services.appeal.title"),
+    getSiteSetting("services.appeal.tagline"),
+  ]);
   return (
     <>
       <LegalServiceJsonLd
@@ -36,6 +40,8 @@ export default async function AppealPage({
       lang={lang}
       serviceKey="appeal"
       descriptionOverride={descOverride}
+      titleOverride={titleOverride}
+      taglineOverride={taglineOverride}
       data={{
         kicker: "Administrative Appeal",
         title: "행정심판",

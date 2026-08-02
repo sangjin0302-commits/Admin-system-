@@ -37,6 +37,16 @@ export type SiteSettingsKey =
   | "services.contract.desc"
   | "services.license.desc"
   | "services.corporate.desc"
+  | "services.immigration.title"
+  | "services.appeal.title"
+  | "services.contract.title"
+  | "services.license.title"
+  | "services.corporate.title"
+  | "services.immigration.tagline"
+  | "services.appeal.tagline"
+  | "services.contract.tagline"
+  | "services.license.tagline"
+  | "services.corporate.tagline"
   | "payment.bankName"        // 계좌이체용 은행명
   | "payment.accountNumber"   // 계좌번호
   | "payment.accountHolder"   // 예금주
@@ -81,6 +91,16 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "services.contract.desc": "",
   "services.license.desc": "",
   "services.corporate.desc": "",
+  "services.immigration.title": "",
+  "services.appeal.title": "",
+  "services.contract.title": "",
+  "services.license.title": "",
+  "services.corporate.title": "",
+  "services.immigration.tagline": "",
+  "services.appeal.tagline": "",
+  "services.contract.tagline": "",
+  "services.license.tagline": "",
+  "services.corporate.tagline": "",
   "payment.bankName": "",
   "payment.accountNumber": "",
   "payment.accountHolder": "지상진",
@@ -146,6 +166,16 @@ export const SITE_SETTINGS_LABELS: Record<
   "services.contract.desc": { label: "서비스: 계약서/사실조사 소개글", hint: "비우면 기본 문구 사용", multiline: true },
   "services.license.desc": { label: "서비스: 인허가 소개글", hint: "비우면 기본 문구 사용", multiline: true },
   "services.corporate.desc": { label: "서비스: 법인 설립 소개글", hint: "비우면 기본 문구 사용", multiline: true },
+  "services.immigration.title": { label: "서비스: 비자/체류 제목", hint: "비우면 기본 제목 사용" },
+  "services.appeal.title": { label: "서비스: 행정심판 제목", hint: "비우면 기본 제목 사용" },
+  "services.contract.title": { label: "서비스: 계약서/사실조사 제목", hint: "비우면 기본 제목 사용" },
+  "services.license.title": { label: "서비스: 인허가 제목", hint: "비우면 기본 제목 사용" },
+  "services.corporate.title": { label: "서비스: 법인 설립 제목", hint: "비우면 기본 제목 사용" },
+  "services.immigration.tagline": { label: "서비스: 비자/체류 태그라인", hint: "제목 아래 한 줄. 비우면 기본" },
+  "services.appeal.tagline": { label: "서비스: 행정심판 태그라인", hint: "제목 아래 한 줄. 비우면 기본" },
+  "services.contract.tagline": { label: "서비스: 계약서/사실조사 태그라인", hint: "제목 아래 한 줄. 비우면 기본" },
+  "services.license.tagline": { label: "서비스: 인허가 태그라인", hint: "제목 아래 한 줄. 비우면 기본" },
+  "services.corporate.tagline": { label: "서비스: 법인 설립 태그라인", hint: "제목 아래 한 줄. 비우면 기본" },
   "payment.bankName": { label: "결제: 은행명", hint: "예: 국민은행, 우리은행 (계좌이체 안내용)" },
   "payment.accountNumber": { label: "결제: 계좌번호", hint: "예: 123-456-789012" },
   "payment.accountHolder": { label: "결제: 예금주", hint: "은행 표기와 정확히 일치해야 합니다. 예: 지상진" },
