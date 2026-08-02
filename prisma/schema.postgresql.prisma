@@ -1269,8 +1269,11 @@ model BlogPost {
   source       String   @default("manual")
   originalUrl  String?
   importedAt   DateTime?
+  pinned       Boolean  @default(false)
+  sortOrder    Int      @default(0)
 
   @@index([published, publishedAt])
+  @@index([published, pinned, sortOrder])
   @@index([slug])
   @@index([category])
   @@index([source, importedAt])
