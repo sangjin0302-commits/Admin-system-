@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { getWhitepaper, recordPurchase } from "@/lib/services/whitepaper-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
 export async function POST(req: Request) {
+  // 기능 잠금 시 결제 API 직접 호출도 차단.
+  if (!(await isFeatureEnabled("whitepapers_enabled"))) {
+    return NextResponse.json({ ok: false, error: "DISABLED" }, { status: 403 });
+  }
   const body = (await req.json().catch(() => null)) as
     | { whitepaperId?: string; buyerEmail?: string; tossPaymentKey?: string }
     | null;

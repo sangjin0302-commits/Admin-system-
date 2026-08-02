@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { QuoteCompare } from "@/components/public/quote-compare";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import { FeatureComingSoon } from "@/components/public/feature-coming-soon";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +12,11 @@ export const metadata: Metadata = {
     "다른 곳에서 받으신 견적서를 보내주시면 ETHOS 견적과 항목별 비교 리포트를 무료로 보내드립니다."
 };
 
-export default function QuoteComparePage() {
+export default async function QuoteComparePage() {
+  // 백엔드 미검증 — 기본 비활성(잠금). /admin/features 에서 켤 수 있음.
+  if (!(await isFeatureEnabled("quote_compare_enabled"))) {
+    return <FeatureComingSoon title="비교 견적 준비 중" />;
+  }
   return (
     <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-20">
       <div className="mb-10 text-center">

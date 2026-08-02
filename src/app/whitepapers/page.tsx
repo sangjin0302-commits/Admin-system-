@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { listWhitepapers, type WhitepaperCategory } from "@/lib/services/whitepaper-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import { FeatureComingSoon } from "@/components/public/feature-coming-soon";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "AI 법률 백서 · ETHOS" };
@@ -11,6 +13,10 @@ const CAT_LABELS: Record<WhitepaperCategory, string> = {
 };
 
 export default async function WhitepapersPage() {
+  // 유료 구매 흐름 포함 — 검증 전 기본 비활성(잠금). /admin/features 에서 켤 수 있음.
+  if (!(await isFeatureEnabled("whitepapers_enabled"))) {
+    return <FeatureComingSoon title="법률 백서 준비 중" />;
+  }
   const items = await listWhitepapers({ publishedOnly: true });
   const grouped: Record<WhitepaperCategory, typeof items> = {
     practice_guide: [], case_analysis: [], procedure_guide: [],

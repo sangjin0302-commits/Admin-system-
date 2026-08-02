@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getWhitepaper } from "@/lib/services/whitepaper-service";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import { FeatureComingSoon } from "@/components/public/feature-coming-soon";
 import { PurchaseButton } from "./purchase-button";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +9,10 @@ export const dynamic = "force-dynamic";
 export default async function WhitepaperDetailPage(
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // 유료 구매 흐름 포함 — 검증 전 기본 비활성(잠금).
+  if (!(await isFeatureEnabled("whitepapers_enabled"))) {
+    return <FeatureComingSoon title="법률 백서 준비 중" />;
+  }
   const { id } = await params;
   const wp = await getWhitepaper(id);
   if (!wp || !wp.published) return notFound();

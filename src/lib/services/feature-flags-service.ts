@@ -274,6 +274,8 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "gsc_rank_drop_alert", label: "GSC 순위 급락 알림", category: "marketing", default: false, description: "주 1회 최근 7일 vs 직전 7일 position 비교, 5계단+ 하락 시 텔레그램 (GSC env 필요)" },
   { key: "local_seo_landing", label: "지역 SEO 랜딩", category: "marketing", default: true, description: "/local/[region] — 서울 25구+수도권 주요 시 로컬 검색 랜딩 31개" },
   { key: "quote_to_case_auto", label: "견적 승인→사건 자동생성", category: "operations", default: false, description: "WON 전환 시 CaseMatter 자동 생성 (ETHOS-YYYY-NNN)" },
+  { key: "whitepapers_enabled", label: "백서(whitepapers) 공개", category: "marketing", default: false, description: "/whitepapers·/whitepapers/[id] 공개. 유료 구매 흐름 포함 — 결제·백서 콘텐츠 검증 전 기본 OFF('준비 중' 표시). 검증 후 켜기." },
+  { key: "quote_compare_enabled", label: "견적 비교 공개", category: "marketing", default: false, description: "/quote-compare 공개. 백엔드 미검증이라 기본 OFF('준비 중' 표시). 검증 후 켜기." },
   { key: "inquiry_label_badge_inbox", label: "문의 라벨 배지 (inbox)", category: "ux", default: true, description: "inbox 목록에 자동 라벨링 결과 컬러 칩 표시" },
   { key: "case_delay_badge", label: "사건 지연 배지", category: "ux", default: true, description: "cases 목록에 30일+ 지연 사건 빨간 배지 표시" },
   { key: "deploy_status_monitor", label: "배포 상태 모니터링", category: "operations", default: false, description: "Vercel 배포 상태 모니터링 + 실패 시 텔레그램 알림 (VERCEL_TOKEN env 필요)" },

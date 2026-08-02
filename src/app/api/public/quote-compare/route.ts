@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma/client";
 import { putFile } from "@/lib/storage/file-storage";
 import { sendTelegramAlert } from "@/lib/services/telegram-notify";
 import { consumeRateLimit, getClientIpFromHeaders } from "@/lib/security/rate-limit";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { logger } from "@/lib/utils/logger";
 
 /**
@@ -35,6 +36,10 @@ function extFor(type: string): string {
 }
 
 export async function POST(req: Request) {
+  // 기능 잠금 시 직접 호출 차단.
+  if (!(await isFeatureEnabled("quote_compare_enabled"))) {
+    return NextResponse.json({ ok: false, error: "DISABLED" }, { status: 403 });
+  }
   const ip = getClientIpFromHeaders(req.headers) ?? "unknown";
   const rl = consumeRateLimit({
     namespace: "public:quote-compare",
