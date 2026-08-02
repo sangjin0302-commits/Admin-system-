@@ -33,6 +33,8 @@ export default async function BlogEditPage({ params }: { params: Promise<{ id: s
           category: post.category,
           tags: post.tags,
           published: post.published,
+          pinned: post.pinned,
+          sortOrder: post.sortOrder,
         }}
       />
     </div>

@@ -89,6 +89,8 @@ export async function POST(request: Request) {
         tags: data.tags ?? "[]",
         published: data.published ?? false,
         publishedAt: data.published ? new Date() : null,
+        pinned: Boolean(data.pinned),
+        sortOrder: Number.isFinite(data.sortOrder) ? Math.trunc(data.sortOrder) : 0,
       },
     });
     if (post.published) {
@@ -120,6 +122,8 @@ export async function PUT(request: Request) {
         tags: data.tags ?? "[]",
         published: data.published ?? false,
         publishedAt: data.published && !existing?.publishedAt ? new Date() : existing?.publishedAt,
+        pinned: Boolean(data.pinned),
+        sortOrder: Number.isFinite(data.sortOrder) ? Math.trunc(data.sortOrder) : 0,
       },
     });
     if (post.published && !existing?.published) {

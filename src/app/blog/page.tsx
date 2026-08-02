@@ -38,7 +38,7 @@ export default async function BlogPage({
 
   const importedPosts = await prisma.blogPost.findMany({
     where: { published: true, source: NAVER_BLOG_SOURCE },
-    orderBy: { publishedAt: "desc" },
+    orderBy: [{ pinned: "desc" }, { sortOrder: "asc" }, { publishedAt: "desc" }],
     take: 120,
     select: {
       id: true,
@@ -53,6 +53,8 @@ export default async function BlogPage({
       category: true,
       coverImage: true,
       tags: true,
+      pinned: true,
+      sortOrder: true,
     },
   });
 
@@ -73,6 +75,8 @@ export default async function BlogPage({
     dateLabel: string;
     publicCat: PublicCategory;
     tags: string[];
+    pinned: boolean;
+    sortOrder: number;
   };
   const parseTags = (raw: string | null | undefined): string[] => {
     if (!raw) return [];
@@ -103,6 +107,8 @@ export default async function BlogPage({
       dateLabel: p.publishedAt?.toLocaleDateString(lang === "en" ? "en-US" : "ko-KR") ?? "",
       publicCat: toPublicCategory(p.category),
       tags: parseTags(p.tags),
+      pinned: p.pinned,
+      sortOrder: p.sortOrder,
     })),
     ...posts.map((p) => ({
       key: `md-${p.slug}`,
@@ -114,8 +120,14 @@ export default async function BlogPage({
       dateLabel: p.date,
       publicCat: labelToPublic(p.category),
       tags: [],
+      pinned: false,
+      sortOrder: 0,
     })),
-  ].sort((a, b) => b.dateMs - a.dateMs);
+  ].sort(
+    (a, b) =>
+      // 고정 글 먼저 → 정렬순서(작을수록 앞) → 최신순.
+      Number(b.pinned) - Number(a.pinned) || a.sortOrder - b.sortOrder || b.dateMs - a.dateMs
+  );
   const boardCounts = (Object.keys(PUBLIC_CATEGORY_LABEL) as PublicCategory[])
     .map((c) => ({ cat: c, count: allCards.filter((x) => x.publicCat === c).length }))
     .filter((x) => x.count > 0);

@@ -26,6 +26,8 @@ type PostData = {
   category: string;
   tags: string;
   published: boolean;
+  pinned: boolean;
+  sortOrder: number;
 } | null;
 
 export function BlogEditor({ post }: { post: PostData }) {
@@ -40,6 +42,8 @@ export function BlogEditor({ post }: { post: PostData }) {
   // 쉼표로 편하게 입력 → 내부 tags(JSON)로 동기화.
   const [tagText, setTagText] = useState(parseTags(post?.tags ?? "[]").join(", "));
   const [published, setPublished] = useState(post?.published ?? false);
+  const [pinned, setPinned] = useState(post?.pinned ?? false);
+  const [sortOrder, setSortOrder] = useState(String(post?.sortOrder ?? 0));
 
   const onTagTextChange = (v: string) => {
     setTagText(v);
@@ -72,6 +76,8 @@ export function BlogEditor({ post }: { post: PostData }) {
           category,
           tags,
           published,
+          pinned,
+          sortOrder: Number.parseInt(sortOrder, 10) || 0,
         }),
       });
       if (!res.ok) {
@@ -169,16 +175,37 @@ export function BlogEditor({ post }: { post: PostData }) {
           />
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={published}
-              onChange={(e) => setPublished(e.target.checked)}
-              className="h-4 w-4 rounded border-line"
-            />
-            <span className="text-text-strong">공개</span>
-          </label>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-5">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={published}
+                onChange={(e) => setPublished(e.target.checked)}
+                className="h-4 w-4 rounded border-line"
+              />
+              <span className="text-text-strong">공개</span>
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={pinned}
+                onChange={(e) => setPinned(e.target.checked)}
+                className="h-4 w-4 rounded border-line"
+              />
+              <span className="text-text-strong">상단 고정(pin)</span>
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <span className="text-text-muted">정렬순서</span>
+              <input
+                type="number"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="w-20 rounded border border-line bg-surface-muted px-2 py-1 text-sm"
+                title="작을수록 앞. 고정 글끼리·같은 값이면 최신순."
+              />
+            </label>
+          </div>
 
           <button
             onClick={handleSave}

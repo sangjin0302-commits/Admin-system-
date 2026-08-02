@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import {
   buildServiceIntakeHref,
   getPublicMarketingService,
-  PUBLIC_MARKETING_SAFE_NOTICE,
+  localizeMarketingService,
   PUBLIC_MARKETING_SERVICES
 } from "@/lib/services/public-marketing-pages";
 
@@ -23,19 +23,20 @@ export function generateStaticParams() {
   return PUBLIC_MARKETING_SERVICES.map((service) => ({ slug: service.slug }));
 }
 
-export async function generateMetadata({ params }: ServiceDetailPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: ServiceDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const en = (await searchParams)?.lang === "en";
   const service = getPublicMarketingService(slug);
 
   if (!service) {
     return {
-      title: "업무 분야 안내"
+      title: en ? "Practice Area" : "업무 분야 안내"
     };
   }
 
   return {
-    title: `${service.title} 안내`,
-    description: service.summary,
+    title: en ? `${service.titleEn} | ETHOS` : `${service.title} 안내`,
+    description: en ? service.summaryEn : service.summary,
     alternates: {
       canonical: `/services/${slug}`,
       languages: {
@@ -73,6 +74,7 @@ export default async function ServiceDetailPage({ params, searchParams }: Servic
     notFound();
   }
 
+  const c = localizeMarketingService(service, lang);
   const intakeHref = buildServiceIntakeHref(service);
 
   return (
@@ -80,8 +82,8 @@ export default async function ServiceDetailPage({ params, searchParams }: Servic
       <section className="grid gap-5 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
         <div className="space-y-4">
           <p className="ui-kicker">{t("업무 분야 안내", "Practice Area")}</p>
-          <h1 className="ui-page-title">{service.title}</h1>
-          <p className="max-w-3xl text-base leading-7 text-text-muted">{service.summary}</p>
+          <h1 className="ui-page-title">{c.title}</h1>
+          <p className="max-w-3xl text-base leading-7 text-text-muted">{c.summary}</p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link
               href={intakeHref}
@@ -99,9 +101,9 @@ export default async function ServiceDetailPage({ params, searchParams }: Servic
         </div>
         <Card muted className="p-5">
           <h2 className="ui-section-title">{t("유의사항", "Please note")}</h2>
-          <p className="mt-3 text-sm leading-6 text-text-muted">{PUBLIC_MARKETING_SAFE_NOTICE}</p>
+          <p className="mt-3 text-sm leading-6 text-text-muted">{c.safeNotice}</p>
           <ul className="mt-4 space-y-2 text-sm leading-6 text-text-muted">
-            {service.cautions.map((caution) => (
+            {c.cautions.map((caution) => (
               <li key={caution}>- {caution}</li>
             ))}
           </ul>
@@ -109,10 +111,10 @@ export default async function ServiceDetailPage({ params, searchParams }: Servic
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <InfoList title={t("이런 분에게 필요합니다", "Who it's for")} items={service.audience} />
-        <InfoList title={t("지원 범위", "Scope")} items={service.scope} />
-        <InfoList title={t("준비하면 좋은 자료", "Documents to prepare")} items={service.preparation} />
-        <InfoList title={t("진행 절차", "Process")} items={service.process} />
+        <InfoList title={t("이런 분에게 필요합니다", "Who it's for")} items={c.audience} />
+        <InfoList title={t("지원 범위", "Scope")} items={c.scope} />
+        <InfoList title={t("준비하면 좋은 자료", "Documents to prepare")} items={c.preparation} />
+        <InfoList title={t("진행 절차", "Process")} items={c.process} />
       </section>
 
       <Card className="p-5">

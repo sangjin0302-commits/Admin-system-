@@ -207,9 +207,15 @@ export default function SignInPage() {
                   가입하기
                 </Link>
               </p>
-              <Link href="/portal/forgot" className="hover:text-primary">
-                비밀번호를 잊으셨나요?
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link href="/portal/find-id" className="hover:text-primary">
+                  아이디(이메일) 찾기
+                </Link>
+                <span aria-hidden className="text-gold/50">·</span>
+                <Link href="/portal/forgot" className="hover:text-primary">
+                  비밀번호를 잊으셨나요?
+                </Link>
+              </div>
             </div>
           </div>
 
