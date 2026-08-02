@@ -9,6 +9,8 @@ type SyncResult = {
   translated?: number;
   updated?: number;
   counts?: Record<string, number>;
+  titlesFixed?: number;
+  duplicatesRemoved?: number;
   errors?: string[];
 };
 
@@ -141,6 +143,23 @@ export function ImportControls() {
         </div>
       </div>
 
+      {/* 데이터 정리 — 제목 인코딩·중복 교정 */}
+      <div className="rounded-lg border border-danger/30 bg-danger/5 p-4">
+        <p className="font-serif text-sm font-bold text-primary">데이터 정리 (제목 `+`/`%` 디코드 · 중복 제거)</p>
+        <p className="mt-1 text-xs text-text-muted">
+          제목에 `+`나 `%5B` 가 남은 글을 정상 제목으로 고치고, 같은 네이버 글(logNo)이 중복 저장된 경우 최신 1건만 남깁니다.
+          재수입 없이 기존 데이터를 즉시 교정합니다.
+        </p>
+        <button
+          type="button"
+          onClick={() => run("/api/admin/blog-cleanup", "bulk")}
+          disabled={loading !== null}
+          className="mt-3 rounded-lg bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
+        >
+          {loading === "bulk" ? "정리 중..." : "제목·중복 정리 실행"}
+        </button>
+      </div>
+
       {/* 블로그 메타 description batch (Anthropic) */}
       <div className="rounded-lg border border-line bg-surface p-4">
         <p className="font-serif text-sm font-bold text-primary">메타 description batch (Anthropic Haiku)</p>
@@ -198,6 +217,9 @@ export function ImportControls() {
           )}
           {result.updated !== undefined && (
             <p>분류됨: <strong>{result.updated}</strong>건 — {result.counts && Object.entries(result.counts).map(([k, v]) => `${k}:${v}`).join(" · ")}</p>
+          )}
+          {(result.titlesFixed !== undefined || result.duplicatesRemoved !== undefined) && (
+            <p>제목 교정: <strong>{result.titlesFixed ?? 0}</strong>건 · 중복 제거: <strong>{result.duplicatesRemoved ?? 0}</strong>건</p>
           )}
           {result.errors && result.errors.length > 0 && (
             <ul className="mt-2 list-disc pl-5 text-danger">

@@ -33,6 +33,27 @@ function stripHtml(s: string): string {
   return s.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 }
 
+/**
+ * PostTitleListAsync 제목은 URL 인코딩(공백→`+`, 특수문자→`%XX`)으로 오는 경우가 있어
+ * 그대로 저장하면 제목에 `+`/`%5B` 가 남는다. URL 디코드 후 HTML 엔티티까지 정리.
+ */
+function normalizeTitle(raw: string): string {
+  let s = raw ?? "";
+  if (/%[0-9A-Fa-f]{2}/.test(s) || s.includes("+")) {
+    try {
+      s = decodeURIComponent(s.replace(/\+/g, " "));
+    } catch {
+      s = s.replace(/\+/g, " ");
+    }
+  }
+  return decodeEntities(s).trim();
+}
+
+/** 네이버 URL 에서 logNo(글 고유번호) 추출 — 중복 판정 키. */
+function extractLogNo(url: string): string | null {
+  return url.match(/(\d{6,})/)?.[1] ?? null;
+}
+
 async function fetchTitleList(blogId: string, page: number, categoryNo?: string): Promise<ListEntry[]> {
   const cat = (categoryNo ?? "").trim();
   const url = `${BASE}/PostTitleListAsync.naver?blogId=${encodeURIComponent(blogId)}&viewdate=&currentPage=${page}&categoryNo=${encodeURIComponent(cat)}&parentCategoryNo=&countPerPage=30`;
@@ -63,7 +84,7 @@ async function fetchTitleList(blogId: string, page: number, categoryNo?: string)
   const list = obj.postList ?? [];
   return list.map((p) => ({
     logNo: String(p.logNo),
-    title: decodeEntities(p.title ?? ""),
+    title: normalizeTitle(p.title ?? ""),
     addDate: p.addDate ?? ""
   }));
 }
@@ -160,8 +181,9 @@ export async function bulkImportNaverBlog(options: {
   for (const entry of allEntries) {
     try {
       const link = `${BASE}/${blogId}/${entry.logNo}`;
+      // 중복 판정은 logNo 기준(URL 형식이 RSS와 달라도 같은 글이면 스킵).
       const existing = await prisma.blogPost.findFirst({
-        where: { originalUrl: link },
+        where: { originalUrl: { contains: entry.logNo } },
         select: { id: true }
       });
       if (existing) {
@@ -194,7 +216,7 @@ export async function bulkImportNaverBlog(options: {
       }
 
       // 게시판별 수입 시 지정 카테고리 우선, 아니면 내용 기반 자동분류.
-      const category = categoryLabel ?? classifyBlogPost(`${title}\n${excerpt}\n${body.slice(0, 4000)}`);
+      const category = categoryLabel ?? classifyBlogPost(`${title}\n${excerpt}\n${body.slice(0, 4000)}`, title);
       await prisma.blogPost.create({
         data: {
           slug: generateSlug(title, entry.logNo),

@@ -57,6 +57,19 @@ function stripHtml(s: string): string {
   return s.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 }
 
+/** URL 인코딩(공백→`+`, `%XX`)된 제목 정규화. */
+function normalizeTitle(s: string): string {
+  let t = s ?? "";
+  if (/%[0-9A-Fa-f]{2}/.test(t) || t.includes("+")) {
+    try {
+      t = decodeURIComponent(t.replace(/\+/g, " "));
+    } catch {
+      t = t.replace(/\+/g, " ");
+    }
+  }
+  return t.trim();
+}
+
 /** HTML 엔티티 디코드(제목·발췌에 &amp; 등이 그대로 남는 문제 대응). */
 function decodeEntities(s: string): string {
   return s
@@ -124,8 +137,10 @@ export async function importNaverBlogPosts(options?: {
 
   for (const p of posts) {
     try {
+      // 중복 판정은 logNo 기준(대량수입 URL 형식과 달라도 같은 글이면 스킵).
+      const logNo = p.link.match(/(\d{6,})/)?.[1];
       const existing = await prisma.blogPost.findFirst({
-        where: { originalUrl: p.link },
+        where: logNo ? { originalUrl: { contains: logNo } } : { originalUrl: p.link },
         select: { id: true },
       });
       if (existing) {
@@ -133,7 +148,7 @@ export async function importNaverBlogPosts(options?: {
         continue;
       }
 
-      const title = decodeEntities(stripHtml(p.title));
+      const title = normalizeTitle(decodeEntities(stripHtml(p.title)));
       const body = p.contentEncoded ?? p.description;
       const excerpt = decodeEntities(makeExcerpt(p.description));
       const coverImage = extractCoverImage(p.contentEncoded ?? p.description);
@@ -162,7 +177,7 @@ export async function importNaverBlogPosts(options?: {
           titleEn,
           excerptEn,
           bodyEn,
-          category: classifyBlogPost(`${title}\n${excerpt}\n${(body ?? "").slice(0, 4000)}`),
+          category: classifyBlogPost(`${title}\n${excerpt}\n${(body ?? "").slice(0, 4000)}`, title),
           coverImage,
           source: NAVER_BLOG_SOURCE,
           originalUrl: p.link,

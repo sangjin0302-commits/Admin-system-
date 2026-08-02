@@ -4,11 +4,11 @@ import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-cat
 
 /** %-인코딩된 제목(과거 수입 데이터 오류)을 표시용으로 방어적 디코드. 실패 시 원문. */
 function decodeTitle(s: string): string {
-  if (!s.includes("%")) return s;
+  if (!s.includes("%") && !s.includes("+")) return s;
   try {
-    return decodeURIComponent(s);
+    return decodeURIComponent(s.replace(/\+/g, " "));
   } catch {
-    return s;
+    return s.replace(/\+/g, " ");
   }
 }
 

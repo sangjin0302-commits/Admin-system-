@@ -9,11 +9,11 @@ export const dynamic = "force-dynamic";
 
 /** %-인코딩된 제목(과거 수입 데이터) 방어적 디코드. */
 function decodeTitle(s: string): string {
-  if (!s.includes("%")) return s;
+  if (!s.includes("%") && !s.includes("+")) return s;
   try {
-    return decodeURIComponent(s);
+    return decodeURIComponent(s.replace(/\+/g, " "));
   } catch {
-    return s;
+    return s.replace(/\+/g, " ");
   }
 }
 

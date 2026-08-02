@@ -109,7 +109,8 @@ const KEYWORDS: Partial<Record<BlogCategory, RegExp[]>> = {
   ],
   appeal: [
     /행정심판|행심|재결|청구기한|처분/,
-    /administrative appeal|appeal/i
+    /정보공개|비공개\s*통지|정보공개청구|이의신청/,
+    /administrative appeal|appeal|information disclosure/i
   ],
   contract: [
     /계약서|계약 검토|계약 작성|사실조사|증거/,
@@ -159,14 +160,21 @@ const KEYWORDS: Partial<Record<BlogCategory, RegExp[]>> = {
   ]
 };
 
-export function classifyBlogPost(text: string): BlogCategory {
+export function classifyBlogPost(text: string, title = ""): BlogCategory {
   const t = text.normalize("NFC");
+  const tt = title.normalize("NFC");
+  const TITLE_WEIGHT = 5; // 제목은 본문 예시보다 주제를 강하게 반영 → 가중.
   const scores: Partial<Record<BlogCategory, number>> = {};
   for (const [cat, patterns] of Object.entries(KEYWORDS) as [BlogCategory, RegExp[]][]) {
     let s = 0;
     for (const p of patterns) {
-      const matches = t.match(new RegExp(p.source, p.flags.includes("g") ? p.flags : p.flags + "g"));
-      if (matches) s += matches.length;
+      const g = p.flags.includes("g") ? p.flags : p.flags + "g";
+      const bodyMatches = t.match(new RegExp(p.source, g));
+      if (bodyMatches) s += bodyMatches.length;
+      if (tt) {
+        const titleMatches = tt.match(new RegExp(p.source, g));
+        if (titleMatches) s += titleMatches.length * TITLE_WEIGHT;
+      }
     }
     scores[cat] = s;
   }
