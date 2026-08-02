@@ -74,6 +74,8 @@ export function ServicePage({
   titleOverride,
   taglineOverride,
   whoForOverride,
+  documentsOverride,
+  faqOverride,
   lang = "ko",
   serviceKey
 }: {
@@ -82,6 +84,8 @@ export function ServicePage({
   titleOverride?: string;
   taglineOverride?: string;
   whoForOverride?: string;
+  documentsOverride?: string;
+  faqOverride?: string;
   lang?: "ko" | "en";
   serviceKey?: string;
 }) {
@@ -98,10 +102,19 @@ export function ServicePage({
     .map((s) => s.trim())
     .filter(Boolean);
   const whoFor = whoForLines && whoForLines.length > 0 ? whoForLines : en?.whoFor ?? data.whoFor;
+  // documents: 줄당 1항목. faq: "질문 :: 답변" 줄당 1개(홈 FAQ와 동일 포맷).
+  const docLines = documentsOverride?.split("\n").map((s) => s.trim()).filter(Boolean);
+  const documents = docLines && docLines.length > 0 ? docLines : en?.documents ?? data.documents;
+  const faqPairs = faqOverride
+    ?.split("\n")
+    .map((line) => {
+      const [q, ...rest] = line.split("::");
+      return { q: (q ?? "").trim(), a: rest.join("::").trim() };
+    })
+    .filter((x) => x.q && x.a);
+  const faq = faqPairs && faqPairs.length > 0 ? faqPairs : en?.faq ?? data.faq;
   const process = en?.process ?? data.process;
-  const documents = en?.documents ?? data.documents;
   const deadlines = en?.deadlines ?? data.deadlines;
-  const faq = en?.faq ?? data.faq;
   const description = descriptionOverride?.trim()
     ? descriptionOverride
     : en?.description ?? data.description;

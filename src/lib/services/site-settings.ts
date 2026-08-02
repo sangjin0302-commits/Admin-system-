@@ -52,6 +52,16 @@ export type SiteSettingsKey =
   | "services.contract.whoFor"
   | "services.license.whoFor"
   | "services.corporate.whoFor"
+  | "services.immigration.documents"
+  | "services.appeal.documents"
+  | "services.contract.documents"
+  | "services.license.documents"
+  | "services.corporate.documents"
+  | "services.immigration.faq"
+  | "services.appeal.faq"
+  | "services.contract.faq"
+  | "services.license.faq"
+  | "services.corporate.faq"
   | "payment.bankName"        // 계좌이체용 은행명
   | "payment.accountNumber"   // 계좌번호
   | "payment.accountHolder"   // 예금주
@@ -111,6 +121,16 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "services.contract.whoFor": "",
   "services.license.whoFor": "",
   "services.corporate.whoFor": "",
+  "services.immigration.documents": "",
+  "services.appeal.documents": "",
+  "services.contract.documents": "",
+  "services.license.documents": "",
+  "services.corporate.documents": "",
+  "services.immigration.faq": "",
+  "services.appeal.faq": "",
+  "services.contract.faq": "",
+  "services.license.faq": "",
+  "services.corporate.faq": "",
   "payment.bankName": "",
   "payment.accountNumber": "",
   "payment.accountHolder": "지상진",
@@ -191,6 +211,16 @@ export const SITE_SETTINGS_LABELS: Record<
   "services.contract.whoFor": { label: "서비스: 계약서/사실조사 대상(이런 분께)", hint: "한 줄에 한 항목. 비우면 기본 목록", multiline: true },
   "services.license.whoFor": { label: "서비스: 인허가 대상(이런 분께)", hint: "한 줄에 한 항목. 비우면 기본 목록", multiline: true },
   "services.corporate.whoFor": { label: "서비스: 법인 설립 대상(이런 분께)", hint: "한 줄에 한 항목. 비우면 기본 목록", multiline: true },
+  "services.immigration.documents": { label: "서비스: 비자/체류 필요자료", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.appeal.documents": { label: "서비스: 행정심판 필요자료", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.contract.documents": { label: "서비스: 계약서/사실조사 필요자료", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.license.documents": { label: "서비스: 인허가 필요자료", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.corporate.documents": { label: "서비스: 법인 설립 필요자료", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.immigration.faq": { label: "서비스: 비자/체류 FAQ", hint: "한 줄에 하나: 질문 :: 답변. 비우면 기본", multiline: true },
+  "services.appeal.faq": { label: "서비스: 행정심판 FAQ", hint: "한 줄에 하나: 질문 :: 답변. 비우면 기본", multiline: true },
+  "services.contract.faq": { label: "서비스: 계약서/사실조사 FAQ", hint: "한 줄에 하나: 질문 :: 답변. 비우면 기본", multiline: true },
+  "services.license.faq": { label: "서비스: 인허가 FAQ", hint: "한 줄에 하나: 질문 :: 답변. 비우면 기본", multiline: true },
+  "services.corporate.faq": { label: "서비스: 법인 설립 FAQ", hint: "한 줄에 하나: 질문 :: 답변. 비우면 기본", multiline: true },
   "payment.bankName": { label: "결제: 은행명", hint: "예: 국민은행, 우리은행 (계좌이체 안내용)" },
   "payment.accountNumber": { label: "결제: 계좌번호", hint: "예: 123-456-789012" },
   "payment.accountHolder": { label: "결제: 예금주", hint: "은행 표기와 정확히 일치해야 합니다. 예: 지상진" },

@@ -17,11 +17,13 @@ export default async function AppealPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
-  const [descOverride, titleOverride, taglineOverride, whoForOverride] = await Promise.all([
+  const [descOverride, titleOverride, taglineOverride, whoForOverride, documentsOverride, faqOverride] = await Promise.all([
     getSiteSetting("services.appeal.desc"),
     getSiteSetting("services.appeal.title"),
     getSiteSetting("services.appeal.tagline"),
     getSiteSetting("services.appeal.whoFor"),
+    getSiteSetting("services.appeal.documents"),
+    getSiteSetting("services.appeal.faq"),
   ]);
   return (
     <>
@@ -44,6 +46,8 @@ export default async function AppealPage({
       titleOverride={titleOverride}
       taglineOverride={taglineOverride}
       whoForOverride={whoForOverride}
+      documentsOverride={documentsOverride}
+      faqOverride={faqOverride}
       data={{
         kicker: "Administrative Appeal",
         title: "행정심판",
