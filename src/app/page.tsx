@@ -22,6 +22,7 @@ import { PersonalizedHero } from "@/components/public/personalized-hero";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
 import { HOME_COPY, normalizeLang } from "@/lib/i18n-public";
+import { loadNamespaceOverride } from "@/lib/i18n/load-overrides";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
 import { OrganizationJsonLd, LegalServiceJsonLd } from "@/components/seo/json-ld";
 import { getSiteSettings } from "@/lib/services/site-settings";
@@ -227,6 +228,9 @@ export default async function PublicMarketingHomePage({
   const params = (await searchParams) ?? {};
   const lang = normalizeLang(params.lang);
   const t = HOME_COPY[lang];
+  // admin(/admin/i18n)에서 편집한 마케팅 문구 override. 없으면 기본값(HOME_COPY).
+  const homeOv = await loadNamespaceOverride(lang, "home");
+  const tt = (key: string, fallback: string) => homeOv[key] ?? fallback;
   const intakeHref = buildWebsiteIntakeHref();
 
   // 관리자 운영란 컨텐츠 (한국어에서만 override, 영어는 기본 카피)
@@ -376,7 +380,7 @@ export default async function PublicMarketingHomePage({
             <Reveal>
               <span className="ethos-eyebrow inline-flex items-center gap-2 text-gold-deep">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-                {t.heroEyebrow}
+                {tt("heroEyebrow", t.heroEyebrow)}
               </span>
             </Reveal>
 
@@ -436,7 +440,7 @@ export default async function PublicMarketingHomePage({
                     data-tour-id="cta-consult"
                     className="ethos-cta-shine group inline-flex h-14 items-center justify-center gap-2 rounded-lg bg-primary px-8 text-base font-bold text-white shadow-md transition-all duration-300 hover:bg-text-strong hover:shadow-lg hover:shadow-primary/25"
                   >
-                    {t.ctaFreeReview}
+                    {tt("ctaFreeReview", t.ctaFreeReview)}
                     <span className="transition-transform duration-300 group-hover:translate-x-0.5">→</span>
                   </Link>
                 )}
@@ -444,7 +448,7 @@ export default async function PublicMarketingHomePage({
                   href="/quick-check"
                   className="inline-flex h-14 items-center justify-center gap-2 rounded-lg border border-gold/50 bg-surface/60 px-7 text-sm font-semibold text-primary backdrop-blur transition-all duration-300 hover:border-gold hover:bg-gold-soft/30"
                 >
-                  {t.ctaQuickCheck30}
+                  {tt("ctaQuickCheck30", t.ctaQuickCheck30)}
                 </Link>
               </div>
             </Reveal>
@@ -461,7 +465,7 @@ export default async function PublicMarketingHomePage({
             {/* 사회적 증거 에코 */}
             <Reveal delay={4}>
               <p className="mt-5 text-sm leading-5 text-text">
-                {t.socialEcho}
+                {tt("socialEcho", t.socialEcho)}
               </p>
             </Reveal>
 
@@ -547,11 +551,11 @@ export default async function PublicMarketingHomePage({
               <div>
                 <p className="ethos-eyebrow">Practice Areas</p>
                 <h2 id="practice-heading" className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">
-                  {t.practiceTitle}
+                  {tt("practiceTitle", t.practiceTitle)}
                 </h2>
               </div>
               <p className="max-w-xs text-sm leading-7 text-text-muted">
-                {t.practiceSubtitle}
+                {tt("practiceSubtitle", t.practiceSubtitle)}
               </p>
             </div>
           </Reveal>
@@ -605,9 +609,9 @@ export default async function PublicMarketingHomePage({
           <Reveal className="text-center">
             <p className="ethos-eyebrow">Why ETHOS</p>
             <h2 id="why-ethos-heading" className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">
-              {t.whyTitle}
+              {tt("whyTitle", t.whyTitle)}
             </h2>
-            <p className="mt-4 text-sm text-text-muted">{t.whySubtitle}</p>
+            <p className="mt-4 text-sm text-text-muted">{tt("whySubtitle", t.whySubtitle)}</p>
           </Reveal>
 
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -759,9 +763,9 @@ export default async function PublicMarketingHomePage({
           <Reveal className="text-center">
             <p className="ethos-eyebrow">Our Process</p>
             <h2 id="process-heading" className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">
-              {t.processTitle}
+              {tt("processTitle", t.processTitle)}
             </h2>
-            <p className="mt-4 text-sm text-text-muted">{t.processSubtitle}</p>
+            <p className="mt-4 text-sm text-text-muted">{tt("processSubtitle", t.processSubtitle)}</p>
           </Reveal>
 
           <div className="relative mt-16">
@@ -878,7 +882,7 @@ export default async function PublicMarketingHomePage({
           <Reveal className="text-center">
             <p className="ethos-eyebrow">FAQ</p>
             <h2 id="home-faq-heading" className="ethos-display mt-4 text-3xl sm:text-[2.6rem]">
-              {t.faqTitle}
+              {tt("faqTitle", t.faqTitle)}
             </h2>
           </Reveal>
 
@@ -886,12 +890,12 @@ export default async function PublicMarketingHomePage({
 
           <Reveal>
             <div className="mt-12 flex flex-col items-center gap-3 text-center">
-              <p className="text-sm text-text-muted">{t.faqMore}</p>
+              <p className="text-sm text-text-muted">{tt("faqMore", t.faqMore)}</p>
               <Link
                 href={intakeHref}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-7 text-sm font-bold text-white shadow-sm transition hover:bg-text-strong"
               >
-                {t.ctaFreeReview} →
+                {tt("ctaFreeReview", t.ctaFreeReview)} →
               </Link>
             </div>
           </Reveal>
@@ -920,10 +924,10 @@ export default async function PublicMarketingHomePage({
                 <div>
                   <p className="font-serif text-xs font-bold uppercase tracking-[0.3em] text-gold">Begin Your Story</p>
                   <h2 className="ethos-display mt-4 text-3xl font-bold text-white drop-shadow-sm sm:text-[2.6rem]">
-                    {t.finalCtaTitle}
+                    {tt("finalCtaTitle", t.finalCtaTitle)}
                   </h2>
                   <p className="mt-5 max-w-xl text-base leading-8 text-white">
-                    {t.finalCtaDescription}
+                    {tt("finalCtaDescription", t.finalCtaDescription)}
                   </p>
                   <div className="mt-5 flex items-center gap-3">
                     <span className="h-px w-10 bg-gold/60" aria-hidden />
@@ -937,7 +941,7 @@ export default async function PublicMarketingHomePage({
                     href={intakeHref}
                     className="inline-flex h-12 items-center justify-center rounded-lg bg-gold px-7 text-sm font-bold text-primary shadow-md transition-all duration-300 hover:bg-gold-soft hover:shadow-lg"
                   >
-                    {t.ctaFreeReview}
+                    {tt("ctaFreeReview", t.ctaFreeReview)}
                   </Link>
                   <Link
                     href="/portal"

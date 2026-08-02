@@ -7,6 +7,7 @@
  */
 
 import { PUBLIC_NAV_MESSAGES } from "./public-nav";
+import { HOME_MESSAGES } from "./home";
 
 export type Lang = "ko" | "en" | "zh";
 export const LANGS: readonly Lang[] = ["ko", "en", "zh"];
@@ -24,6 +25,7 @@ type NamespaceBundle = Record<Lang, Record<string, string>>;
 /** All available namespaces. Extend as more surfaces are localized. */
 export const NAMESPACES: Record<string, NamespaceBundle> = {
   "public-nav": PUBLIC_NAV_MESSAGES as NamespaceBundle,
+  home: HOME_MESSAGES as NamespaceBundle,
 };
 
 export type NamespaceKey = keyof typeof NAMESPACES;
