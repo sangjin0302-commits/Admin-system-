@@ -7,6 +7,7 @@ import { ComparisonTable } from "@/components/public/comparison-table";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
 import { SERVICE_EN } from "@/lib/services/service-content-en";
 import { parseLineList, parsePairList } from "@/lib/services/service-content-parse";
+import { FAQJsonLd } from "@/components/seo/json-ld";
 
 const LABELS = {
   ko: {
@@ -134,6 +135,8 @@ export function ServicePage({
 
   return (
     <div className="overflow-x-clip">
+      {/* FAQ 구조화 데이터 — 구글 FAQ 리치결과(서비스 페이지 검색 노출↑) */}
+      {faq.length > 0 && <FAQJsonLd qa={faq.map((f) => ({ question: f.q, answer: f.a }))} />}
       <ScrollToCtaPill />
 
       {/* HERO */}
