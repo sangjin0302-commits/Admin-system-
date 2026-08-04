@@ -8,8 +8,20 @@ import { CHANNELS, CONSULT_TAGLINE } from "@/lib/constants/channels";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
+import { getKeywordLanding } from "@/lib/services/keyword-landing-service";
 
 export const dynamic = "force-dynamic";
+
+type ResolvedKeyword = { label: string; query: string[]; description: string; deadlineNote?: string };
+
+// 하드코딩 7종 우선, 없으면 DB 확장 랜딩. 렌더 형태는 동일하게 정규화.
+async function resolveKeyword(decoded: string): Promise<ResolvedKeyword | null> {
+  const k = KEYWORDS[decoded];
+  if (k) return { ...k, deadlineNote: DEADLINE_NOTE[decoded] };
+  const db = await getKeywordLanding(decoded).catch(() => null);
+  if (db) return { label: db.label, query: db.tokens, description: db.description, deadlineNote: db.deadlineNote };
+  return null;
+}
 
 // 기한이 중요한 키워드 → 신뢰·긴급성 마이크로카피 (사실 기반, 과장 금지)
 const DEADLINE_NOTE: Record<string, string> = {
@@ -61,7 +73,7 @@ const KEYWORDS: Record<string, { label: string; query: string[]; description: st
 export async function generateMetadata({ params }: { params: Promise<{ term: string }> }): Promise<Metadata> {
   const { term } = await params;
   const decoded = decodeURIComponent(term);
-  const k = KEYWORDS[decoded];
+  const k = await resolveKeyword(decoded);
   if (!k) return { title: "키워드 — ETHOS" };
   return {
     title: `${k.label} — 에토스 행정사사무소(ETHOS)`,
@@ -73,7 +85,7 @@ export async function generateMetadata({ params }: { params: Promise<{ term: str
 export default async function KeywordLandingPage({ params }: { params: Promise<{ term: string }> }) {
   const { term } = await params;
   const decoded = decodeURIComponent(term);
-  const k = KEYWORDS[decoded];
+  const k = await resolveKeyword(decoded);
   if (!k) notFound();
 
   // 키워드 매칭 블로그
@@ -91,7 +103,7 @@ export default async function KeywordLandingPage({ params }: { params: Promise<{
     select: { slug: true, title: true, excerpt: true, category: true, publishedAt: true }
   }).catch(() => [] as Array<{ slug: string; title: string; excerpt: string | null; category: string; publishedAt: Date | null }>);
 
-  const deadlineNote = DEADLINE_NOTE[decoded];
+  const deadlineNote = k.deadlineNote;
   const topPosts = posts.slice(0, 3);
   const morePosts = posts.slice(3);
 

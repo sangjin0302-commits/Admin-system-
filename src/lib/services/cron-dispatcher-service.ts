@@ -49,6 +49,7 @@ export const CRON_GROUPS: Record<string, string[]> = {
   ],
   "weekly-batch": [
     "/api/cron/weekly-report",
+    "/api/cron/gazette-digest",
     "/api/cron/cleanup",
     "/api/cron/audit-cleanup",
     "/api/cron/nps-survey",

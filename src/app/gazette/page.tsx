@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
 import { fetchGazetteList, type GazetteItem } from "@/lib/services/gazette-client";
+import { matchGazetteService } from "@/lib/services/gazette-service-match";
 
 export const dynamic = "force-dynamic";
 
@@ -163,6 +164,7 @@ export default async function GazettePage({
                     </div>
                   );
                   const safeUrl = g.url && /^https?:\/\//i.test(g.url) ? g.url : null; // javascript:/data: 차단
+                  const svc = matchGazetteService(g, lang); // 관련 서비스 CTA(분류 확신 시만)
                   return (
                     <li key={g.id}>
                       {safeUrl ? (
@@ -176,6 +178,17 @@ export default async function GazettePage({
                         </a>
                       ) : (
                         <div className="group block">{inner}</div>
+                      )}
+                      {/* 관련 서비스 링크 — 외부 앵커 바깥(중첩 앵커 방지) */}
+                      {svc && (
+                        <div className="px-5 pb-4 sm:pl-[11.25rem]">
+                          <Link
+                            href={lang === "en" ? `${svc.href}?lang=en` : svc.href}
+                            className="inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold-soft/20 px-3 py-1 text-[11px] font-bold text-gold-deep transition hover:bg-gold-soft/40"
+                          >
+                            {t("관련 서비스", "Related service")}: {svc.label} →
+                          </Link>
+                        </div>
                       )}
                     </li>
                   );

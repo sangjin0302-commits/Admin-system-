@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
+import { getExtraKeywordLandings } from "@/lib/services/keyword-landing-service";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   description: "비자·행정심판·법인설립·귀화 등 행정사 핵심 키워드별 가이드."
 };
 
-const KEYWORDS = [
+const BASE_KEYWORDS: Array<{ term: string; label: string; group: string }> = [
   { term: "d-8-비자", label: "D-8 비자 (기업투자)", group: "비자" },
   { term: "d-10-비자", label: "D-10 비자 (구직)", group: "비자" },
   { term: "f-2-7-비자", label: "F-2-7 비자 (점수제 거주)", group: "비자" },
@@ -18,9 +19,17 @@ const KEYWORDS = [
   { term: "강제퇴거", label: "강제퇴거 대응", group: "비자" },
   { term: "행정심판", label: "행정심판", group: "심판" },
   { term: "법인설립", label: "법인 설립", group: "법인" }
-] as const;
+];
 
-export default function KeywordIndexPage() {
+export default async function KeywordIndexPage() {
+  const extras = await getExtraKeywordLandings().catch(() => []);
+  const baseTerms = new Set(BASE_KEYWORDS.map((k) => k.term));
+  const KEYWORDS = [
+    ...BASE_KEYWORDS,
+    ...extras
+      .filter((e) => !baseTerms.has(e.slug))
+      .map((e) => ({ term: e.slug, label: e.label, group: e.group || "기타" })),
+  ];
   const groups = Array.from(new Set(KEYWORDS.map((k) => k.group)));
   return (
     <div className="overflow-x-clip">

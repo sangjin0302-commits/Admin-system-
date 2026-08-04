@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma/client";
+import { getExtraKeywordLandings } from "@/lib/services/keyword-landing-service";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethosattorney.com";
 
@@ -47,6 +48,15 @@ async function loadDynamicRoutes(): Promise<
         priority: 0.6,
         lastModified: c.updatedAt,
       });
+    }
+  } catch {
+    // ignore
+  }
+
+  try {
+    const extras = await getExtraKeywordLandings();
+    for (const e of extras) {
+      out.push({ url: `/keyword/${e.slug}`, priority: 0.7 });
     }
   } catch {
     // ignore

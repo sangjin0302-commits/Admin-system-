@@ -65,6 +65,30 @@ jobs:
       # 보안 회귀 잠금 — 웹훅/이스케이프/export RBAC/수신거부 되돌아가면 CI 실패.
       - run: npm run test:security-guard
 
+  # DB 불필요·결정적 잠금 테스트 — 하드 게이트(회귀 시 CI 실패로 실제 차단).
+  locks:
+    name: Lock tests (hard gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run prisma:generate:sqlite
+      - run: npm run test:blog-source-guard
+      - run: npm run test:telegram
+      - run: npm run test:security-guard
+      - run: npm run test:gazette
+      - run: npm run test:gazette-service
+      - run: npm run test:keyword-landing
+      - run: npm run test:mask-email
+      - run: npm run test:blog-portal-helpers
+      - run: npm run test:site-settings-parity
+      - run: npm run test:service-content-parse
+      - run: npm run test:flag-cache
+
   env-check:
     name: Production env check (dry-run)
     runs-on: ubuntu-latest
