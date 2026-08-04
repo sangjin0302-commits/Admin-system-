@@ -161,8 +161,10 @@ export async function fetchGazetteList(limit = 60): Promise<GazetteOutcome> {
   if (!base) return { status: "not_configured" };
 
   const url = `${base}?limit=${encodeURIComponent(String(limit))}`;
-  // 봇(Railway)이 sleep 상태면 첫 요청에서 wake 시간이 걸리므로 여유(15s).
-  const timeoutMs = Number(process.env.GWANBO_API_TIMEOUT_MS ?? "15000");
+  // 9s — 서버리스 함수 기본 제한(≈10s)보다 짧게 잡아, Vercel이 함수를 죽이기 전에
+  // 내 타임아웃이 먼저 터져 "다시 시도" 카드로 우아하게 처리되게 한다.
+  // (봇 sleep→wake 는 보통 수 초. 콜드스타트 첫 요청이 실패하면 새로고침 시 정상.)
+  const timeoutMs = Number(process.env.GWANBO_API_TIMEOUT_MS ?? "9000");
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
