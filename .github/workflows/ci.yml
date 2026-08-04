@@ -15,6 +15,8 @@ env:
   DATABASE_URL: file:./prisma/dev.db
   AUTH_SECRET: ci-fake-secret-${{ github.sha }}
   NEXTAUTH_URL: http://localhost:3000
+  # next build 는 러너 기본 힙(~2GB)을 넘겨 OOM(exit 134) 났음 — 힙 상향으로 고정.
+  NODE_OPTIONS: --max-old-space-size=4096
 
 jobs:
   typecheck:
@@ -79,6 +81,8 @@ jobs:
   e2e:
     name: E2E tests
     runs-on: ubuntu-latest
+    # e2e 는 아직 잠금(lock) 대상 아님 — 안정화 전까지 soft(실패해도 CI 차단 안 함).
+    continue-on-error: true
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4

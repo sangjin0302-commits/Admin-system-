@@ -11,6 +11,10 @@ concurrency:
   group: build-check-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # next build 는 러너 기본 힙(~2GB)을 넘겨 OOM(exit 134) 났음 — 힙 상향으로 고정.
+  NODE_OPTIONS: --max-old-space-size=4096
+
 jobs:
   verify:
     runs-on: ubuntu-latest
