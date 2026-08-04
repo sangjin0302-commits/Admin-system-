@@ -30,6 +30,7 @@ import { getContentBatch } from "@/lib/services/site-content-service";
 import { listPublicTestimonials } from "@/lib/services/testimonials";
 import { LocalLandingGrid } from "@/components/public/local-landing-grid";
 import DynamicCtaButton from "@/components/public/dynamic-cta-button";
+import { HomeGazetteTeaser } from "@/components/public/home-gazette-teaser";
 
 export const revalidate = 300;
 
@@ -868,6 +869,9 @@ export default async function PublicMarketingHomePage({
           깎았다. 글은 /blog 하나로 모으고 영문 독자용 LinkedIn 을 함께 안내한다. */}
       {/* 홈 블로그 쇼케이스 — 네이버 자동수입 최신글 + 카드뉴스 커버(자사 도메인) */}
       <HomeBlogShowcase posts={showcasePosts} lang={lang === "en" ? "en" : "ko"} />
+
+      {/* 최신 관보 티저 — 봇 미설정/실패/빈응답이면 스스로 숨김(홈 안 깨짐) */}
+      <HomeGazetteTeaser lang={lang === "en" ? "en" : "ko"} />
 
       {/* ═══════════════ 신뢰 뱃지 벨트 (기능 플래그: trust_belt) ═══════════════ */}
       {trustBeltEnabled && <TrustBelt />}
