@@ -32,6 +32,7 @@
     "test:mask-email": "tsx scripts/tests/mask-email-check.ts",
     "test:blog-portal-helpers": "tsx scripts/tests/blog-portal-helpers-check.ts",
     "test:site-settings-parity": "tsx scripts/tests/site-settings-parity-check.ts",
+    "test:service-content-parse": "tsx scripts/tests/service-content-parse-check.ts",
     "test:security-guard": "tsx scripts/tests/security-guard-check.ts",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",

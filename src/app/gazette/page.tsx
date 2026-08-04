@@ -162,11 +162,12 @@ export default async function GazettePage({
                       </div>
                     </div>
                   );
+                  const safeUrl = g.url && /^https?:\/\//i.test(g.url) ? g.url : null; // javascript:/data: 차단
                   return (
                     <li key={g.id}>
-                      {g.url ? (
+                      {safeUrl ? (
                         <a
-                          href={g.url}
+                          href={safeUrl}
                           target="_blank"
                           rel="noopener noreferrer nofollow"
                           className="group block"

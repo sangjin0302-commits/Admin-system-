@@ -65,10 +65,11 @@ export function HomeGazetteTeaser({ lang = "ko" }: { lang?: "ko" | "en" }) {
                 {g.agency && <span className="shrink-0 text-[11px] text-text-muted">{g.agency}</span>}
               </div>
             );
+            const safeUrl = g.url && /^https?:\/\//i.test(g.url) ? g.url : null; // javascript:/data: 스킴 차단
             return (
               <li key={g.id}>
-                {g.url ? (
-                  <a href={g.url} target="_blank" rel="noopener noreferrer nofollow" className="block">
+                {safeUrl ? (
+                  <a href={safeUrl} target="_blank" rel="noopener noreferrer nofollow" className="block">
                     {inner}
                   </a>
                 ) : (

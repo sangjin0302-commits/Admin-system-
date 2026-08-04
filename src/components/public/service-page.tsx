@@ -6,6 +6,7 @@ import { ScrollToCtaPill } from "@/components/public/scroll-to-cta-pill";
 import { ComparisonTable } from "@/components/public/comparison-table";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
 import { SERVICE_EN } from "@/lib/services/service-content-en";
+import { parseLineList, parsePairList } from "@/lib/services/service-content-parse";
 
 const LABELS = {
   ko: {
@@ -104,48 +105,30 @@ export function ServicePage({
   // admin override(있으면 우선) → EN → 기본 데이터. desc 와 동일 패턴.
   const title = titleOverride?.trim() ? titleOverride : en?.title ?? data.title;
   const tagline = taglineOverride?.trim() ? taglineOverride : en?.tagline ?? data.tagline;
-  // whoFor override: 줄당 1항목(빈 줄 제외). 있으면 우선(desc/title 패턴과 동일).
-  const whoForLines = whoForOverride
-    ?.split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const whoFor = whoForLines && whoForLines.length > 0 ? whoForLines : en?.whoFor ?? data.whoFor;
-  // documents: 줄당 1항목. faq: "질문 :: 답변" 줄당 1개(홈 FAQ와 동일 포맷).
-  const docLines = documentsOverride?.split("\n").map((s) => s.trim()).filter(Boolean);
-  const documents = docLines && docLines.length > 0 ? docLines : en?.documents ?? data.documents;
-  const faqPairs = faqOverride
-    ?.split("\n")
-    .map((line) => {
-      const [q, ...rest] = line.split("::");
-      return { q: (q ?? "").trim(), a: rest.join("::").trim() };
-    })
-    .filter((x) => x.q && x.a);
-  const faq = faqPairs && faqPairs.length > 0 ? faqPairs : en?.faq ?? data.faq;
-  // process: "단계제목 :: 설명" 줄당 1개(step 번호 01,02… 자동). deadlines: "항목 :: 기한".
-  const processRows = processOverride
-    ?.split("\n")
-    .map((line) => {
-      const [title, ...rest] = line.split("::");
-      return { title: (title ?? "").trim(), desc: rest.join("::").trim() };
-    })
-    .filter((x) => x.title)
-    .map((x, i) => ({ step: String(i + 1).padStart(2, "0"), title: x.title, desc: x.desc }));
-  const process = processRows && processRows.length > 0 ? processRows : en?.process ?? data.process;
-  const deadlineRows = deadlinesOverride
-    ?.split("\n")
-    .map((line) => {
-      const [label, ...rest] = line.split("::");
-      return { label: (label ?? "").trim(), value: rest.join("::").trim() };
-    })
-    .filter((x) => x.label && x.value);
-  const deadlines = deadlineRows && deadlineRows.length > 0 ? deadlineRows : en?.deadlines ?? data.deadlines;
+  // admin override 파싱은 공용 파서(service-content-parse)로 — 유효 없으면 EN/기본 폴백.
+  const whoFor = parseLineList(whoForOverride) ?? en?.whoFor ?? data.whoFor;
+  const documents = parseLineList(documentsOverride) ?? en?.documents ?? data.documents;
+  const faq =
+    parsePairList(faqOverride, { requireBoth: true })?.map((r) => ({ q: r.a, a: r.b })) ??
+    en?.faq ??
+    data.faq;
+  const process =
+    parsePairList(processOverride)?.map((r, i) => ({
+      step: String(i + 1).padStart(2, "0"),
+      title: r.a,
+      desc: r.b
+    })) ??
+    en?.process ??
+    data.process;
+  const deadlines =
+    parsePairList(deadlinesOverride, { requireBoth: true })?.map((r) => ({ label: r.a, value: r.b })) ??
+    en?.deadlines ??
+    data.deadlines;
   const description = descriptionOverride?.trim()
     ? descriptionOverride
     : en?.description ?? data.description;
-  const outcomeLines = outcomesOverride?.split("\n").map((s) => s.trim()).filter(Boolean);
-  const outcomes = outcomeLines && outcomeLines.length > 0 ? outcomeLines : data.outcomes ?? DEFAULT_OUTCOMES;
-  const riskLines = risksOverride?.split("\n").map((s) => s.trim()).filter(Boolean);
-  const risks = riskLines && riskLines.length > 0 ? riskLines : data.risks ?? DEFAULT_RISKS;
+  const outcomes = parseLineList(outcomesOverride) ?? data.outcomes ?? DEFAULT_OUTCOMES;
+  const risks = parseLineList(risksOverride) ?? data.risks ?? DEFAULT_RISKS;
   const caseHighlight = data.caseHighlight;
   const qs = lang === "en" ? "?lang=en" : "";
 
