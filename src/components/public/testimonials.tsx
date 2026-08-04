@@ -195,12 +195,20 @@ export function Testimonials({ items }: { items: PublicTestimonial[] }) {
         <Reveal>
           <div className="mt-10 flex flex-col items-center gap-3 text-center">
             <p className="text-sm text-text-muted">상담 받고 싶다면</p>
-            <Link
-              href="/intake"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-gold/40 bg-gold-soft/30 px-7 text-sm font-bold text-primary transition hover:bg-gold-soft/60"
-            >
-              무료 검토 요청하기 →
-            </Link>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Link
+                href="/intake"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-gold/40 bg-gold-soft/30 px-7 text-sm font-bold text-primary transition hover:bg-gold-soft/60"
+              >
+                무료 검토 요청하기 →
+              </Link>
+              <Link
+                href="/review"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-line px-6 text-sm font-semibold text-text-muted transition hover:text-primary"
+              >
+                후기 남기기
+              </Link>
+            </div>
           </div>
         </Reveal>
       </div>
