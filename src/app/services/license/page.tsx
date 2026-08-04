@@ -17,7 +17,7 @@ export default async function LicensePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
-  const [descOverride, titleOverride, taglineOverride, whoForOverride, documentsOverride, faqOverride, processOverride, deadlinesOverride] = await Promise.all([
+  const [descOverride, titleOverride, taglineOverride, whoForOverride, documentsOverride, faqOverride, processOverride, deadlinesOverride, outcomesOverride, risksOverride] = await Promise.all([
     getSiteSetting("services.license.desc"),
     getSiteSetting("services.license.title"),
     getSiteSetting("services.license.tagline"),
@@ -26,6 +26,8 @@ export default async function LicensePage({
     getSiteSetting("services.license.faq"),
     getSiteSetting("services.license.process"),
     getSiteSetting("services.license.deadlines"),
+    getSiteSetting("services.license.outcomes"),
+    getSiteSetting("services.license.risks"),
   ]);
   return (
     <>
@@ -52,6 +54,8 @@ export default async function LicensePage({
       faqOverride={faqOverride}
       processOverride={processOverride}
       deadlinesOverride={deadlinesOverride}
+      outcomesOverride={outcomesOverride}
+      risksOverride={risksOverride}
       data={{
         kicker: "License & Permit",
         title: "인허가",

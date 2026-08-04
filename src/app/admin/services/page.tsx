@@ -14,7 +14,7 @@ const SERVICES: { key: string; section: string }[] = [
 ];
 
 // 각 서비스에서 편집하는 필드(렌더 순서).
-const FIELD_ORDER = ["title", "tagline", "desc", "whoFor", "documents", "faq", "process", "deadlines"];
+const FIELD_ORDER = ["title", "tagline", "desc", "whoFor", "documents", "faq", "process", "deadlines", "outcomes", "risks"];
 
 export default async function AdminServicesPage() {
   const settings = await getSiteSettings();

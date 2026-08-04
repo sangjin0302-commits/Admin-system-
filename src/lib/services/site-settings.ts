@@ -72,6 +72,16 @@ export type SiteSettingsKey =
   | "services.contract.deadlines"
   | "services.license.deadlines"
   | "services.corporate.deadlines"
+  | "services.immigration.outcomes"
+  | "services.appeal.outcomes"
+  | "services.contract.outcomes"
+  | "services.license.outcomes"
+  | "services.corporate.outcomes"
+  | "services.immigration.risks"
+  | "services.appeal.risks"
+  | "services.contract.risks"
+  | "services.license.risks"
+  | "services.corporate.risks"
   | "payment.bankName"        // 계좌이체용 은행명
   | "payment.accountNumber"   // 계좌번호
   | "payment.accountHolder"   // 예금주
@@ -151,6 +161,16 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "services.contract.deadlines": "",
   "services.license.deadlines": "",
   "services.corporate.deadlines": "",
+  "services.immigration.outcomes": "",
+  "services.appeal.outcomes": "",
+  "services.contract.outcomes": "",
+  "services.license.outcomes": "",
+  "services.corporate.outcomes": "",
+  "services.immigration.risks": "",
+  "services.appeal.risks": "",
+  "services.contract.risks": "",
+  "services.license.risks": "",
+  "services.corporate.risks": "",
   "payment.bankName": "",
   "payment.accountNumber": "",
   "payment.accountHolder": "지상진",
@@ -251,6 +271,16 @@ export const SITE_SETTINGS_LABELS: Record<
   "services.contract.deadlines": { label: "서비스: 계약서/사실조사 주요기한", hint: "한 줄에 하나: 항목 :: 기한. 비우면 기본", multiline: true },
   "services.license.deadlines": { label: "서비스: 인허가 주요기한", hint: "한 줄에 하나: 항목 :: 기한. 비우면 기본", multiline: true },
   "services.corporate.deadlines": { label: "서비스: 법인 설립 주요기한", hint: "한 줄에 하나: 항목 :: 기한. 비우면 기본", multiline: true },
+  "services.immigration.outcomes": { label: "서비스: 비자/체류 도와드립니다", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.appeal.outcomes": { label: "서비스: 행정심판 도와드립니다", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.contract.outcomes": { label: "서비스: 계약서/사실조사 도와드립니다", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.license.outcomes": { label: "서비스: 인허가 도와드립니다", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.corporate.outcomes": { label: "서비스: 법인 설립 도와드립니다", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.immigration.risks": { label: "서비스: 비자/체류 방치 시", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.appeal.risks": { label: "서비스: 행정심판 방치 시", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.contract.risks": { label: "서비스: 계약서/사실조사 방치 시", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.license.risks": { label: "서비스: 인허가 방치 시", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
+  "services.corporate.risks": { label: "서비스: 법인 설립 방치 시", hint: "한 줄에 한 항목. 비우면 기본", multiline: true },
   "payment.bankName": { label: "결제: 은행명", hint: "예: 국민은행, 우리은행 (계좌이체 안내용)" },
   "payment.accountNumber": { label: "결제: 계좌번호", hint: "예: 123-456-789012" },
   "payment.accountHolder": { label: "결제: 예금주", hint: "은행 표기와 정확히 일치해야 합니다. 예: 지상진" },

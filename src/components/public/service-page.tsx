@@ -78,6 +78,8 @@ export function ServicePage({
   faqOverride,
   processOverride,
   deadlinesOverride,
+  outcomesOverride,
+  risksOverride,
   lang = "ko",
   serviceKey
 }: {
@@ -90,6 +92,8 @@ export function ServicePage({
   faqOverride?: string;
   processOverride?: string;
   deadlinesOverride?: string;
+  outcomesOverride?: string;
+  risksOverride?: string;
   lang?: "ko" | "en";
   serviceKey?: string;
 }) {
@@ -138,8 +142,10 @@ export function ServicePage({
   const description = descriptionOverride?.trim()
     ? descriptionOverride
     : en?.description ?? data.description;
-  const outcomes = data.outcomes ?? DEFAULT_OUTCOMES;
-  const risks = data.risks ?? DEFAULT_RISKS;
+  const outcomeLines = outcomesOverride?.split("\n").map((s) => s.trim()).filter(Boolean);
+  const outcomes = outcomeLines && outcomeLines.length > 0 ? outcomeLines : data.outcomes ?? DEFAULT_OUTCOMES;
+  const riskLines = risksOverride?.split("\n").map((s) => s.trim()).filter(Boolean);
+  const risks = riskLines && riskLines.length > 0 ? riskLines : data.risks ?? DEFAULT_RISKS;
   const caseHighlight = data.caseHighlight;
   const qs = lang === "en" ? "?lang=en" : "";
 
