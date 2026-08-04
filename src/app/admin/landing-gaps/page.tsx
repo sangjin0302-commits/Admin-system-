@@ -31,7 +31,8 @@ function matchLandingSlug(query: string, landings: Landing[]): string | null {
   const nq = normalizeQuery(query);
   for (const landing of landings) {
     for (const token of landing.tokens) {
-      if (token && nq.includes(normalizeQuery(token))) return landing.term;
+      const nt = normalizeQuery(token);
+      if (nt && nq.includes(nt)) return landing.term; // 빈 토큰 → includes("")=항상참 방지
     }
   }
   return null;

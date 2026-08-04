@@ -25,8 +25,19 @@ export type KeywordLandingRecord = {
 };
 
 const KEY_PREFIX = "kwlanding.";
-const INDEX_KEY = "kwlanding.__index__";
 const SLUG_MAX = 48;
+
+// 하드코딩 기본 랜딩 슬러그 — DB 로 같은 슬러그를 만들면 /keyword/[term] 이 하드코딩을
+// 우선 렌더해 DB 레코드가 영영 안 보이므로(그림자) 생성 자체를 거부한다.
+const BASE_SLUGS = new Set([
+  "d-8-비자",
+  "d-10-비자",
+  "f-2-7-비자",
+  "귀화",
+  "강제퇴거",
+  "행정심판",
+  "법인설립",
+]);
 
 /* -------------------------------------------------------------------- */
 /*  순수 헬퍼 (테스트 대상)                                              */
@@ -74,7 +85,9 @@ function parseRecord(slug: string, value: string): KeywordLandingRecord | null {
   try {
     const o = JSON.parse(value) as Record<string, unknown>;
     if (!o || typeof o !== "object") return null;
-    const tokens = Array.isArray(o.tokens) ? o.tokens.filter((t): t is string => typeof t === "string") : [];
+    const tokens = Array.isArray(o.tokens)
+      ? o.tokens.filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+      : [];
     return {
       slug,
       label: typeof o.label === "string" && o.label ? o.label : slug,
@@ -89,41 +102,19 @@ function parseRecord(slug: string, value: string): KeywordLandingRecord | null {
   }
 }
 
-async function readIndex(): Promise<string[]> {
-  const row = await prisma.siteSetting.findUnique({ where: { key: INDEX_KEY } }).catch(() => null);
-  if (!row) return [];
-  try {
-    const parsed = JSON.parse(row.value) as unknown;
-    if (Array.isArray(parsed)) return parsed.filter((s): s is string => typeof s === "string");
-  } catch {
-    /* ignore */
-  }
-  return [];
-}
-
-async function writeIndex(slugs: string[]): Promise<void> {
-  const unique = Array.from(new Set(slugs));
-  await prisma.siteSetting.upsert({
-    where: { key: INDEX_KEY },
-    create: { key: INDEX_KEY, value: JSON.stringify(unique) },
-    update: { value: JSON.stringify(unique) },
-  });
-}
-
-/** DB 로 추가된 랜딩 전체(신규→오래된 순). DB 오류 시 빈 배열(공개 페이지 안전). */
+/**
+ * DB 로 추가된 랜딩 전체(신규→오래된 순). DB 오류 시 빈 배열(공개 페이지 안전).
+ * 별도 인덱스 blob 없이 key prefix 스캔 → 동시 생성 RMW 경쟁 없음(레코드=진실).
+ */
 export async function getExtraKeywordLandings(): Promise<KeywordLandingRecord[]> {
-  const slugs = await readIndex();
-  if (slugs.length === 0) return [];
-  const rows = await prisma.siteSetting.findMany({ where: { key: { in: slugs.map(keyFor) } } }).catch(() => []);
-  const bySlug = new Map<string, string>();
-  for (const row of rows) {
-    if (row.key.startsWith(KEY_PREFIX)) bySlug.set(row.key.slice(KEY_PREFIX.length), row.value);
-  }
+  const rows = await prisma.siteSetting
+    .findMany({ where: { key: { startsWith: KEY_PREFIX } } })
+    .catch(() => []);
   const out: KeywordLandingRecord[] = [];
-  for (const slug of slugs) {
-    const v = bySlug.get(slug);
-    if (!v) continue;
-    const parsed = parseRecord(slug, v);
+  for (const row of rows) {
+    const slug = row.key.slice(KEY_PREFIX.length);
+    if (!slug) continue;
+    const parsed = parseRecord(slug, row.value);
     if (parsed) out.push(parsed);
   }
   return out.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
@@ -143,6 +134,7 @@ export async function createKeywordLandingFromQuery(
 ): Promise<KeywordLandingRecord> {
   const slug = slugifyQuery(query);
   if (!isValidKeywordSlug(slug)) throw new Error("INVALID_SLUG");
+  if (BASE_SLUGS.has(slug)) throw new Error("SLUG_EXISTS"); // 하드코딩 랜딩과 충돌 → 그림자 방지
   const existing = await prisma.siteSetting.findUnique({ where: { key: keyFor(slug) } }).catch(() => null);
   if (existing) throw new Error("SLUG_EXISTS");
   const label = query.normalize("NFC").trim().slice(0, 60) || slug;
@@ -157,11 +149,6 @@ export async function createKeywordLandingFromQuery(
     createdAt: new Date().toISOString(),
   };
   await prisma.siteSetting.create({ data: { key: keyFor(slug), value: JSON.stringify(record) } });
-  const slugs = await readIndex();
-  if (!slugs.includes(slug)) {
-    slugs.push(slug);
-    await writeIndex(slugs);
-  }
   return record;
 }
 
@@ -172,8 +159,5 @@ export async function deleteKeywordLanding(slug: string): Promise<boolean> {
   } catch {
     /* ignore missing */
   }
-  const slugs = await readIndex();
-  const next = slugs.filter((s) => s !== slug);
-  if (next.length !== slugs.length) await writeIndex(next);
   return true;
 }

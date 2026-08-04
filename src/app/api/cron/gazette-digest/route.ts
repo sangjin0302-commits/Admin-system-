@@ -65,9 +65,10 @@ export async function GET(request: Request) {
     try {
       const rows = top
         .map((g) => {
-          const cat = g.category ? `<span style="color:#8a6d1a">[${g.category}]</span> ` : "";
-          const title = g.url
-            ? `<a href="${g.url}">${escapeHtml(g.title)}</a>`
+          const cat = g.category ? `<span style="color:#8a6d1a">[${escapeHtml(g.category)}]</span> ` : "";
+          const safe = g.url && /^https?:\/\//i.test(g.url) ? g.url : null; // javascript:/data: 차단
+          const title = safe
+            ? `<a href="${escapeHtml(safe)}">${escapeHtml(g.title)}</a>`
             : escapeHtml(g.title);
           return `<li style="margin:4px 0">${cat}${title}</li>`;
         })
@@ -91,5 +92,10 @@ ${site ? `<p style="margin-top:16px"><a href="${site}/gazette">관보 게시판 
 }
 
 function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
