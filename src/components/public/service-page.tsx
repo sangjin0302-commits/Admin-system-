@@ -76,6 +76,8 @@ export function ServicePage({
   whoForOverride,
   documentsOverride,
   faqOverride,
+  processOverride,
+  deadlinesOverride,
   lang = "ko",
   serviceKey
 }: {
@@ -86,6 +88,8 @@ export function ServicePage({
   whoForOverride?: string;
   documentsOverride?: string;
   faqOverride?: string;
+  processOverride?: string;
+  deadlinesOverride?: string;
   lang?: "ko" | "en";
   serviceKey?: string;
 }) {
@@ -113,8 +117,24 @@ export function ServicePage({
     })
     .filter((x) => x.q && x.a);
   const faq = faqPairs && faqPairs.length > 0 ? faqPairs : en?.faq ?? data.faq;
-  const process = en?.process ?? data.process;
-  const deadlines = en?.deadlines ?? data.deadlines;
+  // process: "단계제목 :: 설명" 줄당 1개(step 번호 01,02… 자동). deadlines: "항목 :: 기한".
+  const processRows = processOverride
+    ?.split("\n")
+    .map((line) => {
+      const [title, ...rest] = line.split("::");
+      return { title: (title ?? "").trim(), desc: rest.join("::").trim() };
+    })
+    .filter((x) => x.title)
+    .map((x, i) => ({ step: String(i + 1).padStart(2, "0"), title: x.title, desc: x.desc }));
+  const process = processRows && processRows.length > 0 ? processRows : en?.process ?? data.process;
+  const deadlineRows = deadlinesOverride
+    ?.split("\n")
+    .map((line) => {
+      const [label, ...rest] = line.split("::");
+      return { label: (label ?? "").trim(), value: rest.join("::").trim() };
+    })
+    .filter((x) => x.label && x.value);
+  const deadlines = deadlineRows && deadlineRows.length > 0 ? deadlineRows : en?.deadlines ?? data.deadlines;
   const description = descriptionOverride?.trim()
     ? descriptionOverride
     : en?.description ?? data.description;

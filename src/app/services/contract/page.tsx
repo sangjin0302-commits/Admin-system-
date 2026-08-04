@@ -17,13 +17,15 @@ export default async function ContractPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
-  const [descOverride, titleOverride, taglineOverride, whoForOverride, documentsOverride, faqOverride] = await Promise.all([
+  const [descOverride, titleOverride, taglineOverride, whoForOverride, documentsOverride, faqOverride, processOverride, deadlinesOverride] = await Promise.all([
     getSiteSetting("services.contract.desc"),
     getSiteSetting("services.contract.title"),
     getSiteSetting("services.contract.tagline"),
     getSiteSetting("services.contract.whoFor"),
     getSiteSetting("services.contract.documents"),
     getSiteSetting("services.contract.faq"),
+    getSiteSetting("services.contract.process"),
+    getSiteSetting("services.contract.deadlines"),
   ]);
   return (
     <>
@@ -48,6 +50,8 @@ export default async function ContractPage({
       whoForOverride={whoForOverride}
       documentsOverride={documentsOverride}
       faqOverride={faqOverride}
+      processOverride={processOverride}
+      deadlinesOverride={deadlinesOverride}
       data={{
         kicker: "Contract & Investigation",
         title: "계약서 / 사실조사",

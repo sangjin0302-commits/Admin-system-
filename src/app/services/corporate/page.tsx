@@ -17,13 +17,15 @@ export default async function CorporatePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
-  const [descOverride, titleOverride, taglineOverride, whoForOverride, documentsOverride, faqOverride] = await Promise.all([
+  const [descOverride, titleOverride, taglineOverride, whoForOverride, documentsOverride, faqOverride, processOverride, deadlinesOverride] = await Promise.all([
     getSiteSetting("services.corporate.desc"),
     getSiteSetting("services.corporate.title"),
     getSiteSetting("services.corporate.tagline"),
     getSiteSetting("services.corporate.whoFor"),
     getSiteSetting("services.corporate.documents"),
     getSiteSetting("services.corporate.faq"),
+    getSiteSetting("services.corporate.process"),
+    getSiteSetting("services.corporate.deadlines"),
   ]);
   return (
     <>
@@ -48,6 +50,8 @@ export default async function CorporatePage({
       whoForOverride={whoForOverride}
       documentsOverride={documentsOverride}
       faqOverride={faqOverride}
+      processOverride={processOverride}
+      deadlinesOverride={deadlinesOverride}
       data={{
         kicker: "Corporate Formation",
         title: "법인 설립",

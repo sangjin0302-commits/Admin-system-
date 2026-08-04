@@ -62,6 +62,16 @@ export type SiteSettingsKey =
   | "services.contract.faq"
   | "services.license.faq"
   | "services.corporate.faq"
+  | "services.immigration.process"
+  | "services.appeal.process"
+  | "services.contract.process"
+  | "services.license.process"
+  | "services.corporate.process"
+  | "services.immigration.deadlines"
+  | "services.appeal.deadlines"
+  | "services.contract.deadlines"
+  | "services.license.deadlines"
+  | "services.corporate.deadlines"
   | "payment.bankName"        // 계좌이체용 은행명
   | "payment.accountNumber"   // 계좌번호
   | "payment.accountHolder"   // 예금주
@@ -131,6 +141,16 @@ export const SITE_SETTINGS_DEFAULTS: Record<SiteSettingsKey, string> = {
   "services.contract.faq": "",
   "services.license.faq": "",
   "services.corporate.faq": "",
+  "services.immigration.process": "",
+  "services.appeal.process": "",
+  "services.contract.process": "",
+  "services.license.process": "",
+  "services.corporate.process": "",
+  "services.immigration.deadlines": "",
+  "services.appeal.deadlines": "",
+  "services.contract.deadlines": "",
+  "services.license.deadlines": "",
+  "services.corporate.deadlines": "",
   "payment.bankName": "",
   "payment.accountNumber": "",
   "payment.accountHolder": "지상진",
@@ -221,6 +241,16 @@ export const SITE_SETTINGS_LABELS: Record<
   "services.contract.faq": { label: "서비스: 계약서/사실조사 FAQ", hint: "한 줄에 하나: 질문 :: 답변. 비우면 기본", multiline: true },
   "services.license.faq": { label: "서비스: 인허가 FAQ", hint: "한 줄에 하나: 질문 :: 답변. 비우면 기본", multiline: true },
   "services.corporate.faq": { label: "서비스: 법인 설립 FAQ", hint: "한 줄에 하나: 질문 :: 답변. 비우면 기본", multiline: true },
+  "services.immigration.process": { label: "서비스: 비자/체류 진행절차", hint: "한 줄에 하나: 단계제목 :: 설명. 번호 자동. 비우면 기본", multiline: true },
+  "services.appeal.process": { label: "서비스: 행정심판 진행절차", hint: "한 줄에 하나: 단계제목 :: 설명. 번호 자동. 비우면 기본", multiline: true },
+  "services.contract.process": { label: "서비스: 계약서/사실조사 진행절차", hint: "한 줄에 하나: 단계제목 :: 설명. 번호 자동. 비우면 기본", multiline: true },
+  "services.license.process": { label: "서비스: 인허가 진행절차", hint: "한 줄에 하나: 단계제목 :: 설명. 번호 자동. 비우면 기본", multiline: true },
+  "services.corporate.process": { label: "서비스: 법인 설립 진행절차", hint: "한 줄에 하나: 단계제목 :: 설명. 번호 자동. 비우면 기본", multiline: true },
+  "services.immigration.deadlines": { label: "서비스: 비자/체류 주요기한", hint: "한 줄에 하나: 항목 :: 기한. 비우면 기본", multiline: true },
+  "services.appeal.deadlines": { label: "서비스: 행정심판 주요기한", hint: "한 줄에 하나: 항목 :: 기한. 비우면 기본", multiline: true },
+  "services.contract.deadlines": { label: "서비스: 계약서/사실조사 주요기한", hint: "한 줄에 하나: 항목 :: 기한. 비우면 기본", multiline: true },
+  "services.license.deadlines": { label: "서비스: 인허가 주요기한", hint: "한 줄에 하나: 항목 :: 기한. 비우면 기본", multiline: true },
+  "services.corporate.deadlines": { label: "서비스: 법인 설립 주요기한", hint: "한 줄에 하나: 항목 :: 기한. 비우면 기본", multiline: true },
   "payment.bankName": { label: "결제: 은행명", hint: "예: 국민은행, 우리은행 (계좌이체 안내용)" },
   "payment.accountNumber": { label: "결제: 계좌번호", hint: "예: 123-456-789012" },
   "payment.accountHolder": { label: "결제: 예금주", hint: "은행 표기와 정확히 일치해야 합니다. 예: 지상진" },
