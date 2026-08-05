@@ -251,8 +251,14 @@ export function PublicFooter() {
         )}
 
         <div className="mt-6 flex flex-col items-start justify-between gap-3 border-t border-white/15 pt-6 text-xs text-white/50 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-0.5">
             <p>© 2026 ETHOS 행정사사무소. All rights reserved.</p>
+            <p className="text-white/40">
+              {L(
+                "본 사이트의 콘텐츠·디자인·구성의 무단 복제·배포를 금합니다.",
+                "Unauthorized reproduction or distribution of this site's content, design, and layout is prohibited."
+              )}
+            </p>
           </div>
           <div className="flex gap-4">
             <Link href={`/privacy${qs}`} className="transition-colors duration-200 hover:text-gold-soft">{L("개인정보 처리방침", "Privacy Policy")}</Link>

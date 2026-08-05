@@ -93,6 +93,15 @@ export default async function TermsPage({
             <Section title="제9조 (약관의 변경)">
               <p className="text-sm leading-relaxed text-text">본 약관은 법령 또는 운영상의 사정에 따라 변경될 수 있으며, 변경 시 웹사이트에 공지합니다.</p>
             </Section>
+
+            <Section title="제10조 (지식재산권 및 복제 금지)">
+              <p className="text-sm leading-relaxed text-text">
+                본 웹사이트에 게시된 모든 콘텐츠(텍스트·이미지·로고·디자인·레이아웃·구성·소스코드 및 편집 저작물)에 대한
+                저작권 및 기타 지식재산권은 에토스 행정사사무소에 귀속됩니다. 사무소의 사전 서면 동의 없이 이를 복제·배포·전송·
+                전시·2차적저작물 작성 등 어떠한 형태로도 무단 이용할 수 없으며, 위반 시 저작권법 등 관련 법령에 따른 민·형사상
+                책임이 따를 수 있습니다.
+              </p>
+            </Section>
           </div>
         </div>
       </section>
