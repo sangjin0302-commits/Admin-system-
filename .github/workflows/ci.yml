@@ -124,7 +124,9 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # 일부 스펙이 webkit 을 직접 launch 하므로 전체 브라우저 설치(chromium만 깔면
+      # "Executable doesn't exist … webkit" 로 실패).
+      - run: npx playwright install --with-deps
       - run: npm run prisma:generate:sqlite
       # prod 서버(next start)가 DB 를 읽으므로 스키마 반영 필요.
       - run: npm run db:push:sqlite
