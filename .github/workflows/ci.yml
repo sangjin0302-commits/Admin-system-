@@ -83,6 +83,8 @@ jobs:
       - run: npm run test:gazette
       - run: npm run test:gazette-service
       - run: npm run test:gazette-digest
+      - run: npm run test:gazette-column
+      - run: npm run test:landing-performance
       - run: npm run test:keyword-landing
       - run: npm run test:mask-email
       - run: npm run test:blog-portal-helpers
@@ -119,6 +121,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - run: npm run prisma:generate:sqlite
+      # prod 서버(next start)가 DB 를 읽으므로 스키마 반영 필요.
+      - run: npm run db:push:sqlite
       - run: npm run build
       - run: npm run test:e2e
         env:

@@ -155,6 +155,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/bulk-upload", label: "일괄 등록", icon: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" },
       { href: "/admin/blog-import", label: "블로그 가져오기", icon: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" },
       { href: "/admin/blog-rewrite-queue", label: "블로그 리라이트", icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" },
+      { href: "/admin/gazette-columns", label: "관보 칼럼 소재", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
       { href: "/admin/activity", label: "활동 로그", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
       { href: "/admin/utm-heatmap", label: "UTM heatmap", icon: "M4 6h16M4 10h16M4 14h16M4 18h16" },
       { href: "/admin/landing-gaps", label: "랜딩 갭 파인더", icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" },

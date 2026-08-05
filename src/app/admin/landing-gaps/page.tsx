@@ -5,6 +5,10 @@ import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { getTopSearchQueries } from "@/lib/services/gsc-service";
 import { getExtraKeywordLandings } from "@/lib/services/keyword-landing-service";
 import { BASE_KEYWORD_LANDINGS } from "@/lib/constants/keyword-landings";
+import {
+  aggregateLandingPerformance,
+  LANDING_PERF_STATUS_LABEL,
+} from "@/lib/services/landing-performance";
 import { notFound } from "next/navigation";
 
 import { CreateLandingButton, DeleteLandingButton } from "./create-landing-button";
@@ -52,6 +56,13 @@ export default async function LandingGapsPage() {
 
   gaps.sort((a, b) => b.impressions - a.impressions);
 
+  // 랜딩별 성과(GSC 검색어를 토큰 매칭해 근사). 개선 필요 랜딩 우선 노출.
+  const perf = aggregateLandingPerformance(
+    landings,
+    queries.map((q) => ({ query: q.query, clicks: q.clicks, impressions: q.impressions }))
+  );
+  const extraSlugs = new Set(extras.map((e) => e.slug));
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
@@ -89,6 +100,62 @@ export default async function LandingGapsPage() {
                     <td className="py-2 text-right text-text-muted">{g.ctr}%</td>
                     <td className="py-2 text-right text-text-muted">{g.position}</td>
                     <td className="py-2 text-right"><CreateLandingButton query={g.query} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      <Card className="p-5">
+        <p className="ui-kicker">랜딩 성과 (GSC 근사)</p>
+        <p className="mt-1 text-xs text-text-muted">
+          검색어를 랜딩 토큰에 매칭한 근사치. <b>개선 필요</b>(노출 있는데 클릭 0)를 먼저 봅니다.
+          DB 로 만든 랜딩이 계속 <b>노출 적음/클릭 0</b>이면 삭제 후보입니다.
+        </p>
+        {perf.length === 0 ? (
+          <p className="mt-3 text-sm text-text-muted">랜딩이 없습니다.</p>
+        ) : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-gold/20 text-left">
+                  <th className="pb-2 font-bold text-text-strong">랜딩</th>
+                  <th className="pb-2 text-right font-bold text-text-strong">노출</th>
+                  <th className="pb-2 text-right font-bold text-text-strong">클릭</th>
+                  <th className="pb-2 text-right font-bold text-text-strong">CTR</th>
+                  <th className="pb-2 font-bold text-text-strong">상태</th>
+                  <th className="pb-2 text-right font-bold text-text-strong">관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {perf.map((p) => (
+                  <tr key={p.term} className="border-b border-gold/10">
+                    <td className="py-2">
+                      <a href={`/keyword/${encodeURIComponent(p.term)}`} className="font-medium text-gold-deep hover:underline">
+                        {p.label}
+                      </a>
+                    </td>
+                    <td className="py-2 text-right text-text-muted">{p.impressions.toLocaleString()}</td>
+                    <td className="py-2 text-right text-text-muted">{p.clicks}</td>
+                    <td className="py-2 text-right text-text-muted">{p.ctr}%</td>
+                    <td className="py-2">
+                      <span
+                        className={
+                          p.status === "low_ctr"
+                            ? "font-bold text-amber-600"
+                            : p.status === "cold"
+                              ? "text-text-muted"
+                              : "text-emerald-600"
+                        }
+                      >
+                        {LANDING_PERF_STATUS_LABEL[p.status]}
+                      </span>
+                    </td>
+                    <td className="py-2 text-right">
+                      {extraSlugs.has(p.term) ? <DeleteLandingButton slug={p.term} /> : <span className="text-[11px] text-text-muted">기본</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

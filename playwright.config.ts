@@ -20,11 +20,12 @@ export default defineConfig({
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
   ],
-  webServer: process.env.CI
-    ? undefined
-    : {
-        command: "npm run dev",
-        port: 3000,
-        reuseExistingServer: true,
-      },
+  // CI 는 빌드된 prod 서버(next start)를, 로컬은 dev 서버를 자동 기동한다.
+  // 이전엔 CI 에서 webServer=undefined 라 서버가 안 떠 e2e 가 전부 연결실패했음.
+  webServer: {
+    command: process.env.CI ? "npm run start" : "npm run dev",
+    port: 3000,
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
 });
