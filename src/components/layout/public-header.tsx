@@ -155,7 +155,7 @@ function HeaderInner() {
           type="button"
           onClick={() => setMobileOpen((v) => !v)}
           className="rounded-lg p-2 text-primary lg:hidden"
-          aria-label="메뉴"
+          aria-label={lang === "en" ? "Menu" : "메뉴"}
           aria-expanded={mobileOpen}
           aria-controls="mobile-menu"
         >
@@ -202,7 +202,7 @@ function HeaderInner() {
               type="button"
               onClick={() => setMobileOpen(false)}
               className="rounded-lg p-2 text-primary"
-              aria-label="닫기"
+              aria-label={lang === "en" ? "Close" : "닫기"}
             >
               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M6 6l12 12M18 6l-12 12" />

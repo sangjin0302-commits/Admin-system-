@@ -34,18 +34,6 @@ import { HomeGazetteTeaser } from "@/components/public/home-gazette-teaser";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "에토스 행정사사무소(ETHOS) — 절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를",
-  description:
-    "에토스 행정사사무소. 비자/외국인 체류, 행정심판, 계약서·사실조사, 인허가 업무를 Logos·Pathos·Ethos 철학으로 함께합니다.",
-  // 홈은 자기 자신을 canonical 로 명시하고, 영어판(/en)을 hreflang 로 안내한다.
-  // (루트 레이아웃에서 canonical 을 걷어냈기 때문에 페이지별로 지정한다.)
-  alternates: {
-    canonical: "/",
-    languages: { ko: "/", en: "/en", "x-default": "/" }
-  }
-};
-
 type PracticeArea = {
   no: string;
   title: string;
@@ -219,6 +207,35 @@ function SecondaryCta({ href, children }: { href: string; children: ReactNode })
       {children}
     </Link>
   );
+}
+
+// ?lang=en 홈은 그동안 레이아웃의 한글 메타를 상속해 검색결과에 한글 제목이 노출됐음.
+// 영문일 때만 영문 메타로 덮고 canonical 을 /en 으로(중복색인 방지). 한글은 레이아웃 상속.
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}): Promise<Metadata> {
+  const params = (await searchParams) ?? {};
+  if (params.lang !== "en") {
+    // 한글 홈 메타(기존 export const metadata 이관). canonical "/" + hreflang.
+    return {
+      title: "에토스 행정사사무소(ETHOS) — 절차에는 이성을, 사람에게는 공감을, 일에는 신뢰를",
+      description:
+        "에토스 행정사사무소. 비자/외국인 체류, 행정심판, 계약서·사실조사, 인허가 업무를 Logos·Pathos·Ethos 철학으로 함께합니다.",
+      alternates: { canonical: "/", languages: { ko: "/", en: "/en", "x-default": "/" } }
+    };
+  }
+  const title = "ETHOS Administrative Attorney — Visa, Appeals, Permits for Foreign Residents";
+  const description =
+    "Korean administrative-law support for foreign residents: visa & residency, administrative appeals, contracts, and licensing. Fast direction, case-by-case judgment.";
+  return {
+    title,
+    description,
+    alternates: { canonical: "/en" },
+    openGraph: { title, description, locale: "en_US", type: "website" },
+    twitter: { card: "summary_large_image", title, description }
+  };
 }
 
 export default async function PublicMarketingHomePage({

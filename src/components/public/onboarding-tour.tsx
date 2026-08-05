@@ -12,23 +12,31 @@ type Step = {
   id: string;
   title: string;
   body: string;
+  titleEn: string;
+  bodyEn: string;
 };
 
 const STEPS: Step[] = [
   {
     id: "cta-consult",
     title: "무료 검토 요청",
-    body: "지금 사안을 남기면 영업일 24시간 안에 검토 회신을 드립니다."
+    body: "지금 사안을 남기면 영업일 24시간 안에 검토 회신을 드립니다.",
+    titleEn: "Request free review",
+    bodyEn: "Leave your case now and we'll reply with a review within one business day."
   },
   {
     id: "nav-ai",
     title: "AI 사전 진단",
-    body: "간단한 상황 입력만으로 예상 절차와 리스크를 미리 확인해 보세요."
+    body: "간단한 상황 입력만으로 예상 절차와 리스크를 미리 확인해 보세요.",
+    titleEn: "AI pre-check",
+    bodyEn: "Enter a few details to preview the likely process and risks in advance."
   },
   {
     id: "nav-blog",
     title: "블로그 · 칼럼",
-    body: "비자 · 행정심판 · 인허가 실무 인사이트를 모아 두었습니다."
+    body: "비자 · 행정심판 · 인허가 실무 인사이트를 모아 두었습니다.",
+    titleEn: "Blog & Columns",
+    bodyEn: "Practical insights on visas, administrative appeals, and permits, all in one place."
   }
 ];
 
@@ -41,9 +49,11 @@ export function OnboardingTour() {
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<TargetRect>(null);
+  const [en, setEn] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    try { setEn((document.documentElement.lang || "ko").startsWith("en")); } catch { /* ignore */ }
     if (typeof window === "undefined") return;
     try {
       const seen = window.sessionStorage.getItem(STORAGE_KEY);
@@ -108,7 +118,7 @@ export function OnboardingTour() {
     <div
       aria-live="polite"
       role="dialog"
-      aria-label="온보딩 안내"
+      aria-label={en ? "Onboarding guide" : "온보딩 안내"}
       style={{
         position: "fixed",
         inset: 0,
@@ -177,9 +187,9 @@ export function OnboardingTour() {
             />
           ))}
         </div>
-        <p style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>{current.title}</p>
+        <p style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>{en ? current.titleEn : current.title}</p>
         <p style={{ fontSize: 13, lineHeight: 1.55, margin: "6px 0 14px", color: "#475569" }}>
-          {current.body}
+          {en ? current.bodyEn : current.body}
         </p>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <button
@@ -194,7 +204,7 @@ export function OnboardingTour() {
               cursor: "pointer"
             }}
           >
-            건너뛰기
+            {en ? "Skip" : "건너뛰기"}
           </button>
           <button
             type="button"
@@ -216,7 +226,7 @@ export function OnboardingTour() {
               cursor: "pointer"
             }}
           >
-            {step >= STEPS.length - 1 ? "시작하기" : "다음"}
+            {step >= STEPS.length - 1 ? (en ? "Start" : "시작하기") : (en ? "Next" : "다음")}
           </button>
         </div>
       </div>

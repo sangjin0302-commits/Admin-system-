@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const ITEMS = [
   {
     href: "/",
     label: "홈",
+    labelEn: "Home",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.7">
         <path d="M3 12l9-8 9 8M5 10v10h14V10" />
@@ -16,6 +18,7 @@ const ITEMS = [
   {
     href: "/services",
     label: "업무",
+    labelEn: "Services",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.7">
         <rect x="3" y="6" width="18" height="14" rx="2" />
@@ -26,6 +29,7 @@ const ITEMS = [
   {
     href: "/quick-check",
     label: "AI 진단",
+    labelEn: "AI Check",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.7">
         <circle cx="12" cy="12" r="9" />
@@ -36,6 +40,7 @@ const ITEMS = [
   {
     href: "/portal",
     label: "포털",
+    labelEn: "Portal",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.7">
         <circle cx="11" cy="11" r="7" />
@@ -46,6 +51,7 @@ const ITEMS = [
   {
     href: "/intake",
     label: "검토",
+    labelEn: "Review",
     primary: true,
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8">
@@ -57,6 +63,10 @@ const ITEMS = [
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const [en, setEn] = useState(false);
+  useEffect(() => {
+    try { setEn((document.documentElement.lang || "ko").startsWith("en")); } catch { /* ignore */ }
+  }, []);
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
@@ -69,7 +79,7 @@ export function MobileBottomNav() {
       <div aria-hidden className="h-16 lg:hidden" />
 
       <nav
-        aria-label="모바일 하단 메뉴"
+        aria-label={en ? "Mobile navigation" : "모바일 하단 메뉴"}
         className="fixed inset-x-0 bottom-0 z-40 border-t border-gold/30 bg-surface/95 backdrop-blur lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
@@ -83,12 +93,12 @@ export function MobileBottomNav() {
                 <li key={item.href} className="relative flex items-start justify-center">
                   <Link
                     href={item.href}
-                    aria-label={item.label}
+                    aria-label={en ? item.labelEn : item.label}
                     aria-current={active ? "page" : undefined}
                     className="-mt-5 flex h-14 w-14 flex-col items-center justify-center rounded-full bg-primary text-white shadow-floating transition hover:bg-text-strong"
                   >
                     {item.icon}
-                    <span className="mt-0.5 text-[11px] font-bold tracking-tight">{item.label}</span>
+                    <span className="mt-0.5 text-[11px] font-bold tracking-tight">{en ? item.labelEn : item.label}</span>
                   </Link>
                 </li>
               );
@@ -104,7 +114,7 @@ export function MobileBottomNav() {
                   }`}
                 >
                   {item.icon}
-                  <span className="font-serif text-[11px] font-bold tracking-tight">{item.label}</span>
+                  <span className="font-serif text-[11px] font-bold tracking-tight">{en ? item.labelEn : item.label}</span>
                   {active ? (
                     <span aria-hidden className="absolute top-0 h-0.5 w-8 rounded-full bg-gold" />
                   ) : null}

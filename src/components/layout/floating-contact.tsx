@@ -64,7 +64,7 @@ export function FloatingContact() {
           type="button"
           onClick={() => setExpanded((v) => !v)}
           className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-floating transition hover:bg-text-strong"
-          aria-label="검토·상담 연결"
+          aria-label={isEn ? "Consultation" : "검토·상담 연결"}
         >
           {expanded ? (
             <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -87,7 +87,7 @@ export function FloatingContact() {
           className="flex flex-col items-center justify-center gap-1 border-r border-gold/20 bg-[#03C75A]/90 py-3 text-white"
         >
           <NaverIcon className="h-5 w-5" />
-          <span className="text-[11px] font-bold">톡톡</span>
+          <span className="text-[11px] font-bold">{isEn ? "Naver Talk" : "톡톡"}</span>
         </a>
         <a
           href={CHANNELS.kakao.url}
@@ -96,14 +96,14 @@ export function FloatingContact() {
           className="flex flex-col items-center justify-center gap-1 border-r border-gold/20 bg-[#FEE500]/90 py-3 text-[#3C1E1E]"
         >
           <KakaoIcon className="h-5 w-5" />
-          <span className="text-[11px] font-bold">카카오</span>
+          <span className="text-[11px] font-bold">{isEn ? "Kakao" : "카카오"}</span>
         </a>
         <a
           href="/intake"
           className="flex flex-col items-center justify-center gap-1 bg-primary py-3 text-white"
         >
           <FormIcon className="h-5 w-5" />
-          <span className="text-[11px] font-bold">검토 요청</span>
+          <span className="text-[11px] font-bold">{isEn ? "Request review" : "검토 요청"}</span>
         </a>
       </div>
 
