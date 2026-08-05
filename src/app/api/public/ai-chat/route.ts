@@ -6,6 +6,7 @@ import { findFaqMatch } from "@/lib/services/ai-faq-cache-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { getPortalUser, portalUserKey } from "@/lib/security/portal-auth";
 import { consumeRateLimit, getClientIpFromHeaders, getEnvInt } from "@/lib/security/rate-limit";
+import { isAiAllowed } from "@/lib/services/ai-budget-guard";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-4-5-20251001";
@@ -29,6 +30,15 @@ export async function POST(request: NextRequest) {
   if (!key) {
     return NextResponse.json(
       { error: "AI 기능이 현재 비활성화되어 있습니다." },
+      { status: 503 }
+    );
+  }
+
+  const aiGate = await isAiAllowed();
+  if (!aiGate.ok) {
+    logger.warn("[ai-chat] AI budget guard blocked request", { reason: aiGate.reason });
+    return NextResponse.json(
+      { error: "AI 기능이 일시적으로 비활성화되었습니다." },
       { status: 503 }
     );
   }

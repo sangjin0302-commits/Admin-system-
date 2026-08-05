@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { isAiAllowed } from "@/lib/services/ai-budget-guard";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-4-5-20251001";
@@ -116,6 +117,11 @@ export async function translateBlogPostTo(
   input: TranslateInput,
   targetLang: TargetLang
 ): Promise<TranslatedContent | null> {
+  const aiGate = await isAiAllowed();
+  if (!aiGate.ok) {
+    logger.warn("[blog-translate] AI budget guard blocked translation, skipping", { reason: aiGate.reason, targetLang });
+    return null;
+  }
   const result = await callClaude(input, targetLang);
   if (!result) return null;
   return {

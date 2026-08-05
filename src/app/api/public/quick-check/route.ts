@@ -8,6 +8,7 @@ import {
 import { extractLawNames, buildLawDeeplink } from "@/lib/services/law-deeplink";
 import { consumeRateLimit, getClientIpFromHeaders } from "@/lib/security/rate-limit";
 import { logger } from "@/lib/utils/logger";
+import { isAiAllowed } from "@/lib/services/ai-budget-guard";
 
 export const maxDuration = 60;
 
@@ -71,6 +72,20 @@ export async function POST(request: Request) {
         ok: false,
         code: "not_configured",
         error: "AI 사전 진단은 현재 준비 중입니다. 상담 신청을 이용해 주세요."
+      },
+      { status: 503 }
+    );
+  }
+
+  // AI 비용 방어 — 마스터 킬/월 예산 초과 시 상류(Anthropic) 호출 전에 거부.
+  const aiGate = await isAiAllowed();
+  if (!aiGate.ok) {
+    logger.warn("[public/quick-check] AI budget guard blocked request", { reason: aiGate.reason });
+    return NextResponse.json(
+      {
+        ok: false,
+        code: "ai_disabled",
+        error: "AI 사전 진단은 현재 일시적으로 비활성화되었습니다. 상담 신청을 이용해 주세요."
       },
       { status: 503 }
     );

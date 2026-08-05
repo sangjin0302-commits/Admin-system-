@@ -51,6 +51,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "finance_report", label: "재무 리포트", category: "operations", default: true, description: "재무 리포트 자동 생성" },
   { key: "gazette_weekly_digest", label: "주간 관보 요약 발송", category: "operations", default: false, description: "매주 지난 7일 관보를 텔레그램(+선택 이메일)으로 내부 발송" },
   { key: "landing_cleanup_report", label: "주간 랜딩 정리 리포트", category: "operations", default: false, description: "30일+ 노출 적음·클릭0 인 DB 키워드 랜딩 삭제 후보를 주간 텔레그램 알림(자동삭제 안 함)" },
+  { key: "ai_master_kill", label: "🛑 AI 전면 정지(비용 차단)", category: "operations", default: false, description: "켜면 모든 AI 기능(챗·번역·마케팅·진단)이 즉시 거부됨. Anthropic 비용 폭주 시 긴급 차단 스위치." },
   { key: "bottom_sheet_consult", label: "모바일 바텀시트 상담", category: "ux", default: true, description: "모바일 하단 바텀시트 상담", public: true, locked: true, lockReason: "모바일 상담 전환 핵심 진입점 잠금 2026-07-22" },
   { key: "sticky_cta", label: "Sticky CTA", category: "ux", default: true, description: "고정 CTA 버튼", public: true, locked: true, lockReason: "공개 페이지 주요 전환 요소 잠금 2026-07-22" },
   { key: "portal_realtime", label: "포털 실시간 알림", category: "ux", default: true, description: "고객 포털 실시간 알림 (SSE)" },

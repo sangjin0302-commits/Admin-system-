@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
     "/*": ["./generated/prisma-client-next/**/*"]
   },
   serverExternalPackages: ["@prisma/client"],
+  // 빌드 메모리 절감 — Vercel 빌드 OOM(exit 137) 방지 보강.
+  productionBrowserSourceMaps: false,
   eslint: {
     // Lint is executed separately in local verification scripts.
     ignoreDuringBuilds: true
@@ -28,7 +30,9 @@ const nextConfig: NextConfig = {
   experimental: {
     // Disable the build worker because it previously triggered spawn EPERM
     // under the current Windows environment.
-    webpackBuildWorker: false
+    webpackBuildWorker: false,
+    // 빌드 시 webpack 메모리 최적화(Next 15) — 대규모 라우트 빌드 OOM 완화.
+    webpackMemoryOptimizations: true
   },
   webpack: (config, { dev }) => {
     if (!isVercelBuild && !dev) {

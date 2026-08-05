@@ -8,6 +8,7 @@
 import { prisma } from "@/lib/prisma/client";
 import { generateReport as generateAdReport, type AdRecommendation } from "@/lib/services/ad-optimizer-service";
 import { logger } from "@/lib/utils/logger";
+import { isAiAllowed } from "@/lib/services/ai-budget-guard";
 
 const DECISIONS_KEY = "auto_marketing.decisions";
 const AUTO_APPLY_KEY = "auto_marketing.auto_apply";
@@ -107,6 +108,11 @@ export async function setTrustThreshold(v: number): Promise<void> {
 
 /** Claude로 새 광고 카피 변형 생성. */
 async function generateCopyVariant(campaign: string, currentCopy?: string): Promise<string> {
+  const aiGate = await isAiAllowed();
+  if (!aiGate.ok) {
+    logger.warn("[auto-marketing] AI budget guard blocked copy variant, skipping", { reason: aiGate.reason, campaign });
+    return `[변형 생성 건너뜀 - AI 비활성화] ${campaign}`;
+  }
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return `[변형 생성 불가 - ANTHROPIC_API_KEY 미설정] ${campaign}`;
   try {

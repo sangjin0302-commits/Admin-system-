@@ -119,6 +119,10 @@ export async function recordMetric(event: AIMetricEvent): Promise<void> {
     cell.latencyMsSum += event.latencyMs;
     cell.costUsd += event.costUsd;
     await writeBuckets(buckets);
+    // 월 예산 브레이커용 누적(best-effort). ai-budget-guard 가 이 값으로 월 상한 판단.
+    if (event.success && event.costUsd > 0) {
+      void (await import("@/lib/services/ai-budget-guard")).recordAiSpend(event.costUsd);
+    }
   } catch (err) {
     logger.warn("[ai-metrics] record failed", err);
   }

@@ -81,6 +81,7 @@ jobs:
       - run: npm run test:telegram
       - run: npm run test:security-guard
       - run: npm run test:admin-rbac-guard
+      - run: npm run test:ai-budget
       - run: npm run test:gazette
       - run: npm run test:gazette-service
       - run: npm run test:gazette-digest
