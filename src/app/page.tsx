@@ -31,6 +31,13 @@ import { listPublicTestimonials } from "@/lib/services/testimonials";
 import { LocalLandingGrid } from "@/components/public/local-landing-grid";
 import DynamicCtaButton from "@/components/public/dynamic-cta-button";
 import { HomeGazetteTeaser } from "@/components/public/home-gazette-teaser";
+import {
+  parseStringList,
+  parseTitleDescList,
+  parsePhilosophyList,
+  parseProcessList,
+  parsePracticeList
+} from "@/lib/services/home-copy-parsers";
 
 export const revalidate = 300;
 
@@ -251,6 +258,30 @@ export default async function PublicMarketingHomePage({
   const tt = (key: string, fallback: string) => homeOv[key] ?? fallback;
   const intakeHref = buildWebsiteIntakeHref();
 
+  // ─── 마케팅 배열 override(/admin/i18n "home") → 파서 → 실패/빈값이면 하드코딩 회귀 ───
+  //   기본 직렬화본은 하드코딩 배열과 라운드트립하므로 override 없으면 렌더 결과 동일.
+  const benefits = parseStringList(tt("benefitsList", "") || undefined, t.benefits);
+  const leadBullets = parseStringList(tt("leadBulletsList", "") || undefined, t.leadBullets);
+  const whyCards = parseTitleDescList(tt("whyCardsList", "") || undefined, t.whyCards);
+  const philosophyDefaults = PHILOSOPHY.map((p) =>
+    lang === "en"
+      ? { title: p.titleEn, description: p.descriptionEn, benefit: p.benefitEn }
+      : { title: p.title, description: p.description, benefit: p.benefit }
+  );
+  const philosophyItems = parsePhilosophyList(tt("philosophyList", "") || undefined, philosophyDefaults);
+  const processDefaults = PROCESS_STEPS.map((s) =>
+    lang === "en"
+      ? { step: s.step, title: s.titleEn, desc: s.descEn }
+      : { step: s.step, title: s.title, desc: s.desc }
+  );
+  const processSteps = parseProcessList(tt("processList", "") || undefined, processDefaults);
+  const practiceDefaults = PRACTICE_AREAS.map((a) =>
+    lang === "en"
+      ? { title: a.titleEn, subtitle: a.subtitle, description: a.descriptionEn, bullets: [...a.bulletsEn] }
+      : { title: a.title, subtitle: a.subtitle, description: a.description, bullets: [...a.bullets] }
+  );
+  const practiceAreas = parsePracticeList(tt("practiceList", "") || undefined, practiceDefaults);
+
   // 관리자 운영란 컨텐츠 (한국어에서만 override, 영어는 기본 카피)
   const site = await getSiteSettings();
   // CMS 오버레이 (site_content_editor flag) — 편집 가능한 문구
@@ -435,7 +466,7 @@ export default async function PublicMarketingHomePage({
             {/* 혜택 배지 행 — 24h·비용·다국어 전면 노출 */}
             <Reveal delay={2}>
               <div className="mt-7 flex flex-wrap gap-2.5">
-                {t.benefits.map((benefit) => (
+                {benefits.map((benefit) => (
                   <span
                     key={benefit}
                     className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold-soft/40 px-3.5 py-1.5 text-sm font-semibold text-primary"
@@ -582,8 +613,15 @@ export default async function PublicMarketingHomePage({
           </Reveal>
 
           <div className="mt-14 grid gap-5 md:grid-cols-2">
-            {PRACTICE_AREAS.map((area, i) => (
-              <Reveal key={area.title} delay={((i % 2) + 1) as 1 | 2}>
+            {PRACTICE_AREAS.map((area, i) => {
+              const text = practiceAreas[i] ?? {
+                title: lang === "en" ? area.titleEn : area.title,
+                subtitle: area.subtitle,
+                description: lang === "en" ? area.descriptionEn : area.description,
+                bullets: [...(lang === "en" ? area.bulletsEn : area.bullets)]
+              };
+              return (
+              <Reveal key={area.no} delay={((i % 2) + 1) as 1 | 2}>
                 <Link
                   href={area.href}
                   className="ethos-card ethos-card-hover ethos-card-topline ethos-cta-shine ethos-tilt group relative flex h-full flex-col overflow-hidden p-8"
@@ -595,12 +633,12 @@ export default async function PublicMarketingHomePage({
                     {area.icon}
                   </div>
                   <p className="relative mt-6 font-serif text-[11px] font-bold tracking-[0.2em] text-gold-deep">
-                    {area.subtitle}
+                    {text.subtitle}
                   </p>
-                  <h3 className="ethos-display relative mt-1 text-2xl">{lang === "en" ? area.titleEn : area.title}</h3>
-                  <p className="relative mt-4 text-sm leading-7 text-text">{lang === "en" ? area.descriptionEn : area.description}</p>
+                  <h3 className="ethos-display relative mt-1 text-2xl">{text.title}</h3>
+                  <p className="relative mt-4 text-sm leading-7 text-text">{text.description}</p>
                   <ul className="relative mt-5 space-y-2.5">
-                    {(lang === "en" ? area.bulletsEn : area.bullets).map((bullet) => (
+                    {text.bullets.map((bullet) => (
                       <li key={bullet} className="flex items-center gap-2.5 text-sm text-text-muted">
                         <span className="h-1.5 w-1.5 rotate-45 bg-gold" />
                         {bullet}
@@ -618,7 +656,8 @@ export default async function PublicMarketingHomePage({
                   </div>
                 </Link>
               </Reveal>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -636,7 +675,7 @@ export default async function PublicMarketingHomePage({
           </Reveal>
 
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {t.whyCards.map((card, i) => (
+            {whyCards.map((card, i) => (
               <Reveal key={card.title} delay={((i % 4) + 1) as 1 | 2 | 3 | 4}>
                 <div className="ethos-card ethos-card-hover ethos-card-topline flex h-full flex-col p-7">
                   <h3 className="ethos-display text-xl leading-snug">{card.title}</h3>
@@ -685,7 +724,7 @@ export default async function PublicMarketingHomePage({
                   {tt("leadDesc", t.leadDesc)}
                 </p>
                 <ul className="mt-7 space-y-3">
-                  {t.leadBullets.map((item) => (
+                  {leadBullets.map((item) => (
                     <li key={item} className="flex items-center gap-3 text-sm text-text">
                       <span className="h-1.5 w-1.5 shrink-0 rotate-45 bg-gold" aria-hidden />
                       <span className="font-semibold">{item}</span>
@@ -755,7 +794,13 @@ export default async function PublicMarketingHomePage({
 
             {/* 우: 3가치 스택 */}
             <div className="space-y-4">
-              {PHILOSOPHY.map((p, i) => (
+              {PHILOSOPHY.map((p, i) => {
+                const text = philosophyItems[i] ?? {
+                  title: lang === "en" ? p.titleEn : p.title,
+                  description: lang === "en" ? p.descriptionEn : p.description,
+                  benefit: lang === "en" ? p.benefitEn : p.benefit
+                };
+                return (
                 <Reveal key={p.greek} delay={(i + 1) as 1 | 2 | 3}>
                   <div className="group flex items-start gap-5 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur transition-colors duration-300 hover:border-gold/40 hover:bg-white/[0.08]">
                     <span className="ethos-quote text-3xl text-gold/40 transition-colors group-hover:text-gold/70">
@@ -763,15 +808,16 @@ export default async function PublicMarketingHomePage({
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-3">
-                        <h3 className="ethos-display text-2xl text-white">{lang === "en" ? p.titleEn : p.title}</h3>
+                        <h3 className="ethos-display text-2xl text-white">{text.title}</h3>
                         <span className="font-serif text-xs text-white/60">{lang === "en" ? p.koreanEn : p.korean}</span>
                       </div>
-                      <p className="mt-2 text-sm leading-7 text-white/70">{lang === "en" ? p.descriptionEn : p.description}</p>
-                      <p className="mt-2.5 font-serif text-sm leading-6 text-gold-soft">{lang === "en" ? p.benefitEn : p.benefit}</p>
+                      <p className="mt-2 text-sm leading-7 text-white/70">{text.description}</p>
+                      <p className="mt-2.5 font-serif text-sm leading-6 text-gold-soft">{text.benefit}</p>
                     </div>
                   </div>
                 </Reveal>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -812,14 +858,14 @@ export default async function PublicMarketingHomePage({
             {/* 타임라인 라인 */}
             <div className="absolute left-0 right-0 top-6 hidden h-px bg-gradient-to-r from-gold/0 via-gold/50 to-gold/0 lg:block" aria-hidden />
             <div className="grid gap-8 lg:grid-cols-5">
-              {PROCESS_STEPS.map((step, idx) => (
+              {processSteps.map((step, idx) => (
                 <Reveal key={step.step} delay={((idx % 4) + 1) as 1 | 2 | 3 | 4}>
                   <div className="text-center">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-gold/50 bg-surface font-serif text-sm font-bold text-primary shadow-sm">
                       {step.step}
                     </div>
-                    <h3 className="ethos-display mt-5 text-lg">{lang === "en" ? step.titleEn : step.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-text-muted">{lang === "en" ? step.descEn : step.desc}</p>
+                    <h3 className="ethos-display mt-5 text-lg">{step.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-text-muted">{step.desc}</p>
                   </div>
                 </Reveal>
               ))}
