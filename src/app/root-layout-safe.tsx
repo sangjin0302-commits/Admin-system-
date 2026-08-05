@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
 import { Analytics as VercelAnalytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { Toaster as SonnerToaster } from "sonner";
 
@@ -148,7 +147,6 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
         <GA4ConversionTracker enabled={true} />
         <Analytics />
         <VercelAnalytics />
-        <SpeedInsights />
         <PWARegister />
         <LocalBusinessJsonLd />
         <AbBootstrap />
