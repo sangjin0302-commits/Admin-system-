@@ -108,10 +108,7 @@ jobs:
   e2e:
     name: E2E tests
     runs-on: ubuntu-latest
-    # e2e 는 아직 잠금(lock) 대상 아님. push 마다 돌리면 10분 초과로 CI 신호를 흐림 →
-    # 수동(workflow_dispatch) 에서만 실행. 안정화되면 push 게이트로 승격.
-    if: github.event_name == 'workflow_dispatch'
-    continue-on-error: true
+    # 안정화 완료(79/79) → push 게이트로 승격. 실패 시 CI 차단.
     timeout-minutes: 30
     # 절대경로 DB — db:push 와 next start(.next-local 런타임)가 상대경로를 서로
     # 다르게 해석해 "Unable to open the database file"(Error 14) 나던 것 고정.
