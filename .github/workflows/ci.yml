@@ -122,6 +122,8 @@ jobs:
       ADMIN_BASIC_AUTH_USER: ci-admin
       ADMIN_BASIC_AUTH_PASSWORD: Ci-Admin-Pass-2026-strong
       ADMIN_ENFORCE_STRONG_CREDENTIALS: "false"
+      # 스펙들이 미인증 admin API 를 다수 호출 → 기본 20회 제한에 걸려 429. 상향.
+      ADMIN_AUTH_RATE_LIMIT_MAX_FAILURES: "200"
       # 배치 크론 라우트가 CRON_SECRET 없으면 500 → 스펙(401)이 깨짐. 더미 시크릿.
       CRON_SECRET: ci-cron-secret
     steps:
