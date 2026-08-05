@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
-import { getSiteSetting } from "@/lib/services/site-settings";
+import { getSiteSettings } from "@/lib/services/site-settings";
 import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
@@ -17,18 +17,17 @@ export default async function VisaPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
-  const [descOverride, titleOverride, taglineOverride, whoForOverride, documentsOverride, faqOverride, processOverride, deadlinesOverride, outcomesOverride, risksOverride] = await Promise.all([
-    getSiteSetting("services.immigration.desc"),
-    getSiteSetting("services.immigration.title"),
-    getSiteSetting("services.immigration.tagline"),
-    getSiteSetting("services.immigration.whoFor"),
-    getSiteSetting("services.immigration.documents"),
-    getSiteSetting("services.immigration.faq"),
-    getSiteSetting("services.immigration.process"),
-    getSiteSetting("services.immigration.deadlines"),
-    getSiteSetting("services.immigration.outcomes"),
-    getSiteSetting("services.immigration.risks"),
-  ]);
+  const settings = await getSiteSettings();
+  const descOverride = settings["services.immigration.desc"];
+  const titleOverride = settings["services.immigration.title"];
+  const taglineOverride = settings["services.immigration.tagline"];
+  const whoForOverride = settings["services.immigration.whoFor"];
+  const documentsOverride = settings["services.immigration.documents"];
+  const faqOverride = settings["services.immigration.faq"];
+  const processOverride = settings["services.immigration.process"];
+  const deadlinesOverride = settings["services.immigration.deadlines"];
+  const outcomesOverride = settings["services.immigration.outcomes"];
+  const risksOverride = settings["services.immigration.risks"];
   return (
     <>
       <LegalServiceJsonLd

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
-import { getSiteSetting } from "@/lib/services/site-settings";
+import { getSiteSettings } from "@/lib/services/site-settings";
 import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
@@ -17,18 +17,17 @@ export default async function AppealPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
-  const [descOverride, titleOverride, taglineOverride, whoForOverride, documentsOverride, faqOverride, processOverride, deadlinesOverride, outcomesOverride, risksOverride] = await Promise.all([
-    getSiteSetting("services.appeal.desc"),
-    getSiteSetting("services.appeal.title"),
-    getSiteSetting("services.appeal.tagline"),
-    getSiteSetting("services.appeal.whoFor"),
-    getSiteSetting("services.appeal.documents"),
-    getSiteSetting("services.appeal.faq"),
-    getSiteSetting("services.appeal.process"),
-    getSiteSetting("services.appeal.deadlines"),
-    getSiteSetting("services.appeal.outcomes"),
-    getSiteSetting("services.appeal.risks"),
-  ]);
+  const settings = await getSiteSettings();
+  const descOverride = settings["services.appeal.desc"];
+  const titleOverride = settings["services.appeal.title"];
+  const taglineOverride = settings["services.appeal.tagline"];
+  const whoForOverride = settings["services.appeal.whoFor"];
+  const documentsOverride = settings["services.appeal.documents"];
+  const faqOverride = settings["services.appeal.faq"];
+  const processOverride = settings["services.appeal.process"];
+  const deadlinesOverride = settings["services.appeal.deadlines"];
+  const outcomesOverride = settings["services.appeal.outcomes"];
+  const risksOverride = settings["services.appeal.risks"];
   return (
     <>
       <LegalServiceJsonLd

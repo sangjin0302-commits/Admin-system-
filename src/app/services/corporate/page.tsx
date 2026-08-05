@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { ServicePage } from "@/components/public/service-page";
-import { getSiteSetting } from "@/lib/services/site-settings";
+import { getSiteSettings } from "@/lib/services/site-settings";
 import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
@@ -17,18 +17,17 @@ export default async function CorporatePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const lang = (await searchParams).lang === "en" ? "en" : "ko";
-  const [descOverride, titleOverride, taglineOverride, whoForOverride, documentsOverride, faqOverride, processOverride, deadlinesOverride, outcomesOverride, risksOverride] = await Promise.all([
-    getSiteSetting("services.corporate.desc"),
-    getSiteSetting("services.corporate.title"),
-    getSiteSetting("services.corporate.tagline"),
-    getSiteSetting("services.corporate.whoFor"),
-    getSiteSetting("services.corporate.documents"),
-    getSiteSetting("services.corporate.faq"),
-    getSiteSetting("services.corporate.process"),
-    getSiteSetting("services.corporate.deadlines"),
-    getSiteSetting("services.corporate.outcomes"),
-    getSiteSetting("services.corporate.risks"),
-  ]);
+  const settings = await getSiteSettings();
+  const descOverride = settings["services.corporate.desc"];
+  const titleOverride = settings["services.corporate.title"];
+  const taglineOverride = settings["services.corporate.tagline"];
+  const whoForOverride = settings["services.corporate.whoFor"];
+  const documentsOverride = settings["services.corporate.documents"];
+  const faqOverride = settings["services.corporate.faq"];
+  const processOverride = settings["services.corporate.process"];
+  const deadlinesOverride = settings["services.corporate.deadlines"];
+  const outcomesOverride = settings["services.corporate.outcomes"];
+  const risksOverride = settings["services.corporate.risks"];
   return (
     <>
       <LegalServiceJsonLd
