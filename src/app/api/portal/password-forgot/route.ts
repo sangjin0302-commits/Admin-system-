@@ -53,7 +53,8 @@ export async function POST(request: Request) {
       variables: { resetUrl }
     });
 
-    logger.debug("[password-forgot] reset link generated:", resetUrl);
+    // 재설정 토큰은 로그에 남기지 않는다(로그 접근 시 계정탈취 방지). 발급 사실만 기록.
+    logger.debug("[password-forgot] reset link generated for client", client.id);
   }
 
   return NextResponse.json({ ok: true });

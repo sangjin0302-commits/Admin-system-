@@ -20,6 +20,7 @@ export default async function StatusPage() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000);
 
+  // 공개 신뢰 대시보드 — DB 장애 시 500 대신 0으로 우아하게 폴백(홈 페이지 패턴).
   const [activeCases, respondedInquiries, closedThisMonth, closedLast7Days] =
     await Promise.all([
       prisma.caseMatter.count({
@@ -28,27 +29,29 @@ export default async function StatusPage() {
             notIn: [CaseMatterStatus.CLOSED, CaseMatterStatus.CANCELLED],
           },
         },
-      }),
+      }).catch(() => 0),
       prisma.inquiry.findMany({
         where: {
           firstResponseAt: { not: null },
           createdAt: { gte: thirtyDaysAgo },
         },
         select: { createdAt: true, firstResponseAt: true },
-      }),
+        take: 500,
+      }).catch(() => [] as Array<{ createdAt: Date; firstResponseAt: Date | null }>),
       prisma.caseMatter.count({
         where: {
           status: CaseMatterStatus.CLOSED,
           closedAt: { gte: monthStart },
         },
-      }),
+      }).catch(() => 0),
       prisma.caseMatter.findMany({
         where: {
           status: CaseMatterStatus.CLOSED,
           closedAt: { gte: sevenDaysAgo },
         },
         select: { closedAt: true },
-      }),
+        take: 500,
+      }).catch(() => [] as Array<{ closedAt: Date | null }>),
     ]);
 
   // 평균 첫 응답 시간 (시간 단위)

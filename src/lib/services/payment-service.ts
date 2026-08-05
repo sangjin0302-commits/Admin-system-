@@ -378,8 +378,9 @@ export async function getPaymentStats() {
 export function verifyTossWebhook(rawBody: string, signature: string | null): boolean {
   const secret = process.env.TOSS_WEBHOOK_SECRET?.trim();
   if (!secret) {
-    logger.warn("[payment-service] TOSS_WEBHOOK_SECRET 미설정 — 시그니처 검증 건너뜀");
-    return true;
+    // fail-closed: 시크릿 미설정이면 위조 웹훅으로 결제상태 조작 못 하게 거부.
+    logger.warn("[payment-service] TOSS_WEBHOOK_SECRET 미설정 — 웹훅 거부(fail-closed)");
+    return false;
   }
   if (!signature) return false;
   try {

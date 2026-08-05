@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getQuestion, incrementView } from "@/lib/services/community-service";
+import { sanitizeHtml } from "@/lib/utils/sanitize-html";
 
 type Params = { id: string };
 
@@ -90,7 +91,7 @@ export default async function CommunityDetailPage({
             <div
               className="prose prose-sm max-w-none text-text-strong"
               // eslint-disable-next-line react/no-danger
-              dangerouslySetInnerHTML={{ __html: q.answer }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(q.answer) }}
             />
             {q.answeredAt && (
               <p className="mt-4 text-xs text-text-muted">

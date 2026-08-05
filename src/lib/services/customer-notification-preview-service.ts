@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { prisma } from "@/lib/prisma/client";
 import { buildCustomerTrackingNoticeTemplate } from "@/lib/services/customer-tracking-notice-template";
+import { maskEmail as maskEmailCanonical } from "@/lib/auth/mask-email";
 
 export const CUSTOMER_NOTIFICATION_MESSAGE_VERSION = "tracking-notice-v1";
 
@@ -76,17 +77,11 @@ function hasText(value: string | null | undefined) {
   return Boolean(value?.trim());
 }
 
+// CI 로 잠긴 정본(mask-email)에 위임 — PII 마스킹 계약 일원화(로컬 중복 제거).
 function maskEmail(value: string | null | undefined) {
-  const trimmed = value?.trim().toLowerCase();
+  const trimmed = value?.trim();
   if (!trimmed) return "";
-
-  const atIndex = trimmed.indexOf("@");
-  if (atIndex <= 0) return "***";
-
-  const local = trimmed.slice(0, atIndex);
-  const domain = trimmed.slice(atIndex + 1);
-  const first = local[0] ?? "*";
-  return `${first}***@${domain}`;
+  return maskEmailCanonical(trimmed);
 }
 
 function maskPhone(value: string | null | undefined) {

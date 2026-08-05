@@ -53,7 +53,9 @@ export async function listPublicTestimonials(): Promise<PublicTestimonial[]> {
   try {
     const rows = await prisma.testimonial.findMany({
       where: { published: true },
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }]
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+      select: { quote: true, author: true, context: true, category: true },
+      take: 12, // 홈 노출 상한 — 무제한 findMany 방지
     });
     if (rows.length > 0) {
       return rows.map((r) => ({

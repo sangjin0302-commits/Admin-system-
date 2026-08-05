@@ -293,6 +293,9 @@ export default async function PublicMarketingHomePage({
   // 로고 (DB → /logo.webp fallback)
   const heroLogoRow = await prisma.siteSetting.findUnique({ where: { key: "image.logo" } }).catch(() => null);
   let heroLogo = heroLogoRow?.value || "/logo.webp";
+  // 대표 사진 슬롯 (image.aboutPhoto) — 설정 시 Lead Attorney 섹션에 인물 사진 노출.
+  const aboutPhotoRow = await prisma.siteSetting.findUnique({ where: { key: "image.aboutPhoto" } }).catch(() => null);
+  const aboutPhoto = aboutPhotoRow?.value?.trim() || "";
   const [
     holoLogoEnabled,
     personalizationEnabled,
@@ -631,10 +634,29 @@ export default async function PublicMarketingHomePage({
       {/* ═══════════════ 대표 행정사 프로필 ═══════════════ */}
       <section className="ethos-band ethos-band-soft py-24 sm:py-28" aria-labelledby="lead-attorney-heading">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          {/* 사진/로고 카드는 제거했다. 세로 4:5 블록이 화면을 크게 차지하는 데 비해
-              전하는 정보가 없었다. 이름·자격·CTA 만 한 단으로 둔다.
-              사진을 쓰려면 image.aboutPhoto 설정 + 이 자리에 슬롯을 되살리면 된다. */}
-          <div className="mx-auto max-w-3xl">
+          {/* 대표 사진 슬롯: image.aboutPhoto 설정 시 인물 사진 + 텍스트 2단,
+              미설정 시 텍스트만 1단(회귀 없음). */}
+          <div
+            className={
+              aboutPhoto
+                ? "mx-auto grid max-w-5xl items-center gap-10 sm:gap-14 lg:grid-cols-[0.8fr_1.2fr]"
+                : "mx-auto max-w-3xl"
+            }
+          >
+            {aboutPhoto && (
+              <Reveal className="flex justify-center lg:justify-start">
+                <div className="relative aspect-[4/5] w-full max-w-xs overflow-hidden rounded-[24px] border border-gold/30 shadow-floating">
+                  <Image
+                    src={aboutPhoto}
+                    alt={lang === "en" ? "Lead administrative attorney at ETHOS" : "에토스 대표 행정사"}
+                    fill
+                    className="object-cover"
+                    unoptimized={aboutPhoto.startsWith("http")}
+                    sizes="(max-width: 1024px) 20rem, 22rem"
+                  />
+                </div>
+              </Reveal>
+            )}
             {/* 우: 이름 · 자격 요약 · CTA */}
             <Reveal delay={1}>
               <div>
