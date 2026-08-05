@@ -33,7 +33,10 @@ export function buildGazetteColumnDraft(item: GazetteItem): GazetteColumnDraft {
     ...(safeUrl ? [`> 원문: ${safeUrl}`] : []),
     "",
     "## 무엇이 바뀌었나",
-    "(관보 원문의 핵심 변경 내용을 1~2문단으로 정리 — 원문 확인 후 사실대로 작성)",
+    // 관보 요약이 있으면 자동 인용해 초안 시작점 제공(사람이 원문 확인 후 보완).
+    item.summary && item.summary.trim()
+      ? `${item.summary.trim()}\n\n(위는 관보 요약 자동 인용 — 원문 확인 후 사실 검증·보완)`
+      : "(관보 원문의 핵심 변경 내용을 1~2문단으로 정리 — 원문 확인 후 사실대로 작성)",
     "",
     "## 누구에게 영향이 있나",
     "(대상·요건을 정리)",

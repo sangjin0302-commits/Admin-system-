@@ -64,6 +64,23 @@ export function aggregateLandingPerformance(
   return out.sort((a, b) => rank[a.status] - rank[b.status] || b.impressions - a.impressions);
 }
 
+/**
+ * 삭제 제안 대상: 생성 후 minAgeDays 이상 지났는데 여전히 노출 적음(cold)+클릭 0.
+ * low_ctr(노출은 있는데 클릭 0)은 개선 대상이지 삭제 대상이 아니므로 제외.
+ */
+export function isLandingCleanupCandidate(
+  status: LandingPerfStatus,
+  clicks: number,
+  createdAtMs: number,
+  nowMs: number,
+  minAgeDays = 30
+): boolean {
+  if (clicks > 0) return false;
+  if (status !== "cold") return false;
+  const ageDays = (nowMs - createdAtMs) / 86_400_000;
+  return ageDays >= minAgeDays;
+}
+
 export const LANDING_PERF_STATUS_LABEL: Record<LandingPerfStatus, string> = {
   active: "유입 있음",
   low_ctr: "개선 필요(노출↑ 클릭0)",

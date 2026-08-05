@@ -117,6 +117,12 @@ jobs:
     # 다르게 해석해 "Unable to open the database file"(Error 14) 나던 것 고정.
     env:
       DATABASE_URL: file:${{ github.workspace }}/prisma/dev.db
+      # admin-auth 미설정 시 미들웨어가 503 fail-close → 스펙(401 기대)이 깨짐.
+      # CI 전용 더미값(실서버 아님)을 넣어 미인증 요청이 401 로 응답하게 한다.
+      ADMIN_BASIC_AUTH_USER: ci-admin
+      ADMIN_BASIC_AUTH_PASSWORD: ci-admin-pass
+      # 배치 크론 라우트가 CRON_SECRET 없으면 500 → 스펙(401)이 깨짐. 더미 시크릿.
+      CRON_SECRET: ci-cron-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -33,8 +33,16 @@ check("섹션 골격 포함", d.markdown.includes("## 무엇이 바뀌었나") &
 const bad = buildGazetteColumnDraft(item({ title: "공고", url: "javascript:alert(1)" }));
 check("javascript: url 미포함", !bad.markdown.includes("javascript:"));
 
+// 요약 자동 인용
+const withSummary = buildGazetteColumnDraft(
+  item({ title: "고시 개정", summary: "체류자격 변경 신고 기한이 30일로 단축됩니다." })
+);
+check("요약 자동 인용", withSummary.markdown.includes("체류자격 변경 신고 기한이 30일로 단축됩니다."));
+check("요약 인용 캡션", withSummary.markdown.includes("관보 요약 자동 인용"));
+
 // 값 없는 줄 생략
 const bare = buildGazetteColumnDraft(item({ title: "단순 공고" }));
+check("요약 없으면 플레이스홀더", bare.markdown.includes("핵심 변경 내용을 1~2문단"));
 check("메타 없으면 발령기관 줄 없음", !bare.markdown.includes("발령기관"));
 check("서비스 매칭 없으면 일반 CTA", bare.markdown.includes("관련 사안은 [무료 상담 신청](/intake)"));
 

@@ -4,6 +4,7 @@
  */
 import {
   aggregateLandingPerformance,
+  isLandingCleanupCandidate,
   type GscQueryRow,
   type LandingPerfInput,
 } from "../../src/lib/services/landing-performance";
@@ -42,6 +43,16 @@ check("귀화 low_ctr(노출40 클릭0)", by("귀화").status === "low_ctr");
 check("법인설립 cold(매칭없음)", by("법인설립").status === "cold" && by("법인설립").impressions === 0);
 // 정렬: low_ctr 먼저
 check("정렬 low_ctr 최상단", perf[0].status === "low_ctr");
+
+// 삭제 제안: cold + 클릭0 + 30일+ 경과
+const NOW = 1_700_000_000_000;
+const old = NOW - 40 * 86_400_000;
+const fresh = NOW - 5 * 86_400_000;
+check("cold+0클릭+40일 → 삭제 제안", isLandingCleanupCandidate("cold", 0, old, NOW) === true);
+check("cold+0클릭+5일 → 아직 아님", isLandingCleanupCandidate("cold", 0, fresh, NOW) === false);
+check("클릭 있으면 제외", isLandingCleanupCandidate("cold", 3, old, NOW) === false);
+check("low_ctr 은 개선대상(제외)", isLandingCleanupCandidate("low_ctr", 0, old, NOW) === false);
+check("active 제외", isLandingCleanupCandidate("active", 0, old, NOW) === false);
 
 if (failed > 0) {
   console.error(`\n[landing-performance] FAILED ${failed}건`);

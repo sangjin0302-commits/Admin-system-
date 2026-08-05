@@ -7,6 +7,7 @@ import { getExtraKeywordLandings } from "@/lib/services/keyword-landing-service"
 import { BASE_KEYWORD_LANDINGS } from "@/lib/constants/keyword-landings";
 import {
   aggregateLandingPerformance,
+  isLandingCleanupCandidate,
   LANDING_PERF_STATUS_LABEL,
 } from "@/lib/services/landing-performance";
 import { notFound } from "next/navigation";
@@ -62,6 +63,8 @@ export default async function LandingGapsPage() {
     queries.map((q) => ({ query: q.query, clicks: q.clicks, impressions: q.impressions }))
   );
   const extraSlugs = new Set(extras.map((e) => e.slug));
+  const nowMs = Date.now();
+  const extraCreatedAtMs = new Map(extras.map((e) => [e.slug, Date.parse(e.createdAt) || nowMs]));
 
   return (
     <div className="space-y-6">
@@ -154,7 +157,21 @@ export default async function LandingGapsPage() {
                       </span>
                     </td>
                     <td className="py-2 text-right">
-                      {extraSlugs.has(p.term) ? <DeleteLandingButton slug={p.term} /> : <span className="text-[11px] text-text-muted">기본</span>}
+                      {extraSlugs.has(p.term) ? (
+                        <span className="inline-flex items-center justify-end gap-1.5">
+                          {isLandingCleanupCandidate(p.status, p.clicks, extraCreatedAtMs.get(p.term) ?? nowMs, nowMs) && (
+                            <span
+                              className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700"
+                              title="30일+ 노출 적음·클릭 0 — 삭제 권장"
+                            >
+                              삭제 제안
+                            </span>
+                          )}
+                          <DeleteLandingButton slug={p.term} />
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-text-muted">기본</span>
+                      )}
                     </td>
                   </tr>
                 ))}

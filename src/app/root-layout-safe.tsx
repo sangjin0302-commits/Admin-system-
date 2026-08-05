@@ -11,6 +11,7 @@ import { Analytics } from "@/components/public/analytics";
 import { CookieConsent } from "@/components/public/cookie-consent";
 import { BottomSheetMount } from "@/components/public/bottom-sheet-mount";
 import { LiveChat } from "@/components/public/live-chat";
+import { KakaoChannelFab } from "@/components/public/kakao-channel-fab";
 import { LocalBusinessJsonLd } from "@/components/public/json-ld";
 import { PublicOnly } from "@/components/public/public-only";
 import { PWARegister } from "@/components/public/pwa-register";
@@ -138,7 +139,9 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
           }}
         />
         <PublicOnly>
-          {/* 상담 채널은 FloatingContact(우하단 항상 노출)로 통합 — 카카오 포함 */}
+          {/* 우하단 항상 노출 카카오 상담 FAB(서버 렌더). LiveChat 은 Tawk.to 위젯이
+              설정된 경우에만 로드(미설정 시 null). */}
+          <KakaoChannelFab />
           <LiveChat />
           <CookieConsent />
         </PublicOnly>
