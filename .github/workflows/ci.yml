@@ -113,6 +113,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     continue-on-error: true
     timeout-minutes: 30
+    # 절대경로 DB — db:push 와 next start(.next-local 런타임)가 상대경로를 서로
+    # 다르게 해석해 "Unable to open the database file"(Error 14) 나던 것 고정.
+    env:
+      DATABASE_URL: file:${{ github.workspace }}/prisma/dev.db
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -126,5 +130,3 @@ jobs:
       - run: npm run db:push:sqlite
       - run: npm run build
       - run: npm run test:e2e
-        env:
-          DATABASE_URL: file:./prisma/dev.db
