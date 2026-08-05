@@ -1,6 +1,6 @@
 import { NetworkApplyClient } from "./client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // ISR — 정적 콘텐츠, 함수호출 절감(설정 저장 시 자연 만료)
 
 export default function NetworkLandingPage() {
   return (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getVipPlans } from "@/lib/services/vip-membership-service";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // ISR — 정적 콘텐츠, 함수호출 절감(설정 저장 시 자연 만료)
 export const metadata = { title: "VIP 회원제 · ETHOS" };
 
 const TESTIMONIALS = [

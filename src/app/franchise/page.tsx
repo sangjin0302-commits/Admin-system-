@@ -3,7 +3,7 @@ import { FRANCHISE_PLANS } from "@/lib/services/franchise-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // ISR — 정적 콘텐츠, 함수호출 절감(설정 저장 시 자연 만료)
 export const metadata = { title: "ETHOS 가맹 · 우리 사무소에도 도입하기" };
 
 export default async function FranchiseLandingPage() {

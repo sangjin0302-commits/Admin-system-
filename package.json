@@ -42,6 +42,7 @@
     "test:admin-rbac-guard": "tsx scripts/tests/admin-rbac-guard-check.ts",
     "test:ai-budget": "tsx scripts/tests/ai-budget-check.ts",
     "test:home-copy": "tsx scripts/tests/home-copy-parsers-check.ts",
+    "test:unit": "node scripts/run-unit-tests.mjs",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "clean": "node scripts/clean-build.mjs",
