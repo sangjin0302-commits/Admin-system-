@@ -73,11 +73,23 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  silent: !process.env.CI,
-  widenClientFileUpload: true,
-  disableLogger: true,
-  tunnelRoute: "/monitoring",
-});
+// Sentry 소스맵 빌드 플러그인은 메모리를 많이 써서 Vercel 빌드가 OOM(exit 137)로
+// 죽는 원인이 됐다. 실제 업로드가 가능한 경우(SENTRY_AUTH_TOKEN + org/project)에만
+// 적용하고, 그때도 widenClientFileUpload 를 꺼서 처리량을 줄인다. 런타임 에러 수집
+// (sentry.*.config)은 이 래퍼와 무관하게 계속 동작한다.
+const sentryUploadEnabled = !!(
+  process.env.SENTRY_AUTH_TOKEN &&
+  process.env.SENTRY_ORG &&
+  process.env.SENTRY_PROJECT
+);
+
+export default sentryUploadEnabled
+  ? withSentryConfig(nextConfig, {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      silent: !process.env.CI,
+      widenClientFileUpload: false,
+      disableLogger: true,
+      tunnelRoute: "/monitoring",
+    })
+  : nextConfig;
