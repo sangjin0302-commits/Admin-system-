@@ -81,6 +81,23 @@ export function isLandingCleanupCandidate(
   return ageDays >= minAgeDays;
 }
 
+/**
+ * 성과 목록에서 삭제 후보(DB 랜딩만) 추출. createdAtBySlug 에 든 slug(=DB 확장)만
+ * 대상. 주간 크론 리포트용.
+ */
+export function pickLandingCleanupCandidates(
+  perf: LandingPerfRow[],
+  createdAtBySlug: Map<string, number>,
+  nowMs: number
+): Array<{ term: string; label: string }> {
+  return perf
+    .filter((p) => {
+      const created = createdAtBySlug.get(p.term);
+      return created !== undefined && isLandingCleanupCandidate(p.status, p.clicks, created, nowMs);
+    })
+    .map((p) => ({ term: p.term, label: p.label }));
+}
+
 export const LANDING_PERF_STATUS_LABEL: Record<LandingPerfStatus, string> = {
   active: "유입 있음",
   low_ctr: "개선 필요(노출↑ 클릭0)",

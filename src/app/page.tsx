@@ -529,16 +529,16 @@ export default async function PublicMarketingHomePage({
             </div>
           </Reveal>
         </div>
-      </section>
 
-      {/* ═══════════════ 신뢰 통계 (soft band) ═══════════════ */}
-      <section className="ethos-band ethos-band-soft py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <Reveal>
-            <TrustStats
-          overrides={[site["home.stat1"], site["home.stat2"], site["home.stat3"], site["home.stat4"]]}
-        />
-          </Reveal>
+        {/* 히어로 실적 스트립 — 첫인상(3초)에 결과 숫자를 바로 노출. */}
+        <div className="relative border-t border-gold/20 bg-surface/40 backdrop-blur-sm">
+          <div className="mx-auto max-w-6xl px-4 pb-14 pt-10 sm:px-6">
+            <Reveal>
+              <TrustStats
+                overrides={[site["home.stat1"], site["home.stat2"], site["home.stat3"], site["home.stat4"]]}
+              />
+            </Reveal>
+          </div>
         </div>
       </section>
 

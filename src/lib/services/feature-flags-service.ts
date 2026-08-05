@@ -50,6 +50,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "calendar_sync", label: "캘린더 동기", category: "operations", default: true, description: "Google 캘린더 양방향 동기" },
   { key: "finance_report", label: "재무 리포트", category: "operations", default: true, description: "재무 리포트 자동 생성" },
   { key: "gazette_weekly_digest", label: "주간 관보 요약 발송", category: "operations", default: false, description: "매주 지난 7일 관보를 텔레그램(+선택 이메일)으로 내부 발송" },
+  { key: "landing_cleanup_report", label: "주간 랜딩 정리 리포트", category: "operations", default: false, description: "30일+ 노출 적음·클릭0 인 DB 키워드 랜딩 삭제 후보를 주간 텔레그램 알림(자동삭제 안 함)" },
   { key: "bottom_sheet_consult", label: "모바일 바텀시트 상담", category: "ux", default: true, description: "모바일 하단 바텀시트 상담", public: true, locked: true, lockReason: "모바일 상담 전환 핵심 진입점 잠금 2026-07-22" },
   { key: "sticky_cta", label: "Sticky CTA", category: "ux", default: true, description: "고정 CTA 버튼", public: true, locked: true, lockReason: "공개 페이지 주요 전환 요소 잠금 2026-07-22" },
   { key: "portal_realtime", label: "포털 실시간 알림", category: "ux", default: true, description: "고객 포털 실시간 알림 (SSE)" },

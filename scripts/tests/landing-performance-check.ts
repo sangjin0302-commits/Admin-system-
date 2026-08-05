@@ -5,6 +5,7 @@
 import {
   aggregateLandingPerformance,
   isLandingCleanupCandidate,
+  pickLandingCleanupCandidates,
   type GscQueryRow,
   type LandingPerfInput,
 } from "../../src/lib/services/landing-performance";
@@ -53,6 +54,22 @@ check("cold+0클릭+5일 → 아직 아님", isLandingCleanupCandidate("cold", 0
 check("클릭 있으면 제외", isLandingCleanupCandidate("cold", 3, old, NOW) === false);
 check("low_ctr 은 개선대상(제외)", isLandingCleanupCandidate("low_ctr", 0, old, NOW) === false);
 check("active 제외", isLandingCleanupCandidate("active", 0, old, NOW) === false);
+
+// pick: DB 랜딩(createdAt 있는 것)만, 삭제후보만
+const perfRows = aggregateLandingPerformance(
+  [
+    { term: "old-dead", label: "죽은 랜딩", tokens: ["없는키워드xyz"] }, // 매칭 0 → cold
+    { term: "귀화", label: "귀화", tokens: ["귀화"] }, // 아래서 클릭 발생 → active
+  ],
+  [{ query: "귀화 요건", clicks: 2, impressions: 30 }]
+);
+const createdMap = new Map<string, number>([
+  ["old-dead", old], // 40일 전 DB 랜딩
+  // "귀화"는 map 에 없음(기본 랜딩) → 후보 제외
+]);
+const picks = pickLandingCleanupCandidates(perfRows, createdMap, NOW);
+check("삭제후보 1건(old-dead)", picks.length === 1 && picks[0].term === "old-dead");
+check("기본 랜딩(귀화)은 후보 아님", !picks.some((p) => p.term === "귀화"));
 
 if (failed > 0) {
   console.error(`\n[landing-performance] FAILED ${failed}건`);
