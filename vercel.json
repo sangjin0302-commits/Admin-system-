@@ -14,6 +14,10 @@
       "schedule": "0 1 * * *"
     },
     {
+      "path": "/api/cron/naver-rss-sync",
+      "schedule": "0 5 * * *"
+    },
+    {
       "path": "/api/cron/batch/infra-maintenance",
       "schedule": "0 3 * * *"
     },
