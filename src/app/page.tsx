@@ -376,7 +376,7 @@ export default async function PublicMarketingHomePage({
           href="/quick-check"
           className="ml-1 inline-flex items-center gap-1 font-semibold text-primary underline decoration-gold/60 underline-offset-2 transition-colors hover:text-gold-deep"
         >
-          {t.deadlineCta}
+          {tt("deadlineCta", t.deadlineCta)}
           <span aria-hidden>→</span>
         </Link>
       </div>
@@ -384,7 +384,7 @@ export default async function PublicMarketingHomePage({
       {/* 공지 배너 (운영란에서 입력 시 표시) */}
       {noticeBanner && (
         <div className="border-b border-gold/30 bg-primary px-4 py-2.5 text-center text-sm text-white">
-          <span className="font-serif text-gold-soft">{t.noticeLabel}</span> · {noticeBanner}
+          <span className="font-serif text-gold-soft">{tt("noticeLabel", t.noticeLabel)}</span> · {noticeBanner}
         </div>
       )}
 
@@ -491,7 +491,7 @@ export default async function PublicMarketingHomePage({
             </Reveal>
 
             <Reveal delay={4}>
-              <p className="mt-3 text-sm leading-5 text-text-muted">{t.safetyNote}</p>
+              <p className="mt-3 text-sm leading-5 text-text-muted">{tt("safetyNote", t.safetyNote)}</p>
             </Reveal>
           </div>
 
@@ -536,7 +536,7 @@ export default async function PublicMarketingHomePage({
 
                 {/* 권위 한 줄 */}
                 <p className="mt-6 text-xs leading-6 text-white/85">
-                  {t.cardAuthority.split("\n").map((line, i) => (
+                  {tt("cardAuthority", t.cardAuthority).split("\n").map((line, i) => (
                     <span key={i}>
                       {line}
                       {i === 0 && <br />}
@@ -609,11 +609,11 @@ export default async function PublicMarketingHomePage({
                   </ul>
                   <div className="relative mt-auto flex items-center justify-between pt-6">
                     <span className="inline-flex items-center gap-1 font-serif text-sm font-semibold text-primary transition-colors group-hover:text-gold-deep">
-                      {t.practiceDetail}
+                      {tt("practiceDetail", t.practiceDetail)}
                       <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-lg border border-gold/40 bg-gold-soft/30 px-3 py-1.5 font-serif text-xs font-bold text-gold-deep transition-colors group-hover:bg-gold-soft/60">
-                      {t.practiceConsult}
+                      {tt("practiceConsult", t.practiceConsult)}
                     </span>
                   </div>
                 </Link>
@@ -679,10 +679,10 @@ export default async function PublicMarketingHomePage({
               <div>
                 <p className="ethos-eyebrow">Lead Attorney</p>
                 <h2 id="lead-attorney-heading" className="ethos-display mt-3 text-3xl sm:text-4xl">
-                  {t.leadTitle}
+                  {tt("leadTitle", t.leadTitle)}
                 </h2>
                 <p className="mt-4 max-w-lg text-sm leading-7 text-text-muted">
-                  {t.leadDesc}
+                  {tt("leadDesc", t.leadDesc)}
                 </p>
                 <ul className="mt-7 space-y-3">
                   {t.leadBullets.map((item) => (
@@ -697,7 +697,7 @@ export default async function PublicMarketingHomePage({
                     href={lang === "en" ? "/about?lang=en" : "/about"}
                     className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-gold/50 bg-surface px-7 text-sm font-bold text-primary shadow-sm transition-all duration-300 hover:border-gold hover:bg-gold-soft/40"
                   >
-                    {t.profileCta}
+                    {tt("profileCta", t.profileCta)}
                   </Link>
                 </div>
               </div>
@@ -738,17 +738,17 @@ export default async function PublicMarketingHomePage({
                 ) : (
                   <>
                 <p className="mt-7 max-w-md text-sm leading-8 text-white/75">
-                  {t.brandPara1}
+                  {tt("brandPara1", t.brandPara1)}
                 </p>
                 <p className="mt-4 max-w-md text-sm leading-8 text-white/75">
-                  {t.brandPara2Pre}
+                  {tt("brandPara2Pre", t.brandPara2Pre)}
                   <span className="ethos-quote mx-1 text-gold-soft">Logos · Pathos · Ethos</span>
-                  {t.brandPara2Post}
+                  {tt("brandPara2Post", t.brandPara2Post)}
                 </p>
                   </>
                 )}
                 <p className="ethos-quote mt-8 border-l-2 border-gold/60 pl-5 text-lg text-gold-soft">
-                  {t.brandQuote}
+                  {tt("brandQuote", t.brandQuote)}
                 </p>
               </div>
             </Reveal>
@@ -783,14 +783,14 @@ export default async function PublicMarketingHomePage({
           <Reveal>
             <div className="flex flex-col items-center gap-4 rounded-2xl border border-gold/30 bg-gold-soft/20 px-8 py-7 text-center sm:flex-row sm:justify-between sm:text-left">
               <div>
-                <p className="font-serif text-base font-bold text-primary">{t.pricingTitle}</p>
-                <p className="mt-1 text-sm text-text-muted">{t.pricingDesc}</p>
+                <p className="font-serif text-base font-bold text-primary">{tt("pricingTitle", t.pricingTitle)}</p>
+                <p className="mt-1 text-sm text-text-muted">{tt("pricingDesc", t.pricingDesc)}</p>
               </div>
               <Link
                 href={lang === "en" ? "/pricing-calculator?lang=en" : "/pricing-calculator"}
                 className="ethos-cta-shine inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-gold/50 bg-surface px-6 text-sm font-bold text-primary shadow-sm transition hover:border-gold hover:bg-gold-soft/40"
               >
-                {t.pricingCta}
+                {tt("pricingCta", t.pricingCta)}
               </Link>
             </div>
           </Reveal>
@@ -877,7 +877,7 @@ export default async function PublicMarketingHomePage({
             <Reveal delay={1}>
               <div>
                 <p className="ethos-eyebrow">Office Principles</p>
-                <h2 className="ethos-display mt-4 text-2xl">{t.officeTitle}</h2>
+                <h2 className="ethos-display mt-4 text-2xl">{tt("officeTitle", t.officeTitle)}</h2>
                 <div className="mt-7 grid gap-4 sm:grid-cols-2">
                   {t.officeCards.map((p) => (
                     <div
@@ -990,7 +990,7 @@ export default async function PublicMarketingHomePage({
                     href="/portal"
                     className="inline-flex h-12 items-center justify-center rounded-lg border border-gold/60 bg-transparent px-7 text-sm font-semibold text-gold-soft transition hover:bg-gold/10"
                   >
-                    {t.ctaTrack}
+                    {tt("ctaTrack", t.ctaTrack)}
                   </Link>
                 </div>
               </div>
