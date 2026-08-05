@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 import {
   createSsoConfig,
   deleteSsoConfig,
@@ -20,6 +21,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const guard = await requireRole(req, ["SUPER"]);
+  if (!guard.ok) return guard.response;
+
   const body = (await req.json().catch(() => null)) as
     | { action?: "create" | "delete"; orgId?: string; config?: (Omit<SsoConfig, "orgId" | "createdAt"> & { orgId?: string }) }
     | null;

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma/client";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 import { listAdminCredentials } from "@/lib/services/credentials";
 
 const VALID = ["CAREER", "LICENSE", "EDUCATION", "AWARD", "ACTIVITY"];
@@ -11,6 +12,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const guard = await requireRole(request, ["SUPER"]);
+  if (!guard.ok) return guard.response;
+
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ ok: false, error: "INVALID_BODY" }, { status: 400 });
 

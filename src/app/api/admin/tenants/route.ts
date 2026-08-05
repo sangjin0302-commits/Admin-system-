@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 import { createTenant, listTenants } from "@/lib/services/tenant-service";
 
 export async function GET() {
@@ -11,6 +12,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const guard = await requireRole(req, ["SUPER"]);
+  if (!guard.ok) return guard.response;
+
   try {
     const body = await req.json();
     const { name, subdomain, ownerEmail, plan } = body ?? {};

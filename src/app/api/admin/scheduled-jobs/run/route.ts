@@ -1,7 +1,11 @@
 import { createAdminRequestContext, safeReadJsonBody } from "@/lib/http/admin-api";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 import { runJob } from "@/lib/services/job-scheduler-service";
 
 export async function POST(request: Request) {
+  const guard = await requireRole(request, ["SUPER"]);
+  if (!guard.ok) return guard.response;
+
   const api = createAdminRequestContext("admin.scheduled-jobs.run");
   const parsed = await safeReadJsonBody(request);
   if (!parsed.ok) {

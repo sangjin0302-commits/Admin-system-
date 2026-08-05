@@ -39,6 +39,7 @@
     "test:site-settings-parity": "tsx scripts/tests/site-settings-parity-check.ts",
     "test:service-content-parse": "tsx scripts/tests/service-content-parse-check.ts",
     "test:security-guard": "tsx scripts/tests/security-guard-check.ts",
+    "test:admin-rbac-guard": "tsx scripts/tests/admin-rbac-guard-check.ts",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "clean": "node scripts/clean-build.mjs",

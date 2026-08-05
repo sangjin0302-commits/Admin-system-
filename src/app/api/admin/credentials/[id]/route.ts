@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@generated/prisma-client/client";
 
 import { prisma } from "@/lib/prisma/client";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 
 const VALID = ["CAREER", "LICENSE", "EDUCATION", "AWARD", "ACTIVITY"];
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  const guard = await requireRole(request, ["SUPER"]);
+  if (!guard.ok) return guard.response;
+
   const { id } = await context.params;
   const body = await request.json().catch(() => null);
   if (!id || !body) return NextResponse.json({ ok: false, error: "INVALID" }, { status: 400 });
@@ -31,6 +35,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 }
 
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const guard = await requireRole(_request, ["SUPER"]);
+  if (!guard.ok) return guard.response;
+
   const { id } = await context.params;
   if (!id) return NextResponse.json({ ok: false, error: "INVALID" }, { status: 400 });
   try {

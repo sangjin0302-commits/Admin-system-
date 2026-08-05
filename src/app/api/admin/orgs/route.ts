@@ -1,5 +1,6 @@
 import { createAdminRequestContext, safeReadJsonBody } from "@/lib/http/admin-api";
 import { prisma } from "@/lib/prisma/client";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 
 export async function GET() {
   const api = createAdminRequestContext("admin.orgs.list");
@@ -25,6 +26,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const guard = await requireRole(request, ["SUPER"]);
+  if (!guard.ok) return guard.response;
+
   const api = createAdminRequestContext("admin.orgs.create");
   const parsed = await safeReadJsonBody(request);
   if (!parsed.ok) return api.error(400, "요청 본문이 올바르지 않습니다.", { code: "INVALID_BODY" });

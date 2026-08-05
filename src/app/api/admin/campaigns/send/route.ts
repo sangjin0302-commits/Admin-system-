@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { sendCampaign } from "@/lib/services/email-campaign-service";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 
 export async function POST(req: Request) {
+  const guard = await requireRole(req, ["SUPER", "MANAGER"]);
+  if (!guard.ok) return guard.response;
+
   try {
     const body = await req.json();
     const { id } = body ?? {};

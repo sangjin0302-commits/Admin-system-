@@ -4,8 +4,12 @@ import {
   sendPush,
   sendToAllDevices,
 } from "@/lib/services/push-notification-service";
+import { requireRole } from "@/lib/services/admin-rbac-service";
 
 export async function POST(req: Request) {
+  const guard = await requireRole(req, ["SUPER", "MANAGER"]);
+  if (!guard.ok) return guard.response;
+
   try {
     const body = (await req.json()) as {
       title?: string;
