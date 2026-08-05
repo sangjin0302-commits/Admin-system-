@@ -30,6 +30,7 @@
     "test:blog-source-guard": "tsx scripts/tests/blog-source-guard-check.ts",
     "test:gazette": "tsx scripts/tests/gazette-client-check.ts",
     "test:gazette-service": "tsx scripts/tests/gazette-service-match-check.ts",
+    "test:gazette-digest": "tsx scripts/tests/gazette-digest-check.ts",
     "test:keyword-landing": "tsx scripts/tests/keyword-landing-check.ts",
     "test:mask-email": "tsx scripts/tests/mask-email-check.ts",
     "test:blog-portal-helpers": "tsx scripts/tests/blog-portal-helpers-check.ts",

@@ -4,22 +4,12 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { getTopSearchQueries } from "@/lib/services/gsc-service";
 import { getExtraKeywordLandings } from "@/lib/services/keyword-landing-service";
+import { BASE_KEYWORD_LANDINGS } from "@/lib/constants/keyword-landings";
 import { notFound } from "next/navigation";
 
-import { CreateLandingButton } from "./create-landing-button";
+import { CreateLandingButton, DeleteLandingButton } from "./create-landing-button";
 
 export const dynamic = "force-dynamic";
-
-// 하드코딩 기본 랜딩 7종. DB 로 추가된 랜딩은 런타임에 병합.
-const BASE_LANDINGS = [
-  { term: "d-8-비자", label: "D-8 비자 (기업투자)", tokens: ["d-8", "d8", "기업투자"] },
-  { term: "d-10-비자", label: "D-10 비자 (구직)", tokens: ["d-10", "d10", "구직비자"] },
-  { term: "f-2-7-비자", label: "F-2-7 비자 (점수제 거주)", tokens: ["f-2-7", "f2-7", "점수제"] },
-  { term: "귀화", label: "귀화 · 국적", tokens: ["귀화", "국적"] },
-  { term: "강제퇴거", label: "강제퇴거 대응", tokens: ["강제퇴거", "출국명령"] },
-  { term: "행정심판", label: "행정심판", tokens: ["행정심판", "이의신청"] },
-  { term: "법인설립", label: "법인 설립", tokens: ["법인설립", "회사설립"] },
-];
 
 type Landing = { term: string; label: string; tokens: string[] };
 
@@ -47,7 +37,7 @@ export default async function LandingGapsPage() {
   ]);
 
   const landings: Landing[] = [
-    ...BASE_LANDINGS,
+    ...BASE_KEYWORD_LANDINGS.map((k) => ({ term: k.term, label: k.label, tokens: k.tokens })),
     ...extras.map((e) => ({ term: e.slug, label: e.label, tokens: e.tokens })),
   ];
 
@@ -106,6 +96,26 @@ export default async function LandingGapsPage() {
           </div>
         )}
       </Card>
+
+      {extras.length > 0 && (
+        <Card className="p-5">
+          <p className="ui-kicker">생성된 랜딩 (갭에서 추가됨)</p>
+          <p className="mt-1 text-xs text-text-muted">
+            갭 파인더에서 추가한 <code>/keyword/[term]</code> 랜딩. 성과 없으면 삭제하세요.
+          </p>
+          <div className="mt-4 space-y-2">
+            {extras.map((e) => (
+              <div key={e.slug} className="flex items-center justify-between gap-3 border-b border-gold/10 pb-2">
+                <a href={`/keyword/${encodeURIComponent(e.slug)}`} className="text-xs font-medium text-gold-deep hover:underline">
+                  /keyword/{e.slug}
+                </a>
+                <span className="ml-auto text-[11px] text-text-muted">{e.label}</span>
+                <DeleteLandingButton slug={e.slug} />
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card className="p-5">
         <p className="ui-kicker">매칭된 키워드 (기존 랜딩 활용 중)</p>

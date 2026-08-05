@@ -48,3 +48,34 @@ export function CreateLandingButton({ query }: { query: string }) {
     </button>
   );
 }
+
+/** DB 로 생성된 키워드 랜딩 삭제. */
+export function DeleteLandingButton({ slug }: { slug: string }) {
+  const router = useRouter();
+  const [state, setState] = useState<"idle" | "loading" | "done">("idle");
+
+  async function remove() {
+    if (!window.confirm(`/keyword/${slug} 랜딩을 삭제할까요?`)) return;
+    setState("loading");
+    try {
+      await fetch(`/api/admin/keyword-landing?slug=${encodeURIComponent(slug)}`, { method: "DELETE" });
+      setState("done");
+      router.refresh();
+    } catch {
+      setState("idle");
+    }
+  }
+
+  if (state === "done") return <span className="text-[11px] text-text-muted">삭제됨</span>;
+
+  return (
+    <button
+      type="button"
+      onClick={remove}
+      disabled={state === "loading"}
+      className="rounded-md border border-red-300 px-2 py-0.5 text-[11px] font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+    >
+      {state === "loading" ? "삭제 중…" : "삭제"}
+    </button>
+  );
+}

@@ -184,6 +184,8 @@ export default async function GazettePage({
                         <div className="px-5 pb-4 sm:pl-[11.25rem]">
                           <Link
                             href={lang === "en" ? `${svc.href}?lang=en` : svc.href}
+                            data-funnel="gazette_to_service"
+                            data-funnel-cat={svc.href}
                             className="inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold-soft/20 px-3 py-1 text-[11px] font-bold text-gold-deep transition hover:bg-gold-soft/40"
                           >
                             {t("관련 서비스", "Related service")}: {svc.label} →

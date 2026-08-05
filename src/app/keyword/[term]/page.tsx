@@ -9,66 +9,22 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-categorizer";
 import { getKeywordLanding } from "@/lib/services/keyword-landing-service";
+import { getBaseKeywordLanding } from "@/lib/constants/keyword-landings";
 
 export const dynamic = "force-dynamic";
 
 type ResolvedKeyword = { label: string; query: string[]; description: string; deadlineNote?: string };
 
-// 하드코딩 7종 우선, 없으면 DB 확장 랜딩. 렌더 형태는 동일하게 정규화.
+// 기본 7종(단일 소스) 우선, 없으면 DB 확장 랜딩. 렌더 형태는 동일하게 정규화.
 async function resolveKeyword(decoded: string): Promise<ResolvedKeyword | null> {
-  const k = KEYWORDS[decoded];
-  if (k) return { ...k, deadlineNote: DEADLINE_NOTE[decoded] };
+  const base = getBaseKeywordLanding(decoded);
+  if (base) {
+    return { label: base.label, query: base.query, description: base.description, deadlineNote: base.deadlineNote };
+  }
   const db = await getKeywordLanding(decoded).catch(() => null);
   if (db) return { label: db.label, query: db.tokens, description: db.description, deadlineNote: db.deadlineNote };
   return null;
 }
-
-// 기한이 중요한 키워드 → 신뢰·긴급성 마이크로카피 (사실 기반, 과장 금지)
-const DEADLINE_NOTE: Record<string, string> = {
-  "행정심판": "행정심판 청구는 처분을 안 날부터 90일 이내입니다. 기한을 놓치면 청구 자체가 각하될 수 있어 빠른 검토가 중요합니다.",
-  "강제퇴거": "강제퇴거·출국명령에 대한 이의신청·행정심판은 기한이 짧습니다. 처분서를 받으셨다면 즉시 검토를 권해드립니다.",
-  "d-10-비자": "D-10 체류 기간 만료 전 전환·연장 준비가 필요합니다. 만료가 임박했다면 서둘러 검토받으세요.",
-  "f-2-7-비자": "점수·체류 요건은 심사 시점 기준으로 계산됩니다. 신청 시기에 따라 결과가 달라질 수 있어 미리 점검하는 것이 좋습니다."
-};
-
-// 허용 키워드 (행정사 핵심 검색어)
-const KEYWORDS: Record<string, { label: string; query: string[]; description: string }> = {
-  "d-8-비자": {
-    label: "D-8 비자 (기업투자)",
-    query: ["D-8", "D8", "기업투자", "투자비자"],
-    description: "외국인 창업가 D-8 비자 신청, 요건, 사업계획서, 자본금 안내 — 행정사 지상진이 정리한 실무 가이드."
-  },
-  "d-10-비자": {
-    label: "D-10 비자 (구직)",
-    query: ["D-10", "D10", "구직비자", "기술창업"],
-    description: "D-10 구직비자에서 D-8 전환, 점수제 가산점, 활동 범위 — Jean의 실무 안내."
-  },
-  "f-2-7-비자": {
-    label: "F-2-7 비자 (점수제 거주)",
-    query: ["F-2-7", "F27", "점수제", "거주비자"],
-    description: "F-2-7 점수제 거주 비자 신청 점수 계산, 필요 서류, 갱신 안내."
-  },
-  "행정심판": {
-    label: "행정심판",
-    query: ["행정심판", "재결", "청구기한"],
-    description: "행정심판 청구 90일 기한, 처분 취소, 재결 절차 — 행정사 지상진의 실무 안내."
-  },
-  "귀화": {
-    label: "귀화 · 국적",
-    query: ["귀화", "국적", "외국국적불행사"],
-    description: "일반/간이/특별 귀화, 외국국적불행사 서약 안내 — 다국어 응대 가능."
-  },
-  "법인설립": {
-    label: "법인 설립",
-    query: ["법인설립", "주식회사", "정관"],
-    description: "외국인 1인 창업 법인 vs 개인사업자, 정관 작성, 등기 준비 — Jean의 실무 가이드."
-  },
-  "강제퇴거": {
-    label: "강제퇴거 대응",
-    query: ["강제퇴거", "출국명령", "이의신청"],
-    description: "강제퇴거 명령, 출국명령 이의신청, 행정심판 대응 절차."
-  }
-};
 
 export async function generateMetadata({ params }: { params: Promise<{ term: string }> }): Promise<Metadata> {
   const { term } = await params;

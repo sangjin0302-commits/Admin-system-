@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma/client";
 import { getExtraKeywordLandings } from "@/lib/services/keyword-landing-service";
+import { BASE_KEYWORD_LANDINGS } from "@/lib/constants/keyword-landings";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethosattorney.com";
 
@@ -87,13 +88,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: "/cases", priority: 0.7 },
     { url: "/blog", priority: 0.7 },
     { url: "/keyword", priority: 0.7 },
-    { url: "/keyword/d-8-비자", priority: 0.8 },
-    { url: "/keyword/d-10-비자", priority: 0.8 },
-    { url: "/keyword/f-2-7-비자", priority: 0.8 },
-    { url: "/keyword/행정심판", priority: 0.8 },
-    { url: "/keyword/귀화", priority: 0.75 },
-    { url: "/keyword/법인설립", priority: 0.75 },
-    { url: "/keyword/강제퇴거", priority: 0.75 },
+    ...BASE_KEYWORD_LANDINGS.map((k) => ({ url: `/keyword/${k.term}`, priority: k.priority })),
     { url: "/contact", priority: 0.6 },
     { url: "/fees", priority: 0.6 },
     { url: "/track", priority: 0.5 },

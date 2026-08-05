@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { fetchGazetteList } from "@/lib/services/gazette-client";
+import { selectRecentGazette, buildGazetteDigestLines } from "@/lib/services/gazette-digest-format";
 import { sendTelegramAlert } from "@/lib/services/telegram-notify";
 import { sendEmail } from "@/lib/services/email-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
@@ -32,10 +33,7 @@ export async function GET(request: Request) {
   }
 
   const weekAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  // 날짜 있는 항목은 지난 7일로, 날짜 파싱 실패(dateMs=0)만 있으면 최신 10건으로 폴백.
-  const dated = outcome.items.filter((i) => i.dateMs > 0);
-  const recent = dated.filter((i) => i.dateMs >= weekAgoMs);
-  const picked = recent.length > 0 ? recent : dated.length > 0 ? [] : outcome.items.slice(0, 10);
+  const picked = selectRecentGazette(outcome.items, weekAgoMs);
 
   if (picked.length === 0) {
     logger.info("[cron/gazette-digest] nothing new this week");
@@ -43,13 +41,7 @@ export async function GET(request: Request) {
   }
 
   const top = picked.slice(0, 8);
-  const lines = [
-    `🗞 지난 7일 관보 ${picked.length}건`,
-    ...top.map((g) => {
-      const cat = g.category ? `[${g.category}] ` : "";
-      return `• ${cat}${g.title}`.slice(0, 180);
-    }),
-  ];
+  const lines = buildGazetteDigestLines(picked);
 
   const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   await sendTelegramAlert({

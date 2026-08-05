@@ -13,6 +13,7 @@
  */
 
 import { prisma } from "@/lib/prisma/client";
+import { BASE_KEYWORD_SLUGS } from "@/lib/constants/keyword-landings";
 
 export type KeywordLandingRecord = {
   slug: string;
@@ -27,17 +28,9 @@ export type KeywordLandingRecord = {
 const KEY_PREFIX = "kwlanding.";
 const SLUG_MAX = 48;
 
-// 하드코딩 기본 랜딩 슬러그 — DB 로 같은 슬러그를 만들면 /keyword/[term] 이 하드코딩을
+// 기본 랜딩 슬러그(단일 소스) — DB 로 같은 슬러그를 만들면 /keyword/[term] 이 기본을
 // 우선 렌더해 DB 레코드가 영영 안 보이므로(그림자) 생성 자체를 거부한다.
-const BASE_SLUGS = new Set([
-  "d-8-비자",
-  "d-10-비자",
-  "f-2-7-비자",
-  "귀화",
-  "강제퇴거",
-  "행정심판",
-  "법인설립",
-]);
+const BASE_SLUGS = new Set<string>(BASE_KEYWORD_SLUGS);
 
 /* -------------------------------------------------------------------- */
 /*  순수 헬퍼 (테스트 대상)                                              */

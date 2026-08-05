@@ -82,6 +82,7 @@ jobs:
       - run: npm run test:security-guard
       - run: npm run test:gazette
       - run: npm run test:gazette-service
+      - run: npm run test:gazette-digest
       - run: npm run test:keyword-landing
       - run: npm run test:mask-email
       - run: npm run test:blog-portal-helpers
