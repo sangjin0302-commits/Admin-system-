@@ -18,17 +18,17 @@ const SRC = join(ROOT, "src");
 
 // 아직 통과하지 못하는 테스트(트리아지 대상). 고치면 여기서 제거.
 const EXCLUDE = new Set([
+  // 아래는 소스 문자열/UI 모델을 grep 검증하는 brittle 테스트로, 대규모 리팩터
+  // 이후 다수 assert 가 스테일. 제품 버그는 아님(트리아지 확인). 별도 재작성 대상.
   "src/app/admin/document-lab/page.test.ts",
   "src/components/admin/immigration-case-detail-panel.test.ts",
   "src/lib/services/case-matter-service.test.ts",
-  "src/lib/services/customer-notification-send/__tests__/email-send.test.ts",
   "src/lib/services/lawbot-message-send-readiness-ui-model.test.ts",
   "src/lib/services/lawbot-review-approval-ui-model.test.ts",
   "src/lib/services/lawbot-review-readonly-ui-model.test.ts",
   "src/lib/services/public-marketing-pages.test.ts",
   "src/lib/services/public-root-gateway-ui-model.test.ts",
   "src/lib/services/public-track-page-ui-model.test.ts",
-  "src/lib/services/public-track-pwa-manifest.test.ts",
 ]);
 
 function walk(dir) {

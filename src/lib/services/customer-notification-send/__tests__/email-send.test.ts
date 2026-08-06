@@ -43,7 +43,7 @@ async function testEmailDryRunSuccessAppendsAudit() {
   assert.equal(result.status, "DRY_RUN_RECORDED");
   assert.equal(result.channel, "email");
   assert.equal(result.deliveryMode, "email_dry_run_only");
-  assert.equal(result.recipientPreview, "c***@example.com");
+  assert.equal(result.recipientPreview, "cl****@example.com");
   assert.equal(result.providerName, "dry-run");
   assert.equal(result.providerCalled, false);
   assert.equal(result.dryRunOnly, true);
@@ -68,7 +68,7 @@ async function testEmailDryRunSuccessAppendsAudit() {
   assert.equal(log.dryRunOnly, true);
   assert.equal(log.externalActionAllowed, false);
   assert.equal(log.trackingCode, fake.state.inquiry.publicTrackingCode);
-  assert.equal(log.recipientPreview, "c***@example.com");
+  assert.equal(log.recipientPreview, "cl****@example.com");
   assert.equal(log.messageVersion, CUSTOMER_NOTIFICATION_MESSAGE_VERSION);
   assert.equal(log.previewHash, previewHash);
   assert.equal(log.idempotencyKey, "email-dry-run-001");

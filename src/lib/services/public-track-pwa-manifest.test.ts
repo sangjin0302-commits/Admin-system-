@@ -7,46 +7,42 @@ import manifest from "@/app/manifest";
 const root = process.cwd();
 const pwaManifest = manifest();
 
-assert.equal(pwaManifest.name, "행정사 진행상황 조회");
-assert.equal(pwaManifest.short_name, "진행상황");
-assert.equal(pwaManifest.start_url, "/track");
+assert.equal(pwaManifest.name, "에토스 행정사사무소(ETHOS)");
+assert.equal(pwaManifest.short_name, "ETHOS");
+assert.equal(pwaManifest.start_url, "/");
 assert.equal(pwaManifest.scope, "/");
 assert.equal(pwaManifest.display, "standalone");
 assert.equal(pwaManifest.lang, "ko-KR");
-assert.equal(pwaManifest.background_color, "#ffffff");
-assert.equal(pwaManifest.theme_color, "#0f4c81");
+assert.equal(pwaManifest.background_color, "#faf6ef");
+assert.equal(pwaManifest.theme_color, "#1a3c5f");
+// 진행상황 조회는 이제 글로벌 앱 shortcut 으로 제공.
+assert.ok((pwaManifest.shortcuts ?? []).some((s) => s.url === "/track"));
 
 const icons = pwaManifest.icons ?? [];
 assert.equal(
-  icons.some((icon) => icon.src === "/icons/tracking-192.svg" && icon.sizes === "192x192"),
+  icons.some((icon) => icon.src === "/icons/logo-192.png" && icon.sizes === "192x192"),
   true
 );
 assert.equal(
-  icons.some((icon) => icon.src === "/icons/tracking-512.svg" && icon.sizes === "512x512"),
+  icons.some((icon) => icon.src === "/icons/logo-512.png" && icon.sizes === "512x512"),
   true
 );
 assert.equal(
-  icons.some((icon) => icon.src === "/icons/tracking-maskable.svg" && icon.purpose === "maskable"),
+  icons.some((icon) => icon.src === "/icons/logo-512.png" && icon.purpose === "maskable"),
   true
 );
 
-for (const iconPath of [
-  "public/icons/tracking-192.svg",
-  "public/icons/tracking-512.svg",
-  "public/icons/tracking-maskable.svg"
-]) {
-  const absolutePath = join(root, iconPath);
-  assert.equal(existsSync(absolutePath), true, `${iconPath} should exist`);
-  const source = readFileSync(absolutePath, "utf8");
-  assert.match(source, /<svg /);
+// 매니페스트가 참조하는 아이콘 파일이 실제로 존재해야 한다(과거 tracking-*.svg 는 미존재=깨진 참조였음).
+for (const iconPath of ["public/icons/logo-192.png", "public/icons/logo-512.png"]) {
+  assert.equal(existsSync(join(root, iconPath)), true, `${iconPath} should exist`);
 }
 
 const rootLayoutSource = readFileSync(join(root, "src/app/root-layout-safe.tsx"), "utf8");
-assert.match(rootLayoutSource, /manifest: "\/manifest\.webmanifest"/);
+assert.match(rootLayoutSource, /manifest: "\/manifest\.json"/);
 assert.match(rootLayoutSource, /appleWebApp/);
 assert.match(rootLayoutSource, /apple-mobile-web-app-capable/);
 assert.match(rootLayoutSource, /theme-color/);
-assert.match(rootLayoutSource, /tracking-192\.svg/);
+assert.match(rootLayoutSource, /logo-192\.png/);
 
 const trackClientSource = readFileSync(
   join(root, "src/components/public-track/public-track-client.tsx"),
