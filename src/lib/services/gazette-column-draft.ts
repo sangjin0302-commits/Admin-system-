@@ -23,6 +23,7 @@ export function buildGazetteColumnDraft(item: GazetteItem): GazetteColumnDraft {
     item.agency ? `발령기관: ${item.agency}` : "",
     item.category ? `구분: ${item.category}` : "",
     fmtDate(item.dateMs) ? `게시일: ${fmtDate(item.dateMs)}` : "",
+    item.legalBasis && item.legalBasis.trim() ? `근거 법령: ${item.legalBasis.trim()}` : "",
   ].filter(Boolean);
   const safeUrl = item.url && /^https?:\/\//i.test(item.url) ? item.url : null;
 

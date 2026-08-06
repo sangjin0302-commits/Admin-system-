@@ -59,7 +59,7 @@ export default async function CoursesCatalogPage({
             <div className="aspect-video overflow-hidden rounded-lg bg-gold-soft/40">
               {c.thumbnailUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={c.thumbnailUrl} alt={`${c.title} 강의 썸네일`} className="h-full w-full object-cover" />
+                <img src={c.thumbnailUrl} alt={`${c.title} 강의 썸네일`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
               )}
             </div>
             <p className="mt-3 text-xs font-bold uppercase text-gold-deep">

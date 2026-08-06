@@ -26,7 +26,18 @@ for (const f of FEATURE_REGISTRY) {
   assert.equal(typeof f.label, "string");
   assert.ok(f.label.length > 0);
   assert.equal(typeof f.default, "boolean");
-  const validCats: FeatureCategory[] = ["marketing", "operations", "ux"];
+  const validCats: FeatureCategory[] = [
+    "marketing",
+    "operations",
+    "ux",
+    "portal",
+    "ai",
+    "platform",
+    "analytics",
+    "intake",
+    "content",
+    "admin",
+  ];
   assert.ok(validCats.includes(f.category), `unknown category: ${f.category}`);
 }
 

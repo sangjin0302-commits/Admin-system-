@@ -78,7 +78,7 @@ async function testEmailPreview() {
     prismaClient: fakePrisma(baseInquiry)
   });
   assert.ok(result);
-  assert.equal(result.recipientPreview, "s***@example.com");
+  assert.equal(result.recipientPreview, "sa*****@example.com");
   assert.equal(result.canSend, false);
   assert.equal(result.dryRunOnly, true);
   assert.equal(result.externalActionAllowed, false);

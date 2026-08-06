@@ -18,7 +18,7 @@ function check(name: string, cond: boolean) {
 }
 
 function item(p: Partial<GazetteItem>): GazetteItem {
-  return { id: "x", title: "t", agency: "", category: "", dateMs: 0, url: null, summary: "", ...p };
+  return { id: "x", title: "t", agency: "", category: "", dateMs: 0, url: null, summary: "", legalBasis: "", ...p };
 }
 
 const NOW = 1_700_000_000_000;

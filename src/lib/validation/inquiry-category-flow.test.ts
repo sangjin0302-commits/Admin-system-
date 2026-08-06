@@ -221,7 +221,7 @@ for (const koreanOnlyValue of Object.values(intakeCategoryLabels)) {
   assert.equal(JSON.stringify(englishIntakeSnapshot).includes(koreanOnlyValue), false);
 }
 
-const middlewareSource = readFileSync(join(root, "middleware.ts"), "utf8");
+const middlewareSource = readFileSync(join(root, "src", "middleware.ts"), "utf8");
 assert.match(middlewareSource, /pathname\.startsWith\("\/admin"\)/);
 assert.match(middlewareSource, /pathname\.startsWith\("\/api\/admin"\)/);
 assert.match(middlewareSource, /"\/intake\/:path\*"/);

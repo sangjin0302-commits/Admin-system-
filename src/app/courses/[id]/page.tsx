@@ -24,7 +24,7 @@ export default async function CourseDetailPage({
       {course.thumbnailUrl && (
         <div className="mt-6 aspect-video overflow-hidden rounded-xl border border-line">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={course.thumbnailUrl} alt={`${course.title} 강의 썸네일`} className="h-full w-full object-cover" />
+          <img src={course.thumbnailUrl} alt={`${course.title} 강의 썸네일`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
         </div>
       )}
 

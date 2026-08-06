@@ -49,7 +49,7 @@ export default async function WhitepapersPage() {
                   >
                     {w.coverImage && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={w.coverImage} alt={w.title} className="mb-4 h-32 w-full rounded object-cover" />
+                      <img src={w.coverImage} alt={w.title} loading="lazy" decoding="async" className="mb-4 h-32 w-full rounded object-cover" />
                     )}
                     <h3 className="font-serif text-lg font-bold text-primary group-hover:underline">{w.title}</h3>
                     <p className="mt-2 line-clamp-3 text-sm text-text-muted">{w.description}</p>

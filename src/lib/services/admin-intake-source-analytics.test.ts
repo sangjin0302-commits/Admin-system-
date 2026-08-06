@@ -153,13 +153,13 @@ assert.equal(pageSource.includes("RESEND_API_KEY"), false);
 assert.equal(pageSource.includes("client-message-service"), false);
 assert.equal(pageSource.includes("run-lawbot-workflow"), false);
 
-const middlewareSource = readFileSync(join(root, "middleware.ts"), "utf8");
+const middlewareSource = readFileSync(join(root, "src", "middleware.ts"), "utf8");
 assert.match(middlewareSource, /pathname\.startsWith\("\/admin"\)/);
 assert.equal(middlewareSource.includes("/admin/intake-sources"), false);
 const adminListPageSource = readFileSync(join(root, "src/app/admin/inquiries/page.tsx"), "utf8");
 assert.match(adminListPageSource, /\/admin\/intake-sources/);
 assert.match(adminListPageSource, /접수 유입 분석/);
-const adminDashboardSource = readFileSync(join(root, "src/app/admin/dashboard-content.tsx"), "utf8");
+const adminDashboardSource = readFileSync(join(root, "src/app/admin/_dashboard/dashboard-hero.tsx"), "utf8");
 assert.match(adminDashboardSource, /\/admin\/intake-sources/);
 assert.match(adminDashboardSource, /접수 유입 분석/);
 

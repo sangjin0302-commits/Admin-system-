@@ -20,11 +20,8 @@ const SRC = join(ROOT, "src");
 const EXCLUDE = new Set([
   "src/app/admin/document-lab/page.test.ts",
   "src/components/admin/immigration-case-detail-panel.test.ts",
-  "src/lib/services/admin-intake-source-analytics.test.ts",
   "src/lib/services/case-matter-service.test.ts",
-  "src/lib/services/customer-notification-preview-service.test.ts",
   "src/lib/services/customer-notification-send/__tests__/email-send.test.ts",
-  "src/lib/services/feature-flags-service.test.ts",
   "src/lib/services/lawbot-message-send-readiness-ui-model.test.ts",
   "src/lib/services/lawbot-review-approval-ui-model.test.ts",
   "src/lib/services/lawbot-review-readonly-ui-model.test.ts",
@@ -32,7 +29,6 @@ const EXCLUDE = new Set([
   "src/lib/services/public-root-gateway-ui-model.test.ts",
   "src/lib/services/public-track-page-ui-model.test.ts",
   "src/lib/services/public-track-pwa-manifest.test.ts",
-  "src/lib/validation/inquiry-category-flow.test.ts",
 ]);
 
 function walk(dir) {

@@ -15,7 +15,7 @@ function check(name: string, cond: boolean) {
 }
 
 function item(p: Partial<GazetteItem>): GazetteItem {
-  return { id: "x", title: "t", agency: "", category: "", dateMs: 0, url: null, summary: "", ...p };
+  return { id: "x", title: "t", agency: "", category: "", dateMs: 0, url: null, summary: "", legalBasis: "", ...p };
 }
 
 const d = buildGazetteColumnDraft(
@@ -28,6 +28,10 @@ check("메타 발령기관 포함", d.markdown.includes("발령기관: 법무부
 check("원문 링크 포함", d.markdown.includes("원문: https://x.go.kr/1"));
 check("서비스 CTA(비자→immigration 라벨)", d.markdown.includes("비자·체류 업무"));
 check("섹션 골격 포함", d.markdown.includes("## 무엇이 바뀌었나") && d.markdown.includes("## 지금 확인할 것"));
+
+// 근거 법령 주입
+const withLaw = buildGazetteColumnDraft(item({ title: "국적법 고시", legalBasis: "국적법 제17조" }));
+check("근거 법령 주입", withLaw.markdown.includes("근거 법령: 국적법 제17조"));
 
 // 위험 url 차단
 const bad = buildGazetteColumnDraft(item({ title: "공고", url: "javascript:alert(1)" }));

@@ -36,6 +36,8 @@ export type GazetteItem = {
   url: string | null;
   /** 요약/발췌. 없으면 빈 문자열. */
   summary: string;
+  /** 근거 법령(예: "국적법 제17조"). 봇 legal_basis. 없으면 빈 문자열. */
+  legalBasis: string;
 };
 
 export type GazetteOutcome =
@@ -121,6 +123,7 @@ function normalizeItem(raw: unknown, index: number): GazetteItem | null {
     dateMs,
     url,
     summary: pickString(o, ["summary", "excerpt", "description", "content", "요약", "본문"]),
+    legalBasis: pickString(o, ["legal_basis", "legalBasis", "근거법령", "법적근거", "근거"]),
   };
 }
 
