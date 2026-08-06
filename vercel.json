@@ -11,10 +11,6 @@
     },
     {
       "path": "/api/cron/batch/content-sync",
-      "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/naver-rss-sync",
       "schedule": "0 5 * * *"
     },
     {
