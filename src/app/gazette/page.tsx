@@ -21,13 +21,14 @@ type Lang = "ko" | "en";
 export default async function GazettePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ lang?: string; cat?: string }>;
+  searchParams?: Promise<{ lang?: string; cat?: string; month?: string }>;
 }) {
   const sp = (await searchParams) ?? {};
   const lang: Lang = sp.lang === "en" ? "en" : "ko";
   const t = (ko: string, en: string) => (lang === "en" ? en : ko);
 
-  const outcome = await fetchGazetteList(60);
+  // 한 번에 최대한 많이(달력식 월 넘김 위해). 봇이 주는 만큼.
+  const outcome = await fetchGazetteList(300);
   const items: GazetteItem[] = outcome.status === "ok" ? outcome.items : [];
 
   // 구분(category)별 필터 칩 — 응답에 실제로 존재하는 값만.
@@ -35,7 +36,36 @@ export default async function GazettePage({
     new Set(items.map((i) => i.category).filter((c) => c.length > 0))
   );
   const activeCat = sp.cat && categories.includes(sp.cat) ? sp.cat : null;
-  const board = activeCat ? items.filter((i) => i.category === activeCat) : items;
+
+  // 월(YYYY-MM)별 그룹 — 달력처럼 넘겨보기. month 미지정이면 전체.
+  const monthOf = (ms: number) => {
+    if (ms <= 0) return "";
+    const d = new Date(ms);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  };
+  const months = Array.from(new Set(items.map((i) => monthOf(i.dateMs)).filter(Boolean))).sort().reverse();
+  const activeMonth = sp.month && months.includes(sp.month) ? sp.month : null; // null = 전체
+  const monthIdx = activeMonth ? months.indexOf(activeMonth) : -1;
+  const prevMonth = monthIdx >= 0 && monthIdx < months.length - 1 ? months[monthIdx + 1] : null; // 더 과거
+  const nextMonth = monthIdx > 0 ? months[monthIdx - 1] : null; // 더 최근
+  const fmtMonth = (m: string) => {
+    const [y, mo] = m.split("-");
+    return lang === "en" ? `${mo}/${y}` : `${y}년 ${Number(mo)}월`;
+  };
+  const qs = (over: { cat?: string | null; month?: string | null }) => {
+    const params = new URLSearchParams();
+    if (lang === "en") params.set("lang", "en");
+    const cat = over.cat === undefined ? activeCat : over.cat;
+    const month = over.month === undefined ? activeMonth : over.month;
+    if (cat) params.set("cat", cat);
+    if (month) params.set("month", month);
+    const s = params.toString();
+    return s ? `?${s}` : "";
+  };
+
+  let board = items;
+  if (activeMonth) board = board.filter((i) => monthOf(i.dateMs) === activeMonth);
+  if (activeCat) board = board.filter((i) => i.category === activeCat);
 
   const fmtDate = (ms: number) =>
     ms > 0 ? new Date(ms).toLocaleDateString(lang === "en" ? "en-US" : "ko-KR") : "";
@@ -111,11 +141,51 @@ export default async function GazettePage({
             />
           ) : (
             <>
+              {/* 월별(달력식) 네비게이션 — 전체 / 이전·다음 달 / 월 칩 */}
+              {months.length > 0 && (
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/gazette${qs({ month: null })}`}
+                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${!activeMonth ? "bg-primary text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
+                  >
+                    {t("전체 기간", "All dates")}
+                  </Link>
+                  {activeMonth && (
+                    <span className="inline-flex items-center gap-1">
+                      <Link
+                        href={prevMonth ? `/gazette${qs({ month: prevMonth })}` : "#"}
+                        aria-label={t("이전 달", "Previous month")}
+                        className={`grid h-8 w-8 place-items-center rounded-full border border-gold/30 text-sm ${prevMonth ? "text-primary hover:bg-gold-soft/30" : "pointer-events-none opacity-30"}`}
+                      >
+                        ←
+                      </Link>
+                      <span className="px-1 text-xs font-bold text-primary">{fmtMonth(activeMonth)}</span>
+                      <Link
+                        href={nextMonth ? `/gazette${qs({ month: nextMonth })}` : "#"}
+                        aria-label={t("다음 달", "Next month")}
+                        className={`grid h-8 w-8 place-items-center rounded-full border border-gold/30 text-sm ${nextMonth ? "text-primary hover:bg-gold-soft/30" : "pointer-events-none opacity-30"}`}
+                      >
+                        →
+                      </Link>
+                    </span>
+                  )}
+                  {months.slice(0, 6).map((m) => (
+                    <Link
+                      key={m}
+                      href={`/gazette${qs({ month: m })}`}
+                      className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${activeMonth === m ? "bg-primary text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
+                    >
+                      {fmtMonth(m)}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
               {/* 구분 필터 */}
               {categories.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   <Link
-                    href={`/gazette${lang === "en" ? "?lang=en" : ""}`}
+                    href={`/gazette${qs({ cat: null })}`}
                     className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${!activeCat ? "bg-primary text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
                   >
                     {t("전체", "All")}
@@ -123,7 +193,7 @@ export default async function GazettePage({
                   {categories.map((cat) => (
                     <Link
                       key={cat}
-                      href={`/gazette?cat=${encodeURIComponent(cat)}${lang === "en" ? "&lang=en" : ""}`}
+                      href={`/gazette${qs({ cat })}`}
                       className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${activeCat === cat ? "bg-primary text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
                     >
                       {cat}
@@ -131,6 +201,12 @@ export default async function GazettePage({
                   ))}
                 </div>
               )}
+
+              {/* 건수 표시 */}
+              <p className="mt-4 text-xs text-text-muted">
+                {t(`${board.length}건`, `${board.length} items`)}
+                {activeMonth ? ` · ${fmtMonth(activeMonth)}` : ` · ${t("전체 기간", "all dates")}`}
+              </p>
 
               {/* 목록 */}
               <ul className="mt-8 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
