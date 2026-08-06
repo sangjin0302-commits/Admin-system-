@@ -38,9 +38,11 @@ export default async function BlogPage({
   const posts = await listBlogPosts();
 
   const importedPosts = await prisma.blogPost.findMany({
-    where: { published: true, source: NAVER_BLOG_SOURCE },
+    // 네이버 수입글 + 직접 작성글(source=manual 등) 모두 노출. 예전엔 NAVER 만 조회해
+    // 관리자가 직접 쓴 글이 공개 리스트에서 누락됐음.
+    where: { published: true },
     orderBy: [{ pinned: "desc" }, { sortOrder: "asc" }, { publishedAt: "desc" }],
-    take: 120,
+    take: 1000,
     select: {
       id: true,
       slug: true,
@@ -111,7 +113,10 @@ export default async function BlogPage({
       pinned: p.pinned,
       sortOrder: p.sortOrder,
     })),
-    ...posts.map((p) => ({
+    // DB에 같은 slug 가 있으면 마크다운 카드는 제외(이중 노출 방지).
+    ...posts
+      .filter((p) => !importedPosts.some((d) => d.slug === p.slug))
+      .map((p) => ({
       key: `md-${p.slug}`,
       href: `/blog/${p.slug}${lang === "en" ? "?lang=en" : ""}`,
       title: decodeTitle(p.title),

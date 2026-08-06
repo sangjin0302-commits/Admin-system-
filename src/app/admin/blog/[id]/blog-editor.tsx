@@ -38,6 +38,83 @@ type PostData = {
   scheduledAt: string;
 } | null;
 
+/**
+ * 마케팅 글 골격 템플릿(사람이 채워 쓰는 구조 — AI 생성 아님, 블로그 정책 준수).
+ * 전환율 높은 검증된 구조를 제공해 마케팅적으로 쓰기 쉽게 한다.
+ */
+const MARKETING_TEMPLATES: { label: string; md: string }[] = [
+  {
+    label: "문제해결형(PAS)",
+    md: [
+      "## 이런 상황, 겪고 계신가요?",
+      "(독자가 처한 구체적 문제·불안을 한두 문장으로)",
+      "",
+      "## 방치하면 생기는 일",
+      "(기한 도과·불이익 등 실제 리스크를 근거와 함께)",
+      "",
+      "## 해결 방법",
+      "1. (첫 단계)",
+      "2. (둘째 단계)",
+      "3. (셋째 단계)",
+      "",
+      "## 정리",
+      "(핵심 요약 + 지금 확인할 것)",
+      "",
+    ].join("\n"),
+  },
+  {
+    label: "사례연구형",
+    md: [
+      "## 의뢰 상황",
+      "(의뢰인이 처했던 상황 — 개인정보 없이)",
+      "",
+      "## 어떻게 대응했나",
+      "(진행한 절차·전략을 단계별로)",
+      "",
+      "## 결과",
+      "(성과를 사실대로. 과장·보장 표현 금지)",
+      "",
+      "## 비슷한 고민이라면",
+      "(일반화한 시사점)",
+      "",
+    ].join("\n"),
+  },
+  {
+    label: "뉴스·관보 반응형",
+    md: [
+      "## 무엇이 바뀌었나",
+      "(관보/뉴스 핵심 변경 — 원문 확인 후 사실대로)",
+      "",
+      "## 누구에게 영향이 있나",
+      "(대상·요건 정리)",
+      "",
+      "## 지금 확인할 것",
+      "- ",
+      "- ",
+      "",
+    ].join("\n"),
+  },
+  {
+    label: "How-to 가이드형",
+    md: [
+      "## 한눈에 보기",
+      "(무엇을·왜 하는지 요약)",
+      "",
+      "## 준비물 / 요건",
+      "- ",
+      "",
+      "## 단계별 절차",
+      "1. ",
+      "2. ",
+      "3. ",
+      "",
+      "## 자주 막히는 부분",
+      "(실무 팁)",
+      "",
+    ].join("\n"),
+  },
+];
+
 /** datetime-local 입력값(로컬 시간) ↔ ISO 변환 헬퍼. */
 function isoToLocalInput(iso: string): string {
   if (!iso) return "";
@@ -442,6 +519,20 @@ export function BlogEditor({ post, boards = [] }: { post: PostData; boards?: str
           <div className="flex items-center justify-between">
             <label className="text-xs font-semibold text-text-muted">본문 (Markdown)</label>
             <span className="text-[11px] text-text-muted">{body.length.toLocaleString()}자</span>
+          </div>
+          {/* 마케팅 골격 삽입 — 검증된 구조를 커서 위치에 넣어 마케팅적으로 쓰기 쉽게. */}
+          <div className="mt-1 flex flex-wrap items-center gap-1">
+            <span className="text-[11px] font-semibold text-gold-deep">마케팅 골격:</span>
+            {MARKETING_TEMPLATES.map((tpl) => (
+              <button
+                key={tpl.label}
+                type="button"
+                onClick={() => applyMarkdown(bodyRef, body, setBody, "wrap", tpl.md, "", "")}
+                className="rounded border border-gold/40 bg-gold-soft/20 px-2 py-1 text-[11px] font-semibold text-gold-deep hover:bg-gold-soft/40"
+              >
+                + {tpl.label}
+              </button>
+            ))}
           </div>
           {renderToolbar(bodyRef, body, setBody)}
           <textarea

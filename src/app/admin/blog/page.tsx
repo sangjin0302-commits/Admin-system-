@@ -20,7 +20,7 @@ function decodeTitle(s: string): string {
 export default async function BlogListPage() {
   const posts = await prisma.blogPost.findMany({
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: 500,
   });
   const publishedCount = posts.filter((p) => p.published).length;
 
