@@ -8,6 +8,7 @@ import { PersonJsonLd } from "@/components/seo/json-ld";
 import { prisma } from "@/lib/prisma/client";
 import { getSiteSetting } from "@/lib/services/site-settings";
 import { listPublicCredentials, CREDENTIAL_TYPE_LABELS } from "@/lib/services/credentials";
+import { getRequestLocale } from "@/lib/i18n-request";
 
 export const dynamic = "force-dynamic";
 
@@ -239,7 +240,8 @@ export default async function AboutPage({
 }: {
   searchParams: Promise<{ lang?: string }>;
 }) {
-  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  // 경로기반: /en/about 이면 미들웨어가 x-ethos-locale=en 주입. 레거시 ?lang=en 도 폴백 지원.
+  const lang = await getRequestLocale((await searchParams).lang);
   const t = COPY[lang];
   const [greeting, brandEyebrow, brandTitle, brandBody, brandLogoNote] = await Promise.all([
     getSiteSetting("about.greeting"),

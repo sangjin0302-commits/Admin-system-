@@ -6,6 +6,7 @@ import {
   verifyAdminSessionToken
 } from "@/lib/security/admin-session";
 import { isExperimentalAdminPath } from "@/lib/security/experimental-admin-pages";
+import { LOCALE_HEADER, LOCALE_PREFIX, splitLocalePath } from "@/lib/i18n-locale";
 
 const ADMIN_AUTH_USER_ENV = "ADMIN_BASIC_AUTH_USER";
 const ADMIN_AUTH_PASSWORD_ENV = "ADMIN_BASIC_AUTH_PASSWORD";
@@ -363,6 +364,30 @@ export async function middleware(request: NextRequest) {
       : textError(426, KO_HTTPS_REQUIRED, request);
   }
 
+  // ── 경로기반 로케일(/en) ─────────────────────────────
+  // `/en/<path>` → 내부적으로 `<path>` 로 rewrite 하고 x-ethos-locale=en 헤더를 주입.
+  // 서버 컴포넌트는 getRequestLocale()로 이 헤더를 읽어 EN 렌더. `/en/*` 는 절대 admin
+  // 경로가 될 수 없으므로 이 블록은 admin 인증 로직과 완전히 분리(안전).
+  //
+  // 단, 이미 존재하는 app/en 라우트(바로 `/en` 홈, `/en/feed.xml`)는 그대로 두어야
+  // 하므로 rewrite 대상에서 제외한다(이들은 아래 matcher 의 `/en/:path*` 에 걸리더라도
+  // 실제 파일 라우트가 우선하도록 next() 반환).
+  if (pathname.startsWith(LOCALE_PREFIX + "/")) {
+    if (pathname === "/en/feed.xml") {
+      const response = NextResponse.next();
+      applySecurityHeaders(request, response);
+      return response;
+    }
+    const { path } = splitLocalePath(pathname);
+    const url = request.nextUrl.clone();
+    url.pathname = path;
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set(LOCALE_HEADER, "en");
+    const response = NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+    applySecurityHeaders(request, response);
+    return response;
+  }
+
   if (isPublicRoute(pathname)) {
     const response = NextResponse.next();
     applySecurityHeaders(request, response);
@@ -531,6 +556,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
+    "/en/:path*",
     "/admin/:path*",
     "/api/admin/:path*",
     "/api/admin-auth/:path*",
