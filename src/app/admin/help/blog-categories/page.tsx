@@ -197,7 +197,7 @@ export default function BlogCategoriesHelpPage() {
             </tr>
             <tr className="border-t">
               <td className="py-1 font-mono text-xs">weekly-batch</td>
-              <td className="py-1">일 21:00</td>
+              <td className="py-1">월 08:00</td>
               <td className="py-1">뉴스레터 / 주간리포트 / cleanup</td>
             </tr>
           </tbody>

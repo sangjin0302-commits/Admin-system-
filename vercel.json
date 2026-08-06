@@ -6,7 +6,7 @@
       "schedule": "0 21 * * *"
     },
     {
-      "path": "/api/cron/batch/night-analytics",
+      "path": "/api/cron/batch/morning-briefing",
       "schedule": "0 22 * * *"
     },
     {
@@ -19,11 +19,11 @@
     },
     {
       "path": "/api/cron/batch/calendar-sync",
-      "schedule": "0 6 * * *"
+      "schedule": "0 23 * * *"
     },
     {
       "path": "/api/cron/batch/weekly-batch",
-      "schedule": "0 12 * * 0"
+      "schedule": "0 23 * * 0"
     },
     {
       "path": "/api/cron/batch/monthly-batch",

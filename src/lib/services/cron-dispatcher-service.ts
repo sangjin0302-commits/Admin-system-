@@ -17,7 +17,7 @@ export const CRON_GROUPS: Record<string, string[]> = {
     "/api/cron/intake-retarget",
     "/api/cron/deploy-status-check",
   ],
-  "night-analytics": [
+  "morning-briefing": [
     "/api/cron/priority-scoring",
     "/api/cron/audit-anomaly-scan",
     "/api/cron/deadline-autopilot",

@@ -19,14 +19,14 @@ const cfg = JSON.parse(raw) as { crons: Cron[] };
 // UTC → KST(+9) 의도된 스케줄. 위반 시 CI 실패.
 // 형식: cron expression (UTC).
 const EXPECTED: Record<string, string> = {
-  "/api/cron/batch/morning-ops":       "0 21 * * *",   // KST 06:00 매일
-  "/api/cron/batch/night-analytics":   "0 22 * * *",   // KST 07:00 매일 (briefing 배송)
-  "/api/cron/batch/content-sync":      "0 5 * * *",    // KST 14:00 매일 (네이버 오후1시 발행 후)
-  "/api/cron/batch/infra-maintenance": "0 18 * * *",   // KST 03:00 매일 (트래픽 최저)
-  "/api/cron/batch/calendar-sync":     "0 6 * * *",    // KST 15:00 매일
-  "/api/cron/batch/weekly-batch":      "0 12 * * 0",   // KST 일 21:00
-  "/api/cron/batch/monthly-batch":     "0 1 1 * *",    // KST 매월1일 10:00
-  "/api/cron/batch/bi-weekly":         "0 22 * * 1",   // KST 화 07:00 (route에서 격주 gate)
+  "/api/cron/batch/morning-ops":        "0 21 * * *",   // KST 06:00 매일
+  "/api/cron/batch/morning-briefing":   "0 22 * * *",   // KST 07:00 매일 (briefing 배송)
+  "/api/cron/batch/content-sync":       "0 5 * * *",    // KST 14:00 매일 (네이버 오후1시 발행 후)
+  "/api/cron/batch/infra-maintenance":  "0 18 * * *",   // KST 03:00 매일 (트래픽 최저)
+  "/api/cron/batch/calendar-sync":      "0 23 * * *",   // KST 08:00 매일 (아침 업무 시작 sync)
+  "/api/cron/batch/weekly-batch":       "0 23 * * 0",   // KST 월 08:00 (월요일 아침)
+  "/api/cron/batch/monthly-batch":      "0 1 1 * *",    // KST 매월1일 10:00
+  "/api/cron/batch/bi-weekly":          "0 22 * * 1",   // KST 화 07:00 (route에서 격주 gate)
 };
 
 const actual = new Map(cfg.crons.map((c) => [c.path, c.schedule]));
