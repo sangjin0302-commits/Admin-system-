@@ -240,10 +240,18 @@ export async function importNaverBlogPosts(options?: {
 
   for (const p of posts) {
     try {
-      // 중복 판정은 logNo 기준(대량수입 URL 형식과 달라도 같은 글이면 스킵).
+      // 중복 판정: logNo 기준 + 제목 fallback. logNo 추출/URL 포맷이 실행마다
+      // 달라져 dedup 을 놓치면 랜덤 slug 로 재수입돼 "두 개씩" 중복이 쌓였음
+      // → 같은 글은 제목이 같으므로 제목 매칭을 OR 로 추가해 확실히 스킵한다.
       const logNo = p.link.match(/(\d{6,})/)?.[1];
+      const title = normalizeTitle(decodeEntities(stripHtml(p.title)));
       const existing = await prisma.blogPost.findFirst({
-        where: logNo ? { originalUrl: { contains: logNo } } : { originalUrl: p.link },
+        where: {
+          OR: [
+            logNo ? { originalUrl: { contains: logNo } } : { originalUrl: p.link },
+            { source: NAVER_BLOG_SOURCE, title },
+          ],
+        },
         select: { id: true },
       });
       if (existing) {
@@ -251,7 +259,6 @@ export async function importNaverBlogPosts(options?: {
         continue;
       }
 
-      const title = normalizeTitle(decodeEntities(stripHtml(p.title)));
       // 전문 확보 우선순위: RSS content:encoded → 원문 페이지 스크레이프 → description(요약).
       // 네이버 RSS 는 요약만 주므로, 짧으면 실제 글 페이지에서 전문을 가져온다.
       let body = p.contentEncoded ?? null;
