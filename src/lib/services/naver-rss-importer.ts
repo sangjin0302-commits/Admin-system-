@@ -294,7 +294,9 @@ export async function importNaverBlogPosts(options?: {
           titleEn,
           excerptEn,
           bodyEn,
-          category: classifyBlogPost(`${title}\n${excerpt}\n${(body ?? "").slice(0, 4000)}`, title),
+          // 본문(스크레이프)은 사이드바·관련글 등 비자 도배 chrome 이 섞여 분류를
+          // 오염시킴(계약/심판 글도 visa 로 뒤집힘) → 제목+요약만으로 분류.
+          category: classifyBlogPost(`${title}\n${excerpt}`, title),
           coverImage,
           source: NAVER_BLOG_SOURCE,
           originalUrl: p.link,
