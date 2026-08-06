@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { CHANNELS, CONSULT_TAGLINE } from "@/lib/constants/channels";
 import { prisma } from "@/lib/prisma/client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // ISR — 안정 데이터(site-settings), 함수호출 절감
 
 export const metadata: Metadata = {
   title: "모든 채널 — 에토스 행정사사무소(ETHOS) 지상진",

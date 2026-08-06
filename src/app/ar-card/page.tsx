@@ -5,7 +5,7 @@ import { ArCardScene } from "./ar-card-scene";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { getSiteSettings } from "@/lib/services/site-settings";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // ISR — 안정 데이터(site-settings·flag), 함수호출 절감
 
 export const metadata: Metadata = {
   title: "ETHOS AR 명함",

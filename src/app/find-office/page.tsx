@@ -1,6 +1,6 @@
 import { OfficeFinder } from "./office-finder";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // ISR — 정적 콘텐츠, 함수호출 절감
 
 export default function FindOfficePage() {
   return (
