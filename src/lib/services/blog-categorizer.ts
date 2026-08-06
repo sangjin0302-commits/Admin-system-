@@ -129,7 +129,8 @@ const KEYWORDS: Partial<Record<BlogCategory, RegExp[]>> = {
   ],
   contract: [
     /계약서|계약 검토|계약 작성|사실조사|증거/,
-    /contract|fact[- ]?find|investigat/i
+    /사실혼|비혼|법률혼|상속권|손해배상/,
+    /contract|fact[- ]?find|investigat|common[- ]?law\s+marriage|inheritance/i
   ],
   license: [
     /인허가|허가|면허|등록|건축|식품|의료|환경/,
