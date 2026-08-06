@@ -51,11 +51,6 @@ export function HomeGazetteTeaser({ lang = "ko" }: { lang?: "ko" | "en" }) {
             const inner = (
               <div className="flex flex-col gap-1 px-5 py-3.5 transition hover:bg-surface-muted sm:flex-row sm:items-center sm:gap-4">
                 <div className="flex shrink-0 items-center gap-2 sm:w-44">
-                  {g.category && (
-                    <span className="rounded-full bg-gold-soft/50 px-2 py-0.5 font-serif text-[10px] font-bold text-gold-deep">
-                      {g.category}
-                    </span>
-                  )}
                   {g.dateMs > 0 && <span className="text-[11px] text-text-muted">{fmt(g.dateMs)}</span>}
                 </div>
                 <span className="min-w-0 flex-1 truncate font-serif text-sm font-semibold text-primary">

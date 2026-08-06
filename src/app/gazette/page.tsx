@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
 import { fetchGazetteList, type GazetteItem } from "@/lib/services/gazette-client";
-import { matchGazetteService } from "@/lib/services/gazette-service-match";
 
 export const dynamic = "force-dynamic";
 
@@ -31,11 +30,8 @@ export default async function GazettePage({
   const outcome = await fetchGazetteList(300);
   const items: GazetteItem[] = outcome.status === "ok" ? outcome.items : [];
 
-  // 구분(category)별 필터 칩 — 응답에 실제로 존재하는 값만.
-  const categories = Array.from(
-    new Set(items.map((i) => i.category).filter((c) => c.length > 0))
-  );
-  const activeCat = sp.cat && categories.includes(sp.cat) ? sp.cat : null;
+  // 관보는 카테고리(구분/주제)로 나누지 않는다. 봇이 주는 원문을 시간순으로만 나열.
+  // (예전엔 블로그 분류기로 "비자" 등 주제 태깅을 했으나 관보엔 부정확 → 전면 제거.)
 
   // 월(YYYY-MM)별 그룹 — 달력처럼 넘겨보기. month 미지정이면 전체.
   const monthOf = (ms: number) => {
@@ -52,12 +48,10 @@ export default async function GazettePage({
     const [y, mo] = m.split("-");
     return lang === "en" ? `${mo}/${y}` : `${y}년 ${Number(mo)}월`;
   };
-  const qs = (over: { cat?: string | null; month?: string | null }) => {
+  const qs = (over: { month?: string | null }) => {
     const params = new URLSearchParams();
     if (lang === "en") params.set("lang", "en");
-    const cat = over.cat === undefined ? activeCat : over.cat;
     const month = over.month === undefined ? activeMonth : over.month;
-    if (cat) params.set("cat", cat);
     if (month) params.set("month", month);
     const s = params.toString();
     return s ? `?${s}` : "";
@@ -65,7 +59,6 @@ export default async function GazettePage({
 
   let board = items;
   if (activeMonth) board = board.filter((i) => monthOf(i.dateMs) === activeMonth);
-  if (activeCat) board = board.filter((i) => i.category === activeCat);
 
   const fmtDate = (ms: number) =>
     ms > 0 ? new Date(ms).toLocaleDateString(lang === "en" ? "en-US" : "ko-KR") : "";
@@ -181,27 +174,6 @@ export default async function GazettePage({
                 </div>
               )}
 
-              {/* 구분 필터 */}
-              {categories.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/gazette${qs({ cat: null })}`}
-                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${!activeCat ? "bg-primary text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
-                  >
-                    {t("전체", "All")}
-                  </Link>
-                  {categories.map((cat) => (
-                    <Link
-                      key={cat}
-                      href={`/gazette${qs({ cat })}`}
-                      className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${activeCat === cat ? "bg-primary text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
-                    >
-                      {cat}
-                    </Link>
-                  ))}
-                </div>
-              )}
-
               {/* 건수 표시 */}
               <p className="mt-4 text-xs text-text-muted">
                 {t(`${board.length}건`, `${board.length} items`)}
@@ -214,11 +186,6 @@ export default async function GazettePage({
                   const inner = (
                     <div className="flex flex-col gap-2 px-5 py-4 transition group-hover:bg-surface-muted sm:flex-row sm:items-start sm:gap-5">
                       <div className="flex shrink-0 items-center gap-2 sm:w-40 sm:flex-col sm:items-start">
-                        {g.category && (
-                          <span className="inline-block w-fit rounded-full bg-gold-soft/50 px-2.5 py-0.5 font-serif text-[11px] font-bold text-gold-deep">
-                            {g.category}
-                          </span>
-                        )}
                         {g.dateMs > 0 && (
                           <span className="text-[11px] text-text-muted">{fmtDate(g.dateMs)}</span>
                         )}
@@ -240,7 +207,6 @@ export default async function GazettePage({
                     </div>
                   );
                   const safeUrl = g.url && /^https?:\/\//i.test(g.url) ? g.url : null; // javascript:/data: 차단
-                  const svc = matchGazetteService(g, lang); // 관련 서비스 CTA(분류 확신 시만)
                   return (
                     <li key={g.id}>
                       {safeUrl ? (
@@ -255,19 +221,16 @@ export default async function GazettePage({
                       ) : (
                         <div className="group block">{inner}</div>
                       )}
-                      {/* 관련 서비스 링크 — 외부 앵커 바깥(중첩 앵커 방지) */}
-                      {svc && (
-                        <div className="px-5 pb-4 sm:pl-[11.25rem]">
-                          <Link
-                            href={lang === "en" ? `${svc.href}?lang=en` : svc.href}
-                            data-funnel="gazette_to_service"
-                            data-funnel-cat={svc.href}
-                            className="inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold-soft/20 px-3 py-1 text-[11px] font-bold text-gold-deep transition hover:bg-gold-soft/40"
-                          >
-                            {t("관련 서비스", "Related service")}: {svc.label} →
-                          </Link>
-                        </div>
-                      )}
+                      {/* 상담 유도 — 카테고리 태깅 없이 일반 CTA(중첩 앵커 방지 위해 외부 앵커 바깥) */}
+                      <div className="px-5 pb-4 sm:pl-[11.25rem]">
+                        <Link
+                          href={lang === "en" ? "/consult?lang=en" : "/consult"}
+                          data-funnel="gazette_to_consult"
+                          className="inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold-soft/20 px-3 py-1 text-[11px] font-bold text-gold-deep transition hover:bg-gold-soft/40"
+                        >
+                          {t("이 사안 행정 대응 상담", "Get administrative help")} →
+                        </Link>
+                      </div>
                     </li>
                   );
                 })}

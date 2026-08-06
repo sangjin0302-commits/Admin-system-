@@ -26,7 +26,10 @@ check("제목에 영향 문구", d.title === "출입국관리법 시행령 개�
 check("마크다운 H1", d.markdown.startsWith("# 출입국관리법 시행령 개정"));
 check("메타 발령기관 포함", d.markdown.includes("발령기관: 법무부"));
 check("원문 링크 포함", d.markdown.includes("원문: https://x.go.kr/1"));
-check("서비스 CTA(비자→immigration 라벨)", d.markdown.includes("비자·체류 업무"));
+// 정책: 관보는 카테고리/서비스로 태깅하지 않는다 → 항상 일반 CTA, "구분" 메타 없음.
+check("카테고리 태깅 없음(주제 서비스 라벨 미포함)", !d.markdown.includes("비자·체류 업무"));
+check("구분 메타 미포함", !d.markdown.includes("구분:"));
+check("일반 상담 CTA", d.markdown.includes("관련 사안은 [무료 상담 신청](/intake)"));
 check("섹션 골격 포함", d.markdown.includes("## 무엇이 바뀌었나") && d.markdown.includes("## 지금 확인할 것"));
 
 // 근거 법령 주입

@@ -7,7 +7,6 @@
  */
 
 import type { GazetteItem } from "@/lib/services/gazette-client";
-import { matchGazetteService } from "@/lib/services/gazette-service-match";
 
 export type GazetteColumnDraft = { title: string; markdown: string };
 
@@ -18,10 +17,9 @@ function fmtDate(ms: number): string {
 /** 관보 항목에서 칼럼 초안(제목 + 마크다운 골격) 생성. 값 없는 줄은 생략. */
 export function buildGazetteColumnDraft(item: GazetteItem): GazetteColumnDraft {
   const title = `${item.title} — 내 사안에 미치는 영향`;
-  const svc = matchGazetteService(item, "ko");
+  // 관보는 카테고리/서비스로 태깅하지 않는다(부정확). 발령기관·게시일·근거법령만 표기.
   const meta = [
     item.agency ? `발령기관: ${item.agency}` : "",
-    item.category ? `구분: ${item.category}` : "",
     fmtDate(item.dateMs) ? `게시일: ${fmtDate(item.dateMs)}` : "",
     item.legalBasis && item.legalBasis.trim() ? `근거 법령: ${item.legalBasis.trim()}` : "",
   ].filter(Boolean);
@@ -47,9 +45,7 @@ export function buildGazetteColumnDraft(item: GazetteItem): GazetteColumnDraft {
     "- ",
     "",
     "## 도움이 필요하면",
-    svc
-      ? `${svc.label} 관련 사안은 [무료 상담 신청](/intake)으로 확인해 드립니다.`
-      : "관련 사안은 [무료 상담 신청](/intake)으로 확인해 드립니다.",
+    "관련 사안은 [무료 상담 신청](/intake)으로 확인해 드립니다.",
   ];
 
   return { title, markdown: lines.join("\n") };
