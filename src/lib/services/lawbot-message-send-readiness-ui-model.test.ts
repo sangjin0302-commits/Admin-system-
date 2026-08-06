@@ -11,7 +11,7 @@ function assertNoUnsafeOutput(value: unknown) {
   readinessUiAssert.equal(serialized.includes('"riskFlags":'), false);
   readinessUiAssert.equal(serialized.includes("raw message body text"), false);
   readinessUiAssert.equal(serialized.includes("client@example.test"), false);
-  readinessUiAssert.equal(/[ìëíÂ�]/.test(serialized), false);
+  readinessUiAssert.equal(/[ìëíÂ\uFFFD]/.test(serialized), false);
 }
 
 function runLawbotMessageSendReadinessUiModelTest() {

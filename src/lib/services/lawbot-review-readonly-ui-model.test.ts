@@ -69,7 +69,7 @@ function runLawbotReviewReadonlyUiModelTest() {
   readonlyAssert.equal(serialized.includes("í"), false);
   readonlyAssert.equal(serialized.includes("Â"), false);
   readonlyAssert.equal(serialized.includes(""), false);
-  readonlyAssert.equal(serialized.includes("�"), false);
+  readonlyAssert.equal(serialized.includes("\uFFFD"), false);
 
   readonlyAssert.equal(
     model.readonlyNotice,

@@ -61,7 +61,7 @@ function assertNoRawReviewFields(value: unknown) {
   approvalUiAssert.equal(serialized.includes("\"mustVerify\":"), false);
   approvalUiAssert.equal(serialized.includes("\"mustVerifySources\":"), false);
   approvalUiAssert.equal(serialized.includes("\"riskFlags\":"), false);
-  approvalUiAssert.equal(/[ìëíÂ�]/.test(serialized), false);
+  approvalUiAssert.equal(/[ìëíÂ\uFFFD]/.test(serialized), false);
 }
 
 function runLawbotReviewApprovalUiModelTest() {
