@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runCronGroup, CRON_GROUPS } from "@/lib/services/cron-dispatcher-service";
+import { shouldRunBiWeekly } from "@/lib/services/cron-biweekly-gate";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,12 @@ async function handle(
       { error: `Unknown cron group: ${group}`, available: Object.keys(CRON_GROUPS) },
       { status: 404 },
     );
+  }
+
+  // bi-weekly: Vercel cron 표준이 격주 미지원. 매주 트리거되지만 홀수 ISO week 는 skip.
+  if (group === "bi-weekly" && !shouldRunBiWeekly()) {
+    logger.info(`[cron-batch] bi-weekly skipped (odd ISO week)`);
+    return NextResponse.json({ group, skipped: true, reason: "odd ISO week" });
   }
 
   // Build base URL
