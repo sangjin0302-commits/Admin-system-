@@ -5,14 +5,30 @@ import { BlogEditor } from "./blog-editor";
 
 export const dynamic = "force-dynamic";
 
+/** 이미 쓰인 게시판(폴더) 목록 — 에디터 datalist 로 재사용 편의 제공. */
+async function listBoards(): Promise<string[]> {
+  try {
+    const rows = await prisma.blogPost.findMany({
+      where: { board: { not: null } },
+      select: { board: true },
+      distinct: ["board"],
+      orderBy: { board: "asc" },
+    });
+    return rows.map((r) => r.board).filter((b): b is string => !!b && b.trim().length > 0);
+  } catch {
+    return [];
+  }
+}
+
 export default async function BlogEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const boards = await listBoards();
 
   if (id === "new") {
     return (
       <div className="space-y-6">
         <AdminPageHeader kicker="Blog CMS" title="새 글 작성" />
-        <BlogEditor post={null} />
+        <BlogEditor post={null} boards={boards} />
       </div>
     );
   }
@@ -24,6 +40,7 @@ export default async function BlogEditPage({ params }: { params: Promise<{ id: s
     <div className="space-y-6">
       <AdminPageHeader kicker="Blog CMS" title="글 수정" />
       <BlogEditor
+        boards={boards}
         post={{
           id: post.id,
           title: post.title,
@@ -35,6 +52,7 @@ export default async function BlogEditPage({ params }: { params: Promise<{ id: s
           published: post.published,
           pinned: post.pinned,
           sortOrder: post.sortOrder,
+          board: post.board ?? "",
           titleEn: post.titleEn ?? "",
           excerptEn: post.excerptEn ?? "",
           bodyEn: post.bodyEn ?? "",

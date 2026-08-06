@@ -1266,6 +1266,9 @@ model BlogPost {
   titleEn      String?
   bodyEn       String?
   excerptEn    String?
+  // 게시판(사용자 지정 폴더) — 네이버 블로그의 카테고리 폴더처럼 관리자가 자유 생성.
+  // 공개 5대 category(서비스 매핑용)와 별개. 값 없으면 게시판 미지정.
+  board        String?
   // 카드뉴스: 본문과 달리 글 맨 끝에만 렌더되는 슬라이드 묶음(JSON 배열).
   // 각 슬라이드 { image?, title?, body? }. 첫 슬라이드는 항상 커버(표지)로 취급.
   cardNews     String?

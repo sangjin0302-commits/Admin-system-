@@ -74,6 +74,8 @@ type ResolvedPost = {
   tags?: string[];
   /** 카드뉴스 JSON(맨 끝 렌더). EN 요청 시 cardNewsEn 폴백 반영된 값. */
   cardNews?: string | null;
+  /** 게시판(사용자 지정 폴더). 표시용. */
+  board?: string | null;
 };
 
 /** blogPost.tags(JSON 문자열)를 표시용 배열로 파싱. */
@@ -113,6 +115,7 @@ async function resolvePost(slug: string, lang: Lang): Promise<ResolvedPost | nul
       // 마크다운 글은 EN 번역본이 없다 → EN 요청 시 한글 원문임을 배너로 알린다(무단 한글 노출 방지).
       translationMissing: lang === "en",
       cardNews: null,
+      board: null,
     };
   }
   const db = await prisma.blogPost.findUnique({ where: { slug } });
@@ -138,6 +141,7 @@ async function resolvePost(slug: string, lang: Lang): Promise<ResolvedPost | nul
     hasEn: !!bodyEn,
     tags: parseTags(db.tags),
     cardNews: cardNewsRaw ?? null,
+    board: db.board ?? null,
   };
 }
 
@@ -413,7 +417,10 @@ export default async function BlogDetailPage({
           </p>
         )}
 
-        <div className="ethos-rule my-8">{publicCategoryLabel(toPublicCategoryLoose(post.category), lang)}</div>
+        <div className="ethos-rule my-8">
+          {post.board ? `${post.board} · ` : ""}
+          {publicCategoryLabel(toPublicCategoryLoose(post.category), lang)}
+        </div>
 
         <div
           className="prose prose-sm max-w-none font-serif text-base leading-8 text-text [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-2 [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-5xl [&>p:first-of-type]:first-letter:font-extrabold [&>p:first-of-type]:first-letter:leading-[0.8] [&>p:first-of-type]:first-letter:text-gold-deep [&_h2]:font-serif [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-primary [&_h2]:mt-8 [&_h2]:mb-3 [&_p]:my-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_strong]:text-primary"

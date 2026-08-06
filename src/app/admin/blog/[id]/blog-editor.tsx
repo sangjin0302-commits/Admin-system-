@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -29,6 +29,7 @@ type PostData = {
   published: boolean;
   pinned: boolean;
   sortOrder: number;
+  board: string;
   titleEn: string;
   excerptEn: string;
   bodyEn: string;
@@ -46,7 +47,7 @@ function isoToLocalInput(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function BlogEditor({ post }: { post: PostData }) {
+export function BlogEditor({ post, boards = [] }: { post: PostData; boards?: string[] }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState(post?.title ?? "");
@@ -54,6 +55,7 @@ export function BlogEditor({ post }: { post: PostData }) {
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [body, setBody] = useState(post?.body ?? "");
   const [category, setCategory] = useState(post?.category ?? "other");
+  const [board, setBoard] = useState(post?.board ?? "");
   const [tags, setTags] = useState(post?.tags ?? "[]");
   // 쉼표로 편하게 입력 → 내부 tags(JSON)로 동기화.
   const [tagText, setTagText] = useState(parseTags(post?.tags ?? "[]").join(", "));
@@ -72,6 +74,48 @@ export function BlogEditor({ post }: { post: PostData }) {
   // 네이버 링크 → 본문 자동 가져오기(수입 시 스크레이프 실패한 글 복구용).
   const [naverLink, setNaverLink] = useState("");
   const [fetchingBody, setFetchingBody] = useState(false);
+  // 마크다운 서식 툴바 — 국문/영문 본문 textarea 각각에 서식 삽입.
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const bodyEnRef = useRef<HTMLTextAreaElement>(null);
+
+  /** 선택 영역을 prefix/suffix 로 감싸거나, 줄머리 prefix 를 넣는다(placeholder 지원). */
+  const applyMarkdown = (
+    ref: React.RefObject<HTMLTextAreaElement | null>,
+    value: string,
+    setValue: (v: string) => void,
+    kind: "wrap" | "line",
+    a: string,
+    b = "",
+    placeholder = "",
+  ) => {
+    const el = ref.current;
+    const start = el ? el.selectionStart : value.length;
+    const end = el ? el.selectionEnd : value.length;
+    const sel = value.slice(start, end) || placeholder;
+    let next: string;
+    let caret: number;
+    if (kind === "wrap") {
+      next = value.slice(0, start) + a + sel + b + value.slice(end);
+      caret = start + a.length + sel.length + b.length;
+    } else {
+      // 줄머리에 prefix(선택 각 줄 앞). 선택 없으면 현재 줄.
+      const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+      const block = value.slice(lineStart, end) || placeholder;
+      const prefixed = block
+        .split("\n")
+        .map((ln) => a + ln)
+        .join("\n");
+      next = value.slice(0, lineStart) + prefixed + value.slice(end);
+      caret = lineStart + prefixed.length;
+    }
+    setValue(next);
+    requestAnimationFrame(() => {
+      if (el) {
+        el.focus();
+        el.setSelectionRange(caret, caret);
+      }
+    });
+  };
 
   // 카드뉴스 슬라이드 조작 헬퍼(KO/EN 공용).
   const updateSlide = (
@@ -158,6 +202,7 @@ export function BlogEditor({ post }: { post: PostData }) {
           published,
           pinned,
           sortOrder: Number.parseInt(sortOrder, 10) || 0,
+          board,
           titleEn,
           excerptEn,
           bodyEn,
@@ -180,6 +225,38 @@ export function BlogEditor({ post }: { post: PostData }) {
     } finally {
       setSaving(false);
     }
+  };
+
+  // 마크다운 서식 툴바(네이버 유사) — 대상 본문 textarea 에 서식 삽입.
+  const renderToolbar = (
+    ref: React.RefObject<HTMLTextAreaElement | null>,
+    value: string,
+    setValue: (v: string) => void,
+  ) => {
+    const Btn = ({ label, title, onClick }: { label: string; title: string; onClick: () => void }) => (
+      <button
+        type="button"
+        title={title}
+        onClick={onClick}
+        className="rounded border border-line bg-surface px-2 py-1 text-xs font-semibold text-text hover:bg-surface-muted"
+      >
+        {label}
+      </button>
+    );
+    return (
+      <div className="mt-1 flex flex-wrap gap-1">
+        <Btn label="H2" title="제목" onClick={() => applyMarkdown(ref, value, setValue, "line", "## ", "", "제목")} />
+        <Btn label="H3" title="소제목" onClick={() => applyMarkdown(ref, value, setValue, "line", "### ", "", "소제목")} />
+        <Btn label="B" title="굵게" onClick={() => applyMarkdown(ref, value, setValue, "wrap", "**", "**", "굵게")} />
+        <Btn label="I" title="기울임" onClick={() => applyMarkdown(ref, value, setValue, "wrap", "*", "*", "기울임")} />
+        <Btn label="• 목록" title="목록" onClick={() => applyMarkdown(ref, value, setValue, "line", "- ", "", "항목")} />
+        <Btn label="1. 번호" title="번호목록" onClick={() => applyMarkdown(ref, value, setValue, "line", "1. ", "", "항목")} />
+        <Btn label="❝ 인용" title="인용" onClick={() => applyMarkdown(ref, value, setValue, "line", "> ", "", "인용문")} />
+        <Btn label="🔗 링크" title="링크" onClick={() => applyMarkdown(ref, value, setValue, "wrap", "[", "](https://)", "링크문구")} />
+        <Btn label="🖼 이미지" title="이미지" onClick={() => applyMarkdown(ref, value, setValue, "wrap", "![", "](https://)", "대체텍스트")} />
+        <Btn label="― 구분선" title="구분선" onClick={() => applyMarkdown(ref, value, setValue, "wrap", "\n\n---\n\n", "", "")} />
+      </div>
+    );
   };
 
   // 카드뉴스 슬라이드 에디터(KO/EN 공용). 첫 장은 "커버(표지)"로 표시.
@@ -286,6 +363,24 @@ export function BlogEditor({ post }: { post: PostData }) {
             </select>
           </div>
           <div>
+            <label className="text-xs font-semibold text-text-muted">게시판 (폴더 · 직접 지정)</label>
+            <input
+              list="blog-board-list"
+              value={board}
+              onChange={(e) => setBoard(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-line bg-surface-muted px-3 py-2 text-sm"
+              placeholder="예: 공지사항, 사무소 소식 (없으면 미지정)"
+            />
+            <datalist id="blog-board-list">
+              {boards.map((b) => (
+                <option key={b} value={b} />
+              ))}
+            </datalist>
+            <p className="mt-1 text-[11px] text-text-muted">
+              네이버 블로그 카테고리 폴더처럼 자유롭게 만들어 분류. 5대 카테고리와 별개.
+            </p>
+          </div>
+          <div>
             <label className="text-xs font-semibold text-text-muted">키워드/태그 (쉼표로 구분)</label>
             <input
               value={tagText}
@@ -348,13 +443,15 @@ export function BlogEditor({ post }: { post: PostData }) {
             <label className="text-xs font-semibold text-text-muted">본문 (Markdown)</label>
             <span className="text-[11px] text-text-muted">{body.length.toLocaleString()}자</span>
           </div>
+          {renderToolbar(bodyRef, body, setBody)}
           <textarea
+            ref={bodyRef}
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={24}
             className="mt-1 w-full rounded-lg border border-line bg-surface-muted px-3 py-2 text-sm font-mono"
           />
-          <p className="mt-1 text-[11px] text-text-muted">길이 제한 없음(수만 자 가능).</p>
+          <p className="mt-1 text-[11px] text-text-muted">길이 제한 없음(수만 자 가능). 위 버튼으로 서식 삽입.</p>
         </div>
 
         {/* 카드뉴스(국문) — 본문과 달리 글 맨 끝에만. 첫 장은 커버. */}
@@ -389,7 +486,9 @@ export function BlogEditor({ post }: { post: PostData }) {
               <label className="text-xs font-semibold text-text-muted">Body (EN, Markdown)</label>
               <span className="text-[11px] text-text-muted">{bodyEn.length.toLocaleString()} chars</span>
             </div>
+            {renderToolbar(bodyEnRef, bodyEn, setBodyEn)}
             <textarea
+              ref={bodyEnRef}
               value={bodyEn}
               onChange={(e) => setBodyEn(e.target.value)}
               rows={20}

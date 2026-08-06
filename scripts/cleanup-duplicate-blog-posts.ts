@@ -16,6 +16,7 @@
  */
 import { prisma } from "../src/lib/prisma/client";
 import { NAVER_BLOG_SOURCE } from "../src/lib/services/naver-rss-importer";
+import { blogTitleKey } from "../src/lib/blog-title-key";
 
 const APPLY = process.argv.includes("--apply");
 
@@ -40,9 +41,11 @@ async function main() {
     select: { id: true, slug: true, title: true, importedAt: true, publishedAt: true, bodyEn: true, body: true },
   })) as Row[];
 
+  // 표시 기준 정규화 키로 그룹핑 — 인코딩만 다른 변종(%20/+/엔티티/대소문자)도 같은
+  // 제목으로 묶어 실제로 눈에 보이는 중복을 잡는다(raw title.trim() 은 이를 놓쳤음).
   const byTitle = new Map<string, Row[]>();
   for (const r of rows) {
-    const key = r.title.trim();
+    const key = blogTitleKey(r.title);
     if (!key) continue;
     const arr = byTitle.get(key) ?? [];
     arr.push(r);
