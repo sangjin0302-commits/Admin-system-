@@ -4,8 +4,9 @@ import { prisma } from "@/lib/prisma/client";
 import { logSearch } from "@/lib/services/search-log-service";
 import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 
+// q 쿼리 읽기 + logSearch 부작용 있어 동적. 캐시는 아래 Cache-Control 헤더가 담당
+// (q 없으면 CDN 300초, q 있으면 no-store). revalidate 는 force-dynamic 과 모순이라 제거.
 export const dynamic = "force-dynamic";
-export const revalidate = 300;
 
 /**
  * 블로그 글 검색 인덱스.

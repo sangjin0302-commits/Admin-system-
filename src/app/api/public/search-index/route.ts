@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { listBlogPosts } from "@/lib/blog-posts";
 
-export const dynamic = "force-dynamic";
+// 발행 블로그/사례 인덱스 — 방문마다 3개 Prisma 쿼리 돌던 것을 CDN 캐시로.
+// (force-dynamic + revalidate 는 모순: force-dynamic 이 revalidate 를 무효화했음.)
 export const revalidate = 600;
 
 type IndexItem = {
@@ -120,5 +121,13 @@ export async function GET() {
     // ignore
   }
 
-  return NextResponse.json({ items, generatedAt: new Date().toISOString() });
+  return NextResponse.json(
+    { items, generatedAt: new Date().toISOString() },
+    {
+      headers: {
+        // CDN 10분 캐시 + 1시간 stale-while-revalidate. 익명 트래픽 함수호출 절감.
+        "Cache-Control": "public, s-maxage=600, stale-while-revalidate=3600",
+      },
+    },
+  );
 }

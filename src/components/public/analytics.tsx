@@ -37,7 +37,9 @@ export async function Analytics() {
                 ad_user_data: 'denied',
                 ad_personalization: 'denied'
               });
-              gtag('config', '${gaId}', { anonymize_ip: true });
+              // send_page_view:false — page_view 는 SPA 라우터 훅(GA4ConversionTracker)이
+              // route 변경마다 단일 전송. config 자동 전송까지 겹치면 pageview 이중집계됨.
+              gtag('config', '${gaId}', { anonymize_ip: true, send_page_view: false });
             `}
           </Script>
         </>

@@ -144,9 +144,13 @@ export default function RootLayoutSafe({ children }: Readonly<{ children: React.
           <LiveChat />
           <CookieConsent />
         </PublicOnly>
-        <GA4ConversionTracker enabled={true} />
-        <Analytics />
-        <VercelAnalytics />
+        {/* 분석 트래커는 공개 페이지에서만 — admin 트래픽은 분석 가치 없고
+            Vercel Web Analytics 이벤트(과금)만 소모하므로 PublicOnly 로 스코핑. */}
+        <PublicOnly>
+          <GA4ConversionTracker enabled={true} />
+          <Analytics />
+          <VercelAnalytics />
+        </PublicOnly>
         <PWARegister />
         <LocalBusinessJsonLd />
         <AbBootstrap />

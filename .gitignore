@@ -33,3 +33,6 @@ storybook-static/
 # Playwright
 test-results/
 playwright-report/
+
+# 원본 고해상 브랜드 마스터(재인코딩 소스, 배포 불필요)
+.asset-originals/

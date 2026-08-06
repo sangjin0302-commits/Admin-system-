@@ -285,10 +285,11 @@ export default async function PublicMarketingHomePage({
   // 관리자 운영란 컨텐츠 (한국어에서만 override, 영어는 기본 카피)
   const site = await getSiteSettings();
   // CMS 오버레이 (site_content_editor flag) — 편집 가능한 문구
+  // "home.cta.label" 제거: 이 키는 fetch 만 되고 렌더 안 됐음(dead read). 실제 기본
+  // CTA 문구는 i18n tt("ctaFreeReview")가 담당 → content-editor 에서 편집해도 무효였음.
   const cms = await getContentBatch([
     "home.deadline_strip.title",
     "home.deadline_strip.subtitle",
-    "home.cta.label",
     "footer.tagline"
   ]);
   const heroBadge = lang === "ko" && site["home.heroBadge"] ? site["home.heroBadge"] : t.heroTagBadge;
