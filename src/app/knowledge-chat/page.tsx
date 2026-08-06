@@ -1,7 +1,8 @@
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { RagChatWidget } from "@/components/public/rag-chat-widget";
 
-export const dynamic = "force-dynamic";
+// 정적 셸 + RAG 챗 위젯(searchParams 미사용) → ISR. 함수호출 절감.
+export const revalidate = 3600;
 
 export const metadata = {
   title: "지식 챗봇 — 에토스 행정사사무소(ETHOS)",

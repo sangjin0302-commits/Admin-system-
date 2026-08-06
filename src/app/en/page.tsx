@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import { Reveal } from "@/components/public/reveal";
 import { CHANNELS } from "@/lib/constants/channels";
 
-export const dynamic = "force-dynamic";
+// 정적 EN 홈(searchParams 미사용) → ISR. 방문마다 함수호출 대신 CDN 캐시.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "ETHOS Administrative Attorney Office — Jean | English support",

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { listDatasets } from "@/lib/services/dataset-marketplace-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
-export const dynamic = "force-dynamic";
+// 데이터셋 카탈로그(DB, searchParams 미사용) → ISR. 함수호출 절감.
+export const revalidate = 3600;
 export const metadata = { title: "AI 학습 데이터셋 · ETHOS" };
 
 export default async function DatasetsCatalogPage() {

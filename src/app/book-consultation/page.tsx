@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 import { BookingWidget } from "@/components/public/booking-widget";
 
-export const dynamic = "force-dynamic";
+// 정적 셸 + 예약 위젯(searchParams 미사용) → ISR. 함수호출 절감.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "상담 예약 — 에토스 행정사사무소(ETHOS)",

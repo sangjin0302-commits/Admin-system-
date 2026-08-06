@@ -4,7 +4,8 @@ import { QuoteCompare } from "@/components/public/quote-compare";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { FeatureComingSoon } from "@/components/public/feature-coming-soon";
 
-export const dynamic = "force-dynamic";
+// 정적 셸 + 클라이언트 위젯(searchParams 미사용) → ISR. 함수호출 절감.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "비교 견적 요청 — 에토스 행정사사무소(ETHOS)",

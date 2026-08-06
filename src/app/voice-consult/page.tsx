@@ -4,7 +4,8 @@ import Link from "next/link";
 import { VoiceConsultWidget } from "@/components/public/voice-consult-widget";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 
-export const dynamic = "force-dynamic";
+// 정적 셸 + 음성 위젯(searchParams 미사용) → ISR. 함수호출 절감.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "AI 음성 상담 — 에토스 행정사사무소(ETHOS)",

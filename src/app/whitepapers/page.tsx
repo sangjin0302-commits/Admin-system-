@@ -3,7 +3,8 @@ import { listWhitepapers, type WhitepaperCategory } from "@/lib/services/whitepa
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { FeatureComingSoon } from "@/components/public/feature-coming-soon";
 
-export const dynamic = "force-dynamic";
+// 백서 카탈로그(DB, searchParams 미사용) → ISR. 함수호출 절감.
+export const revalidate = 3600;
 export const metadata = { title: "AI 법률 백서 · ETHOS" };
 
 const CAT_LABELS: Record<WhitepaperCategory, string> = {

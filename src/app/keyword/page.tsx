@@ -5,7 +5,8 @@ import { Reveal } from "@/components/public/reveal";
 import { getExtraKeywordLandings } from "@/lib/services/keyword-landing-service";
 import { BASE_KEYWORD_LANDINGS } from "@/lib/constants/keyword-landings";
 
-export const dynamic = "force-dynamic";
+// 키워드 랜딩 목록(DB+상수, searchParams 미사용) → ISR. 함수호출 절감.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "키워드 가이드 — 에토스 행정사사무소(ETHOS)",
