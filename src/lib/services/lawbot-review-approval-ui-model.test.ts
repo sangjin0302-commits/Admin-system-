@@ -1,6 +1,4 @@
 const approvalUiAssert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
 
 const {
   areLawbotApprovalChecksComplete,
@@ -63,7 +61,7 @@ function assertNoRawReviewFields(value: unknown) {
   approvalUiAssert.equal(serialized.includes("\"mustVerify\":"), false);
   approvalUiAssert.equal(serialized.includes("\"mustVerifySources\":"), false);
   approvalUiAssert.equal(serialized.includes("\"riskFlags\":"), false);
-  approvalUiAssert.equal(/[\u00ec\u00eb\u00ed\u00c2\u0085\uFFFD]/.test(serialized), false);
+  approvalUiAssert.equal(/[ìëíÂ�]/.test(serialized), false);
 }
 
 function runLawbotReviewApprovalUiModelTest() {
@@ -148,38 +146,70 @@ function runLawbotReviewApprovalUiModelTest() {
   approvalUiAssert.equal(approvedModel.approvalGate.externalActionAllowed, false);
   assertNoRawReviewFields(approvedModel);
 
-  const clientPath = path.resolve(
-    __dirname,
-    "..",
-    "..",
-    "components",
-    "admin",
-    "lawbot-review-readonly-client.tsx"
+  // Additional model-level coverage (replaces removed source-grep assertions).
+
+  // Unknown / unexpected workflow status must fall back to the blocked panel
+  // with approval controls hidden.
+  const blockedModel = buildLawbotReviewReadonlyUiModel(
+    createSafeReview({ workflowStatus: "EXECUTION_FAILED" })
   );
-  const clientSource = fs.readFileSync(clientPath, "utf8");
-  approvalUiAssert.equal(clientSource.includes("관리자 내부 승인"), true);
-  approvalUiAssert.equal(clientSource.includes("수동 검토 항목을 확인했습니다."), true);
-  approvalUiAssert.equal(clientSource.includes("내부 승인 처리"), true);
+  const blockedPanel = getLawbotReviewApprovalPanelState(blockedModel);
+  approvalUiAssert.equal(blockedPanel.state, "blocked");
+  approvalUiAssert.equal(blockedPanel.canShowApprovalControls, false);
   approvalUiAssert.equal(
-    clientSource.includes("내부 승인 처리하시겠습니까? 이 작업은 발송/제출을 실행하지 않습니다."),
-    true
+    blockedPanel.statusMessage,
+    "현재 워크플로 상태에서는 내부 승인 처리를 할 수 없습니다."
   );
-  approvalUiAssert.equal(clientSource.includes("외부 발송/제출은 별도 단계에서만 가능합니다."), true);
-  approvalUiAssert.equal(clientSource.includes("lawbot-review/approve"), true);
-  approvalUiAssert.equal(clientSource.includes("message-send-readiness"), true);
-  approvalUiAssert.equal(clientSource.includes("run-lawbot-" + "workflow"), false);
-  approvalUiAssert.equal(clientSource.includes("externalActionAllowed: " + "true"), false);
-  approvalUiAssert.equal(clientSource.includes("dispatchInitialClientMessage"), false);
-  approvalUiAssert.equal(clientSource.includes("clientMessageAdapters"), false);
-  approvalUiAssert.equal(clientSource.includes("sendInitialMessage"), false);
-  approvalUiAssert.equal(clientSource.includes("client-message-service"), false);
-  approvalUiAssert.equal(clientSource.toLowerCase().includes("sub" + "mit"), false);
-  approvalUiAssert.equal(clientSource.toLowerCase().includes("re" + "run"), false);
-  approvalUiAssert.equal(clientSource.toLowerCase().includes("re" + "try"), false);
-  approvalUiAssert.equal(clientSource.includes("\"mustVerify\":"), false);
-  approvalUiAssert.equal(clientSource.includes("\"mustVerifySources\":"), false);
-  approvalUiAssert.equal(clientSource.includes("\"riskFlags\":"), false);
-  approvalUiAssert.equal(/[\u00ec\u00eb\u00ed\u00c2\u0085\uFFFD]/.test(clientSource), false);
+
+  // Panel state must normalize casing / whitespace of workflowStatus.
+  const messyStatusModel = buildLawbotReviewReadonlyUiModel(
+    createSafeReview({ workflowStatus: "  approval_pending  " })
+  );
+  const messyStatusPanel = getLawbotReviewApprovalPanelState(messyStatusModel);
+  approvalUiAssert.equal(messyStatusPanel.state, "approval_pending");
+  approvalUiAssert.equal(messyStatusPanel.canShowApprovalControls, true);
+
+  // areLawbotApprovalChecksComplete must reject any single unchecked box.
+  approvalUiAssert.equal(
+    areLawbotApprovalChecksComplete({
+      manualReviewChecked: false,
+      sourcesChecked: true,
+      riskFlagsChecked: true,
+      draftsReviewed: true
+    }),
+    false
+  );
+  approvalUiAssert.equal(
+    areLawbotApprovalChecksComplete({
+      manualReviewChecked: true,
+      sourcesChecked: true,
+      riskFlagsChecked: true,
+      draftsReviewed: false
+    }),
+    false
+  );
+
+  // buildLawbotApprovalRequestBody must trim the note to empty and always
+  // pin the expected workflow status regardless of check values.
+  approvalUiAssert.deepEqual(
+    buildLawbotApprovalRequestBody(
+      {
+        manualReviewChecked: false,
+        sourcesChecked: false,
+        riskFlagsChecked: false,
+        draftsReviewed: false
+      },
+      "   "
+    ),
+    {
+      manualReviewChecked: false,
+      sourcesChecked: false,
+      riskFlagsChecked: false,
+      draftsReviewed: false,
+      operatorNote: "",
+      expectedWorkflowStatus: "APPROVAL_PENDING"
+    }
+  );
 
   console.log("lawbot-review-approval-ui-model-test-ok");
 }

@@ -123,7 +123,7 @@ const dateFields: Array<{
   { key: "resultExpectedDate", label: "결과 예상일" }
 ];
 
-function draftFromDetail(detail: ImmigrationCaseDetailSnapshot): Draft {
+export function draftFromDetail(detail: ImmigrationCaseDetailSnapshot): Draft {
   return {
     dispositionType: detail?.dispositionType ?? "",
     dispositionDate: stringifyDateForInput(detail?.dispositionDate ?? null),
@@ -151,12 +151,12 @@ function draftFromDetail(detail: ImmigrationCaseDetailSnapshot): Draft {
   };
 }
 
-function nullableText(value: string) {
+export function nullableText(value: string) {
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
 }
 
-function nullableDate(value: string) {
+export function nullableDate(value: string) {
   return value || null;
 }
 
@@ -164,7 +164,7 @@ function displayDate(value: Date | null | undefined) {
   return formatDate(value ?? null);
 }
 
-function buildImmigrationCaseDetailPatchPayload({
+export function buildImmigrationCaseDetailPatchPayload({
   draft,
   immigrationDetail,
   caseMatterUpdatedAt

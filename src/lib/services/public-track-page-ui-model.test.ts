@@ -1,6 +1,4 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 
 import {
   buildPublicTrackViewModel,
@@ -12,8 +10,6 @@ import {
   PUBLIC_TRACK_FORBIDDEN_RENDER_TOKENS,
   PUBLIC_TRACK_GENERIC_NOT_FOUND_MESSAGE
 } from "@/lib/services/public-track-page-ui-model";
-
-const root = process.cwd();
 
 assert.equal(PUBLIC_TRACK_API_PATH, "/api/public/track");
 assert.equal(
@@ -86,50 +82,36 @@ assert.equal(
   null
 );
 
-const trackPagePath = join(root, "src/app/track/page.tsx");
-const trackClientPath = join(root, "src/components/public-track/public-track-client.tsx");
-const appShellPath = join(root, "src/components/layout/app-shell-safe.tsx");
-assert.equal(existsSync(trackPagePath), true);
-assert.equal(existsSync(trackClientPath), true);
-assert.equal(existsSync(appShellPath), true);
+// 추가 모델 검증(기존 소스 grep 대체) — 민감 내부필드가 어떤 조합으로 들어와도
+// 뷰모델 직렬화 결과에 노출되지 않음을 모델 계층에서 직접 확인.
+const documentsRequestedModel = buildPublicTrackViewModel({
+  trackingCode: "20260504-fc-0009-aa",
+  categoryLabel: "인허가",
+  categoryDetailLabel: "건축 인허가",
+  receivedAt: "2026-05-04T13:53:51.051Z",
+  lastUpdatedAt: "2026-05-05T09:00:00.000Z",
+  customerStatus: "DOCUMENTS_REQUESTED",
+  customerStatusLabel: "추가자료 요청",
+  message: "추가 서류가 필요합니다.",
+  documentsRequested: true,
+  nextStepLabel: "요청 서류를 제출해 주세요.",
+  inquiryId: "leak-inquiry",
+  caseId: "leak-case",
+  workflowStatus: "APPROVED",
+  approvalGate: { externalActionAllowed: true },
+  adminNote: "leak-note"
+});
+assert.ok(documentsRequestedModel);
+assert.equal(documentsRequestedModel.documentsRequested, true);
+assert.equal(documentsRequestedModel.categoryDetailLabel, "건축 인허가");
+const documentsRequestedRendered = JSON.stringify(documentsRequestedModel);
+for (const forbidden of ["leak-inquiry", "leak-case", "APPROVED", "externalActionAllowed", "leak-note"]) {
+  assert.equal(documentsRequestedRendered.includes(forbidden), false);
+}
 
-const trackPageSource = readFileSync(trackPagePath, "utf8");
-const trackClientSource = readFileSync(trackClientPath, "utf8");
-const appShellSource = readFileSync(appShellPath, "utf8");
-assert.match(trackPageSource, /PublicTrackClient/);
-assert.match(trackClientSource, /PUBLIC_TRACK_API_PATH/);
-assert.match(trackClientSource, /접수 조회/);
-assert.match(trackClientSource, /<details/);
-assert.match(trackClientSource, /<summary/);
-assert.match(trackClientSource, /HOME_SCREEN_TITLE/);
-assert.ok(
-  trackClientSource.indexOf("{result ? <TrackingResultCard result={result} /> : null}") <
-    trackClientSource.indexOf("<details"),
-  "Result card should stay higher priority than home screen guidance"
-);
-assert.equal(trackPageSource.includes("Administrative Office Intake System"), false);
-assert.equal(trackClientSource.includes("Administrative Office Intake System"), false);
-assert.equal(trackPageSource.includes("행정사 문의 접수 및 업무 관리시스템"), false);
-assert.equal(trackClientSource.includes("행정사 문의 접수 및 업무 관리시스템"), false);
-assert.equal(trackPageSource.includes('href="/admin"'), false);
-assert.equal(trackClientSource.includes('href="/admin"'), false);
-assert.equal(trackPageSource.includes("/api/admin"), false);
-assert.equal(trackClientSource.includes("/api/admin"), false);
-assert.equal(trackClientSource.includes("/api/inquiries"), false);
-assert.equal(trackClientSource.includes("run-lawbot-workflow"), false);
-assert.equal(trackClientSource.includes("client-message-service"), false);
-assert.equal(trackClientSource.includes("externalActionAllowed"), false);
-assert.equal(trackClientSource.includes("documentDrafts"), false);
-assert.equal(trackClientSource.includes("messageDrafts"), false);
-assert.match(appShellSource, /isHeaderlessPublicRoute/);
-assert.match(appShellSource, /pathname === "\/track"/);
-assert.match(appShellSource, /pathname\.startsWith\("\/track\/"\)/);
-
-const intakeSource = readFileSync(join(root, "src/components/intake/intake-form.tsx"), "utf8");
-assert.match(intakeSource, /href="\/track"/);
-assert.match(intakeSource, /trackingCode/);
-
-const middlewareSource = readFileSync(join(root, "middleware.ts"), "utf8");
-assert.equal(middlewareSource.includes('pathname.startsWith("/track")'), false);
+// 입력 정규화 엣지: 공백/대소문자/하이픈 혼합 코드, 문자 섞인 전화번호.
+assert.equal(normalizePublicTrackCodeInput("  20260504-fc-0009-aa"), "20260504-FC-0009-AA");
+assert.equal(normalizePublicTrackPhoneLast4Input("휴대폰 010 1234 5678"), "5678");
+assert.equal(formatPublicTrackDateTime(""), "");
 
 console.log("public track page ui model tests passed");

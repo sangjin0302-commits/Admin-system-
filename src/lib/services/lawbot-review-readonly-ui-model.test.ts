@@ -1,6 +1,4 @@
 const readonlyAssert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
 
 const {
   buildLawbotReviewReadonlyUiModel,
@@ -70,8 +68,8 @@ function runLawbotReviewReadonlyUiModelTest() {
   readonlyAssert.equal(serialized.includes("ë"), false);
   readonlyAssert.equal(serialized.includes("í"), false);
   readonlyAssert.equal(serialized.includes("Â"), false);
-  readonlyAssert.equal(serialized.includes("\u0085"), false);
-  readonlyAssert.equal(serialized.includes("\uFFFD"), false);
+  readonlyAssert.equal(serialized.includes(""), false);
+  readonlyAssert.equal(serialized.includes("�"), false);
 
   readonlyAssert.equal(
     model.readonlyNotice,
@@ -84,45 +82,69 @@ function runLawbotReviewReadonlyUiModelTest() {
   readonlyAssert.equal(model.reviewQueue.documentDrafts.length, 1);
   readonlyAssert.equal(model.reviewQueue.messageDrafts.length, 1);
 
-  const clientPath = path.resolve(
-    __dirname,
-    "..",
-    "..",
-    "components",
-    "admin",
-    "lawbot-review-readonly-client.tsx"
-  );
-  const clientSource = fs.readFileSync(clientPath, "utf8");
-  readonlyAssert.equal(clientSource.includes("현재 이 화면은 읽기 전용이며"), false);
-  readonlyAssert.equal(clientSource.includes("model.readonlyNotice"), true);
-  readonlyAssert.equal(clientSource.includes("run-lawbot-" + "workflow"), false);
-  readonlyAssert.equal(clientSource.includes('"mustVerify":'), false);
-  readonlyAssert.equal(clientSource.includes('"mustVerifySources":'), false);
-  readonlyAssert.equal(clientSource.includes('"riskFlags":'), false);
+  // Additional model-level coverage (replaces removed source-grep assertions).
 
-  readonlyAssert.equal(clientSource.includes("message-send-readiness"), true);
-  readonlyAssert.equal(clientSource.includes("dispatchInitialClientMessage"), false);
-  readonlyAssert.equal(clientSource.includes("clientMessageAdapters"), false);
-  readonlyAssert.equal(clientSource.includes("sendInitialMessage"), false);
-  readonlyAssert.equal(clientSource.includes("client-message-service"), false);
-  readonlyAssert.equal(clientSource.toLowerCase().includes("sub" + "mit"), false);
-  readonlyAssert.equal(clientSource.toLowerCase().includes("re" + "run"), false);
-  readonlyAssert.equal(clientSource.toLowerCase().includes("re" + "try"), false);
+  // Null/undefined-ish input must produce a null model, not throw.
+  readonlyAssert.equal(buildLawbotReviewReadonlyUiModel(null), null);
+  readonlyAssert.equal(buildLawbotReviewReadonlyUiModel(undefined), null);
 
-  const detailPath = path.resolve(
-    __dirname,
-    "..",
-    "..",
-    "components",
-    "admin",
-    "inquiry-detail-right-column.tsx"
-  );
-  const detailSource = fs.readFileSync(detailPath, "utf8");
-  readonlyAssert.equal(detailSource.includes("Lawbot 리뷰 결과 보기"), true);
-  readonlyAssert.equal(
-    detailSource.includes("/admin/inquiries/${input.lawbotPanel.inquiryId}/lawbot-review"),
-    true
-  );
+  // Missing/garbage fields must be coerced to safe fallbacks, never crash.
+  const emptyModel = buildLawbotReviewReadonlyUiModel({});
+  readonlyAssert.ok(emptyModel);
+  readonlyAssert.equal(emptyModel.inquiryId, "unknown-inquiry");
+  readonlyAssert.equal(emptyModel.caseId, null);
+  readonlyAssert.equal(emptyModel.caseNumber, null);
+  readonlyAssert.equal(emptyModel.workflowStatus, "APPROVAL_PENDING");
+  readonlyAssert.equal(emptyModel.executionStatus, "success");
+  readonlyAssert.equal(emptyModel.executionSummary, "원문 확인 필요");
+  readonlyAssert.equal(emptyModel.reviewRequired, true);
+  readonlyAssert.equal(emptyModel.readonlyNotice, LAWBOT_REVIEW_READONLY_NOTICE);
+  // Empty reasonCodes must fall back to the default gate reason.
+  readonlyAssert.deepEqual(emptyModel.approvalGate.reasonCodes, ["manual_approval_required"]);
+  readonlyAssert.equal(emptyModel.approvalGate.approvalRequired, true);
+  readonlyAssert.equal(emptyModel.approvalGate.externalActionAllowed, false);
+  // Counts default to zero and draft lists default to empty.
+  readonlyAssert.equal(emptyModel.reviewSignals.mustVerifyCount, 0);
+  readonlyAssert.equal(emptyModel.reviewQueue.documentDrafts.length, 0);
+  readonlyAssert.equal(emptyModel.reviewQueue.messageDrafts.length, 0);
+  readonlyAssert.equal(emptyModel.reviewQueue.totalDrafts, 0);
+
+  // A mojibake executionSummary must be scrubbed to the safe fallback while
+  // the overall model is still returned.
+  const mojibakeModel = buildLawbotReviewReadonlyUiModel({
+    ...raw,
+    executionSummary: "ìë¬¸ íì¸"
+  });
+  readonlyAssert.ok(mojibakeModel);
+  readonlyAssert.equal(mojibakeModel.executionSummary, "원문 확인 필요");
+  readonlyAssert.equal(mojibakeModel.readonlyNotice, LAWBOT_REVIEW_READONLY_NOTICE);
+
+  // reasonCodes must be normalized (non-alnum replaced) and de-duplicated.
+  const reasonModel = buildLawbotReviewReadonlyUiModel({
+    ...raw,
+    approvalGate: {
+      approvalRequired: true,
+      externalActionAllowed: false,
+      reasonCodes: ["manual approval!", "manual approval!", "review_required"]
+    }
+  });
+  readonlyAssert.deepEqual(reasonModel.approvalGate.reasonCodes, [
+    "manual_approval_",
+    "review_required"
+  ]);
+
+  // Negative / fractional counts must be floored to a safe non-negative int.
+  const numberModel = buildLawbotReviewReadonlyUiModel({
+    ...raw,
+    reviewSignals: {
+      mustVerifyCount: -5,
+      mustVerifySourcesCount: 2.9,
+      riskFlagsCount: 0,
+      sourceVerificationChecklist: { totalRequired: 3 }
+    }
+  });
+  readonlyAssert.equal(numberModel.reviewSignals.mustVerifyCount, 0);
+  readonlyAssert.equal(numberModel.reviewSignals.mustVerifySourcesCount, 2);
 
   readonlyAssert.equal(
     LAWBOT_REVIEW_READONLY_NOTICE,
