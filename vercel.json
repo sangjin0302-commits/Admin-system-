@@ -32,6 +32,10 @@
     {
       "path": "/api/cron/batch/bi-weekly",
       "schedule": "0 22 * * 1"
+    },
+    {
+      "path": "/api/cron/blog-scheduled-publish",
+      "schedule": "0 * * * *"
     }
   ]
 }

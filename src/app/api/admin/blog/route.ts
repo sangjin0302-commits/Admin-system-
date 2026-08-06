@@ -7,6 +7,24 @@ import { generateSeoMeta } from "@/lib/services/blog-seo-service";
 import { ensureDisclaimer } from "@/lib/services/blog-disclaimer-service";
 import { assertBlogCreateAllowed, BlogContentPolicyError } from "@/lib/services/blog-content-policy";
 import { requireRole } from "@/lib/services/admin-rbac-service";
+import { parseCardNews, serializeCardNews } from "@/lib/services/card-news";
+
+/** 빈 문자열/공백/비문자열 → null. EN 선택 필드 정규화. */
+function normalizeOptionalText(v: unknown): string | null {
+  return typeof v === "string" && v.trim() ? v : null;
+}
+
+/** 카드뉴스(JSON 문자열 or 배열)를 검증·재직렬화. 빈/깨진 값은 null. */
+function normalizeCardNews(v: unknown): string | null {
+  return serializeCardNews(parseCardNews(v));
+}
+
+/** 예약 게시 시각 파싱. 유효한 미래/과거 ISO 만 Date, 그 외 null. */
+function parseScheduledAt(v: unknown): Date | null {
+  if (typeof v !== "string" || !v.trim()) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 async function maybeApplyDisclaimer(body: string, published: boolean): Promise<string> {
   if (!published) return body;
@@ -82,6 +100,7 @@ export async function POST(request: Request) {
       throw e;
     }
     const finalBody = await maybeApplyDisclaimer(data.body ?? "", Boolean(data.published));
+    const scheduledAt = parseScheduledAt(data.scheduledAt);
     const post = await prisma.blogPost.create({
       data: {
         title: data.title,
@@ -94,6 +113,12 @@ export async function POST(request: Request) {
         publishedAt: data.published ? new Date() : null,
         pinned: Boolean(data.pinned),
         sortOrder: Math.max(0, Number.parseInt(String(data.sortOrder), 10) || 0),
+        titleEn: normalizeOptionalText(data.titleEn),
+        excerptEn: normalizeOptionalText(data.excerptEn),
+        bodyEn: normalizeOptionalText(data.bodyEn),
+        cardNews: normalizeCardNews(data.cardNews),
+        cardNewsEn: normalizeCardNews(data.cardNewsEn),
+        scheduledAt,
       },
     });
     if (post.published) {
@@ -129,6 +154,12 @@ export async function PUT(request: Request) {
         publishedAt: data.published && !existing?.publishedAt ? new Date() : existing?.publishedAt,
         pinned: Boolean(data.pinned),
         sortOrder: Math.max(0, Number.parseInt(String(data.sortOrder), 10) || 0),
+        titleEn: normalizeOptionalText(data.titleEn),
+        excerptEn: normalizeOptionalText(data.excerptEn),
+        bodyEn: normalizeOptionalText(data.bodyEn),
+        cardNews: normalizeCardNews(data.cardNews),
+        cardNewsEn: normalizeCardNews(data.cardNewsEn),
+        scheduledAt: parseScheduledAt(data.scheduledAt),
       },
     });
     if (post.published && !existing?.published) {

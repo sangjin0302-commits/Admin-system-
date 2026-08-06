@@ -27,6 +27,7 @@ const EXPECTED: Record<string, string> = {
   "/api/cron/batch/weekly-batch":       "0 23 * * 0",   // KST 월 08:00 (월요일 아침)
   "/api/cron/batch/monthly-batch":      "0 1 1 * *",    // KST 매월1일 10:00
   "/api/cron/batch/bi-weekly":          "0 22 * * 1",   // KST 화 07:00 (route에서 격주 gate)
+  "/api/cron/blog-scheduled-publish":   "0 * * * *",    // 매시간 — 블로그 예약 게시 발행
 };
 
 const actual = new Map(cfg.crons.map((c) => [c.path, c.schedule]));

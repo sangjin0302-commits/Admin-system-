@@ -35,6 +35,12 @@ export default async function BlogEditPage({ params }: { params: Promise<{ id: s
           published: post.published,
           pinned: post.pinned,
           sortOrder: post.sortOrder,
+          titleEn: post.titleEn ?? "",
+          excerptEn: post.excerptEn ?? "",
+          bodyEn: post.bodyEn ?? "",
+          cardNews: post.cardNews ?? "",
+          cardNewsEn: post.cardNewsEn ?? "",
+          scheduledAt: post.scheduledAt ? post.scheduledAt.toISOString() : "",
         }}
       />
     </div>

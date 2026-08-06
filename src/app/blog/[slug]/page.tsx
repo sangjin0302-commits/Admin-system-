@@ -7,6 +7,7 @@ import { BlogToc } from "@/components/public/blog-toc";
 import { ShareButtons } from "@/components/public/share-buttons";
 import { BlogCta } from "@/components/public/blog-cta";
 import { BlogInlineCta } from "@/components/public/blog-inline-cta";
+import { CardNewsSection } from "@/components/public/card-news-section";
 import { RelatedKeywords } from "@/components/public/related-keywords";
 import { ScrollProgress } from "@/components/public/scroll-progress";
 import { BlogScrollTracker } from "@/components/public/blog-scroll-tracker";
@@ -71,6 +72,8 @@ type ResolvedPost = {
   hasEn?: boolean;
   /** 관리자가 지정한 태그(공개 표시용). db.tags(JSON) 파싱. */
   tags?: string[];
+  /** 카드뉴스 JSON(맨 끝 렌더). EN 요청 시 cardNewsEn 폴백 반영된 값. */
+  cardNews?: string | null;
 };
 
 /** blogPost.tags(JSON 문자열)를 표시용 배열로 파싱. */
@@ -109,6 +112,7 @@ async function resolvePost(slug: string, lang: Lang): Promise<ResolvedPost | nul
       readMin: md.readMin,
       // 마크다운 글은 EN 번역본이 없다 → EN 요청 시 한글 원문임을 배너로 알린다(무단 한글 노출 방지).
       translationMissing: lang === "en",
+      cardNews: null,
     };
   }
   const db = await prisma.blogPost.findUnique({ where: { slug } });
@@ -118,6 +122,8 @@ async function resolvePost(slug: string, lang: Lang): Promise<ResolvedPost | nul
   const bodyEn = db.bodyEn;
   const excerptEn = db.excerptEn;
   const useEn = wantEn && !!bodyEn;
+  // 카드뉴스: EN 요청이고 EN 카드가 있으면 EN, 아니면 KO 카드로 폴백.
+  const cardNewsRaw = useEn && db.cardNewsEn ? db.cardNewsEn : db.cardNews;
   return {
     source: "db",
     slug: db.slug,
@@ -131,6 +137,7 @@ async function resolvePost(slug: string, lang: Lang): Promise<ResolvedPost | nul
     translationMissing: wantEn && !bodyEn,
     hasEn: !!bodyEn,
     tags: parseTags(db.tags),
+    cardNews: cardNewsRaw ?? null,
   };
 }
 
@@ -413,6 +420,10 @@ export default async function BlogDetailPage({
           dangerouslySetInnerHTML={{ __html: autoLinkKeywords(sanitizeHtml(post.contentHtml)) }}
         />
 
+        {/* 카드뉴스 — 본문과 달리 글 맨 끝에만. 첫 슬라이드는 커버(표지). */}
+        {post.cardNews && <CardNewsSection raw={post.cardNews} lang={lang} />}
+
+        {/* 수동 CTA 없이도 자동으로 상담/연락 안내로 연결. */}
         <BlogInlineCta category={post.category} lang={lang} />
 
         {dbRelated.length > 0 && (

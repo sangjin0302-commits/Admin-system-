@@ -166,38 +166,53 @@ function promoteLazyImages(html: string): string {
 export async function fetchNaverPostBody(link: string): Promise<string | null> {
   const ids = parseNaverIds(link);
   if (!ids) return null;
-  const url = `https://m.blog.naver.com/PostView.naver?blogId=${encodeURIComponent(ids.blogId)}&logNo=${encodeURIComponent(ids.logNo)}`;
   const timeoutMs = Number(process.env.NAVER_FETCH_TIMEOUT_MS ?? "10000");
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1",
-        Accept: "text/html,application/xhtml+xml,*/*",
-      },
-      cache: "no-store",
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      logger.warn("[naver-rss] post body fetch non-ok", res.status, { link });
-      return null;
+
+  // 모바일 PostView 가 SmartEditor 본문을 인라인으로 내려 파싱이 쉽지만, 봇차단/마크업
+  // 변화로 종종 실패한다. 모바일 → 데스크톱 순으로 시도해 성공률을 높인다.
+  const candidates = [
+    `https://m.blog.naver.com/PostView.naver?blogId=${encodeURIComponent(ids.blogId)}&logNo=${encodeURIComponent(ids.logNo)}`,
+    `https://blog.naver.com/PostView.naver?blogId=${encodeURIComponent(ids.blogId)}&logNo=${encodeURIComponent(ids.logNo)}`,
+  ];
+
+  for (const url of candidates) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1",
+          Accept: "text/html,application/xhtml+xml,*/*",
+          "Accept-Language": "ko-KR,ko;q=0.9",
+          // Referer 없으면 네이버가 빈 셸을 주는 경우가 있어 blogId 홈을 지정.
+          Referer: `https://m.blog.naver.com/${encodeURIComponent(ids.blogId)}`,
+        },
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        logger.warn("[naver-rss] post body fetch non-ok", res.status, { url });
+        continue;
+      }
+      const html = await res.text();
+      // SmartEditor(se-main-container/se_component) · 구형(postViewArea) · iframe 셸 순.
+      const inner =
+        extractBalancedDiv(html, /<div[^>]*class=["'][^"']*se-main-container[^"']*["'][^>]*>/i) ??
+        extractBalancedDiv(html, /<div[^>]*class=["'][^"']*se_component_wrap[^"']*["'][^>]*>/i) ??
+        extractBalancedDiv(html, /<div[^>]*id=["']postViewArea["'][^>]*>/i) ??
+        extractBalancedDiv(html, /<div[^>]*class=["'][^"']*post-view[^"']*["'][^>]*>/i) ??
+        extractBalancedDiv(html, /<div[^>]*id=["']viewTypeSelector["'][^>]*>/i);
+      if (!inner) continue;
+      const cleaned = promoteLazyImages(inner).trim();
+      if (stripHtml(cleaned).length > 0) return cleaned;
+    } catch (err) {
+      logger.warn("[naver-rss] post body fetch failed", err, { url });
+    } finally {
+      clearTimeout(timeoutId);
     }
-    const html = await res.text();
-    const inner =
-      extractBalancedDiv(html, /<div[^>]*class=["'][^"']*se-main-container[^"']*["'][^>]*>/i) ??
-      extractBalancedDiv(html, /<div[^>]*id=["']postViewArea["'][^>]*>/i) ??
-      extractBalancedDiv(html, /<div[^>]*id=["']viewTypeSelector["'][^>]*>/i);
-    if (!inner) return null;
-    const cleaned = promoteLazyImages(inner).trim();
-    return stripHtml(cleaned).length > 0 ? cleaned : null;
-  } catch (err) {
-    logger.warn("[naver-rss] post body fetch failed", err, { link });
-    return null;
-  } finally {
-    clearTimeout(timeoutId);
   }
+  return null;
 }
 
 function generateSlug(title: string): string {

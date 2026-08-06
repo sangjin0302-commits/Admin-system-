@@ -1266,6 +1266,12 @@ model BlogPost {
   titleEn      String?
   bodyEn       String?
   excerptEn    String?
+  // 카드뉴스: 본문과 달리 글 맨 끝에만 렌더되는 슬라이드 묶음(JSON 배열).
+  // 각 슬라이드 { image?, title?, body? }. 첫 슬라이드는 항상 커버(표지)로 취급.
+  cardNews     String?
+  cardNewsEn   String?
+  // 예약 게시: 값이 있고 published=false 면 크론이 그 시각 이후 자동 발행.
+  scheduledAt  DateTime?
   source       String   @default("manual")
   originalUrl  String?
   importedAt   DateTime?
