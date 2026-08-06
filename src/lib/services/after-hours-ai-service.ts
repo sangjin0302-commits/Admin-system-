@@ -9,8 +9,8 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-4-5-20251001";
 
 const KST_OFFSET_MIN = 9 * 60;
@@ -156,27 +156,13 @@ async function callHaiku(ctx: AfterHoursContext, nextOpen: Date, hours: Business
   ].join("\n");
 
   try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 800,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }],
-      }),
+    const r = await callAnthropicMessages({
+      model: MODEL,
+      maxTokens: 800,
+      system: systemPrompt,
+      prompt: userPrompt,
     });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      logger.warn("[after-hours-ai] api error", { status: res.status, body: txt.slice(0, 300) });
-      return null;
-    }
-    const data = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
-    const text = data.content?.find((c) => c.type === "text")?.text?.trim() ?? "";
+    const text = r.text.trim();
     return text || null;
   } catch (err) {
     logger.warn("[after-hours-ai] failed", err);

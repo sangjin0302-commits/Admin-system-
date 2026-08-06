@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma/client";
 import { getRecentErrors, type ErrorEvent } from "@/lib/services/error-monitor-service";
 import { markSentryEventResolved } from "@/lib/services/sentry-integration-service";
 import { logger } from "@/lib/utils/logger";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
 const LOG_KEY = "self_healing.log";
 const MAX_LOG = 200;
@@ -140,29 +141,18 @@ async function aiSuggestFix(err: { message: string; stack?: string }): Promise<s
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return "AI 분석 불가 (ANTHROPIC_API_KEY 미설정)";
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5",
-        max_tokens: 300,
-        messages: [
-          {
-            role: "user",
-            content: `다음 에러의 원인과 안전한 복구 방안을 3줄 이내 한국어로 제안:\n\n메시지: ${err.message}\n스택: ${(err.stack ?? "").slice(0, 800)}`,
-          },
-        ],
-      }),
+    const r = await callAnthropicMessages({
+      model: "claude-haiku-4-5",
+      maxTokens: 300,
+      prompt: `다음 에러의 원인과 안전한 복구 방안을 3줄 이내 한국어로 제안:\n\n메시지: ${err.message}\n스택: ${(err.stack ?? "").slice(0, 800)}`,
     });
-    if (!res.ok) return `AI 분석 실패 (${res.status})`;
-    const json = (await res.json()) as { content?: Array<{ text?: string }> };
-    return json.content?.[0]?.text?.trim() ?? "제안 없음";
+    return r.text.trim() || "제안 없음";
   } catch (e) {
-    return `AI 분석 예외: ${e instanceof Error ? e.message : String(e)}`;
+    // 게이트웨이는 HTTP 오류도 throw 하므로 상태코드를 복원해 기존 메시지 분기를 보존.
+    const msg = e instanceof Error ? e.message : String(e);
+    const statusMatch = msg.match(/anthropic (\d{3})/);
+    if (statusMatch) return `AI 분석 실패 (${statusMatch[1]})`;
+    return `AI 분석 예외: ${msg}`;
   }
 }
 

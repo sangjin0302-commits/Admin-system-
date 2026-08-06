@@ -43,6 +43,7 @@
     "test:ai-budget": "tsx scripts/tests/ai-budget-check.ts",
     "test:home-copy": "tsx scripts/tests/home-copy-parsers-check.ts",
     "test:vercel-cron": "tsx scripts/tests/vercel-cron-schedule-check.ts",
+    "test:anthropic-gateway": "tsx scripts/tests/anthropic-gateway-lock-check.ts",
     "test:unit": "node scripts/run-unit-tests.mjs",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",

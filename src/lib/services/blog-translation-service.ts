@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
 import { isAiAllowed } from "@/lib/services/ai-budget-guard";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-4-5-20251001";
 
 export type TargetLang = "en" | "zh";
@@ -69,29 +69,14 @@ BODY (HTML — 保留所有标签/图片/链接):
 ${input.body}`;
 
   try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 4000,
-        system: SYSTEM_PROMPTS[targetLang],
-        messages: [{ role: "user", content: userMessage }],
-      }),
+    const r = await callAnthropicMessages({
+      model: MODEL,
+      maxTokens: 4000,
+      system: SYSTEM_PROMPTS[targetLang],
+      prompt: userMessage,
     });
 
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      logger.error("[blog-translate] API error", { status: res.status, targetLang, body: errText.slice(0, 500) });
-      return null;
-    }
-
-    const data = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
-    const text = data.content?.find((c) => c.type === "text")?.text ?? "";
+    const text = r.text;
     const cleaned = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
     const parsed = JSON.parse(cleaned) as { title?: string; excerpt?: string; body?: string; titleEn?: string; excerptEn?: string; bodyEn?: string };
     // Accept both legacy (titleEn) and new (title) shapes

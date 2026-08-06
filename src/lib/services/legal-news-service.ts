@@ -10,9 +10,9 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
 const STORE_KEY = "news.legal.recent";
-const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 const MAX_KEEP = 100;
 
@@ -112,22 +112,12 @@ async function summarize(title: string): Promise<{ summary: string; category: st
 제목: "${title}"
 출력 형식만: {"summary": string, "category": string, "keywords": string[]}. 카테고리는 "출입국", "행정심판", "건축", "영업허가", "세무", "기타" 중 하나. 마크다운 금지.`;
   try {
-    const res = await fetch(ANTHROPIC_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: HAIKU_MODEL,
-        max_tokens: 300,
-        messages: [{ role: "user", content: prompt }],
-      }),
+    const r = await callAnthropicMessages({
+      model: HAIKU_MODEL,
+      maxTokens: 300,
+      prompt,
     });
-    if (!res.ok) return { summary: title, category: "기타", keywords: [] };
-    const data = await res.json();
-    const raw = data?.content?.[0]?.text?.trim() ?? "";
+    const raw = r.text.trim();
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) return { summary: title, category: "기타", keywords: [] };
     const p = JSON.parse(match[0]) as { summary?: string; category?: string; keywords?: string[] };

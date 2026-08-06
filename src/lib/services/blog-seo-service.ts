@@ -1,6 +1,7 @@
 import { logger } from "@/lib/utils/logger";
 import { getSiteUrl } from "@/lib/utils/site-url";
 import { smartInvoke } from "./smart-ai-client";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
 export type BlogSEOMeta = {
   metaTitle: string;
@@ -20,7 +21,7 @@ export async function generateBlogSEO(
 
   if (apiKey) {
     try {
-      return await generateWithAI(apiKey, title, body, category);
+      return await generateWithAI(title, body, category);
     } catch (err) {
       logger.error("AI SEO generation failed, falling back:", err);
     }
@@ -65,29 +66,18 @@ function generateFallback(
 }
 
 async function generateWithAI(
-  apiKey: string,
   title: string,
   body: string,
   category: string,
 ): Promise<BlogSEOMeta> {
   const truncatedBody = body.slice(0, 2000);
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 500,
-      system:
-        "You are an SEO specialist for ETHOS 행정사사무소 (Korean administrative agent office). Generate optimized SEO metadata in Korean for blog posts. Respond ONLY with JSON.",
-      messages: [
-        {
-          role: "user",
-          content: `다음 블로그 글에 대한 SEO 메타데이터를 JSON으로 생성해 주세요.
+  const r = await callAnthropicMessages({
+    model: "claude-haiku-4-5-20251001",
+    maxTokens: 500,
+    system:
+      "You are an SEO specialist for ETHOS 행정사사무소 (Korean administrative agent office). Generate optimized SEO metadata in Korean for blog posts. Respond ONLY with JSON.",
+    prompt: `다음 블로그 글에 대한 SEO 메타데이터를 JSON으로 생성해 주세요.
 
 제목: ${title}
 카테고리: ${category}
@@ -102,15 +92,9 @@ JSON 형식:
   "ogDescription": "OG 설명 (120자 이내)",
   "canonicalSlug": "url-friendly-slug"
 }`,
-        },
-      ],
-    }),
   });
 
-  if (!res.ok) throw new Error(`Anthropic API error: ${res.status}`);
-
-  const data = await res.json();
-  const text = data.content?.[0]?.text ?? "";
+  const text = r.text;
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("No JSON in AI response");
 
@@ -174,24 +158,13 @@ async function generateMetaDescription(post: BlogPostSeoInput): Promise<string> 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (apiKey) {
     try {
-      const resp = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: HAIKU_MODEL,
-          max_tokens: 300,
-          messages: [{ role: "user", content: prompt }],
-        }),
+      const resp = await callAnthropicMessages({
+        model: HAIKU_MODEL,
+        maxTokens: 300,
+        prompt,
       });
-      if (resp.ok) {
-        const j = (await resp.json()) as { content?: Array<{ text?: string }> };
-        const text = j.content?.[0]?.text?.trim();
-        if (text) return text.replace(/^["'`]|["'`]$/g, "").slice(0, 160);
-      }
+      const text = resp.text.trim();
+      if (text) return text.replace(/^["'`]|["'`]$/g, "").slice(0, 160);
     } catch (err) {
       logger.warn("[blog-seo] Haiku direct fallback failed", err);
     }

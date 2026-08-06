@@ -18,11 +18,11 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
 const KEY_FEEDS = "naver_kin.feeds";
 const KEY_QUEUE = "naver_kin.queue";
 const KEY_SEEN = "naver_kin.seen";
-const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 const RELEVANCE_THRESHOLD = 0.6;
 const DISCLAIMER =
@@ -146,26 +146,13 @@ async function classifyAndDraft(
   const user = `제목: ${q.title}\n내용: ${q.body.slice(0, 1500)}`;
 
   try {
-    const res = await fetch(ANTHROPIC_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: HAIKU_MODEL,
-        max_tokens: 800,
-        system,
-        messages: [{ role: "user", content: user }],
-      }),
+    const r = await callAnthropicMessages({
+      model: HAIKU_MODEL,
+      maxTokens: 800,
+      system,
+      prompt: user,
     });
-    if (!res.ok) {
-      logger.warn("[naver-kin] anthropic error", res.status);
-      return null;
-    }
-    const data = await res.json();
-    const text = data?.content?.[0]?.text?.trim() ?? "";
+    const text = r.text.trim();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
     const parsed = JSON.parse(jsonMatch[0]) as { confidence?: number; answer?: string };

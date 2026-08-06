@@ -95,6 +95,7 @@ jobs:
       - run: npm run test:service-content-parse
       - run: npm run test:flag-cache
       - run: npm run test:vercel-cron
+      - run: npm run test:anthropic-gateway
 
   # 코로케이션 유닛테스트(그동안 러너 없어 미실행) — 통과분 71개 하드게이트.
   # 실패 15개는 run-unit-tests.mjs EXCLUDE 에서 트리아지 대상으로 분리.

@@ -12,6 +12,7 @@
 import { createHash } from "crypto";
 
 import { cacheGet, cacheSet } from "@/lib/services/cache-service";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 import {
   estimateCostUsd,
   recordMetric,
@@ -43,46 +44,23 @@ export type Invoker = (args: {
   maxTokens?: number;
 }) => Promise<{ text: string; input_tokens: number; output_tokens: number }>;
 
-const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const AI_CACHE_TTL = 3600; // 1 hour
 
+// 기본 invoker 는 단일 게이트웨이를 경유 → 예산 킬스위치 + 지출 집계가 자동 적용된다.
+// (라우팅/폴백/메트릭 로직은 smartInvoke 가 담당하므로 invoker 는 호출만.)
 async function defaultAnthropicInvoker(args: {
   model: string;
   prompt: string;
   system?: string;
   maxTokens?: number;
 }): Promise<{ text: string; input_tokens: number; output_tokens: number }> {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error("ANTHROPIC_API_KEY 미설정");
-  const body: Record<string, unknown> = {
+  const r = await callAnthropicMessages({
     model: args.model,
-    max_tokens: args.maxTokens ?? 1024,
-    messages: [{ role: "user", content: args.prompt }],
-  };
-  if (args.system) body.system = args.system;
-  const res = await fetch(ANTHROPIC_URL, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": key,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify(body),
+    prompt: args.prompt,
+    system: args.system,
+    maxTokens: args.maxTokens,
   });
-  if (!res.ok) throw new Error(`anthropic ${res.status}`);
-  const data = (await res.json()) as {
-    content?: Array<{ type: string; text?: string }>;
-    usage?: { input_tokens?: number; output_tokens?: number };
-  };
-  const text = (data.content ?? [])
-    .filter((b) => b.type === "text")
-    .map((b) => b.text ?? "")
-    .join("");
-  return {
-    text,
-    input_tokens: data.usage?.input_tokens ?? 0,
-    output_tokens: data.usage?.output_tokens ?? 0,
-  };
+  return { text: r.text, input_tokens: r.inputTokens, output_tokens: r.outputTokens };
 }
 
 export type SmartInvokeOptions = ComplexitySignals & {

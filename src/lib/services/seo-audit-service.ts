@@ -8,6 +8,7 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
 export type SeoIssue = {
   code: string;
@@ -244,28 +245,15 @@ async function tryHaikuSuggestion(
   post: BlogPostInput,
   issues: SeoIssue[]
 ): Promise<string | null> {
-  // Minimal fetch-based call to keep this file dependency-light.
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return null;
   const issuesText = issues.map((i) => `- ${i.code}: ${i.message}`).join("\n");
   const prompt = `다음 블로그 글의 SEO 개선을 위해 한 문장으로 구체적 조언을 해 주세요.\n\n제목: ${post.title}\n발췌: ${post.excerpt.slice(0, 200)}\n\n감지된 이슈:\n${issuesText}`;
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5",
-        max_tokens: 200,
-        messages: [{ role: "user", content: prompt }],
-      }),
+    const r = await callAnthropicMessages({
+      model: "claude-haiku-4-5",
+      maxTokens: 200,
+      prompt,
     });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
-    const text = data.content?.find((c) => c.type === "text")?.text?.trim();
+    const text = r.text.trim();
     return text ? `AI 제안: ${text}` : null;
   } catch {
     return null;

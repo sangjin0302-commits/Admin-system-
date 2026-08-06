@@ -17,6 +17,7 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
 const LOG_KEY = "audit_anomaly.log";
 const MARK_PREFIX = "audit_anomaly.marks.";
@@ -108,24 +109,13 @@ async function aiExplain(context: string): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return "AI 미사용 - 기준선 분석 결과만 제공";
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 200,
-        messages: [
-          {
-            role: "user",
-            content: `다음 감사 로그 이상 징후를 한국어 1-2문장으로 설명하고 리스크 수준을 코멘트하세요. 사실 기반으로만.
+    const r = await callAnthropicMessages({
+      model: "claude-haiku-4-5-20251001",
+      maxTokens: 200,
+      prompt: `다음 감사 로그 이상 징후를 한국어 1-2문장으로 설명하고 리스크 수준을 코멘트하세요. 사실 기반으로만.
 ${context}`,
-          },
-        ],
-      }),
     });
-    if (!res.ok) throw new Error(`Anthropic ${res.status}`);
-    const data = await res.json();
-    return (data?.content?.[0]?.text ?? "").trim() || "AI 응답 없음";
+    return r.text.trim() || "AI 응답 없음";
   } catch (err) {
     logger.warn("[audit-anomaly] AI 설명 실패", err);
     return "AI 설명 생성 실패 - 기준선 분석 결과만 제공";

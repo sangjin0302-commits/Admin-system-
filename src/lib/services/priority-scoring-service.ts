@@ -9,6 +9,7 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
 export type PriorityScore = {
   urgency: number;
@@ -111,7 +112,7 @@ function heuristicScore(inquiry: InquiryLike): PriorityScore {
   };
 }
 
-async function aiScore(apiKey: string, inquiry: InquiryLike): Promise<PriorityScore | null> {
+async function aiScore(inquiry: InquiryLike): Promise<PriorityScore | null> {
   const prompt = `You are prioritising an inquiry for an administrative agent (행정사) firm.
 Given the inquiry, return three integer scores 0-100 and a Korean explanation:
 - urgency: how time-sensitive (deadline keywords 급함/오늘/내일, dueDate soon)
@@ -130,23 +131,13 @@ Corporate: ${inquiry.isCorporateRequest ? "yes" : "no"}
 DocsReady: ${inquiry.hasPreparedDocuments ? "yes" : "no"}
 Description: ${inquiry.description.slice(0, 1500)}`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 300,
-      messages: [{ role: "user", content: prompt }],
-    }),
+  const r = await callAnthropicMessages({
+    model: "claude-haiku-4-5-20251001",
+    maxTokens: 300,
+    prompt,
   });
 
-  if (!res.ok) throw new Error(`Anthropic API error: ${res.status}`);
-  const data = await res.json();
-  const text = data?.content?.[0]?.text ?? "";
+  const text = r.text ?? "";
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) return null;
 
@@ -195,7 +186,7 @@ export async function scoreInquiry(inquiryId: string): Promise<PriorityScore> {
   let score: PriorityScore | null = null;
   if (apiKey) {
     try {
-      score = await aiScore(apiKey, inquiry as InquiryLike);
+      score = await aiScore(inquiry as InquiryLike);
     } catch (err) {
       logger.warn("[priority-scoring] AI 실패 — heuristic fallback", err);
     }

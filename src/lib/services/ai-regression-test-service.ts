@@ -8,6 +8,7 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
 const SUITE_KEY = "ai.regression.suite";
 const HISTORY_KEY = "ai.regression.history";
@@ -131,22 +132,12 @@ ${output}
 
 Respond ONLY with JSON: {"score":0.0-1.0,"reason":"한국어 간단 설명"}`;
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 150,
-        messages: [{ role: "user", content: prompt }],
-      }),
+    const r = await callAnthropicMessages({
+      model: "claude-haiku-4-5-20251001",
+      maxTokens: 150,
+      prompt,
     });
-    if (!res.ok) throw new Error(`Anthropic ${res.status}`);
-    const data = await res.json();
-    const text: string = data.content?.[0]?.text ?? "";
+    const text: string = r.text ?? "";
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) return { score: keywordScore, reason: "판정기 응답 파싱 실패" };
     const parsed = JSON.parse(match[0]) as { score?: number; reason?: string };

@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma/client";
 import { generateReport as generateAdReport, type AdRecommendation } from "@/lib/services/ad-optimizer-service";
 import { logger } from "@/lib/utils/logger";
 import { isAiAllowed } from "@/lib/services/ai-budget-guard";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
 const DECISIONS_KEY = "auto_marketing.decisions";
 const AUTO_APPLY_KEY = "auto_marketing.auto_apply";
@@ -113,30 +114,13 @@ async function generateCopyVariant(campaign: string, currentCopy?: string): Prom
     logger.warn("[auto-marketing] AI budget guard blocked copy variant, skipping", { reason: aiGate.reason, campaign });
     return `[변형 생성 건너뜀 - AI 비활성화] ${campaign}`;
   }
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return `[변형 생성 불가 - ANTHROPIC_API_KEY 미설정] ${campaign}`;
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5",
-        max_tokens: 200,
-        messages: [
-          {
-            role: "user",
-            content: `행정사 사무소 광고 A/B 테스트용 새 카피 1개 (한국어, 40자 이내). 캠페인: ${campaign}${currentCopy ? `\n현재: ${currentCopy}` : ""}\n카피만 반환:`,
-          },
-        ],
-      }),
+    const r = await callAnthropicMessages({
+      model: "claude-haiku-4-5",
+      maxTokens: 200,
+      prompt: `행정사 사무소 광고 A/B 테스트용 새 카피 1개 (한국어, 40자 이내). 캠페인: ${campaign}${currentCopy ? `\n현재: ${currentCopy}` : ""}\n카피만 반환:`,
     });
-    if (!res.ok) return `카피 생성 실패 (${res.status})`;
-    const json = (await res.json()) as { content?: Array<{ text?: string }> };
-    return json.content?.[0]?.text?.trim() ?? `변형 초안 ${campaign}`;
+    return r.text.trim() || `변형 초안 ${campaign}`;
   } catch (e) {
     return `카피 생성 예외: ${e instanceof Error ? e.message : String(e)}`;
   }

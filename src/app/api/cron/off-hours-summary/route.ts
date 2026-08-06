@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { sendTelegramAlert } from "@/lib/services/telegram-notify";
 import { logger } from "@/lib/utils/logger";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 90;
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-4-5-20251001";
 
 type Inquiry = {
@@ -39,22 +39,12 @@ async function summarizeWithClaude(items: Inquiry[]): Promise<string | null> {
     "우선순위 상위 2건을 지목하고, 유형 분포(비자/심판/계약 등)를 요약하며, 오늘 오전 우선 처리 권고를 포함하라.\n\n" +
     lines.join("\n");
   try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 600,
-        messages: [{ role: "user", content: userPrompt }],
-      }),
+    const r = await callAnthropicMessages({
+      model: MODEL,
+      maxTokens: 600,
+      prompt: userPrompt,
     });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
-    return data.content?.find((c) => c.type === "text")?.text?.trim() ?? null;
+    return r.text.trim() || null;
   } catch (err) {
     logger.warn("[off-hours-summary] claude failed", err);
     return null;

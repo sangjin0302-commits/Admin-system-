@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
+import { callAnthropicMessages } from "@/lib/services/anthropic-gateway";
 
 export type AutoReplyConfig = {
   minConfidence: number;
@@ -93,29 +94,14 @@ async function generateWithConfidence(inquiry: {
     return { draft: generateFromTemplate(inquiry), confidence: 0.5 };
   }
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 700,
-        system:
-          "You are a polite assistant for ETHOS 행정사사무소. Reply in JSON: {\"draft\": string, \"confidence\": number between 0 and 1 estimating how safe it is to auto-send without human review}. Draft is a brief Korean reply under 200 words. Lower confidence for ambiguous, sensitive, or complex inquiries.",
-        messages: [
-          {
-            role: "user",
-            content: `문의자: ${inquiry.name}\n유형: ${inquiry.inquiryType}\n제목: ${inquiry.title}\n내용: ${inquiry.message}`
-          }
-        ]
-      })
+    const r = await callAnthropicMessages({
+      model: "claude-haiku-4-5-20251001",
+      maxTokens: 700,
+      system:
+        "You are a polite assistant for ETHOS 행정사사무소. Reply in JSON: {\"draft\": string, \"confidence\": number between 0 and 1 estimating how safe it is to auto-send without human review}. Draft is a brief Korean reply under 200 words. Lower confidence for ambiguous, sensitive, or complex inquiries.",
+      prompt: `문의자: ${inquiry.name}\n유형: ${inquiry.inquiryType}\n제목: ${inquiry.title}\n내용: ${inquiry.message}`,
     });
-    if (!res.ok) throw new Error(`Anthropic ${res.status}`);
-    const data = await res.json();
-    const text: string = data.content?.[0]?.text ?? "";
+    const text: string = r.text ?? "";
     const jsonStart = text.indexOf("{");
     const jsonEnd = text.lastIndexOf("}");
     if (jsonStart >= 0 && jsonEnd > jsonStart) {
@@ -249,7 +235,7 @@ export async function generateAutoReplyDraft(inquiry: {
 
   if (apiKey) {
     try {
-      return await generateWithAI(apiKey, inquiry);
+      return await generateWithAI(inquiry);
     } catch (err) {
       logger.error("AI auto-reply failed, falling back to template:", err);
     }
@@ -268,37 +254,20 @@ function generateFromTemplate(inquiry: {
 }
 
 async function generateWithAI(
-  apiKey: string,
   inquiry: { name: string; inquiryType: string; message: string; title: string },
 ): Promise<string> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 500,
-      system:
-        "You are a polite assistant for ETHOS 행정사사무소. Generate a brief Korean reply acknowledging the inquiry, providing relevant initial guidance based on the inquiry type, and asking for any additional documents needed. Keep under 200 words.",
-      messages: [
-        {
-          role: "user",
-          content: `다음 문의에 대한 답변 초안을 작성해 주세요.
+  const r = await callAnthropicMessages({
+    model: "claude-haiku-4-5-20251001",
+    maxTokens: 500,
+    system:
+      "You are a polite assistant for ETHOS 행정사사무소. Generate a brief Korean reply acknowledging the inquiry, providing relevant initial guidance based on the inquiry type, and asking for any additional documents needed. Keep under 200 words.",
+    prompt: `다음 문의에 대한 답변 초안을 작성해 주세요.
 
 문의자: ${inquiry.name}
 문의 유형: ${inquiry.inquiryType}
 제목: ${inquiry.title}
 내용: ${inquiry.message}`,
-        },
-      ],
-    }),
   });
 
-  if (!res.ok) throw new Error(`Anthropic API error: ${res.status}`);
-
-  const data = await res.json();
-  return data.content?.[0]?.text ?? generateFromTemplate(inquiry);
+  return r.text || generateFromTemplate(inquiry);
 }
