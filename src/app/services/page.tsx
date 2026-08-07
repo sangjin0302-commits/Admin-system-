@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { buildWebsiteIntakeHref } from "@/lib/services/public-marketing-pages";
+import { getRequestLocale } from "@/lib/i18n-request";
 
 import { Reveal } from "@/components/public/reveal";
 
@@ -11,7 +12,9 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
-  const en = (await searchParams).lang === "en";
+  const sp = await searchParams;
+  const langParam = typeof sp.lang === "string" ? sp.lang : undefined;
+  const en = (await getRequestLocale(langParam)) === "en";
   return en
     ? {
         title: "Practice Areas — ETHOS Administrative Attorney Office",
@@ -129,7 +132,8 @@ export default async function ServicesIndex({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const lang = sp.lang === "en" ? "en" : "ko";
+  const langParam = typeof sp.lang === "string" ? sp.lang : undefined;
+  const lang = await getRequestLocale(langParam);
   const c = COPY[lang];
   const qs = lang === "en" ? "?lang=en" : "";
   const intakeHref = buildWebsiteIntakeHref();

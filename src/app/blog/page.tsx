@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   // 국문 목록과 영문 목록(?lang=en)을 hreflang 로 서로 연결한다.
   alternates: {
     canonical: "/blog",
-    languages: { ko: "/blog", en: "/blog?lang=en", "x-default": "/blog" }
+    languages: { ko: "/blog", en: "/en/blog", "x-default": "/blog" }
   }
 };
 

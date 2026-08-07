@@ -5,6 +5,7 @@ import { LocaleSwitcher } from "@/components/public/locale-switcher";
 import { Reveal } from "@/components/public/reveal";
 import { intakePageMessages } from "@/i18n/locales/intake-page";
 import { buildIntakeSourceTrackingFromSearchParams } from "@/lib/services/intake-source-tracking";
+import { getRequestLocale } from "@/lib/i18n-request";
 import type { Locale } from "@/types/inquiry";
 
 export const dynamic = "force-dynamic";
@@ -25,8 +26,8 @@ export default async function IntakePageSafe({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const lang = typeof params.lang === "string" ? params.lang : undefined;
-  const locale = normalizeIntakeLocale(lang);
+  const langParam = typeof params.lang === "string" ? params.lang : undefined;
+  const locale = normalizeIntakeLocale(await getRequestLocale(langParam));
   const intakeTracking = buildIntakeSourceTrackingFromSearchParams(params);
 
   const prepChips = locale === "ko"

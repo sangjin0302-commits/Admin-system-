@@ -31,7 +31,9 @@ async function handle(request: Request) {
     for (const p of due) {
       await prisma.blogPost.update({
         where: { id: p.id },
-        data: { published: true, publishedAt: now },
+        // scheduledAt 을 비워 1회성으로 만든다(재게시 위험 방지):
+        // 나중에 언퍼블리시해도 과거 scheduledAt 로 다음 실행에 재발행되지 않게.
+        data: { published: true, publishedAt: now, scheduledAt: null },
       });
       publishedCount++;
       // 발행 후 신디케이션 훅(텔레그램/사이트맵 등) — best-effort.

@@ -28,9 +28,10 @@ export function BlogInlineCta({ category, lang = "ko" }: { category: string; lan
   const hook = en
     ? (CATEGORY_HOOK_EN[cat] ?? CATEGORY_HOOK_EN.other)
     : (CATEGORY_HOOK[cat] ?? CATEGORY_HOOK.other);
-  const phone =
-    process.env.NEXT_PUBLIC_OFFICE_PHONE ?? "+82-2-0000-0000";
-  const telHref = `tel:${phone.replace(/[^+\d]/g, "")}`;
+  const rawPhone = process.env.NEXT_PUBLIC_OFFICE_PHONE?.trim();
+  // 사무실 전화번호가 없거나 placeholder(0000-0000)면 죽은 tel: 링크를 걸지 않고 버튼 자체를 숨긴다.
+  const phone = rawPhone && !rawPhone.includes("0000-0000") ? rawPhone : null;
+  const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, "")}` : null;
   const intakeHref = `/intake?cat=${cat}&from=blog_inline${en ? "&lang=en" : ""}`;
 
   return (
@@ -72,13 +73,15 @@ export function BlogInlineCta({ category, lang = "ko" }: { category: string; lan
         >
           {en ? "Request a free review →" : "무료 검토 요청 →"}
         </Link>
-        <a
-          href={telHref}
-          data-funnel="blog_inline_cta_phone"
-          className="inline-flex min-h-12 items-center justify-center rounded-lg border border-gold/50 bg-white/50 px-6 text-sm font-semibold text-primary transition hover:bg-gold-soft/30 active:scale-[0.98]"
-        >
-          {en ? `Call · ${phone}` : `전화 상담 · ${phone}`}
-        </a>
+        {phone && telHref && (
+          <a
+            href={telHref}
+            data-funnel="blog_inline_cta_phone"
+            className="inline-flex min-h-12 items-center justify-center rounded-lg border border-gold/50 bg-white/50 px-6 text-sm font-semibold text-primary transition hover:bg-gold-soft/30 active:scale-[0.98]"
+          >
+            {en ? `Call · ${phone}` : `전화 상담 · ${phone}`}
+          </a>
+        )}
       </div>
     </aside>
   );

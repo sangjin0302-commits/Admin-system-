@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { PublicTrackClient } from "@/components/public-track/public-track-client";
+import { getRequestLocale } from "@/lib/i18n-request";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function TrackPage({
 }: {
   searchParams: Promise<{ lang?: string }>;
 }) {
-  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const lang = await getRequestLocale((await searchParams).lang);
   return (
     <div className="relative overflow-hidden py-16 sm:py-24">
       <div className="ethos-aurora ethos-aurora-animated" aria-hidden />

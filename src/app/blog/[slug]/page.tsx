@@ -118,7 +118,7 @@ async function resolvePost(slug: string, lang: Lang): Promise<ResolvedPost | nul
       board: null,
     };
   }
-  const db = await prisma.blogPost.findUnique({ where: { slug } });
+  const db = await prisma.blogPost.findUnique({ where: { slug } }).catch(() => null);
   if (!db || !db.published) return null;
   const wantEn = lang === "en";
   const titleEn = db.titleEn;
@@ -158,7 +158,7 @@ export async function generateMetadata({
   const post = await resolvePost(slug, lang);
   if (!post) return { title: "글을 찾을 수 없습니다" };
   const slugPath = `/blog/${slug}`;
-  const enPath = `${slugPath}?lang=en`;
+  const enPath = `/en/blog/${slug}`;
   const isImported = Boolean(post.originalUrl);
   // 네이버 수입글의 EN 번역은 네이버에 없는 고유 콘텐츠 → 구글 색인 허용(국제 유입).
   // 반대로 KO 수입글은 네이버 원문과 중복 → noindex + canonical 을 네이버로.
