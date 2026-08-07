@@ -71,6 +71,11 @@ const nextConfig: NextConfig = {
         key: "Permissions-Policy",
         value: "camera=(), microphone=(), geolocation=(), interest-cohort=()"
       },
+      // Cross-Origin isolation 정적 헤더. 값이 요청과 무관하므로 미들웨어가 아니라
+      // 여기서 전역 적용한다(=미들웨어 미실행 경로에서도 보장되는 defense-in-depth).
+      // 동적 CSP(nonce)는 계속 middleware.ts 에서만 발급한다.
+      { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+      { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
       { key: "X-DNS-Prefetch-Control", value: "on" }
     ];
     return [{ source: "/:path*", headers: securityHeaders }];

@@ -485,6 +485,17 @@ html {
   .ethos-fadeUp { opacity: 1; animation: none; }
 }
 
+/* ── Route entry transition (framer-motion 대체, CSS-only) ──
+   기존 PageTransition 의 motion.div initial{opacity:0,y:12}→animate{1,0},
+   0.35s cubic-bezier(0.16,1,0.3,1) 진입 페이드를 그대로 재현. pathname keying 으로
+   래퍼가 재마운트될 때마다 재생된다. */
+.page-transition-enter {
+  animation: ethos-fade-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-transition-enter { animation: none; }
+}
+
 /* ── Dark navy gradient card (Tailwind primary purge-proof) ── */
 .ethos-dark-card {
   background-color: rgb(22 50 80);
