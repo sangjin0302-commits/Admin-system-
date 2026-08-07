@@ -11,6 +11,10 @@ import { ScrollEnhancements } from "@/components/layout/scroll-enhancements";
 import { StickyCta } from "@/components/layout/sticky-cta";
 import { PageTransition } from "@/components/public/page-transition";
 import { StickyCta as PublicStickyCta } from "@/components/public/sticky-cta";
+import { ExitIntent } from "@/components/public/exit-intent";
+import { ChannelTracker } from "@/components/public/channel-tracker";
+import { ScrollDepthTracker } from "@/components/public/scroll-depth-tracker";
+import { ReturningVisitorBadge } from "@/components/public/returning-visitor-badge";
 
 /**
  * Routes that use the system shell (admin/portal — internal tools).
@@ -72,6 +76,13 @@ export function AppShellSafe({ children }: Readonly<{ children: React.ReactNode 
       <ScrollEnhancements />
       <StickyCta />
       <PublicStickyCta />
+      {/* 이전에 죽은 app-shell.tsx 에만 있어 렌더 안 되던 마케팅/분석 컴포넌트들.
+          ChannelTracker 는 data-funnel/채널 클릭 추적의 전역 리스너 → 이게 없으면
+          사이트의 모든 퍼널·채널 분석이 죽음. ExitIntent 는 이탈방지 리드캡처. */}
+      <ChannelTracker />
+      <ExitIntent />
+      <ScrollDepthTracker />
+      <ReturningVisitorBadge />
     </>
   );
 }
