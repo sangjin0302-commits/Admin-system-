@@ -5,9 +5,9 @@ import FeesContent, { buildFeesMetadata } from "@/components/public/fees-content
 export const revalidate = 300;
 
 export function generateMetadata(): Metadata {
-  return buildFeesMetadata("ko");
+  return buildFeesMetadata("en");
 }
 
-export default function FeesPage() {
-  return <FeesContent lang="ko" />;
+export default function EnFeesPage() {
+  return <FeesContent lang="en" />;
 }

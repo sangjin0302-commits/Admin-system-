@@ -6,7 +6,7 @@ import {
   verifyAdminSessionToken
 } from "@/lib/security/admin-session";
 import { isExperimentalAdminPath } from "@/lib/security/experimental-admin-pages";
-import { LOCALE_HEADER, LOCALE_PREFIX, splitLocalePath } from "@/lib/i18n-locale";
+import { LOCALE_HEADER, LOCALE_PREFIX, splitLocalePath, isStaticEnRoute } from "@/lib/i18n-locale";
 
 const ADMIN_AUTH_USER_ENV = "ADMIN_BASIC_AUTH_USER";
 const ADMIN_AUTH_PASSWORD_ENV = "ADMIN_BASIC_AUTH_PASSWORD";
@@ -384,7 +384,8 @@ export async function middleware(request: NextRequest) {
   // 하므로 rewrite 대상에서 제외한다(이들은 아래 matcher 의 `/en/:path*` 에 걸리더라도
   // 실제 파일 라우트가 우선하도록 next() 반환).
   if (pathname.startsWith(LOCALE_PREFIX + "/")) {
-    if (pathname === "/en/feed.xml") {
+    // 정적 /en 라우트(로케일별 정적 ISR)는 파일 라우트가 우선하도록 rewrite 제외.
+    if (isStaticEnRoute(pathname)) {
       const response = NextResponse.next();
       applySecurityHeaders(request, response);
       return response;

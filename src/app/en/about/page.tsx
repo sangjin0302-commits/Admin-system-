@@ -5,9 +5,9 @@ import AboutContent, { buildAboutMetadata } from "@/components/public/about-cont
 export const revalidate = 300;
 
 export function generateMetadata(): Metadata {
-  return buildAboutMetadata("ko");
+  return buildAboutMetadata("en");
 }
 
-export default function AboutPage() {
-  return <AboutContent lang="ko" />;
+export default function EnAboutPage() {
+  return <AboutContent lang="en" />;
 }
