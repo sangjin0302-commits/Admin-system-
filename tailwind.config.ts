@@ -5,8 +5,11 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Segoe UI"', '"Apple SD Gothic Neo"', '"Noto Sans KR"', '"Malgun Gothic"', "sans-serif"],
-        serif: ['"Playfair Display"', '"Nanum Myeongjo"', '"Noto Serif KR"', "Georgia", "serif"]
+        // next/font 는 self-host 폰트를 해시 패밀리명으로 등록하고 CSS 변수로만 노출한다.
+        // 리터럴 폰트명("Playfair Display" 등)은 등록 안 돼 폴백(Georgia/시스템)으로 새던
+        // 버그 → 변수(--font-*)를 우선 참조하도록 수정. 본문·워드마크·블로그 전문에 영향.
+        sans: ["var(--font-body-ko)", '"Apple SD Gothic Neo"', '"Noto Sans KR"', '"Malgun Gothic"', "sans-serif"],
+        serif: ["var(--font-display-latin)", "var(--font-display-ko)", '"Noto Serif KR"', "Georgia", "serif"]
       },
       colors: {
         canvas: "rgb(var(--color-canvas) / <alpha-value>)",
