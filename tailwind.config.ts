@@ -28,7 +28,8 @@ const config: Config = {
         danger: "rgb(var(--color-danger) / <alpha-value>)",
         gold: "rgb(var(--color-gold) / <alpha-value>)",
         "gold-soft": "rgb(var(--color-gold-soft) / <alpha-value>)",
-        "gold-deep": "rgb(var(--color-gold-deep) / <alpha-value>)"
+        "gold-deep": "rgb(var(--color-gold-deep) / <alpha-value>)",
+        "gold-deeper": "rgb(var(--color-gold-deeper) / <alpha-value>)"
       },
       boxShadow: {
         panel: "var(--shadow-panel)",

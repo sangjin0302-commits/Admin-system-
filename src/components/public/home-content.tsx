@@ -418,7 +418,7 @@ export default async function HomeContent({ lang }: { lang: PublicLocale }) {
           <div>
             {personalizationEnabled && <PersonalizedHero fallbackBadge={heroBadge} fallbackTitle={heroTitleOverride || "비자 거절, 행정처분, 인허가 —\n방향은 빠르게, 판단은 사안별로 드립니다"} fallbackDescription={heroDescription} />}
             <Reveal>
-              <span className="ethos-eyebrow inline-flex items-center gap-2 text-gold-deep">
+              <span className="ethos-eyebrow inline-flex items-center gap-2 text-gold-deeper">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold" />
                 {tt("heroEyebrow", t.heroEyebrow)}
               </span>
@@ -496,7 +496,7 @@ export default async function HomeContent({ lang }: { lang: PublicLocale }) {
             {/* 요금 안내 힌트 (admin 편집: home.pricingHint) — 비우면 숨김 */}
             {site["home.pricingHint"]?.trim() && (
               <Reveal delay={3}>
-                <p className="mt-4 inline-flex items-center rounded-full bg-gold-soft/40 px-4 py-1.5 text-xs font-semibold text-gold-deep">
+                <p className="mt-4 inline-flex items-center rounded-full bg-gold-soft/40 px-4 py-1.5 text-xs font-semibold text-gold-deeper">
                   {site["home.pricingHint"]!.trim()}
                 </p>
               </Reveal>
@@ -519,11 +519,7 @@ export default async function HomeContent({ lang }: { lang: PublicLocale }) {
             <div className="relative w-full max-w-md">
               <div className="absolute -inset-8 -z-10 rounded-[40px] bg-gold/15 blur-3xl" aria-hidden />
               <div
-                className="ethos-grain relative flex w-full flex-col items-center overflow-hidden rounded-[28px] border border-gold/30 px-8 py-12 text-center shadow-floating sm:px-12 sm:py-14"
-                style={{
-                  backgroundColor: "rgb(22 50 80)",
-                  backgroundImage: "linear-gradient(180deg, rgb(22 50 80) 0%, rgb(18 40 65) 60%, rgb(12 28 48) 100%)"
-                }}>
+                className="ethos-dark-card-v ethos-grain relative flex w-full flex-col items-center overflow-hidden rounded-[28px] border border-gold/30 px-8 py-12 text-center shadow-floating sm:px-12 sm:py-14">
                 <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
 
                 {/* 로고 prominent — 흰 타일로 가시성 보장 */}
@@ -612,7 +608,7 @@ export default async function HomeContent({ lang }: { lang: PublicLocale }) {
               <Reveal key={area.no} delay={((i % 2) + 1) as 1 | 2}>
                 <Link
                   href={area.href}
-                  className="ethos-card ethos-card-hover ethos-card-topline ethos-cta-shine ethos-tilt group relative flex h-full flex-col overflow-hidden p-8"
+                  className="ethos-card ethos-card-hover ethos-card-topline group relative flex h-full flex-col overflow-hidden p-8"
                 >
                   <span className="ethos-index pointer-events-none absolute -right-2 -top-4 select-none">
                     {area.no}
@@ -620,7 +616,7 @@ export default async function HomeContent({ lang }: { lang: PublicLocale }) {
                   <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-gold/40 bg-gold-soft/30 text-primary transition-colors duration-300 group-hover:bg-gold-soft/60">
                     {area.icon}
                   </div>
-                  <p className="relative mt-6 font-serif text-[11px] font-bold tracking-[0.2em] text-gold-deep">
+                  <p className="relative mt-6 font-serif text-[11px] font-bold tracking-[0.2em] text-gold-deeper">
                     {text.subtitle}
                   </p>
                   <h3 className="ethos-display relative mt-1 text-2xl">{text.title}</h3>
@@ -638,7 +634,7 @@ export default async function HomeContent({ lang }: { lang: PublicLocale }) {
                       {tt("practiceDetail", t.practiceDetail)}
                       <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-lg border border-gold/40 bg-gold-soft/30 px-3 py-1.5 font-serif text-xs font-bold text-gold-deep transition-colors group-hover:bg-gold-soft/60">
+                    <span className="inline-flex items-center gap-1 rounded-lg border border-gold/40 bg-gold-soft/30 px-3 py-1.5 font-serif text-xs font-bold text-gold-deeper transition-colors group-hover:bg-gold-soft/60">
                       {tt("practiceConsult", t.practiceConsult)}
                     </span>
                   </div>
@@ -742,7 +738,7 @@ export default async function HomeContent({ lang }: { lang: PublicLocale }) {
 
       {/* ━━━━━━━━━━━━━━━ 의뢰인 여정 ③ 어떻게 진행되나 — 철학·비용·절차 ━━━━━━━━━━━━━━━ */}
       {/* ═══════════════ 철학 — DARK 풀블리드 밴드 ═══════════════ */}
-      <section className="ethos-band ethos-band-dark ethos-grain overflow-hidden py-24 sm:py-32" style={{ backgroundColor: "rgb(22 50 80)" }}>
+      <section className="ethos-band ethos-band-dark ethos-grain overflow-hidden py-24 sm:py-32">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             {/* 좌: 카피 */}
@@ -986,11 +982,7 @@ export default async function HomeContent({ lang }: { lang: PublicLocale }) {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <Reveal>
             <div
-              className="ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 p-12 shadow-floating sm:p-16"
-              style={{
-                backgroundColor: "rgb(22 50 80)",
-                backgroundImage: "linear-gradient(135deg, rgb(22 50 80) 0%, rgb(18 40 65) 50%, rgb(12 28 48) 100%)"
-              }}>
+              className="ethos-dark-card ethos-grain relative overflow-hidden rounded-[28px] border border-gold/30 p-12 shadow-floating sm:p-16">
               <svg className="absolute -right-20 -top-20 h-80 w-80 text-gold/15" viewBox="0 0 200 200" fill="none" aria-hidden>
                 <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="1" />
                 <circle cx="100" cy="100" r="60" stroke="currentColor" strokeWidth="0.7" />

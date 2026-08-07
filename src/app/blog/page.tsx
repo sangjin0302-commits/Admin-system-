@@ -213,7 +213,6 @@ export default async function BlogPage({
       {featured && (
         <section
           className="ethos-band ethos-band-dark ethos-grain py-16 sm:py-20"
-          style={{ backgroundColor: "rgb(22 50 80)" }}
         >
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <Reveal>

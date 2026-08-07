@@ -54,6 +54,7 @@ html {
   --color-gold: 201 169 97;             /* ETHOS gold */
   --color-gold-soft: 240 224 188;
   --color-gold-deep: 168 134 71;
+  --color-gold-deeper: 140 108 56;      /* AA-safe gold for small text (~4.5:1 on ivory) */
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
@@ -84,6 +85,7 @@ html {
   --color-gold: 220 188 120;
   --color-gold-soft: 60 50 35;
   --color-gold-deep: 200 168 100;
+  --color-gold-deeper: 200 168 100;
   --shadow-panel: 0 10px 28px rgba(0, 0, 0, 0.3);
   --shadow-floating: 0 18px 40px rgba(0, 0, 0, 0.4);
 }
@@ -108,6 +110,7 @@ html {
     --color-gold: 220 188 120;
     --color-gold-soft: 60 50 35;
     --color-gold-deep: 200 168 100;
+    --color-gold-deeper: 200 168 100;
     --shadow-panel: 0 10px 28px rgba(0, 0, 0, 0.3);
     --shadow-floating: 0 18px 40px rgba(0, 0, 0, 0.4);
   }

@@ -14,6 +14,7 @@ export default async function CasesKanbanPage() {
     caseNo: cm.caseNo,
     status: cm.status,
     matterTypeLabel: formatCaseMatterTypeLabel(cm.matterType),
+    updatedAt: cm.updatedAt.toISOString(),
   }));
 
   return (

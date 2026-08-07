@@ -10,41 +10,52 @@
 
 ## 2. Color Palette
 
-Light mode only.
+브랜드: **Deep Navy + Gold + Ivory** (ETHOS). 공개(마케팅) 사이트는 **light-mode 고정**
+— 관리자 외 경로에서 head 스크립트가 `data-theme=light`를 강제한다.
+다크모드는 **관리자 화면 전용**으로, `:root[data-theme="dark"]` 및
+`prefers-color-scheme: dark`(단, `[data-theme=light]` 제외) 아래 별도 토큰 세트로만 적용된다.
+
+토큰은 `src/app/globals.css`의 CSS 변수(`--color-*`)로 정의하고,
+`tailwind.config.ts`에서 `rgb(var(--color-*) / <alpha-value>)` semantic alias로 노출한다.
 
 ### Semantic colors
 
-- `canvas`: 전체 앱 배경
-- `surface`: 기본 카드/패널 배경
-- `surface-muted`: 보조 배경, 필터 영역, 표 헤더
-- `surface-raised`: 가장 강조되는 흰색 영역
-- `line`: 기본 경계선
-- `line-strong`: 강한 구분선
-- `text-strong`: 기본 텍스트
+- `canvas`: 전체 앱 배경 (warm ivory)
+- `surface` / `surface-raised`: 기본·강조 카드/패널 배경 (off-white)
+- `surface-muted`: 보조 배경, 필터 영역, 표 헤더 (soft beige)
+- `line` / `line-strong`: 기본·강조 경계선 (warm/gold-tinted beige)
+- `text-strong`: 기본 텍스트 (deep navy)
 - `text`: 본문 텍스트
-- `text-muted`: 보조 텍스트
-- `primary`: 주 액션, 링크, 핵심 강조
-- `primary-soft`: 주 색상의 연한 배경
-- `success`: 수임/완료 등 긍정 상태
-- `warning`: 주의/대기 상태
-- `danger`: 긴급/오류 상태
+- `text-muted`: 보조 텍스트 (warm muted)
+- `primary` / `primary-soft`: 주 액션·링크·강조 (ETHOS deep navy) 및 그 연한 배경
+- `gold` / `gold-soft`: 브랜드 골드 강조 및 연한 골드 배경
+- `gold-deep`: 큰 골드 텍스트·아이콘·마커
+- `gold-deeper`: 작은 골드 라벨 전용 (11px/xs bold 에서 ivory 대비 ~4.5:1 AA 확보)
+- `success` / `warning` / `danger`: 상태색
 
-### Actual values
+### Actual values (light — globals.css `:root`)
 
-- `--color-canvas: 244 246 248`
-- `--color-surface: 255 255 255`
-- `--color-surface-muted: 247 249 251`
+- `--color-canvas: 250 246 239`        /* warm ivory */
+- `--color-surface: 255 253 248`       /* off-white */
+- `--color-surface-muted: 245 237 224` /* soft beige */
 - `--color-surface-raised: 255 255 255`
-- `--color-line: 218 224 230`
-- `--color-line-strong: 197 206 214`
-- `--color-text-strong: 22 33 43`
-- `--color-text: 58 71 82`
-- `--color-text-muted: 103 118 130`
-- `--color-primary: 24 72 109`
-- `--color-primary-soft: 231 240 247`
+- `--color-line: 224 215 195`
+- `--color-line-strong: 196 178 142`
+- `--color-text-strong: 22 52 84`      /* deep navy */
+- `--color-text: 44 62 82`
+- `--color-text-muted: 92 84 68`
+- `--color-primary: 26 60 95`          /* ETHOS deep navy */
+- `--color-primary-soft: 240 232 215`
+- `--color-gold: 201 169 97`           /* ETHOS gold */
+- `--color-gold-soft: 240 224 188`
+- `--color-gold-deep: 168 134 71`
+- `--color-gold-deeper: 140 108 56`    /* AA-safe small gold text */
 - `--color-success: 40 112 76`
-- `--color-warning: 161 104 36`
+- `--color-warning: 184 130 60`
 - `--color-danger: 166 63 63`
+
+작은 골드 텍스트(eyebrow/subtitle, ≤ text-xs bold)는 `gold-deep`가 ivory 위에서
+약 3.2:1로 AA 미달이므로 `gold-deeper`를 쓴다. 큰 골드 텍스트·장식은 `gold-deep` 유지.
 
 ## 3. Typography Scale
 

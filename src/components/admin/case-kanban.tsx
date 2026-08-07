@@ -18,11 +18,13 @@ export interface KanbanItem {
   caseNo: string | null;
   status: string;
   matterTypeLabel: string;
+  /** ISO timestamp, used as `expectedUpdatedAt` for optimistic-concurrency on drag-to-update. */
+  updatedAt?: string;
 }
 
 interface CaseKanbanProps {
   items: KanbanItem[];
-  onStatusChange: (caseId: string, newStatus: string) => void;
+  onStatusChange: (caseId: string, newStatus: string, expectedUpdatedAt?: string) => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -69,6 +71,31 @@ function toColumnStatus(raw: string): ColumnStatus {
   }
 }
 
+/**
+ * The column-to-status mapping is many-to-one (16 statuses -> 5 columns), so
+ * dropping a card into a column has no single "reverse" status. Each column
+ * is instead given a representative target status to PATCH to when a card is
+ * dropped into it:
+ *  - INTAKE / CONSULTATION / QUOTE_SENT are effectively 1:1 (or pick the
+ *    status that matches the column's own name).
+ *  - IN_PROGRESS -> OPEN: the earliest status in the group, and the status
+ *    reachable from every column to its left (QUOTED, CONTRACT_PENDING), so
+ *    dragging a case "into progress" is the most broadly legal transition.
+ *  - COMPLETED -> CLOSED: the terminal, successful-completion status, matching
+ *    the "완료" (done) label. ON_HOLD/CANCELLED also render in this column,
+ *    but a CLOSED target is the sensible destination for a fresh drag.
+ * Illegal transitions (e.g. dragging an INTAKE card straight to COMPLETED)
+ * are rejected server-side by CaseMatterStatusGuardError and surfaced as a
+ * toast in kanban-shell.tsx.
+ */
+const REPRESENTATIVE_STATUS_BY_COLUMN: Record<ColumnStatus, string> = {
+  INTAKE: "INTAKE_REVIEW",
+  CONSULTATION: "CONSULTING",
+  QUOTE_SENT: "QUOTED",
+  IN_PROGRESS: "OPEN",
+  COMPLETED: "CLOSED"
+};
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
@@ -85,11 +112,12 @@ export default function CaseKanban({ items, onStatusChange }: CaseKanbanProps) {
   function handleDragEnd(result: DropResult) {
     const { destination, draggableId } = result;
     if (!destination) return;
-    const newStatus = destination.droppableId;
+    const newColumn = destination.droppableId as ColumnStatus;
     const item = items.find((i) => i.id === draggableId);
     if (!item) return;
-    if (toColumnStatus(item.status) === newStatus) return;
-    onStatusChange(draggableId, newStatus);
+    if (toColumnStatus(item.status) === newColumn) return;
+    const targetStatus = REPRESENTATIVE_STATUS_BY_COLUMN[newColumn];
+    onStatusChange(draggableId, targetStatus, item.updatedAt);
   }
 
   return (
