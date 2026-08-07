@@ -485,6 +485,33 @@ html {
   .ethos-fadeUp { opacity: 1; animation: none; }
 }
 
+/* ── 모바일 헤더 오버레이 (framer-motion 대체, CSS-only) ──
+   기존 AnimatePresence: 배경 opacity 0↔1 (0.2s), 패널 opacity+y(-16px) (0.25s easeOut).
+   data-open 플래그를 rAF로 다음 프레임에 토글해 진입/종료 트랜지션을 모두 재생한다. */
+.ethos-menu-backdrop {
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+.ethos-menu-backdrop[data-open="true"] {
+  opacity: 1;
+}
+.ethos-menu-panel {
+  opacity: 0;
+  transform: translateY(-16px);
+  transition: opacity 250ms ease-out, transform 250ms ease-out;
+}
+.ethos-menu-panel[data-open="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ethos-menu-backdrop,
+  .ethos-menu-panel {
+    transition: none !important;
+  }
+  .ethos-menu-panel { transform: none; }
+}
+
 /* ── Route entry transition (framer-motion 대체, CSS-only) ──
    기존 PageTransition 의 motion.div initial{opacity:0,y:12}→animate{1,0},
    0.35s cubic-bezier(0.16,1,0.3,1) 진입 페이드를 그대로 재현. pathname keying 으로

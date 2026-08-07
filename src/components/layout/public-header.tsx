@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { BlogSearchTrigger } from "@/components/public/blog-search";
 import { LangSwitcher } from "@/components/layout/lang-switcher";
@@ -53,7 +52,10 @@ function HeaderInner() {
   const qs = lang === "en" ? "?lang=en" : "";
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const reduceMotion = useReducedMotion();
+  // 오버레이 마운트/트랜지션 상태(framer-motion AnimatePresence 대체, CSS-only).
+  // menuMounted: 종료 트랜지션 동안 DOM 유지. menuShown: data-open 플래그(rAF로 다음 프레임에 켜서 진입 트랜지션 보장).
+  const [menuMounted, setMenuMounted] = useState(false);
+  const [menuShown, setMenuShown] = useState(false);
   const flags = usePublicFlags();
 
   useEffect(() => {
@@ -63,6 +65,17 @@ function HeaderInner() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      setMenuMounted(true);
+      const raf = window.requestAnimationFrame(() => setMenuShown(true));
+      return () => window.cancelAnimationFrame(raf);
+    }
+    setMenuShown(false);
+    const t = window.setTimeout(() => setMenuMounted(false), 300);
+    return () => window.clearTimeout(t);
+  }, [mobileOpen]);
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
@@ -165,29 +178,22 @@ function HeaderInner() {
         </button>
       </div>
 
-      {/* 모바일 풀스크린 overlay */}
-      <AnimatePresence>
-        {mobileOpen && (
+      {/* 모바일 풀스크린 overlay (CSS 트랜지션, framer-motion 대체) */}
+      {menuMounted && (
         <div
           id="mobile-menu"
           className="fixed inset-0 z-50 lg:hidden"
           style={{ minHeight: "100dvh" }}
         >
           {/* 배경 (fade) */}
-          <motion.div
-            className="absolute inset-0 bg-surface/98 backdrop-blur-md"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+          <div
+            className="ethos-menu-backdrop absolute inset-0 bg-surface/98 backdrop-blur-md"
+            data-open={menuShown ? "true" : "false"}
             aria-hidden
           />
-          <motion.div
-            className="relative flex h-full flex-col"
-            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -16 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+          <div
+            className="ethos-menu-panel relative flex h-full flex-col"
+            data-open={menuShown ? "true" : "false"}
           >
           {/* 헤더 (닫기 버튼) */}
           <div className="flex items-center justify-between border-b border-gold/30 px-4 py-3">
@@ -286,10 +292,9 @@ function HeaderInner() {
               </Link>
             </div>
           </div>
-          </motion.div>
+          </div>
         </div>
-        )}
-      </AnimatePresence>
+      )}
     </header>
   );
 }
