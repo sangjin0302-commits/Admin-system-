@@ -9,6 +9,8 @@ import { PUBLIC_CATEGORY_LABEL, publicCategoryLabel, toPublicCategory, type Publ
 import { compareBoardCards } from "@/lib/blog/board-sort";
 import { BlogTagCloud } from "@/components/public/blog-tag-cloud";
 import { NewsletterSubscribeForm } from "@/components/public/newsletter-subscribe-form";
+import { getRequestLocale } from "@/lib/i18n-request";
+import { localePath } from "@/lib/i18n-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -27,13 +29,14 @@ type Lang = "ko" | "en";
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ lang?: string; cat?: string }>;
+  searchParams?: Promise<{ lang?: string; cat?: string; board?: string }>;
 }) {
   const sp = (await searchParams) ?? {};
-  const lang: Lang = sp.lang === "en" ? "en" : "ko";
+  const lang: Lang = await getRequestLocale(sp.lang);
   // ?cat= 값은 공개 카테고리 키만 허용(잘못된 값이면 전체로 폴백).
   const activeCat: PublicCategory | null =
     sp.cat && sp.cat in PUBLIC_CATEGORY_LABEL ? (sp.cat as PublicCategory) : null;
+  const activeBoard = sp.board?.trim() || null;
 
   const posts = await listBlogPosts();
 
@@ -54,6 +57,7 @@ export default async function BlogPage({
       source: true,
       originalUrl: true,
       category: true,
+      board: true,
       coverImage: true,
       tags: true,
       pinned: true,
@@ -77,6 +81,7 @@ export default async function BlogPage({
     dateMs: number;
     dateLabel: string;
     publicCat: PublicCategory;
+    board: string | null;
     tags: string[];
     pinned: boolean;
     sortOrder: number;
@@ -109,6 +114,7 @@ export default async function BlogPage({
       dateMs: p.publishedAt ? p.publishedAt.getTime() : 0,
       dateLabel: p.publishedAt?.toLocaleDateString(lang === "en" ? "en-US" : "ko-KR") ?? "",
       publicCat: toPublicCategory(p.category),
+      board: p.board ?? null,
       tags: parseTags(p.tags),
       pinned: p.pinned,
       sortOrder: p.sortOrder,
@@ -125,6 +131,7 @@ export default async function BlogPage({
       dateMs: p.date ? new Date(p.date).getTime() : 0,
       dateLabel: p.date,
       publicCat: labelToPublic(p.category),
+      board: null,
       tags: [],
       pinned: false,
       sortOrder: 0,
@@ -133,7 +140,18 @@ export default async function BlogPage({
   const boardCounts = (Object.keys(PUBLIC_CATEGORY_LABEL) as PublicCategory[])
     .map((c) => ({ cat: c, count: allCards.filter((x) => x.publicCat === c).length }))
     .filter((x) => x.count > 0);
-  const board = activeCat ? allCards.filter((c) => c.publicCat === activeCat) : allCards;
+  // 게시판(폴더) 목록 — 관리자가 지정한 board 값들. 글 수 순.
+  const boardFolders = Array.from(
+    allCards.reduce((m, c) => {
+      if (c.board) m.set(c.board, (m.get(c.board) ?? 0) + 1);
+      return m;
+    }, new Map<string, number>()),
+  )
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count]) => ({ name, count }));
+  let board = allCards;
+  if (activeBoard) board = board.filter((c) => c.board === activeBoard);
+  if (activeCat) board = board.filter((c) => c.publicCat === activeCat);
   const featured = board[0];
   const rest = board.slice(1);
 
@@ -234,9 +252,32 @@ export default async function BlogPage({
         </section>
       )}
 
-      {/* 단일 게시판 — 카테고리 필터 + 카드뉴스 커버 그리드 */}
+      {/* 단일 게시판 — 게시판(폴더) + 카테고리 필터 + 카드뉴스 커버 그리드 */}
       <section className="py-14 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          {/* 게시판(폴더) 필터 — 관리자가 지정한 board 폴더별. */}
+          {boardFolders.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold text-gold-deep">
+                {lang === "en" ? "Folders" : "게시판"}
+              </span>
+              <Link
+                href={localePath("/blog", lang)}
+                className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${!activeBoard ? "bg-gold-deep text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
+              >
+                {lang === "en" ? "All" : "전체"}
+              </Link>
+              {boardFolders.map(({ name, count }) => (
+                <Link
+                  key={name}
+                  href={`${localePath("/blog", lang)}${localePath("/blog", lang).includes("?") ? "&" : "?"}board=${encodeURIComponent(name)}`}
+                  className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${activeBoard === name ? "bg-gold-deep text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
+                >
+                  {name} <span className="opacity-70">({count})</span>
+                </Link>
+              ))}
+            </div>
+          )}
           {boardCounts.length > 0 && (
             <div className="flex flex-wrap gap-2">
               <Link
