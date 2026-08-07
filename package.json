@@ -45,6 +45,7 @@
     "test:vercel-cron": "tsx scripts/tests/vercel-cron-schedule-check.ts",
     "test:anthropic-gateway": "tsx scripts/tests/anthropic-gateway-lock-check.ts",
     "test:static-en-routes": "tsx scripts/tests/static-en-routes-check.ts",
+    "test:toss-webhook": "tsx scripts/tests/toss-webhook-check.ts",
     "test:unit": "node scripts/run-unit-tests.mjs",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
