@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { fetchGazetteList } from "@/lib/services/gazette-client";
-import { selectRecentGazette, buildGazetteDigestLines } from "@/lib/services/gazette-digest-format";
+import { selectRecentGazette, buildGazetteDigestLines, buildGazetteStats } from "@/lib/services/gazette-digest-format";
 import { sendTelegramAlert } from "@/lib/services/telegram-notify";
 import { sendEmail } from "@/lib/services/email-service";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
@@ -42,6 +42,15 @@ export async function GET(request: Request) {
 
   const top = picked.slice(0, 8);
   const lines = buildGazetteDigestLines(picked);
+  const stats = buildGazetteStats(picked);
+  const fmtDate = (ms: number) => new Date(ms).toLocaleDateString("ko-KR");
+  const rangeLabel = stats.dateRange
+    ? `${fmtDate(stats.dateRange.fromMs)} ~ ${fmtDate(stats.dateRange.toMs)}`
+    : "";
+  const agencyStatsHtml = stats.byAgency
+    .slice(0, 6)
+    .map((a) => `<li>${escapeHtml(a.agency)} — <b>${a.count}</b>건</li>`)
+    .join("");
 
   const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   await sendTelegramAlert({
@@ -55,21 +64,26 @@ export async function GET(request: Request) {
   const adminEmail = process.env.ADMIN_ALERT_EMAIL?.trim();
   if (adminEmail) {
     try {
+      // 관보는 카테고리 태깅 안 함 → 발령기관을 접두로.
       const rows = top
         .map((g) => {
-          const cat = g.category ? `<span style="color:#8a6d1a">[${escapeHtml(g.category)}]</span> ` : "";
+          const agency = (g.agency ?? "").trim()
+            ? `<span style="color:#8a6d1a">[${escapeHtml(g.agency as string)}]</span> `
+            : "";
           const safe = g.url && /^https?:\/\//i.test(g.url) ? g.url : null; // javascript:/data: 차단
           const title = safe
             ? `<a href="${escapeHtml(safe)}">${escapeHtml(g.title)}</a>`
             : escapeHtml(g.title);
-          return `<li style="margin:4px 0">${cat}${title}</li>`;
+          return `<li style="margin:4px 0">${agency}${title}</li>`;
         })
         .join("");
       await sendEmail({
         to: adminEmail,
-        subject: `[ETHOS] 주간 관보 요약 — ${picked.length}건 (${new Date().toLocaleDateString("ko-KR")})`,
+        subject: `[ETHOS] 주간 관보 요약 — ${stats.total}건 (${new Date().toLocaleDateString("ko-KR")})`,
         html: `<h2>주간 관보 요약</h2>
-<p>지난 7일 동안 수집된 관보 <b>${picked.length}</b>건 중 상위 ${top.length}건입니다.</p>
+<p>지난 7일 동안 수집된 관보 <b>${stats.total}</b>건${rangeLabel ? ` (${escapeHtml(rangeLabel)})` : ""} 중 상위 ${top.length}건입니다.</p>
+${agencyStatsHtml ? `<h3 style="margin:14px 0 4px">기관별 통계</h3><ul style="font-size:14px;padding-left:18px">${agencyStatsHtml}</ul>` : ""}
+<h3 style="margin:14px 0 4px">주요 관보</h3>
 <ul style="font-size:14px;padding-left:18px">${rows}</ul>
 ${site ? `<p style="margin-top:16px"><a href="${site}/gazette">관보 게시판 전체 보기 →</a></p>` : ""}`,
       });

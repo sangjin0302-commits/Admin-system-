@@ -5,6 +5,7 @@
 import {
   selectRecentGazette,
   buildGazetteDigestLines,
+  buildGazetteStats,
 } from "../../src/lib/services/gazette-digest-format";
 import type { GazetteItem } from "../../src/lib/services/gazette-client";
 
@@ -41,18 +42,31 @@ check("최근 없음 → 빈 배열", selectRecentGazette(old, weekAgo).length =
 const undated = [item({ id: "d" }), item({ id: "e" }), item({ id: "f" })];
 check("날짜없음 → fallback 최신 2건", selectRecentGazette(undated, weekAgo, 2).length === 2);
 
-// 포맷: 첫 줄 건수 + 항목 구분 접두
+// 통계: 총건수·기관별·기간
+const statsItems = [
+  item({ title: "A", agency: "법무부", dateMs: NOW - 1 * 24 * 60 * 60 * 1000 }),
+  item({ title: "B", agency: "법무부", dateMs: NOW - 2 * 24 * 60 * 60 * 1000 }),
+  item({ title: "C", agency: "행정안전부", dateMs: NOW - 3 * 24 * 60 * 60 * 1000 }),
+];
+const stats = buildGazetteStats(statsItems);
+check("통계 총건수", stats.total === 3);
+check("통계 기관별 최다", stats.byAgency[0].agency === "법무부" && stats.byAgency[0].count === 2);
+check("통계 기간 존재", stats.dateRange !== null && stats.dateRange!.toMs > stats.dateRange!.fromMs);
+check("통계 agency 없으면 기타", buildGazetteStats([item({ title: "x" })]).byAgency[0].agency === "기타");
+
+// 포맷: 첫 줄 건수 + 기관 통계 라인 + 항목 기관 접두(카테고리 아님)
 const lines = buildGazetteDigestLines(
-  [item({ title: "출입국관리법 개정", category: "대통령령" }), item({ title: "고시 A", category: "" })],
+  [item({ title: "출입국관리법 개정", agency: "법무부" }), item({ title: "고시 A", agency: "" })],
   8
 );
 check("첫 줄 건수", lines[0] === "🗞 지난 7일 관보 2건");
-check("구분 접두 포함", lines[1] === "• [대통령령] 출입국관리법 개정");
-check("구분 없으면 접두 없음", lines[2] === "• 고시 A");
+check("기관별 통계 라인", lines[1].startsWith("기관별:"));
+check("기관 접두 포함", lines[2] === "• [법무부] 출입국관리법 개정");
+check("기관 없으면 접두 없음", lines[3] === "• 고시 A");
 
-// maxItems 제한
-const many = Array.from({ length: 20 }, (_, i) => item({ title: `t${i}` }));
-check("maxItems 제한(1+8)", buildGazetteDigestLines(many, 8).length === 9);
+// maxItems 제한: 건수(1) + 기관통계(1) + 항목 8 = 10
+const many = Array.from({ length: 20 }, (_, i) => item({ title: `t${i}`, agency: "법무부" }));
+check("maxItems 제한(1+1+8)", buildGazetteDigestLines(many, 8).length === 10);
 
 if (failed > 0) {
   console.error(`\n[gazette-digest] FAILED ${failed}건`);
