@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { LANGS, NAMESPACES, setI18nOverrides, type Lang } from "@/lib/i18n/locales";
+import { invalidatePath } from "@/lib/services/edge-cache-service";
 
 /** SiteSetting key for a lang's override payload. */
 function overrideKey(lang: Lang) {
@@ -86,5 +87,7 @@ export async function PUT(request: Request) {
   );
 
   setI18nOverrides(current);
+  // 홈은 i18n home 네임스페이스 override 를 읽는다.
+  for (const p of ["/", "/en"]) void invalidatePath(p, `i18n:${body.namespace}`);
   return NextResponse.json({ ok: true, overrides: current });
 }

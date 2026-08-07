@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { requireRole } from "@/lib/services/admin-rbac-service";
 import { listAdminCredentials } from "@/lib/services/credentials";
+import { invalidatePath } from "@/lib/services/edge-cache-service";
 
 const VALID = ["CAREER", "LICENSE", "EDUCATION", "AWARD", "ACTIVITY"];
 
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
     const created = await prisma.credential.create({
       data: { type, year, title, detail, sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : 0 }
     });
+    for (const p of ["/", "/en", "/about", "/en/about"]) void invalidatePath(p, "credential create");
     return NextResponse.json({ ok: true, item: created });
   } catch (error) {
     console.error("admin/credentials POST failed", error);

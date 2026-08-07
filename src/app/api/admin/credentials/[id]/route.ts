@@ -3,6 +3,9 @@ import { Prisma } from "@generated/prisma-client/client";
 
 import { prisma } from "@/lib/prisma/client";
 import { requireRole } from "@/lib/services/admin-rbac-service";
+import { invalidatePath } from "@/lib/services/edge-cache-service";
+
+const CREDENTIAL_PATHS = ["/", "/en", "/about", "/en/about"];
 
 const VALID = ["CAREER", "LICENSE", "EDUCATION", "AWARD", "ACTIVITY"];
 
@@ -24,6 +27,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
   try {
     const updated = await prisma.credential.update({ where: { id }, data });
+    for (const p of CREDENTIAL_PATHS) void invalidatePath(p, "credential update");
     return NextResponse.json({ ok: true, item: updated });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
@@ -42,6 +46,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   if (!id) return NextResponse.json({ ok: false, error: "INVALID" }, { status: 400 });
   try {
     await prisma.credential.delete({ where: { id } });
+    for (const p of CREDENTIAL_PATHS) void invalidatePath(p, "credential delete");
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {

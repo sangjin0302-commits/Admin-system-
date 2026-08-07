@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { listAdminTestimonials } from "@/lib/services/testimonials";
 import { PRACTICE_AREA_KEYS } from "@/lib/practice-areas";
+import { invalidatePath } from "@/lib/services/edge-cache-service";
 
 const VALID_CATEGORIES = PRACTICE_AREA_KEYS;
 
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
       }
     });
 
+    for (const p of ["/", "/en"]) void invalidatePath(p, "testimonial create");
     return NextResponse.json({ ok: true, item: created });
   } catch (error) {
     console.error("admin/testimonials POST failed", error);

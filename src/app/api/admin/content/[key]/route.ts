@@ -3,6 +3,7 @@ import { createAdminRequestContext, safeReadJsonBody, firstZodMessage } from "@/
 import { requireRole } from "@/lib/services/admin-rbac-service";
 import { getContent, setContent, isContentEditor } from "@/lib/services/site-content-service";
 import { isValidContentKey } from "@/lib/services/site-content-keys";
+import { invalidatePath } from "@/lib/services/edge-cache-service";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -55,6 +56,8 @@ export async function PUT(req: Request, ctx: Ctx) {
 
   try {
     await setContent(key, validation.data.value, guard.user.email);
+    // site-content(getContentBatch)는 홈이 읽는다. about 은 안전차원 포함.
+    for (const p of ["/", "/en", "/about", "/en/about"]) void invalidatePath(p, `content:${key}`);
     const value = await getContent(key);
     return api.ok({ ok: true, key, value });
   } catch (err) {

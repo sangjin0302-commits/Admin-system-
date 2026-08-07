@@ -3,6 +3,9 @@ import { Prisma } from "@generated/prisma-client/client";
 
 import { prisma } from "@/lib/prisma/client";
 import { PRACTICE_AREA_KEYS } from "@/lib/practice-areas";
+import { invalidatePath } from "@/lib/services/edge-cache-service";
+
+const CASE_PATHS = ["/cases", "/en/cases"];
 
 const VALID_CATEGORIES = PRACTICE_AREA_KEYS;
 
@@ -22,6 +25,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
   try {
     const updated = await prisma.caseStudy.update({ where: { id }, data });
+    for (const p of CASE_PATHS) void invalidatePath(p, "case-study update");
     return NextResponse.json({ ok: true, item: updated });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
@@ -37,6 +41,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   if (!id) return NextResponse.json({ ok: false, error: "INVALID" }, { status: 400 });
   try {
     await prisma.caseStudy.delete({ where: { id } });
+    for (const p of CASE_PATHS) void invalidatePath(p, "case-study delete");
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {

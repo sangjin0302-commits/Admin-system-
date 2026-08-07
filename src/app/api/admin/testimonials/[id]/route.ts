@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma/client";
 import { PRACTICE_AREA_KEYS } from "@/lib/practice-areas";
+import { invalidatePath } from "@/lib/services/edge-cache-service";
 
 const VALID_CATEGORIES = PRACTICE_AREA_KEYS;
 
@@ -26,6 +27,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   if (!updated) {
     return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
   }
+  for (const p of ["/", "/en"]) void invalidatePath(p, "testimonial update");
   return NextResponse.json({ ok: true, item: updated });
 }
 
@@ -33,5 +35,6 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   const { id } = await context.params;
   if (!id) return NextResponse.json({ ok: false, error: "INVALID" }, { status: 400 });
   await prisma.testimonial.delete({ where: { id } }).catch(() => undefined);
+  for (const p of ["/", "/en"]) void invalidatePath(p, "testimonial delete");
   return NextResponse.json({ ok: true });
 }
