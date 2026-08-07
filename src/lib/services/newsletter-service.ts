@@ -125,14 +125,19 @@ export async function beginSubscribe(
   const createdAt = new Date().toISOString();
   const cats = categories && categories.length > 0 ? categories : undefined;
 
-  await mutateJson<PendingConfirmation[]>(KEY_PENDING, [], (pending) => {
-    const now = Date.now();
-    const cleaned = pending.filter(
-      (p) => now - new Date(p.createdAt).getTime() < PENDING_TTL_MS && p.email !== email
-    );
-    cleaned.push({ email, token, createdAt, categories: cats });
-    return cleaned;
-  });
+  try {
+    await mutateJson<PendingConfirmation[]>(KEY_PENDING, [], (pending) => {
+      const now = Date.now();
+      const cleaned = pending.filter(
+        (p) => now - new Date(p.createdAt).getTime() < PENDING_TTL_MS && p.email !== email
+      );
+      cleaned.push({ email, token, createdAt, categories: cats });
+      return cleaned;
+    });
+  } catch (err) {
+    logger.warn("[newsletter] beginSubscribe store busy", err);
+    return { ok: false, error: "STORE_BUSY" };
+  }
   return { ok: true, token, alreadyConfirmed: false };
 }
 
@@ -151,21 +156,26 @@ export async function confirmSubscribe(
   );
   if (!match) return { ok: false, error: "TOKEN_NOT_FOUND_OR_EXPIRED" };
 
-  // 토큰 제거는 원자적으로(다른 요청의 pending 변경을 덮어쓰지 않게).
-  await mutateJson<PendingConfirmation[]>(KEY_PENDING, [], (list) =>
-    list.filter((p) => p.token !== token)
-  );
-
   const subscribedAt = new Date().toISOString();
   let added = false;
-  await mutateJson<Subscriber[]>(KEY_SUBSCRIBERS, [], (confirmed) => {
-    if (confirmed.some((s) => s.email === match.email)) {
-      added = false; // 이미 확인된 구독자의 재확인 → 그대로.
-      return confirmed;
-    }
-    added = true;
-    return [...confirmed, { email: match.email, subscribedAt, categories: match.categories }];
-  });
+  try {
+    // 순서: 구독자 추가(멱등) → pending 토큰 제거. 부분실패 시 토큰이 살아있어 재확인 가능
+    // (반대 순서면 토큰만 사라지고 구독은 안 되는 최악 케이스 발생).
+    await mutateJson<Subscriber[]>(KEY_SUBSCRIBERS, [], (confirmed) => {
+      if (confirmed.some((s) => s.email === match.email)) {
+        added = false; // 이미 확인된 구독자의 재확인 → 그대로.
+        return confirmed;
+      }
+      added = true;
+      return [...confirmed, { email: match.email, subscribedAt, categories: match.categories }];
+    });
+    await mutateJson<PendingConfirmation[]>(KEY_PENDING, [], (list) =>
+      list.filter((p) => p.token !== token)
+    );
+  } catch (err) {
+    logger.warn("[newsletter] confirmSubscribe store busy", err);
+    return { ok: false, error: "STORE_BUSY" };
+  }
 
   // 최초 확인 시에만 1회 환영 메일(중복 방지, best-effort — 실패해도 확인 플로우는 계속).
   if (added) {
@@ -182,11 +192,16 @@ export async function confirmSubscribe(
 export async function unsubscribe(emailRaw: string): Promise<{ ok: boolean }> {
   const email = normalizeEmail(emailRaw);
   let removed = false;
-  await mutateJson<Subscriber[]>(KEY_SUBSCRIBERS, [], (confirmed) => {
-    const next = confirmed.filter((s) => s.email !== email);
-    removed = next.length !== confirmed.length;
-    return next;
-  });
+  try {
+    await mutateJson<Subscriber[]>(KEY_SUBSCRIBERS, [], (confirmed) => {
+      const next = confirmed.filter((s) => s.email !== email);
+      removed = next.length !== confirmed.length;
+      return next;
+    });
+  } catch (err) {
+    logger.warn("[newsletter] unsubscribe store busy", err);
+    return { ok: false };
+  }
   return { ok: removed };
 }
 
