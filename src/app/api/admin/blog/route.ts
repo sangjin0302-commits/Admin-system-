@@ -8,6 +8,18 @@ import { ensureDisclaimer } from "@/lib/services/blog-disclaimer-service";
 import { assertBlogCreateAllowed, BlogContentPolicyError } from "@/lib/services/blog-content-policy";
 import { requireRole } from "@/lib/services/admin-rbac-service";
 import { parseCardNews, serializeCardNews } from "@/lib/services/card-news";
+import { invalidatePath } from "@/lib/services/edge-cache-service";
+
+/** 블로그 변경 시 관련 ISR 페이지 즉시 갱신(목록·홈 쇼케이스·해당 글). */
+function revalidateBlog(slug?: string): void {
+  void invalidatePath("/blog", "blog-mutation");
+  void invalidatePath("/en/blog", "blog-mutation");
+  void invalidatePath("/", "blog-showcase");
+  if (slug) {
+    void invalidatePath(`/blog/${slug}`, "blog-mutation");
+    void invalidatePath(`/en/blog/${slug}`, "blog-mutation");
+  }
+}
 
 /** 빈 문자열/공백/비문자열 → null. EN 선택 필드 정규화. */
 function normalizeOptionalText(v: unknown): string | null {
@@ -126,6 +138,7 @@ export async function POST(request: Request) {
       void onBlogPublished(post.id);
       void applyBlogSeoAuto(post.id);
     }
+    revalidateBlog(post.slug);
     return NextResponse.json(post);
   } catch (err) {
     logger.error("Blog create error:", err);
@@ -168,6 +181,8 @@ export async function PUT(request: Request) {
       void onBlogPublished(post.id);
       void applyBlogSeoAuto(post.id);
     }
+    revalidateBlog(post.slug);
+    if (existing?.slug && existing.slug !== post.slug) revalidateBlog(existing.slug);
     return NextResponse.json(post);
   } catch (err) {
     logger.error("Blog update error:", err);
@@ -187,7 +202,9 @@ export async function DELETE(request: Request) {
       id = new URL(request.url).searchParams.get("id") ?? "";
     }
     if (!id) return NextResponse.json({ error: "ID 필요" }, { status: 400 });
+    const doomed = await prisma.blogPost.findUnique({ where: { id }, select: { slug: true } }).catch(() => null);
     await prisma.blogPost.delete({ where: { id } });
+    revalidateBlog(doomed?.slug);
     return NextResponse.json({ ok: true });
   } catch (err) {
     logger.error("Blog delete error:", err);
