@@ -154,6 +154,38 @@ export function BlogEditor({ post, boards = [] }: { post: PostData; boards?: str
   // 마크다운 서식 툴바 — 국문/영문 본문 textarea 각각에 서식 삽입.
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const bodyEnRef = useRef<HTMLTextAreaElement>(null);
+  const [uploadingImg, setUploadingImg] = useState(false);
+
+  // 이미지 파일 업로드 → Vercel Blob URL → 대상 본문에 마크다운 이미지 삽입.
+  const uploadImage = async (
+    file: File,
+    ref: React.RefObject<HTMLTextAreaElement | null>,
+    value: string,
+    setValue: (v: string) => void,
+  ) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("이미지 파일만 업로드 가능합니다.");
+      return;
+    }
+    setUploadingImg(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/blog/upload-image", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok || !data.ok || !data.url) {
+        toast.error(data.error ?? "이미지 업로드 실패");
+        return;
+      }
+      const alt = file.name.replace(/\.[^.]+$/, "");
+      applyMarkdown(ref, value, setValue, "wrap", `![${alt}](${data.url})`, "", "");
+      toast.success("이미지 삽입 완료");
+    } catch {
+      toast.error("이미지 업로드 중 오류");
+    } finally {
+      setUploadingImg(false);
+    }
+  };
 
   /** 선택 영역을 prefix/suffix 로 감싸거나, 줄머리 prefix 를 넣는다(placeholder 지원). */
   const applyMarkdown = (
@@ -330,7 +362,21 @@ export function BlogEditor({ post, boards = [] }: { post: PostData; boards?: str
         <Btn label="1. 번호" title="번호목록" onClick={() => applyMarkdown(ref, value, setValue, "line", "1. ", "", "항목")} />
         <Btn label="❝ 인용" title="인용" onClick={() => applyMarkdown(ref, value, setValue, "line", "> ", "", "인용문")} />
         <Btn label="🔗 링크" title="링크" onClick={() => applyMarkdown(ref, value, setValue, "wrap", "[", "](https://)", "링크문구")} />
-        <Btn label="🖼 이미지" title="이미지" onClick={() => applyMarkdown(ref, value, setValue, "wrap", "![", "](https://)", "대체텍스트")} />
+        <Btn label="🖼 URL" title="이미지 URL" onClick={() => applyMarkdown(ref, value, setValue, "wrap", "![", "](https://)", "대체텍스트")} />
+        <label className={`cursor-pointer rounded border border-primary/40 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/20 ${uploadingImg ? "opacity-50" : ""}`}>
+          {uploadingImg ? "업로드…" : "⬆ 이미지 업로드"}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploadingImg}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void uploadImage(f, ref, value, setValue);
+              e.target.value = ""; // 같은 파일 재선택 허용
+            }}
+          />
+        </label>
         <Btn label="― 구분선" title="구분선" onClick={() => applyMarkdown(ref, value, setValue, "wrap", "\n\n---\n\n", "", "")} />
       </div>
     );
