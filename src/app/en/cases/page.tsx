@@ -5,9 +5,9 @@ import CasesContent, { buildCasesMetadata } from "@/components/public/cases-cont
 export const revalidate = 300;
 
 export function generateMetadata(): Metadata {
-  return buildCasesMetadata("ko");
+  return buildCasesMetadata("en");
 }
 
-export default function CasesPage() {
-  return <CasesContent lang="ko" />;
+export default function EnCasesPage() {
+  return <CasesContent lang="en" />;
 }

@@ -5,9 +5,9 @@ import CareersContent, { buildCareersMetadata } from "@/components/public/career
 export const revalidate = 300;
 
 export function generateMetadata(): Metadata {
-  return buildCareersMetadata("ko");
+  return buildCareersMetadata("en");
 }
 
-export default function CareersPage() {
-  return <CareersContent lang="ko" />;
+export default function EnCareersPage() {
+  return <CareersContent lang="en" />;
 }

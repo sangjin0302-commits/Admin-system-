@@ -5,9 +5,9 @@ import ContactContent, { buildContactMetadata } from "@/components/public/contac
 export const revalidate = 300;
 
 export function generateMetadata(): Metadata {
-  return buildContactMetadata("ko");
+  return buildContactMetadata("en");
 }
 
-export default function ContactPage() {
-  return <ContactContent lang="ko" />;
+export default function EnContactPage() {
+  return <ContactContent lang="en" />;
 }
