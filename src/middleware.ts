@@ -364,6 +364,17 @@ export async function middleware(request: NextRequest) {
       : textError(426, KO_HTTPS_REQUIRED, request);
   }
 
+  // 레거시 홈 `/?lang=en` → `/en` 301. 홈은 이제 로케일별 정적(ISR)이라 쿼리로
+  // 언어를 못 받는다. 기존 색인·링크 보존을 위해 경로기반으로 영구 이동한다.
+  if (pathname === "/" && request.nextUrl.searchParams.get("lang") === "en") {
+    const url = request.nextUrl.clone();
+    url.pathname = LOCALE_PREFIX;
+    url.searchParams.delete("lang");
+    const response = NextResponse.redirect(url, 301);
+    applySecurityHeaders(request, response);
+    return response;
+  }
+
   // ── 경로기반 로케일(/en) ─────────────────────────────
   // `/en/<path>` → 내부적으로 `<path>` 로 rewrite 하고 x-ethos-locale=en 헤더를 주입.
   // 서버 컴포넌트는 getRequestLocale()로 이 헤더를 읽어 EN 렌더. `/en/*` 는 절대 admin
