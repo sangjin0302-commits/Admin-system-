@@ -20,7 +20,6 @@ import { HeroCtaSubtitleVariants } from "@/components/public/hero-cta-variants";
 import { HoloLogo } from "@/components/public/holo-logo";
 import { PersonalizedHero } from "@/components/public/personalized-hero";
 import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
-import { fetchNaverBlogPosts } from "@/lib/services/naver-blog";
 import { HOME_COPY, type PublicLocale } from "@/lib/i18n-public";
 import { loadNamespaceOverride } from "@/lib/i18n/load-overrides";
 import { buildWebsiteIntakeHref, PUBLIC_MARKETING_SAFE_NOTICE } from "@/lib/services/public-marketing-pages";
@@ -241,7 +240,67 @@ export function buildHomeMetadata(lang: PublicLocale): Metadata {
 export default async function HomeContent({ lang }: { lang: PublicLocale }) {
   const t = HOME_COPY[lang];
   // admin(/admin/i18n)에서 편집한 마케팅 문구 override. 없으면 기본값(HOME_COPY).
-  const homeOv = await loadNamespaceOverride(lang, "home");
+  // 독립적인 데이터·플래그를 한 번에 병렬 로드. 예전엔 순차 await 폭포(homeOv→site→cms→
+  // testimonials→네이버→showcase→logo→aboutPhoto)라 지연이 합산됐고, 결과를 버리는
+  // 네이버 외부 RSS 호출(dead read)까지 렌더를 블록했다.
+  const [
+    homeOv,
+    site,
+    cms,
+    testimonials,
+    showcasePosts,
+    heroLogoRow,
+    aboutPhotoRow,
+    [
+      holoLogoEnabled,
+      personalizationEnabled,
+      heroRotationEnabled,
+      dynamicCtaEnabled,
+      trustBeltEnabled,
+      localGridEnabled,
+      naverReviewsEnabled,
+      processCtaEnabled,
+      newsletterEnabled,
+      consultStructureEnabled,
+      trackingPrinciplesEnabled,
+    ],
+  ] = await Promise.all([
+    loadNamespaceOverride(lang, "home"),
+    getSiteSettings(),
+    getContentBatch(["home.deadline_strip.title", "home.deadline_strip.subtitle", "footer.tagline"]),
+    listPublicTestimonials(),
+    prisma.blogPost
+      .findMany({
+        where: { published: true },
+        orderBy: { publishedAt: "desc" },
+        take: 3,
+        select: {
+          slug: true,
+          title: true,
+          titleEn: true,
+          excerpt: true,
+          excerptEn: true,
+          category: true,
+          coverImage: true,
+        },
+      })
+      .catch(() => []),
+    prisma.siteSetting.findUnique({ where: { key: "image.logo" } }).catch(() => null),
+    prisma.siteSetting.findUnique({ where: { key: "image.aboutPhoto" } }).catch(() => null),
+    Promise.all([
+      isFeatureEnabled("holographic_logo"),
+      isFeatureEnabled("homepage_personalization"),
+      isFeatureEnabled("hero_image_rotation"),
+      isFeatureEnabled("dynamic_cta_labels"),
+      isFeatureEnabled("trust_belt"),
+      isFeatureEnabled("local_landing_grid"),
+      isFeatureEnabled("home_naver_reviews"),
+      isFeatureEnabled("home_process_cta"),
+      isFeatureEnabled("home_newsletter"),
+      isFeatureEnabled("home_consult_structure"),
+      isFeatureEnabled("home_tracking_principles"),
+    ]),
+  ]);
   const tt = (key: string, fallback: string) => homeOv[key] ?? fallback;
   const intakeHref = buildWebsiteIntakeHref();
 
@@ -269,16 +328,7 @@ export default async function HomeContent({ lang }: { lang: PublicLocale }) {
   );
   const practiceAreas = parsePracticeList(tt("practiceList", "") || undefined, practiceDefaults);
 
-  // 관리자 운영란 컨텐츠 (한국어에서만 override, 영어는 기본 카피)
-  const site = await getSiteSettings();
-  // CMS 오버레이 (site_content_editor flag) — 편집 가능한 문구
-  // "home.cta.label" 제거: 이 키는 fetch 만 되고 렌더 안 됐음(dead read). 실제 기본
-  // CTA 문구는 i18n tt("ctaFreeReview")가 담당 → content-editor 에서 편집해도 무효였음.
-  const cms = await getContentBatch([
-    "home.deadline_strip.title",
-    "home.deadline_strip.subtitle",
-    "footer.tagline"
-  ]);
+  // site/cms/testimonials/showcasePosts/logo/aboutPhoto/플래그는 위 Promise.all 에서 로드됨.
   const heroBadge = lang === "ko" && site["home.heroBadge"] ? site["home.heroBadge"] : t.heroTagBadge;
   const heroDescription =
     lang === "ko" && site["home.heroDescription"] ? site["home.heroDescription"] : t.heroDescription;
@@ -304,59 +354,9 @@ export default async function HomeContent({ lang }: { lang: PublicLocale }) {
         .filter((x) => x.q && x.a)
     : FAQ_ITEMS.map((f) => ({ q: lang === "en" ? f.qEn : f.q, a: lang === "en" ? f.aEn : f.a }));
 
-  const testimonials = await listPublicTestimonials();
-  const naverBlogId = site["naver.blogId"];
-  const naverPosts = naverBlogId ? await fetchNaverBlogPosts(naverBlogId, 6) : [];
-
-  // 홈 블로그 쇼케이스 — 자사 수입 최신글(커버 포함). 자사 도메인 링크로 SEO/전환.
-  const showcasePosts = await prisma.blogPost
-    .findMany({
-      where: { published: true },
-      orderBy: { publishedAt: "desc" },
-      take: 3,
-      select: {
-        slug: true,
-        title: true,
-        titleEn: true,
-        excerpt: true,
-        excerptEn: true,
-        category: true,
-        coverImage: true
-      }
-    })
-    .catch(() => []);
-
-  // 로고 (DB → /logo.webp fallback)
-  const heroLogoRow = await prisma.siteSetting.findUnique({ where: { key: "image.logo" } }).catch(() => null);
+  // 로고·대표사진 원본은 위 Promise.all(heroLogoRow/aboutPhotoRow)에서 로드.
   let heroLogo = heroLogoRow?.value || "/logo.webp";
-  // 대표 사진 슬롯 (image.aboutPhoto) — 설정 시 Lead Attorney 섹션에 인물 사진 노출.
-  const aboutPhotoRow = await prisma.siteSetting.findUnique({ where: { key: "image.aboutPhoto" } }).catch(() => null);
   const aboutPhoto = aboutPhotoRow?.value?.trim() || "";
-  const [
-    holoLogoEnabled,
-    personalizationEnabled,
-    heroRotationEnabled,
-    dynamicCtaEnabled,
-    trustBeltEnabled,
-    localGridEnabled,
-    naverReviewsEnabled,
-    processCtaEnabled,
-    newsletterEnabled,
-    consultStructureEnabled,
-    trackingPrinciplesEnabled
-  ] = await Promise.all([
-    isFeatureEnabled("holographic_logo"),
-    isFeatureEnabled("homepage_personalization"),
-    isFeatureEnabled("hero_image_rotation"),
-    isFeatureEnabled("dynamic_cta_labels"),
-    isFeatureEnabled("trust_belt"),
-    isFeatureEnabled("local_landing_grid"),
-    isFeatureEnabled("home_naver_reviews"),
-    isFeatureEnabled("home_process_cta"),
-    isFeatureEnabled("home_newsletter"),
-    isFeatureEnabled("home_consult_structure"),
-    isFeatureEnabled("home_tracking_principles"),
-  ]);
 
   // UX5: 히어로 이미지 일자별 로테이션 — SiteSetting "image.hero.rotation" = JSON string[]
   //   DB 미설정 시 기본 배열 (커밋된 브랜드 배경) 사용
