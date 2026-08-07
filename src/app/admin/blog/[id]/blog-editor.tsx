@@ -127,6 +127,32 @@ function isoToLocalInput(iso: string): string {
 export function BlogEditor({ post, boards = [] }: { post: PostData; boards?: string[] }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!post?.id) return;
+    if (!confirm("이 글을 삭제할까요? 되돌릴 수 없습니다.")) return;
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/admin/blog", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: post.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        toast.error(data.error ?? "삭제 실패");
+        return;
+      }
+      toast.success("삭제 완료");
+      router.push("/admin/blog");
+      router.refresh();
+    } catch {
+      toast.error("삭제 중 오류");
+    } finally {
+      setDeleting(false);
+    }
+  };
   const [title, setTitle] = useState(post?.title ?? "");
   const [slug, setSlug] = useState(post?.slug ?? "");
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
@@ -682,13 +708,24 @@ export function BlogEditor({ post, boards = [] }: { post: PostData; boards?: str
             </label>
           </div>
 
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-text-strong disabled:opacity-50"
-          >
-            {saving ? "저장 중..." : post ? "수정" : "작성"}
-          </button>
+          <div className="flex items-center gap-2">
+            {post?.id && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting || saving}
+                className="rounded-lg border border-danger/40 px-4 py-2.5 text-sm font-semibold text-danger transition hover:bg-danger/10 disabled:opacity-50"
+              >
+                {deleting ? "삭제 중..." : "삭제"}
+              </button>
+            )}
+            <button
+              onClick={handleSave}
+              disabled={saving || deleting}
+              className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-text-strong disabled:opacity-50"
+            >
+              {saving ? "저장 중..." : post ? "수정" : "작성"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

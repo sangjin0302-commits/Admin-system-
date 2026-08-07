@@ -55,6 +55,15 @@ export function toGazetteUrl(rawUrl: string): string {
   let t = rawUrl.trim().replace(/\/+$/, "");
   if (t.endsWith("/items/latest")) return t;
   if (t.endsWith("/gazette")) t = t.slice(0, -"/gazette".length); // 구 설정 보정
+  // 봇이 더 많은/과거 관보용 endpoint(예: /items, /items/all)를 열면, GWANBO_API_URL
+  // 에 그 전체 경로를 넣어 그대로 쓰게 한다(호스트만 주면 기본 /items/latest=최신 10건).
+  // 명시적 경로 판단: origin 뒤에 경로 세그먼트가 있으면 그대로 사용.
+  try {
+    const u = new URL(t);
+    if (u.pathname && u.pathname !== "/" && u.pathname.length > 1) return t;
+  } catch {
+    /* URL 파싱 실패 시 아래 기본 규칙 */
+  }
   return `${t}/items/latest`;
 }
 

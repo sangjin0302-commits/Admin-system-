@@ -54,10 +54,10 @@ export default async function BlogListPage() {
         <p className="font-serif text-sm font-bold text-primary">블로그 = 주요 마케팅 수단</p>
         <p className="mt-1 text-xs leading-6 text-text-muted">
           네이버 블로그를 자동 수입 → 영문 자동 번역(구글 국제 유입) → 홈 쇼케이스·구독자 알림·텔레그램 공유로 확산합니다.
-          아래에서 수입·번역·분류를 한 번에 관리하세요. (직접 글쓰기는 정책상 비활성 — 네이버 원문 + 번역만.)
+          아래에서 수입·번역·분류를 한 번에 관리하세요. 직접 글쓰기(국문·영문·게시판·카드뉴스·이미지)는 새 글 작성에서 가능합니다.
         </p>
         <div className="mt-3 flex flex-wrap gap-4 text-xs text-text-muted">
-          <span>총 <strong className="text-text-strong">{posts.length}</strong>편(최근 50)</span>
+          <span>총 <strong className="text-text-strong">{posts.length}</strong>편(최근 500)</span>
           <span>발행 <strong className="text-success">{publishedCount}</strong></span>
           <span>초안 <strong className="text-warning">{posts.length - publishedCount}</strong></span>
         </div>
@@ -76,7 +76,7 @@ export default async function BlogListPage() {
 
       {/* 글 목록 */}
       <div>
-        <h3 className="mb-3 font-serif text-base font-bold text-primary">글 목록 (최근 50)</h3>
+        <h3 className="mb-3 font-serif text-base font-bold text-primary">글 목록 (최근 500) · 글 클릭 → 수정/삭제</h3>
         {posts.length === 0 ? (
           <Card className="p-8 text-center">
             <p className="text-sm text-text-muted">아직 글이 없습니다. 위에서 네이버 글을 가져오세요.</p>

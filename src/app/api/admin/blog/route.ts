@@ -174,3 +174,23 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "수정 실패" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  const guard = await requireRole(request, ["SUPER", "MANAGER"]);
+  if (!guard.ok) return guard.response;
+  try {
+    let id = "";
+    try {
+      const data = await request.json();
+      id = typeof data?.id === "string" ? data.id : "";
+    } catch {
+      id = new URL(request.url).searchParams.get("id") ?? "";
+    }
+    if (!id) return NextResponse.json({ error: "ID 필요" }, { status: 400 });
+    await prisma.blogPost.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    logger.error("Blog delete error:", err);
+    return NextResponse.json({ error: "삭제 실패" }, { status: 500 });
+  }
+}

@@ -27,6 +27,9 @@ check("toGazetteUrl → /items/latest", () => {
   assert.equal(toGazetteUrl("https://bot.example.com/"), "https://bot.example.com/items/latest");
   assert.equal(toGazetteUrl("https://bot.example.com/gazette"), "https://bot.example.com/items/latest");
   assert.equal(toGazetteUrl("https://bot.example.com/items/latest"), "https://bot.example.com/items/latest");
+  // 명시적 경로(봇이 과거/전체 endpoint 를 열었을 때)는 그대로 사용 → 기본 latest 강제 안 함.
+  assert.equal(toGazetteUrl("https://bot.example.com/items/all"), "https://bot.example.com/items/all");
+  assert.equal(toGazetteUrl("https://bot.example.com/items"), "https://bot.example.com/items");
 });
 
 // 1b) Gwanbo-bot 실제 응답(GazetteItemRead) 매핑 검증.
