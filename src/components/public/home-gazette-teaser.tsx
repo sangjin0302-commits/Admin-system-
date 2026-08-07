@@ -4,19 +4,30 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type Item = { id: string; title: string; agency: string; category: string; dateMs: number; url: string | null };
+type Stats = {
+  total: number;
+  last7: number;
+  last30: number;
+  latestDate: string | null;
+  byAgency: { agency: string; count: number }[];
+};
 
 /**
- * 홈 관보 티저 — 최신 관보 3건을 비동기로 불러 보여준다.
+ * 홈 관보 티저 — 최신 관보 3건 + 통계를 비동기로 불러 보여준다.
  * 봇 미설정/실패/빈 응답이면 **아무것도 렌더하지 않는다**(홈 깨짐 방지).
  */
 export function HomeGazetteTeaser({ lang = "ko" }: { lang?: "ko" | "en" }) {
   const [items, setItems] = useState<Item[] | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
     const ctrl = new AbortController();
     fetch("/api/public/gazette-latest", { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => setItems(Array.isArray(d?.items) ? d.items : []))
+      .then((d) => {
+        setItems(Array.isArray(d?.items) ? d.items : []);
+        setStats(d?.stats ?? null);
+      })
       .catch(() => setItems([]));
     return () => ctrl.abort();
   }, []);
@@ -45,6 +56,35 @@ export function HomeGazetteTeaser({ lang = "ko" }: { lang?: "ko" | "en" }) {
             {t("전체 보기 →", "View all →")}
           </Link>
         </div>
+
+        {/* 관보 통계 — 총 수집·최근 7일·기관별 상위(봇 /items/stats). 없으면 숨김. */}
+        {stats && stats.total > 0 && (
+          <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl border border-gold/20 bg-gold-soft/10 px-5 py-3 text-sm">
+            <span className="text-text-muted">
+              {t("총 수집", "Total collected")}{" "}
+              <strong className="font-serif text-base text-primary">{stats.total.toLocaleString()}</strong>{t("건", "")}
+            </span>
+            <span className="text-text-muted">
+              {t("최근 7일", "Last 7 days")}{" "}
+              <strong className="text-gold-deep">{stats.last7.toLocaleString()}</strong>{t("건", "")}
+            </span>
+            <span className="text-text-muted">
+              {t("최근 30일", "Last 30 days")}{" "}
+              <strong className="text-gold-deep">{stats.last30.toLocaleString()}</strong>{t("건", "")}
+            </span>
+            {stats.byAgency.length > 0 && (
+              <span className="text-text-muted">
+                {t("기관별", "By agency")}:{" "}
+                {stats.byAgency.slice(0, 3).map((a, i) => (
+                  <span key={a.agency}>
+                    {i > 0 ? " · " : ""}
+                    {a.agency} <span className="text-text-strong">{a.count}</span>
+                  </span>
+                ))}
+              </span>
+            )}
+          </div>
+        )}
 
         <ul className="mt-6 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
           {items.map((g) => {

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma/client";
 import Link from "next/link";
 
 import { ImportControls } from "@/app/admin/blog-import/import-controls";
+import { BlogRowActions } from "@/app/admin/blog/blog-row-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -84,33 +85,32 @@ export default async function BlogListPage() {
         ) : (
           <div className="space-y-3">
             {posts.map((post) => (
-              <Link key={post.id} href={`/admin/blog/${post.id}`}>
-                <Card className="p-4 transition hover:shadow-md">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-block h-2 w-2 rounded-full ${
-                            post.published ? "bg-success" : "bg-warning"
-                          }`}
-                        />
-                        <h3 className="truncate text-sm font-semibold text-text-strong">
-                          {decodeTitle(post.title)}
-                        </h3>
-                      </div>
-                      <p className="mt-1 truncate text-xs text-text-muted">
-                        {post.excerpt || "발췌 없음"}
-                      </p>
+              <Card key={post.id} className="p-4 transition hover:shadow-md">
+                <div className="flex items-center justify-between gap-3">
+                  <Link href={`/admin/blog/${post.id}`} className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-block h-2 w-2 rounded-full ${
+                          post.published ? "bg-success" : "bg-warning"
+                        }`}
+                      />
+                      <h3 className="truncate text-sm font-semibold text-text-strong">
+                        {decodeTitle(post.title)}
+                      </h3>
                     </div>
-                    <div className="ml-4 flex shrink-0 items-center gap-3 text-xs text-text-muted">
-                      <span className="rounded bg-surface-muted px-2 py-0.5">{post.category}</span>
-                      <span>{post.titleEn ? "EN✓" : "EN—"}</span>
-                      <span>{post.viewCount} views</span>
-                      <span>{post.createdAt.toLocaleDateString("ko-KR")}</span>
-                    </div>
+                    <p className="mt-1 truncate text-xs text-text-muted">
+                      {post.excerpt || "발췌 없음"}
+                    </p>
+                  </Link>
+                  <div className="flex shrink-0 items-center gap-3 text-xs text-text-muted">
+                    <span className="hidden rounded bg-surface-muted px-2 py-0.5 sm:inline">{post.category}</span>
+                    <span className="hidden sm:inline">{post.titleEn ? "EN✓" : "EN—"}</span>
+                    <span className="hidden md:inline">{post.viewCount} views</span>
+                    <span className="hidden md:inline">{post.createdAt.toLocaleDateString("ko-KR")}</span>
+                    <BlogRowActions id={post.id} />
                   </div>
-                </Card>
-              </Link>
+                </div>
+              </Card>
             ))}
           </div>
         )}

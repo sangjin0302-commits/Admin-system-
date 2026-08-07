@@ -212,3 +212,63 @@ export async function fetchGazetteList(limit = 60): Promise<GazetteOutcome> {
     clearTimeout(timeoutId);
   }
 }
+
+export type GazetteStats = {
+  total: number;
+  last7: number;
+  last30: number;
+  latestDate: string | null;
+  byAgency: { agency: string; count: number }[];
+};
+
+/** 봇 /items/stats 응답 → GazetteStats. 실패 시 null(홈에서 통계 섹션 숨김). */
+export function normalizeGazetteStats(body: unknown): GazetteStats | null {
+  if (!body || typeof body !== "object") return null;
+  const o = body as Record<string, unknown>;
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+  const byAgency = Array.isArray(o.by_agency)
+    ? (o.by_agency as unknown[])
+        .map((r) => {
+          if (!r || typeof r !== "object") return null;
+          const rr = r as Record<string, unknown>;
+          const agency = typeof rr.agency === "string" ? rr.agency : "";
+          if (!agency) return null;
+          return { agency, count: num(rr.count) };
+        })
+        .filter((x): x is { agency: string; count: number } => x !== null)
+    : [];
+  const total = num(o.total);
+  if (total === 0 && byAgency.length === 0) return null;
+  return {
+    total,
+    last7: num(o.last7),
+    last30: num(o.last30),
+    latestDate: typeof o.latest_date === "string" ? o.latest_date : null,
+    byAgency,
+  };
+}
+
+/** 관보 통계 조회(봇 /items/stats). 미설정/실패 시 null. */
+export async function fetchGazetteStats(): Promise<GazetteStats | null> {
+  const base = resolveGazetteUrl();
+  if (!base) return null;
+  // resolveGazetteUrl 은 보통 .../items/latest → stats 로 치환. 그 외 경로면 /items/stats 추가.
+  const statsUrl = base.endsWith("/items/latest")
+    ? base.slice(0, -"/latest".length) + "/stats"
+    : base.replace(/\/+$/, "") + "/items/stats";
+  const timeoutMs = Number(process.env.GWANBO_API_TIMEOUT_MS ?? "9000");
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const headers: Record<string, string> = { Accept: "application/json" };
+  const token = process.env.GWANBO_API_TOKEN?.trim();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  try {
+    const res = await fetch(statsUrl, { method: "GET", headers, cache: "no-store", signal: controller.signal });
+    if (!res.ok) return null;
+    return normalizeGazetteStats(await res.json());
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
