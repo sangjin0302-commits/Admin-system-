@@ -106,6 +106,43 @@ export async function sendIntakeConfirmation(input: {
   });
 }
 
+export async function sendNewsletterWelcome(input: {
+  to: string;
+}): Promise<{ ok: boolean }> {
+  // 정보통신망법: 광고성 정보는 (광고) 표기 + 수신거부 수단 필수.
+  const unsubUrl = `https://ethosattorney.com/newsletter/unsubscribe?email=${encodeURIComponent(input.to)}`;
+  return sendEmail({
+    to: input.to,
+    subject: "(광고) [ETHOS] 뉴스레터 구독을 환영합니다",
+    headers: { "List-Unsubscribe": `<${unsubUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
+    html: `
+      <div style="font-family:'Pretendard',sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h1 style="font-size:20px;color:#1a2744;margin:0;">ETHOS 행정사사무소</h1>
+          <p style="font-size:12px;color:#b8963e;margin:4px 0 0;">Administrative Services Office</p>
+        </div>
+        <p style="font-size:15px;color:#333;line-height:1.7;">
+          안녕하세요. 뉴스레터 구독이 확인되었습니다.<br><br>
+          앞으로 다음 소식을 이메일로 보내드립니다.
+        </p>
+        <ul style="font-size:14px;color:#444;line-height:1.8;padding-left:18px;margin:12px 0;">
+          <li>새 법률 칼럼 — 비자·행정심판·인허가 실무 인사이트</li>
+          <li>주간 관보(官報) 다이제스트 — 한 주간 주요 고시·공고 요약</li>
+        </ul>
+        <a href="https://ethosattorney.com/blog" style="display:inline-block;margin-top:8px;padding:10px 24px;background:#1a2744;color:#fff;border-radius:20px;text-decoration:none;font-size:13px;font-weight:600;">
+          최근 칼럼 보기
+        </a>
+        <hr style="border:none;border-top:1px solid #e5e3da;margin:24px 0;" />
+        <p style="font-size:11px;color:#999;line-height:1.6;">
+          본 메일은 뉴스레터를 구독하신 분께 발송되는 광고성 정보입니다.<br>
+          수신을 원치 않으시면 <a href="${unsubUrl}" style="color:#b8963e;">무료 수신거부</a> 하실 수 있습니다.<br>
+          <a href="https://ethosattorney.com" style="color:#b8963e;">ethosattorney.com</a>
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendNewBlogNotification(input: {
   to: string[];
   postTitle: string;

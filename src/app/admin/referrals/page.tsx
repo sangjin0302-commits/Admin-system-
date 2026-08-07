@@ -7,8 +7,7 @@ import { NewCodeButton } from "./new-code-button";
 export const dynamic = "force-dynamic";
 
 export default async function ReferralsPage() {
-  const stats = getReferralStats();
-  const codes = listCodes();
+  const [stats, codes] = await Promise.all([getReferralStats(), listCodes()]);
 
   return (
     <div className="space-y-6">

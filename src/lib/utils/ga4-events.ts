@@ -53,6 +53,13 @@ export function trackConsultFormSubmit() {
   trackGA4Event("submit_consult_form", { event_category: "conversion" });
 }
 
+export function trackNewsletterSubscribe(alreadyConfirmed: boolean) {
+  trackGA4Event("newsletter_subscribe", {
+    event_category: "conversion",
+    already_confirmed: alreadyConfirmed,
+  });
+}
+
 export function trackScrollDepth(percent: number) {
   trackGA4Event("scroll_depth", {
     event_category: "engagement",

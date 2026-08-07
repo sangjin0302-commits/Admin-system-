@@ -1289,6 +1289,39 @@ model BlogPost {
   @@index([source, importedAt])
 }
 
+// ---------------------------------------------------------------------------
+// 고객 추천 프로그램 (customer referral) — 기존 in-memory Map/array를 DB로 이관.
+// 서버리스 콜드스타트마다 데이터가 사라지던 문제를 해결한다.
+// B2B 파트너 추천(partner-referral-service, SiteSetting JSON)과는 별개 시스템.
+// ---------------------------------------------------------------------------
+
+model CustomerReferral {
+  id            String                @id @default(cuid())
+  code          String                @unique
+  referrerEmail String
+  referrerName  String
+  usageCount    Int                   @default(0)
+  rewardAmount  Int                   @default(0)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  uses          CustomerReferralUse[]
+
+  @@index([code])
+  @@index([referrerEmail])
+}
+
+model CustomerReferralUse {
+  id               String           @id @default(cuid())
+  code             String
+  referral         CustomerReferral @relation(fields: [code], references: [code], onDelete: Cascade)
+  refereeEmail     String
+  refereeInquiryId String
+  rewardPaid       Boolean          @default(false)
+  usedAt           DateTime         @default(now())
+
+  @@index([code])
+}
+
 model LegacyImportLog {
   id            String   @id @default(cuid())
   source        String

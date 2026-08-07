@@ -10,7 +10,7 @@
 import { randomUUID } from "crypto";
 
 import { prisma } from "@/lib/prisma/client";
-import { sendNewBlogNotification } from "@/lib/services/email-service";
+import { sendNewBlogNotification, sendNewsletterWelcome } from "@/lib/services/email-service";
 import { logger } from "@/lib/utils/logger";
 
 export type Subscriber = {
@@ -114,6 +114,7 @@ export async function confirmSubscribe(
 
   const confirmed = await readJson<Subscriber[]>(KEY_SUBSCRIBERS, []);
   if (confirmed.some((s) => s.email === match.email)) {
+    // 이미 확인된 구독자의 재확인 → 환영 메일 재발송 안 함(중복 방지).
     return { ok: true, email: match.email };
   }
   confirmed.push({
@@ -122,6 +123,14 @@ export async function confirmSubscribe(
     categories: match.categories,
   });
   await writeJson(KEY_SUBSCRIBERS, confirmed);
+
+  // 최초 확인 시 1회 환영 메일 발송(best-effort — 실패해도 확인 플로우는 계속).
+  try {
+    await sendNewsletterWelcome({ to: match.email });
+  } catch (err) {
+    logger.warn("[newsletter] welcome email failed", err);
+  }
+
   return { ok: true, email: match.email };
 }
 
@@ -156,8 +165,8 @@ export async function subscribe(email: string, categories?: string[]) {
  * - watermark(마지막 알림 시각) 이후 published 된 글만 대상 → 중복 발송 방지.
  * - 구독자별 개별 발송(to 배열에 한 명씩) → 수신자 간 이메일 노출 없음.
  * - sendEmail 의 무료한도 가드에 걸리면 발송이 실패로 돌아오므로 즉시 중단.
- * - watermark 는 처리 후 항상 전진 → 한도로 중간 중단돼도 다음 실행에서 재발송 안 함
- *   (일부 구독자가 그 글을 놓칠 순 있으나 중복 스팸보다 안전).
+ * - watermark 는 "모든 구독자에게 발송을 마친 마지막 글"까지만 전진 → 한도로 중간 중단되면
+ *   미발송(또는 부분발송) 글은 다음 실행에서 재시도되어 놓치지 않음.
  */
 export async function notifyNewlyPublishedPosts(
   limit = MAX_POSTS_PER_RUN

@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     if (typeof referrerEmail !== "string" || typeof referrerName !== "string") {
       return NextResponse.json({ error: "invalid payload" }, { status: 400 });
     }
-    const code = generateReferralCode(referrerEmail, referrerName);
+    const code = await generateReferralCode(referrerEmail, referrerName);
     return NextResponse.json({ code });
   } catch (error) {
     console.error("admin/referrals POST failed", error);

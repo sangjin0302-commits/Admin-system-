@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { trackNewsletterSubscribe } from "@/lib/utils/ga4-events";
+
 type Lang = "ko" | "en";
 
 const COPY: Record<Lang, {
@@ -93,6 +95,7 @@ export function NewsletterSubscribeForm({ lang = "ko" }: { lang?: Lang }) {
       }
       setState("done");
       setMessage(j.alreadyConfirmed ? t.already : t.ok);
+      trackNewsletterSubscribe(Boolean(j.alreadyConfirmed));
       setEmail("");
     } catch {
       setState("error");
