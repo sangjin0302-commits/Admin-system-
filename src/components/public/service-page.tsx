@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { localePath } from "@/lib/i18n-locale";
 import { Reveal } from "@/components/public/reveal";
 import { ScrollToCtaPill } from "@/components/public/scroll-to-cta-pill";
 import { ComparisonTable } from "@/components/public/comparison-table";
@@ -131,7 +132,6 @@ export function ServicePage({
   const outcomes = parseLineList(outcomesOverride) ?? data.outcomes ?? DEFAULT_OUTCOMES;
   const risks = parseLineList(risksOverride) ?? data.risks ?? DEFAULT_RISKS;
   const caseHighlight = data.caseHighlight;
-  const qs = lang === "en" ? "?lang=en" : "";
 
   return (
     <div className="overflow-x-clip">
@@ -401,7 +401,7 @@ export function ServicePage({
                   {L.ctaPrimary}
                 </Link>
                 <Link
-                  href={`/services${qs}`}
+                  href={localePath("/services", lang)}
                   className="inline-flex h-12 items-center rounded-lg border border-gold/50 px-8 text-sm font-semibold text-gold-soft transition hover:bg-gold/10"
                 >
                   {L.ctaSecondary}

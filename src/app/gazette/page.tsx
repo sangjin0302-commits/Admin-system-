@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
 import { fetchGazetteList, type GazetteItem } from "@/lib/services/gazette-client";
+import { getRequestLocale, isLegacyLangEn } from "@/lib/i18n-request";
+import { localePath } from "@/lib/i18n-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +14,7 @@ export const metadata: Metadata = {
   description: "외국인·행정 실무에 영향을 주는 최신 관보(법령·고시·공고)를 모아 봅니다.",
   alternates: {
     canonical: "/gazette",
-    languages: { ko: "/gazette", en: "/gazette?lang=en", "x-default": "/gazette" },
+    languages: { ko: "/gazette", en: "/en/gazette", "x-default": "/gazette" },
   },
 };
 
@@ -23,7 +26,11 @@ export default async function GazettePage({
   searchParams?: Promise<{ lang?: string; cat?: string; month?: string }>;
 }) {
   const sp = (await searchParams) ?? {};
-  const lang: Lang = sp.lang === "en" ? "en" : "ko";
+  // 레거시 ?lang=en → 경로기반 /en/gazette 로 301. /en 서빙 중이면 스킵(루프 방지).
+  if (await isLegacyLangEn(sp.lang)) {
+    redirect(localePath("/gazette", "en"));
+  }
+  const lang: Lang = await getRequestLocale(sp.lang);
   const t = (ko: string, en: string) => (lang === "en" ? en : ko);
 
   // 한 번에 최대한 많이(달력식 월 넘김 위해). 봇이 주는 만큼.
@@ -48,9 +55,9 @@ export default async function GazettePage({
     const [y, mo] = m.split("-");
     return lang === "en" ? `${mo}/${y}` : `${y}년 ${Number(mo)}월`;
   };
+  // 로케일은 경로(/en)로 전달되므로 쿼리엔 month 만. href 는 localePath 로 감싼다.
   const qs = (over: { month?: string | null }) => {
     const params = new URLSearchParams();
-    if (lang === "en") params.set("lang", "en");
     const month = over.month === undefined ? activeMonth : over.month;
     if (month) params.set("month", month);
     const s = params.toString();
@@ -93,13 +100,13 @@ export default async function GazettePage({
           </Reveal>
           <div className="mt-6 inline-flex rounded-full border border-line bg-surface p-1 text-xs">
             <Link
-              href="/gazette?lang=ko"
+              href={localePath("/gazette", "ko")}
               className={`px-3 py-1 rounded-full ${lang === "ko" ? "bg-primary text-white" : "text-text-muted"}`}
             >
               KR
             </Link>
             <Link
-              href="/gazette?lang=en"
+              href={localePath("/gazette", "en")}
               className={`px-3 py-1 rounded-full ${lang === "en" ? "bg-primary text-white" : "text-text-muted"}`}
             >
               EN
@@ -138,7 +145,7 @@ export default async function GazettePage({
               {months.length > 0 && (
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <Link
-                    href={`/gazette${qs({ month: null })}`}
+                    href={localePath(`/gazette${qs({ month: null })}`, lang)}
                     className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${!activeMonth ? "bg-primary text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
                   >
                     {t("전체 기간", "All dates")}
@@ -146,7 +153,7 @@ export default async function GazettePage({
                   {activeMonth && (
                     <span className="inline-flex items-center gap-1">
                       <Link
-                        href={prevMonth ? `/gazette${qs({ month: prevMonth })}` : "#"}
+                        href={prevMonth ? localePath(`/gazette${qs({ month: prevMonth })}`, lang) : "#"}
                         aria-label={t("이전 달", "Previous month")}
                         className={`grid h-8 w-8 place-items-center rounded-full border border-gold/30 text-sm ${prevMonth ? "text-primary hover:bg-gold-soft/30" : "pointer-events-none opacity-30"}`}
                       >
@@ -154,7 +161,7 @@ export default async function GazettePage({
                       </Link>
                       <span className="px-1 text-xs font-bold text-primary">{fmtMonth(activeMonth)}</span>
                       <Link
-                        href={nextMonth ? `/gazette${qs({ month: nextMonth })}` : "#"}
+                        href={nextMonth ? localePath(`/gazette${qs({ month: nextMonth })}`, lang) : "#"}
                         aria-label={t("다음 달", "Next month")}
                         className={`grid h-8 w-8 place-items-center rounded-full border border-gold/30 text-sm ${nextMonth ? "text-primary hover:bg-gold-soft/30" : "pointer-events-none opacity-30"}`}
                       >
@@ -165,7 +172,7 @@ export default async function GazettePage({
                   {months.slice(0, 6).map((m) => (
                     <Link
                       key={m}
-                      href={`/gazette${qs({ month: m })}`}
+                      href={localePath(`/gazette${qs({ month: m })}`, lang)}
                       className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${activeMonth === m ? "bg-primary text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
                     >
                       {fmtMonth(m)}
@@ -224,7 +231,7 @@ export default async function GazettePage({
                       {/* 상담 유도 — 카테고리 태깅 없이 일반 CTA(중첩 앵커 방지 위해 외부 앵커 바깥) */}
                       <div className="px-5 pb-4 sm:pl-[11.25rem]">
                         <Link
-                          href={lang === "en" ? "/consult?lang=en" : "/consult"}
+                          href={localePath("/consult", lang)}
                           data-funnel="gazette_to_consult"
                           className="inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold-soft/20 px-3 py-1 text-[11px] font-bold text-gold-deep transition hover:bg-gold-soft/40"
                         >
@@ -262,13 +269,13 @@ export default async function GazettePage({
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
-                href={lang === "en" ? "/intake?lang=en" : "/intake"}
+                href={localePath("/intake", lang)}
                 className="inline-flex h-12 items-center rounded-lg bg-primary px-8 text-sm font-bold text-white transition hover:bg-text-strong"
               >
                 {t("상담 신청하기", "Request Consultation")}
               </Link>
               <Link
-                href="/quick-check"
+                href={localePath("/quick-check", lang)}
                 className="inline-flex h-12 items-center rounded-lg border border-primary/40 px-8 text-sm font-semibold text-primary transition hover:bg-primary/5"
               >
                 {t("무료 AI 사전진단", "Free AI case check")}

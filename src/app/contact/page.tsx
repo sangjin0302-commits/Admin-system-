@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
 import { getSiteSettings } from "@/lib/services/site-settings";
+import { getRequestLocale, isLegacyLangEn } from "@/lib/i18n-request";
+import { localePath } from "@/lib/i18n-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +69,7 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<{ lang?: string }>;
 }): Promise<Metadata> {
-  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const lang = await getRequestLocale((await searchParams).lang);
   const t = COPY[lang];
   return { title: t.metaTitle, description: t.metaDescription };
 }
@@ -76,7 +79,12 @@ export default async function ContactPage({
 }: {
   searchParams: Promise<{ lang?: string }>;
 }) {
-  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const sp = await searchParams;
+  // 레거시 ?lang=en → 경로기반 /en/contact 로 301. /en 서빙 중이면 스킵(루프 방지).
+  if (await isLegacyLangEn(sp.lang)) {
+    redirect(localePath("/contact", "en"));
+  }
+  const lang = await getRequestLocale(sp.lang);
   const t = COPY[lang];
   const site = await getSiteSettings();
   const phone = site["contact.phone"];
@@ -159,7 +167,7 @@ export default async function ContactPage({
                 </div>
 
                 <Link
-                  href={`/intake${lang === "en" ? "?lang=en" : ""}`}
+                  href={localePath("/intake", lang)}
                   className="mt-10 inline-flex h-11 w-full items-center justify-center rounded-lg bg-gold text-sm font-bold text-primary transition hover:bg-gold-soft"
                 >
                   {t.intakeButton}

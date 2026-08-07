@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { CareersForm } from "@/components/public/careers-form";
+import { getRequestLocale, isLegacyLangEn } from "@/lib/i18n-request";
+import { localePath } from "@/lib/i18n-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +75,7 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<{ lang?: string }>;
 }): Promise<Metadata> {
-  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const lang = await getRequestLocale((await searchParams).lang);
   const t = COPY[lang];
   return {
     title: t.metaTitle,
@@ -85,7 +88,12 @@ export default async function CareersPage({
 }: {
   searchParams: Promise<{ lang?: string }>;
 }) {
-  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const sp = await searchParams;
+  // 레거시 ?lang=en → 경로기반 /en/careers 로 301. /en 서빙 중이면 스킵(루프 방지).
+  if (await isLegacyLangEn(sp.lang)) {
+    redirect(localePath("/careers", "en"));
+  }
+  const lang = await getRequestLocale(sp.lang);
   const t = COPY[lang];
 
   return (

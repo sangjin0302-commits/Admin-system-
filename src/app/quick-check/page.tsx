@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { QuickCheckClient } from "@/components/public/quick-check-client";
+import { getRequestLocale, isLegacyLangEn } from "@/lib/i18n-request";
+import { localePath } from "@/lib/i18n-locale";
 
 export const metadata: Metadata = {
   title: "AI 사전 진단 — 에토스 행정사사무소(ETHOS)",
@@ -13,7 +16,12 @@ export default async function QuickCheckPage({
 }: {
   searchParams: Promise<{ lang?: string }>;
 }) {
-  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const sp = await searchParams;
+  // 레거시 ?lang=en → 경로기반 /en/quick-check 로 301. /en 서빙 중이면 스킵(루프 방지).
+  if (await isLegacyLangEn(sp.lang)) {
+    redirect(localePath("/quick-check", "en"));
+  }
+  const lang = await getRequestLocale(sp.lang);
   return (
     <div className="relative overflow-hidden">
       <div className="ethos-aurora ethos-aurora-animated" aria-hidden />

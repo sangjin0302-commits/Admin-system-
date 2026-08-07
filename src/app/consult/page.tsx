@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
+import { getRequestLocale, isLegacyLangEn } from "@/lib/i18n-request";
+import { localePath } from "@/lib/i18n-locale";
 import { ConsultStructure } from "@/components/public/consult-structure";
 import { BookingWidget } from "@/components/public/booking-widget";
 import { DeadlineReminderBand } from "@/components/public/deadline-reminder-band";
@@ -170,7 +173,12 @@ export default async function ConsultPage({
 }: {
   searchParams: Promise<{ lang?: string }>;
 }) {
-  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const sp = await searchParams;
+  // 레거시 ?lang=en → 경로기반 /en/consult 로 301. /en 서빙 중이면 스킵(루프 방지).
+  if (await isLegacyLangEn(sp.lang)) {
+    redirect(localePath("/consult", "en"));
+  }
+  const lang = await getRequestLocale(sp.lang);
   const t = COPY[lang];
   return (
     <div className="overflow-x-clip">
@@ -331,7 +339,7 @@ export default async function ConsultPage({
                 <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold-soft text-lg text-gold-deep">★</span>
                 <span><span className="block font-serif text-base font-bold">{t.channelNaverExpertName}</span><span className="block text-xs text-text-muted">{t.channelNaverExpertDesc}</span></span>
               </a>
-              <Link href={`/intake${lang === "en" ? "?lang=en" : ""}`}
+              <Link href={localePath("/intake", lang)}
                  className="flex items-center gap-3 rounded-2xl border-2 border-gold/50 bg-surface px-5 py-4 text-primary transition hover:bg-gold-soft/30">
                 <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold-soft text-lg text-gold-deep">📋</span>
                 <span><span className="block font-serif text-base font-bold">{t.channelFormName}</span><span className="block text-xs text-text-muted">{t.channelFormDesc}</span></span>

@@ -20,3 +20,21 @@ export async function getRequestLocale(legacyLangParam?: string): Promise<Public
   }
   return normalizeLocale(legacyLangParam);
 }
+
+/**
+ * 레거시 `?lang=en` 로 접근했는지 판별(경로기반 301 유도용).
+ *
+ * true 면 호출 측에서 `/en<path>` 로 redirect 하여 정본(canonical)을 경로기반으로 통일한다.
+ * `/en/*` 로 이미 서빙 중(미들웨어가 헤더 주입)이면 false → 리다이렉트 루프 방지.
+ * 정적 경로 페이지에서만 사용(동적 [slug] 는 스킵 권장).
+ */
+export async function isLegacyLangEn(legacyLangParam?: string): Promise<boolean> {
+  if (legacyLangParam !== "en") return false;
+  try {
+    const h = await headers();
+    if (h.get(LOCALE_HEADER)) return false; // 이미 /en 경로로 서빙 중 → 리다이렉트 불필요
+  } catch {
+    /* headers() 사용 불가 컨텍스트 → 레거시로 간주 */
+  }
+  return true;
+}

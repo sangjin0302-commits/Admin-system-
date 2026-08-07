@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
 import { getFeeTable, type FeeTable } from "@/lib/services/fee-estimator-service";
+import { getRequestLocale, isLegacyLangEn } from "@/lib/i18n-request";
+import { localePath } from "@/lib/i18n-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +14,8 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
-  const en = (await searchParams).lang === "en";
+  const langParam = (await searchParams).lang;
+  const en = (await getRequestLocale(typeof langParam === "string" ? langParam : undefined)) === "en";
   return en
     ? {
         title: "Fee Guide — Reference Pricing by Area | ETHOS",
@@ -140,9 +144,13 @@ export default async function FeesPage({
 }: {
   searchParams: Promise<{ lang?: string }>;
 }) {
-  const lang: Lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const sp = await searchParams;
+  // 레거시 ?lang=en → 경로기반 /en/fees 로 301. /en 서빙 중이면 스킵(루프 방지).
+  if (await isLegacyLangEn(sp.lang)) {
+    redirect(localePath("/fees", "en"));
+  }
+  const lang: Lang = await getRequestLocale(sp.lang);
   const t = COPY[lang];
-  const suffix = lang === "en" ? "?lang=en" : "";
   const table = await getFeeTable();
   const feeGroups = buildFeeGroups(table, lang);
 
@@ -244,13 +252,13 @@ export default async function FeesPage({
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href={`/intake${suffix}`}
+                  href={localePath("/intake", lang)}
                   className="inline-flex h-12 items-center rounded-lg bg-gold px-8 text-sm font-bold text-primary shadow-md transition-all duration-300 hover:bg-gold-soft hover:shadow-lg"
                 >
                   {t.ctaIntake}
                 </Link>
                 <Link
-                  href={`/quick-check${suffix}`}
+                  href={localePath("/quick-check", lang)}
                   className="inline-flex h-12 items-center rounded-lg border border-gold/50 px-8 text-sm font-semibold text-gold-soft transition hover:bg-gold/10"
                 >
                   {t.ctaQuickCheck}

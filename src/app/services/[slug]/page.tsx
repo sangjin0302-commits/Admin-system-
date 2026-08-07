@@ -9,6 +9,8 @@ import {
   localizeMarketingService,
   PUBLIC_MARKETING_SERVICES
 } from "@/lib/services/public-marketing-pages";
+import { getRequestLocale } from "@/lib/i18n-request";
+import { localePath } from "@/lib/i18n-locale";
 
 // 중복 정리: 아래 CMS 슬러그는 nav 연결된 legacy 상세 페이지와 내용이 겹친다
 // (예: visa ≈ /services/immigration). SEO 중복을 없애려고 canonical(legacy)로 리다이렉트.
@@ -37,7 +39,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params, searchParams }: ServiceDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const en = (await searchParams)?.lang === "en";
+  const en = (await getRequestLocale((await searchParams)?.lang)) === "en";
   const service = getPublicMarketingService(slug);
 
   if (!service) {
@@ -50,10 +52,10 @@ export async function generateMetadata({ params, searchParams }: ServiceDetailPa
     title: en ? `${service.titleEn} | ETHOS` : `${service.title} 안내`,
     description: en ? service.summaryEn : service.summary,
     alternates: {
-      canonical: `/services/${slug}`,
+      canonical: en ? localePath(`/services/${slug}`, "en") : `/services/${slug}`,
       languages: {
         ko: `/services/${slug}`,
-        en: `/services/${slug}?lang=en`,
+        en: localePath(`/services/${slug}`, "en"),
         "x-default": `/services/${slug}`
       }
     }
@@ -78,7 +80,8 @@ function InfoList({ title, items }: { title: string; items: string[] }) {
 
 export default async function ServiceDetailPage({ params, searchParams }: ServiceDetailPageProps) {
   const { slug } = await params;
-  const lang = (await searchParams)?.lang === "en" ? "en" : "ko";
+  // 동적 [slug] 경로라 레거시 301 은 스킵(리다이렉트 리스크). getRequestLocale 폴백만 사용.
+  const lang = await getRequestLocale((await searchParams)?.lang);
   // 겹치는 슬러그는 next.config redirects()가 legacy 로 308 리다이렉트하므로 여기 도달 안 함.
   const t = (ko: string, en: string) => (lang === "en" ? en : ko);
   const service = getPublicMarketingService(slug);

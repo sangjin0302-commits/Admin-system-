@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { Reveal } from "@/components/public/reveal";
 import { CaseSearch } from "@/components/public/case-search";
 import { CHANNELS } from "@/lib/constants/channels";
+import { getRequestLocale, isLegacyLangEn } from "@/lib/i18n-request";
+import { localePath } from "@/lib/i18n-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +15,8 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
-  const en = (await searchParams).lang === "en";
+  const langParam = (await searchParams).lang;
+  const en = (await getRequestLocale(typeof langParam === "string" ? langParam : undefined)) === "en";
   return en
     ? {
         title: "Lectures & Talks — ETHOS Administrative Attorney Office",
@@ -130,7 +134,12 @@ export default async function LecturesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const sp = await searchParams;
+  // 레거시 ?lang=en → 경로기반 /en/cases 로 301(정본 통일). /en 서빙 중이면 스킵(루프 방지).
+  if (await isLegacyLangEn(typeof sp.lang === "string" ? sp.lang : undefined)) {
+    redirect(localePath("/cases", "en"));
+  }
+  const lang = await getRequestLocale(typeof sp.lang === "string" ? sp.lang : undefined);
   const t = COPY[lang];
   const feedback = lang === "en" ? FEEDBACK_EN : FEEDBACK_KO;
 

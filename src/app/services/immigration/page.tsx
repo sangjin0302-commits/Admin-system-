@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { ServicePage } from "@/components/public/service-page";
 import { getSiteSettings } from "@/lib/services/site-settings";
 import { LegalServiceJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { getRequestLocale, isLegacyLangEn } from "@/lib/i18n-request";
+import { localePath } from "@/lib/i18n-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +19,12 @@ export default async function VisaPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const lang = (await searchParams).lang === "en" ? "en" : "ko";
+  const sp = await searchParams;
+  // 레거시 ?lang=en → 경로기반 /en/services/immigration 로 301. /en 서빙 중이면 스킵(루프 방지).
+  if (await isLegacyLangEn(typeof sp.lang === "string" ? sp.lang : undefined)) {
+    redirect(localePath("/services/immigration", "en"));
+  }
+  const lang = await getRequestLocale(typeof sp.lang === "string" ? sp.lang : undefined);
   const settings = await getSiteSettings();
   const descOverride = settings["services.immigration.desc"];
   const titleOverride = settings["services.immigration.title"];

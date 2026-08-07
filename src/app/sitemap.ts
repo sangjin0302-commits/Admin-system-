@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma/client";
 import { getExtraKeywordLandings } from "@/lib/services/keyword-landing-service";
 import { BASE_KEYWORD_LANDINGS } from "@/lib/constants/keyword-landings";
+import { localePath } from "@/lib/i18n-locale";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ethosattorney.com";
 
@@ -25,7 +26,7 @@ async function loadDynamicRoutes(): Promise<
         // 네이버 수입글: KO 는 noindex(정본=네이버) → sitemap 제외.
         // EN 번역만 색인 대상(고유 콘텐츠)이므로 있으면 그 URL 을 등재.
         if (b.bodyEn) {
-          out.push({ url: `/blog/${b.slug}?lang=en`, priority: 0.6, lastModified });
+          out.push({ url: `/en/blog/${b.slug}`, priority: 0.6, lastModified });
         }
       } else {
         // 자체 작성 원본글: KO 색인 대상.
@@ -149,7 +150,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       entry.alternates = {
         languages: {
           ko: koUrl,
-          en: r.url === "/" ? `${SITE_URL}/en` : `${koUrl}?lang=en`,
+          en: `${SITE_URL}${localePath(r.url, "en")}`,
           "x-default": koUrl
         } as Record<string, string | undefined> as Record<string, string>,
       };
