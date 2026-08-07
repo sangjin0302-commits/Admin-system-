@@ -11,7 +11,9 @@ import { PUBLIC_CATEGORY_LABEL, toPublicCategory } from "@/lib/services/blog-cat
 import { getKeywordLanding } from "@/lib/services/keyword-landing-service";
 import { getBaseKeywordLanding } from "@/lib/constants/keyword-landings";
 
-export const dynamic = "force-dynamic";
+// 키워드 랜딩 상세 — cookies/headers/searchParams 미사용, params+DB만 → ISR(1h)로 함수호출·비용 절감.
+// 확장 키워드는 dynamicParams(기본 true)로 첫 요청 시 온디맨드 생성 후 캐시.
+export const revalidate = 3600;
 
 type ResolvedKeyword = { label: string; query: string[]; description: string; deadlineNote?: string };
 

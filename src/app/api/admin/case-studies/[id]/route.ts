@@ -25,7 +25,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
   try {
     const updated = await prisma.caseStudy.update({ where: { id }, data });
-    for (const p of CASE_PATHS) void invalidatePath(p, "case-study update");
+    for (const p of [...CASE_PATHS, `/cases/db-${id}`, `/en/cases/db-${id}`]) {
+      void invalidatePath(p, "case-study update");
+    }
     return NextResponse.json({ ok: true, item: updated });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
@@ -41,7 +43,9 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   if (!id) return NextResponse.json({ ok: false, error: "INVALID" }, { status: 400 });
   try {
     await prisma.caseStudy.delete({ where: { id } });
-    for (const p of CASE_PATHS) void invalidatePath(p, "case-study delete");
+    for (const p of [...CASE_PATHS, `/cases/db-${id}`, `/en/cases/db-${id}`]) {
+      void invalidatePath(p, "case-study delete");
+    }
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {

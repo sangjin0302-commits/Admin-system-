@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "파일이 없습니다" }, { status: 400 });
   }
   if (file.size > MAX_SIZE) {
-    return NextResponse.json({ ok: false, error: "파일이 너무 큽니다 (최대 5MB)" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "파일이 너무 큽니다 (최대 10MB)" }, { status: 400 });
   }
   if (!file.type.startsWith("image/")) {
     return NextResponse.json({ ok: false, error: "이미지 파일만 업로드 가능합니다" }, { status: 400 });

@@ -77,26 +77,40 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     children
   );
 
+  // 이중헤더 제거: 대시보드(/admin)에서만 큰 타이틀·소개문을 보여주고,
+  // 하위 페이지는 각자 AdminPageHeader가 제목을 담당하므로 전역 유틸바(검색·다크·로그아웃)만 렌더한다.
+  const isDashboard = !adminPathname || adminPathname === "/admin";
   const header = (
     <>
       <section className="admin-card-static">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-3">
-              <p className="ui-kicker">관리자 업무 공간</p>
-              <AdminLiveIndicator />
-            </div>
-            <h2 className="mt-2 text-[22px] font-semibold tracking-[-0.02em] text-text-strong lg:text-2xl">
-              행정사 업무 관리 허브
-            </h2>
-            <p className="mt-1.5 text-[14px] text-text-muted leading-relaxed">
-              문의 접수부터 상담, 견적, 사건 진행, 분석 연동 준비 상태까지 한 곳에서 보는 관리자 화면입니다.
-            </p>
-            <div className="mt-4 flex items-center gap-3">
-              <div className="flex-1"><AdminSearchBar /></div>
-              <DarkModeToggle enabled={darkToggleEnabled} />
-              <AdminLogoutButton />
-            </div>
+            {isDashboard ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <p className="ui-kicker">관리자 업무 공간</p>
+                  <AdminLiveIndicator />
+                </div>
+                <h2 className="mt-2 text-[22px] font-semibold tracking-[-0.02em] text-text-strong lg:text-2xl">
+                  행정사 업무 관리 허브
+                </h2>
+                <p className="mt-1.5 text-[14px] text-text-muted leading-relaxed">
+                  문의 접수부터 상담, 견적, 사건 진행, 분석 연동 준비 상태까지 한 곳에서 보는 관리자 화면입니다.
+                </p>
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="flex-1"><AdminSearchBar /></div>
+                  <DarkModeToggle enabled={darkToggleEnabled} />
+                  <AdminLogoutButton />
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="flex-1"><AdminSearchBar /></div>
+                <AdminLiveIndicator />
+                <DarkModeToggle enabled={darkToggleEnabled} />
+                <AdminLogoutButton />
+              </div>
+            )}
           </div>
         </div>
       </section>

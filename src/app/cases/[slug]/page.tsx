@@ -6,7 +6,9 @@ import { Card } from "@/components/ui/card";
 import { getPublicCaseBySlug } from "@/lib/public-cases";
 import { getDbCaseStudyBySlug, listPublicCaseStudies } from "@/lib/services/case-studies";
 
-export const dynamic = "force-dynamic";
+// 슬러그별 정적 사례 상세 — cookies/headers/searchParams 미사용, params+DB만.
+// ISR(1h) + on-demand revalidation(사례 저장 시)로 비용↓·SEO↑. 미생성 슬러그는 첫 요청 시 렌더 후 캐시.
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params

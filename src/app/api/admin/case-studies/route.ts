@@ -41,7 +41,10 @@ export async function POST(request: Request) {
       }
     });
 
-    for (const p of ["/cases", "/en/cases"]) void invalidatePath(p, "case-study create");
+    // 목록 + 신규 상세(ISR) 즉시 무효화. 상세 slug = db-<id>.
+    for (const p of ["/cases", "/en/cases", `/cases/db-${created.id}`, `/en/cases/db-${created.id}`]) {
+      void invalidatePath(p, "case-study create");
+    }
     return NextResponse.json({ ok: true, item: created });
   } catch (error) {
     console.error("admin/case-studies POST failed", error);
