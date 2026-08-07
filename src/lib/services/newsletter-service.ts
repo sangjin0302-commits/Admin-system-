@@ -52,6 +52,50 @@ async function writeJson(key: string, value: unknown): Promise<void> {
   });
 }
 
+const MAX_CAS_RETRIES = 5;
+
+/**
+ * Read-modify-write 를 compare-and-swap 로 원자화 — JSON blob 저장의 lost-update
+ * (동시 구독/해지 시 구독자 유실) 방지. 새 마이그레이션 없이 기존 `value` 컬럼으로 낙관적 잠금.
+ *
+ * 읽은 value 가 그대로일 때만 갱신(updateMany where value=old → count 1). 경쟁으로 값이
+ * 바뀌었으면 count 0 → 최신값 다시 읽고 재시도. mutator 는 재실행될 수 있으니 순수해야 하고,
+ * 토큰·랜덤값은 반드시 호출부에서 만들어 넘긴다(mutator 안에서 생성 금지).
+ */
+async function mutateJson<T>(key: string, fallback: T, mutator: (current: T) => T): Promise<T> {
+  for (let attempt = 0; attempt < MAX_CAS_RETRIES; attempt++) {
+    const row = await prisma.siteSetting.findUnique({ where: { key } });
+    let current: T;
+    try {
+      current = row?.value ? (JSON.parse(row.value) as T) : fallback;
+    } catch {
+      current = fallback;
+    }
+    const next = mutator(current);
+    const nextStr = JSON.stringify(next);
+
+    if (!row) {
+      // 행 없음 → create. 경쟁으로 이미 생겼으면 unique(key) 충돌 → 재시도(다음 회차 update 경로).
+      try {
+        await prisma.siteSetting.create({
+          data: { key, value: nextStr, updatedBy: "newsletter-service" },
+        });
+        return next;
+      } catch {
+        continue;
+      }
+    }
+
+    // 행 있음 → 읽은 value 그대로일 때만 갱신(CAS). 아니면 경쟁 발생 → 재시도.
+    const res = await prisma.siteSetting.updateMany({
+      where: { key, value: row.value },
+      data: { value: nextStr, updatedBy: "newsletter-service" },
+    });
+    if (res.count === 1) return next;
+  }
+  throw new Error(`[newsletter] mutateJson CAS 재시도 초과(${key}) — 동시쓰기 과다`);
+}
+
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -76,21 +120,19 @@ export async function beginSubscribe(
     return { ok: true, token: "", alreadyConfirmed: true };
   }
 
-  const pending = await readJson<PendingConfirmation[]>(KEY_PENDING, []);
-  const now = Date.now();
-  const cleaned = pending.filter(
-    (p) => now - new Date(p.createdAt).getTime() < PENDING_TTL_MS && p.email !== email
-  );
-
+  // 토큰·시각은 mutator 밖에서 생성(재시도 시 불변 보장).
   const token = randomUUID().replace(/-/g, "");
-  cleaned.push({
-    email,
-    token,
-    createdAt: new Date().toISOString(),
-    categories: categories && categories.length > 0 ? categories : undefined,
-  });
+  const createdAt = new Date().toISOString();
+  const cats = categories && categories.length > 0 ? categories : undefined;
 
-  await writeJson(KEY_PENDING, cleaned);
+  await mutateJson<PendingConfirmation[]>(KEY_PENDING, [], (pending) => {
+    const now = Date.now();
+    const cleaned = pending.filter(
+      (p) => now - new Date(p.createdAt).getTime() < PENDING_TTL_MS && p.email !== email
+    );
+    cleaned.push({ email, token, createdAt, categories: cats });
+    return cleaned;
+  });
   return { ok: true, token, alreadyConfirmed: false };
 }
 
@@ -109,26 +151,29 @@ export async function confirmSubscribe(
   );
   if (!match) return { ok: false, error: "TOKEN_NOT_FOUND_OR_EXPIRED" };
 
-  const remainingPending = pending.filter((p) => p.token !== token);
-  await writeJson(KEY_PENDING, remainingPending);
+  // 토큰 제거는 원자적으로(다른 요청의 pending 변경을 덮어쓰지 않게).
+  await mutateJson<PendingConfirmation[]>(KEY_PENDING, [], (list) =>
+    list.filter((p) => p.token !== token)
+  );
 
-  const confirmed = await readJson<Subscriber[]>(KEY_SUBSCRIBERS, []);
-  if (confirmed.some((s) => s.email === match.email)) {
-    // 이미 확인된 구독자의 재확인 → 환영 메일 재발송 안 함(중복 방지).
-    return { ok: true, email: match.email };
-  }
-  confirmed.push({
-    email: match.email,
-    subscribedAt: new Date().toISOString(),
-    categories: match.categories,
+  const subscribedAt = new Date().toISOString();
+  let added = false;
+  await mutateJson<Subscriber[]>(KEY_SUBSCRIBERS, [], (confirmed) => {
+    if (confirmed.some((s) => s.email === match.email)) {
+      added = false; // 이미 확인된 구독자의 재확인 → 그대로.
+      return confirmed;
+    }
+    added = true;
+    return [...confirmed, { email: match.email, subscribedAt, categories: match.categories }];
   });
-  await writeJson(KEY_SUBSCRIBERS, confirmed);
 
-  // 최초 확인 시 1회 환영 메일 발송(best-effort — 실패해도 확인 플로우는 계속).
-  try {
-    await sendNewsletterWelcome({ to: match.email });
-  } catch (err) {
-    logger.warn("[newsletter] welcome email failed", err);
+  // 최초 확인 시에만 1회 환영 메일(중복 방지, best-effort — 실패해도 확인 플로우는 계속).
+  if (added) {
+    try {
+      await sendNewsletterWelcome({ to: match.email });
+    } catch (err) {
+      logger.warn("[newsletter] welcome email failed", err);
+    }
   }
 
   return { ok: true, email: match.email };
@@ -136,11 +181,13 @@ export async function confirmSubscribe(
 
 export async function unsubscribe(emailRaw: string): Promise<{ ok: boolean }> {
   const email = normalizeEmail(emailRaw);
-  const confirmed = await readJson<Subscriber[]>(KEY_SUBSCRIBERS, []);
-  const next = confirmed.filter((s) => s.email !== email);
-  if (next.length === confirmed.length) return { ok: false };
-  await writeJson(KEY_SUBSCRIBERS, next);
-  return { ok: true };
+  let removed = false;
+  await mutateJson<Subscriber[]>(KEY_SUBSCRIBERS, [], (confirmed) => {
+    const next = confirmed.filter((s) => s.email !== email);
+    removed = next.length !== confirmed.length;
+    return next;
+  });
+  return { ok: removed };
 }
 
 export async function listSubscribers(): Promise<Subscriber[]> {
