@@ -33,8 +33,8 @@ export default async function GazettePage({
   const lang: Lang = await getRequestLocale(sp.lang);
   const t = (ko: string, en: string) => (lang === "en" ? en : ko);
 
-  // 한 번에 최대한 많이(달력식 월 넘김 위해). 봇이 주는 만큼.
-  const outcome = await fetchGazetteList(300);
+  // 사실상 제한 없이(봇 저장분 전량 근접) 표시 — 달력식 월 넘김으로 과거분까지.
+  const outcome = await fetchGazetteList(1500);
   const items: GazetteItem[] = outcome.status === "ok" ? outcome.items : [];
 
   // 관보는 카테고리(구분/주제)로 나누지 않는다. 봇이 주는 원문을 시간순으로만 나열.

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { importNaverBlogPosts, NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 import { sendTelegramAlert } from "@/lib/services/telegram-notify";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
 import { logger } from "@/lib/utils/logger";
 import { prisma } from "@/lib/prisma/client";
 
@@ -18,6 +19,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
+  // 네이버 자동 수입 flag(기본 OFF). 직접 작성 운영에서는 크론 수입을 하지 않는다.
+  // (수동 대량 가져오기는 admin 의 별도 UI 로 필요할 때만.)
+  if (!(await isFeatureEnabled("naver_blog_import").catch(() => false))) {
+    return NextResponse.json({ ok: true, skipped: "naver_blog_import_off" });
+  }
+
   // 신규 글만 영어로 자동 번역한다(translateBlogPost, Claude).
   //  - cron 은 기존 글을 skip 하므로 매일 번역 대상은 그날 새로 올라온 글뿐이다.
   //  - ANTHROPIC_API_KEY 가 없으면 importer 내부 가드가 번역을 건너뛴다(무해).
@@ -25,9 +32,12 @@ export async function GET(request: Request) {
   //    처리되므로(page.tsx) 중복 콘텐츠 페널티 위험이 없다.
   // 주의: 한 번에 신규 글이 많으면(초기 대량 유입 등) 본문 통번역이 누적돼
   //   maxDuration(60s)을 넘길 수 있다. 그 경우 남은 글은 다음 실행에서 처리된다.
+  // 자동 영문 번역 flag(기본 OFF). 관리자가 영문을 직접 입력하는 운영에서는 수입
+  // 시에도 자동번역하지 않는다. flag 를 켜면 네이버 신규 수입분을 자동 번역.
+  const autoTranslate = await isFeatureEnabled("blog_auto_translate").catch(() => false);
   let result: Awaited<ReturnType<typeof importNaverBlogPosts>>;
   try {
-    result = await importNaverBlogPosts({ translate: true });
+    result = await importNaverBlogPosts({ translate: autoTranslate });
   } catch (error) {
     console.error("[cron/naver-rss-sync] import failed", error);
     // 실패 시 관리자 텔레그램 알림(정기 갱신 중단 감지).

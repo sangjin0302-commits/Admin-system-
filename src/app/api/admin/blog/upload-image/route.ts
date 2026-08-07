@@ -17,7 +17,7 @@ import { logger } from "@/lib/utils/logger";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB (블로그 본문 고해상 이미지 여유)
 
 export async function POST(req: Request) {
   const guard = await requireRole(req, ["SUPER", "MANAGER"]);

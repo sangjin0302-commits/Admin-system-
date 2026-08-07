@@ -21,7 +21,7 @@ function decodeTitle(s: string): string {
 export default async function BlogListPage() {
   const posts = await prisma.blogPost.findMany({
     orderBy: { createdAt: "desc" },
-    take: 500,
+    take: 2000,
   });
   const publishedCount = posts.filter((p) => p.published).length;
 
@@ -31,7 +31,13 @@ export default async function BlogListPage() {
         kicker="Marketing · Content"
         title="블로그 마케팅 허브"
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin/blog/new"
+              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-text-strong"
+            >
+              + 새 글 작성
+            </Link>
             <Link
               href="/admin/blog-translate"
               className="rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
@@ -42,42 +48,46 @@ export default async function BlogListPage() {
               href="/blog"
               target="_blank"
               rel="noreferrer"
-              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-text-strong"
+              className="rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-text-strong transition hover:bg-surface-muted"
             >
-              공개 블로그 보기 ↗
+              공개 블로그 ↗
             </a>
           </div>
         }
       />
 
-      {/* 마케팅 안내 */}
+      {/* 직접 작성 중심 안내 */}
       <Card className="border-gold/30 bg-gold-soft/10 p-5">
-        <p className="font-serif text-sm font-bold text-primary">블로그 = 주요 마케팅 수단</p>
+        <p className="font-serif text-sm font-bold text-primary">블로그 = 주요 마케팅 수단 · 직접 작성</p>
         <p className="mt-1 text-xs leading-6 text-text-muted">
-          네이버 블로그를 자동 수입 → 영문 자동 번역(구글 국제 유입) → 홈 쇼케이스·구독자 알림·텔레그램 공유로 확산합니다.
-          아래에서 수입·번역·분류를 한 번에 관리하세요. 직접 글쓰기(국문·영문·게시판·카드뉴스·이미지)는 새 글 작성에서 가능합니다.
+          <strong>+ 새 글 작성</strong>에서 국문·영문·게시판(폴더)·카드뉴스·이미지·태그·예약 게시까지 직접 작성합니다.
+          영문은 국문을 참고해 직접 번역해 입력하세요(자동 번역·네이버 자동 수입은 기본 OFF).
+          발행 글은 홈 쇼케이스·구독자 알림·텔레그램으로 확산됩니다.
         </p>
         <div className="mt-3 flex flex-wrap gap-4 text-xs text-text-muted">
-          <span>총 <strong className="text-text-strong">{posts.length}</strong>편(최근 500)</span>
+          <span>총 <strong className="text-text-strong">{posts.length}</strong>편(최근 2000)</span>
           <span>발행 <strong className="text-success">{publishedCount}</strong></span>
           <span>초안 <strong className="text-warning">{posts.length - publishedCount}</strong></span>
         </div>
         <div className="mt-3 rounded-lg border border-line bg-surface px-3 py-2 text-xs leading-6 text-text-muted">
-          <strong className="text-text-strong">⏱ 자동 수입 일정</strong> — 매일 새벽 <strong>01:00 (KST)</strong> 네이버 RSS 최신 <strong>10편</strong>을
-          <strong> 국문 수입 + 영문 자동 번역</strong>(ANTHROPIC_API_KEY 필요). 신규 글은 구독자·텔레그램 알림.
-          과거글/전체·게시판별은 아래에서 수동 수입. RSS는 최신 10편만이라 <strong>전체는 대량 가져오기 필수</strong>.
+          <strong className="text-text-strong">자동화(기본 OFF)</strong> — 네이버 자동 수입(<code>naver_blog_import</code>)·영문 자동 번역
+          (<code>blog_auto_translate</code>)은 <strong>/admin/features</strong>에서 켤 수 있습니다. 끈 상태에선 크론이 아무것도 하지 않습니다.
         </div>
       </Card>
 
-      {/* 수입 · 동기화 · 번역 · 분류 (한 곳) */}
-      <Card className="p-6">
-        <h3 className="mb-4 font-serif text-base font-bold text-primary">네이버 수입 · 동기화 · 분류</h3>
-        <ImportControls />
-      </Card>
+      {/* 네이버 수입(선택) — 자동은 OFF, 필요 시 수동 가져오기 */}
+      <details className="rounded-xl border border-line bg-surface p-4">
+        <summary className="cursor-pointer text-sm font-semibold text-text-strong">
+          네이버 수입 (선택) · 자동 OFF — 필요할 때만 수동 가져오기
+        </summary>
+        <div className="mt-4">
+          <ImportControls />
+        </div>
+      </details>
 
       {/* 글 목록 */}
       <div>
-        <h3 className="mb-3 font-serif text-base font-bold text-primary">글 목록 (최근 500) · 글 클릭 → 수정/삭제</h3>
+        <h3 className="mb-3 font-serif text-base font-bold text-primary">글 목록 (최근 2000) · 글 클릭 → 수정/삭제</h3>
         {posts.length === 0 ? (
           <Card className="p-8 text-center">
             <p className="text-sm text-text-muted">아직 글이 없습니다. 위에서 네이버 글을 가져오세요.</p>

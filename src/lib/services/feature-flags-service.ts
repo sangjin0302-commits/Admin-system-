@@ -195,6 +195,8 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition[] = [
   { key: "document_version_diff", label: "서면 버전 diff", category: "operations", default: false, description: "동일 사건 서면 v1→v2 diff view" },
   { key: "newsletter_subject_preview", label: "뉴스레터 제목 A/B 프리뷰", category: "marketing", default: false, description: "발송 전 3개 subject 미리보기 (GA4 클릭률 A/B)" },
   { key: "blog_to_instagram_flow", label: "블로그→카드뉴스 파이프라인", category: "marketing", default: false, description: "instagram_cards 파이프라인 verify 후 자동 실행" },
+  { key: "blog_auto_translate", label: "블로그 자동 영문 번역", category: "marketing", default: false, description: "네이버 수입글의 EN 자동번역(cron·수입시). OFF면 영문은 관리자가 직접 입력. 직접작성글은 어떤 경우에도 자동번역 안 함." },
+  { key: "naver_blog_import", label: "네이버 블로그 자동 수입", category: "marketing", default: false, description: "매일 네이버 RSS 자동 수입 크론. OFF면 수입 안 함(관리자가 직접 작성). 수동 대량 가져오기는 admin 에서 별도." },
   { key: "case_auto_precedent", label: "AI 판례 자동 인용", category: "operations", default: true, description: "vector_search + precedent_live_verify 활용 사건 등록시 관련 판례 3건 추천 UI" },
   { key: "vip_auto_tagging", label: "VIP 자동 태깅", category: "operations", default: true, description: "재의뢰 2회+ or 계약가 500만+ 자동 VIP 배지 (/admin/vips)" },
   { key: "blog_related_auto", label: "블로그 관련 글 자동", category: "marketing", default: true, description: "카테고리+태그 매칭 top 3 자동 삽입" },

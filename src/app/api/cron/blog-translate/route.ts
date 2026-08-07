@@ -7,6 +7,8 @@ import {
   saveBlogTranslationZh,
 } from "@/lib/services/blog-translation-service";
 import { sendTelegramAlert } from "@/lib/services/telegram-notify";
+import { isFeatureEnabled } from "@/lib/services/feature-flags-service";
+import { NAVER_BLOG_SOURCE } from "@/lib/services/naver-rss-importer";
 import { logger } from "@/lib/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -27,10 +29,19 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY not set" }, { status: 400 });
   }
 
+  // 자동 영문 번역이 꺼져 있으면(기본 OFF) 아무것도 하지 않는다. 관리자가 영문을
+  // 직접 입력하는 운영에서, 크론이 빈 영문을 자동으로 채우지 않게 한다.
+  if (!(await isFeatureEnabled("blog_auto_translate").catch(() => false))) {
+    return NextResponse.json({ ok: true, skipped: "blog_auto_translate_off" });
+  }
+
   // ── English pass ────────────────────────────────────────────
+  // 직접 작성글(source != NAVER)은 자동번역 대상에서 제외 — 관리자가 영문을 직접
+  // 넣으므로, 크론이 그 의도를 덮어쓰지 않게 네이버 수입글만 번역한다.
   const untranslated = await prisma.blogPost.findMany({
     where: {
       published: true,
+      source: NAVER_BLOG_SOURCE,
       OR: [{ titleEn: null }, { titleEn: "" }],
     },
     orderBy: { publishedAt: "desc" },

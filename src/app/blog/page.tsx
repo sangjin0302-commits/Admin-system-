@@ -45,7 +45,9 @@ export default async function BlogPage({
     // 관리자가 직접 쓴 글이 공개 리스트에서 누락됐음.
     where: { published: true },
     orderBy: [{ pinned: "desc" }, { sortOrder: "asc" }, { publishedAt: "desc" }],
-    take: 1000,
+    // 사실상 무제한(작성 개수 제한 없음). 표시 상한만 크게. 수천 편 이상 커지면
+    // 페이지네이션이 정석이나, 현재 규모에선 전량 표시가 단순·안전.
+    take: 5000,
     select: {
       id: true,
       slug: true,
