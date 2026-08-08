@@ -364,15 +364,29 @@ export async function middleware(request: NextRequest) {
       : textError(426, KO_HTTPS_REQUIRED, request);
   }
 
-  // 레거시 홈 `/?lang=en` → `/en` 301. 홈은 이제 로케일별 정적(ISR)이라 쿼리로
-  // 언어를 못 받는다. 기존 색인·링크 보존을 위해 경로기반으로 영구 이동한다.
-  if (pathname === "/" && request.nextUrl.searchParams.get("lang") === "en") {
-    const url = request.nextUrl.clone();
-    url.pathname = LOCALE_PREFIX;
-    url.searchParams.delete("lang");
-    const response = NextResponse.redirect(url, 301);
-    applySecurityHeaders(request, response);
-    return response;
+  // 레거시 `?lang=en` → 경로기반 `/en...` 301.
+  //
+  // 로케일별 정적(ISR) 페이지는 요청 쿼리를 읽을 수 없다. 그래서 정적화한 페이지에
+  // `?lang=en` 으로 들어오면 영어가 아니라 **한국어가 그대로 나갔다** — 예전 색인·외부
+  // 링크·북마크로 들어온 외국인 방문자가 한국어 페이지를 보게 되는 실제 버그였다.
+  // (처음엔 홈만 처리했는데, 이후 about·fees·contact·careers·services 등을 정적화하면서
+  //  같은 처리를 확장하지 않아 그대로 새고 있었다.)
+  //
+  // 정적 EN 라우트를 가진 경로만 옮긴다. 나머지(동적 페이지)는 지금도 getRequestLocale 이
+  // `?lang` 을 직접 읽어 EN 을 렌더하므로 건드리지 않는다.
+  if (
+    request.nextUrl.searchParams.get("lang") === "en" &&
+    !pathname.startsWith(LOCALE_PREFIX)
+  ) {
+    const target = pathname === "/" ? LOCALE_PREFIX : `${LOCALE_PREFIX}${pathname}`;
+    if (isStaticEnRoute(target)) {
+      const url = request.nextUrl.clone();
+      url.pathname = target;
+      url.searchParams.delete("lang");
+      const response = NextResponse.redirect(url, 301);
+      applySecurityHeaders(request, response);
+      return response;
+    }
   }
 
   // ── 경로기반 로케일(/en) ─────────────────────────────
@@ -569,6 +583,18 @@ export const config = {
   matcher: [
     "/",
     "/en/:path*",
+    // 레거시 `?lang=en` 301 대상 — STATIC_EN_ROUTES 의 KO 원본 경로.
+    // 여기 없으면 미들웨어가 아예 실행되지 않아 리다이렉트가 조용히 새어 나간다
+    // (실제로 about·fees·contact·careers 가 그래서 한국어로 나가고 있었다).
+    // 새 페이지를 정적화하면 STATIC_EN_ROUTES 와 함께 여기에도 추가할 것
+    // — test:i18n-legacy-lang 잠금이 둘의 일치를 검사한다.
+    "/about",
+    "/fees",
+    "/cases",
+    "/consult",
+    "/contact",
+    "/careers",
+    "/quick-check",
     "/admin/:path*",
     "/api/admin/:path*",
     "/api/admin-auth/:path*",
