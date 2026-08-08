@@ -6,7 +6,7 @@ import { buildDashboardOperationalMetrics } from "@/lib/services/admin-dashboard
 import type { DashboardInquiryBase } from "@/lib/services/admin-dashboard-page-types";
 import { buildDashboardPriorityLists } from "@/lib/services/admin-dashboard-priority-list-helpers";
 import type { PublicIntakeControlSnapshot } from "@/lib/services/public-intake-control-service-safe-v3";
-import type { SystemHealthSnapshot } from "@/lib/services/system-health-service-safe-v3";
+import type { SystemHealthSnapshot } from "@/lib/services/system-health-service";
 
 function buildPipeline(inquiries: DashboardInquiryBase[]) {
   const activeInquiries = inquiries.filter((item) => item.status !== "CLOSED");

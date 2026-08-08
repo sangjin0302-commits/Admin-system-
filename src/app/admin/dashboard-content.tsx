@@ -26,7 +26,7 @@ import {
   getPublicIntakeControlSnapshot,
   type PublicIntakeControlSnapshot
 } from "@/lib/services/public-intake-control-service-safe-v3";
-import { getSystemHealthSnapshot } from "@/lib/services/system-health-service-safe-v3";
+import { getSystemHealthSnapshot } from "@/lib/services/system-health-service";
 
 import { DashboardTodayStrip } from "./_dashboard/dashboard-today-strip";
 import { DashboardHero } from "./_dashboard/dashboard-hero";

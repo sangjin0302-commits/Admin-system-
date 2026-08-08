@@ -1,5 +1,5 @@
 import type { PublicIntakeControlSnapshot } from "@/lib/services/public-intake-control-service-safe-v3";
-import type { HealthLevel } from "@/lib/services/system-health-service-safe-v3";
+import type { HealthLevel } from "@/lib/services/system-health-service";
 import type { InquiryStatus } from "@/types/inquiry";
 
 export type DashboardPrioritySource = {

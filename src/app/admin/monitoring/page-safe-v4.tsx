@@ -5,7 +5,7 @@ import {
   getSystemHealthSnapshot,
   type HealthLevel,
   type SystemHealthSnapshot
-} from "@/lib/services/system-health-service-safe-v3";
+} from "@/lib/services/system-health-service";
 import { formatDateTime } from "@/lib/utils";
 import { logger } from "@/lib/utils/logger";
 

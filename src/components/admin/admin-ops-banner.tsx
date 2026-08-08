@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
 import { getPublicIntakeControlSnapshot } from "@/lib/services/public-intake-control-service-safe-v3";
-import { getSystemHealthSnapshot, type HealthLevel } from "@/lib/services/system-health-service-safe-v2";
+import { getSystemHealthSnapshot, type HealthLevel } from "@/lib/services/system-health-service";
 
 type OpsBannerSnapshot = {
   healthLevel: HealthLevel | null;
