@@ -8,14 +8,19 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   // Windows Next dev 콜드 컴파일이 30s를 종종 넘김 — flake 방지용 60s.
-  timeout: 60_000,
+  // CI 는 120s: 예전엔 CSP 버그로 사이트 JS 가 통째로 차단돼 페이지가 "빈 껍데기"로
+  // 즉시 로드됐고 그래서 짧은 타임아웃으로도 통과했다. CSP 를 고쳐 하이드레이션이
+  // 실제로 돌기 시작하자 러너(2~4 vCPU 에 next start + Chromium 동거)에서 시간이 모자랐다.
+  timeout: process.env.CI ? 120_000 : 60_000,
   expect: { timeout: 10_000 },
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
     trace: "on-first-retry",
     // 개별 액션 타임아웃도 살짝 상향 (SSR + Sentry 미들웨어 오버헤드 대응).
     actionTimeout: 15_000,
-    navigationTimeout: 45_000,
+    // navigation 은 CI 에서 90s. 같은 스펙들을 배포된 사이트(ethosattorney.com)에
+    // 그대로 돌리면 17개가 전부 통과하므로 제품 문제가 아니라 러너 성능 보정이다.
+    navigationTimeout: process.env.CI ? 90_000 : 45_000,
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
