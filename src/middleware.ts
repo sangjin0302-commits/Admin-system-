@@ -253,11 +253,17 @@ function getCredentials() {
  * 'unsafe-inline' 을 무시하므로 정책에 nonce 를 남겨두면 안 된다.
  * 잠금: test:csp-guard.
  */
+/**
+ * 외부 스크립트 허용 호스트 — GA4(gtag)는 googletagmanager 에서 로드된다.
+ * 이걸 빼면 script-src 'self' 에 걸려 분석이 통째로 죽는다(실제로 차단됐던 항목).
+ */
+const SCRIPT_HOSTS = "https://www.googletagmanager.com https://www.google-analytics.com";
+
 function buildCsp() {
   const isDev = process.env.NODE_ENV !== "production";
   const scriptPolicy = isDev
-    ? "'self' 'unsafe-inline' 'unsafe-eval'"
-    : "'self' 'unsafe-inline'";
+    ? `'self' 'unsafe-inline' 'unsafe-eval' ${SCRIPT_HOSTS}`
+    : `'self' 'unsafe-inline' ${SCRIPT_HOSTS}`;
   const stylePolicy = isDev
     ? "'self' 'unsafe-inline'"
     : "'self' 'unsafe-inline'"; // inline styles still needed for Tailwind

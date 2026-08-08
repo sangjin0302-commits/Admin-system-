@@ -38,8 +38,13 @@ check("CSP 에 'strict-dynamic' 을 쓰지 않는다", !body.includes("strict-dy
 check("CSP script-src 에 nonce 를 넣지 않는다", !/nonce-\$\{/.test(body) && !body.includes("'nonce-"));
 check("buildCsp 는 nonce 인자를 받지 않는다", /function buildCsp\(\s*\)/.test(middleware));
 check(
-  "프로덕션 script-src 는 'self' 를 허용한다(청크 로딩)",
-  /:\s*"'self' 'unsafe-inline'"/.test(body),
+  "프로덕션 script-src 는 'self' + 'unsafe-inline' 을 허용한다(청크·스트리밍 스크립트)",
+  /'self' 'unsafe-inline'/.test(body),
+);
+// GA4(gtag)는 googletagmanager 에서 로드된다 — 빠지면 분석이 통째로 죽는다(실제로 차단됐음).
+check(
+  "script-src 가 googletagmanager 를 허용한다(GA4)",
+  middleware.includes("https://www.googletagmanager.com"),
 );
 check("응답에 x-nonce 헤더를 남기지 않는다", !middleware.includes('"x-nonce"'));
 
