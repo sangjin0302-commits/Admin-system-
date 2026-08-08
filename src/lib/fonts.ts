@@ -26,22 +26,30 @@ export const playfair = Playfair_Display({
   variable: "--font-display-latin",
 });
 
-/** 한글 명조 — 제목에서 영문 디스플레이와 짝을 이룬다. */
+/**
+ * 한글 명조 — 제목에서 영문 디스플레이와 짝을 이룬다.
+ * preload:false 필수 — 한글 폰트는 unicode-range 서브셋이 100+ 조각으로 쪼개지는데
+ * preload(기본 true)면 그 전부를 <link rel=preload>로 강제 다운로드해 첫 로딩을 막는다.
+ * false 로 두면 브라우저가 화면에 실제 뜬 글자의 서브셋만 lazy 로드한다.
+ */
 export const nanumMyeongjo = Nanum_Myeongjo({
   subsets: ["latin"],
   weight: ["400", "700", "800"],
   display: "swap",
+  preload: false,
   variable: "--font-display-ko",
 });
 
 /**
  * 한글 본문. 400/500/700 만 받는다 — 굵기를 늘릴수록 내려받는 용량이 늘고,
  * 지금 화면에서 실제로 쓰는 굵기는 이 셋뿐이다.
+ * preload:false — 위 nanumMyeongjo 와 동일 이유(CJK 서브셋 100+ 조각 대량 preload 방지).
  */
 export const notoSansKr = Noto_Sans_KR({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
   display: "swap",
+  preload: false,
   variable: "--font-body-ko",
 });
 
