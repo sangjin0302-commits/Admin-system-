@@ -4,7 +4,9 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 1,
+  // CI 재시도 1회. 2회일 때는 실패 1건이 timeout(120s) × 3 = 6분을 먹어, 몇 개만 깨져도
+  // 잡 제한시간을 통째로 잡아먹었다(실제로 60.3분에 잘림). 플레이크 흡수엔 1회로 충분하다.
+  retries: process.env.CI ? 1 : 1,
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   // Windows Next dev 콜드 컴파일이 30s를 종종 넘김 — flake 방지용 60s.

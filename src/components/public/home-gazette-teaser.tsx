@@ -35,8 +35,16 @@ export function HomeGazetteTeaser({ lang = "ko" }: { lang?: "ko" | "en" }) {
   if (!items || items.length === 0) return null; // 로딩 중·빈 응답이면 숨김
 
   const t = (ko: string, en: string) => (lang === "en" ? en : ko);
+  // timeZone 을 반드시 고정한다. 이 컴포넌트는 클라이언트 컴포넌트라 서버에서도 한 번
+  // 렌더되는데, 서버(Vercel=UTC)와 브라우저(KST)의 기준시가 달라 자정을 걸친 항목에서
+  // 날짜가 하루 어긋난다. 그러면 React 가 하이드레이션 텍스트 불일치(#418)로 트리를 버리고
+  // 클라이언트에서 다시 그린다 — 데이터에 따라 터져서 재현이 들쭉날쭉했다.
   const fmt = (ms: number) =>
-    ms > 0 ? new Date(ms).toLocaleDateString(lang === "en" ? "en-US" : "ko-KR") : "";
+    ms > 0
+      ? new Date(ms).toLocaleDateString(lang === "en" ? "en-US" : "ko-KR", {
+          timeZone: "Asia/Seoul",
+        })
+      : "";
 
   return (
     <section className="py-14 sm:py-16">

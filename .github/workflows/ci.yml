@@ -135,17 +135,23 @@ jobs:
         continue-on-error: true
 
   e2e:
-    name: E2E tests
+    name: E2E tests (shard ${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
     # 안정화 완료 → push 게이트로 승격. 실패 시 CI 차단.
     #
-    # timeout 60분: 30분일 때 잡이 항상 취소돼 게이트가 무의미했다(2026-08-08 확인).
-    # 실측 내역 — 셋업(playwright install + db:push + next build)이 5분,
-    # 남은 25분에 "85 tests using 1 worker" 를 다 못 돌리고 잘렸다.
-    # 워커를 늘리는 쪽은 택하지 않았다: admin-features-toggle 이 기능 플래그를 토글하고
-    # public-flag-surfaces 가 그 값을 읽는 등 스펙들이 sqlite·플래그 상태를 공유해서
-    # 병렬로 돌리면 서로 간섭한다(workers:1 은 의도된 설정).
-    timeout-minutes: 60
+    # 샤딩으로 나눈 이유(2026-08-08):
+    #  - 30분일 때 잡이 매번 취소돼 게이트가 아무것도 막지 못했다. 60분으로 올렸더니
+    #    이번엔 60.3분에 잘렸다 — 한 잡에 85개를 워커 1개로 밀어 넣는 구조가 한계였다.
+    #  - 잡 안에서 워커를 늘릴 수는 없다. admin-features-toggle 이 기능 플래그를 바꾸고
+    #    public-flag-surfaces 가 그 값을 읽는 등 스펙들이 sqlite·플래그 상태를 공유한다.
+    #  - 반면 **샤드는 잡마다 러너·DB·서버가 통째로 분리**되므로 그 간섭이 없다.
+    #    3등분하면 샤드당 ~28개, 셋업 5분을 빼고도 여유가 크다.
+    # fail-fast:false — 한 샤드가 깨져도 나머지 결과를 봐야 원인 파악이 된다.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    timeout-minutes: 45
     # 절대경로 DB — db:push 와 next start(.next-local 런타임)가 상대경로를 서로
     # 다르게 해석해 "Unable to open the database file"(Error 14) 나던 것 고정.
     env:
@@ -173,4 +179,5 @@ jobs:
       # prod 서버(next start)가 DB 를 읽으므로 스키마 반영 필요.
       - run: npm run db:push:sqlite
       - run: npm run build
-      - run: npm run test:e2e
+      # 샤드별로 스펙을 나눠 받는다(Playwright 가 균등 분배).
+      - run: npx playwright test --shard=${{ matrix.shard }}/3

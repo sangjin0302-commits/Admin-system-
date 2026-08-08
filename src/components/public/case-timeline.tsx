@@ -199,7 +199,9 @@ export function CaseTimeline({
             {liveEvents.map((ev, i) => (
               <li key={`${ev.step}-${i}`} className="border-l-2 border-gold/40 pl-4">
                 <p className="text-xs text-text-muted">
-                  {new Date(ev.date).toLocaleString("ko-KR")} · {ev.status}
+                  {/* timeZone 고정 — 서버(UTC)와 브라우저(KST)가 다르게 찍으면
+                      하이드레이션 텍스트 불일치(#418)로 트리가 통째로 버려진다. */}
+                  {new Date(ev.date).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })} · {ev.status}
                 </p>
                 <p className="mt-1 text-sm text-text">{ev.description}</p>
               </li>
