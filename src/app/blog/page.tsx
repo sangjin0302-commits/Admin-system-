@@ -45,9 +45,10 @@ export default async function BlogPage({
     // 관리자가 직접 쓴 글이 공개 리스트에서 누락됐음.
     where: { published: true },
     orderBy: [{ pinned: "desc" }, { sortOrder: "asc" }, { publishedAt: "desc" }],
-    // 사실상 무제한(작성 개수 제한 없음). 표시 상한만 크게. 수천 편 이상 커지면
-    // 페이지네이션이 정석이나, 현재 규모에선 전량 표시가 단순·안전.
-    take: 5000,
+    // 표시 상한. 예전엔 5000 이었는데, 전량을 그대로 카드로 렌더하기 때문에 글이 늘수록
+    // HTML 과 렌더 시간이 함께 커진다(관보 페이지가 같은 이유로 3.7MB 까지 갔다).
+    // 작성 개수 자체엔 제한이 없고, 이 상한을 넘어가면 그때 페이지네이션을 넣는다.
+    take: 600,
     select: {
       id: true,
       slug: true,

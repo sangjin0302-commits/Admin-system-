@@ -8,8 +8,10 @@ const config: Config = {
         // next/font 는 self-host 폰트를 해시 패밀리명으로 등록하고 CSS 변수로만 노출한다.
         // 리터럴 폰트명("Playfair Display" 등)은 등록 안 돼 폴백(Georgia/시스템)으로 새던
         // 버그 → 변수(--font-*)를 우선 참조하도록 수정. 본문·워드마크·블로그 전문에 영향.
-        sans: ["var(--font-body-ko)", '"Apple SD Gothic Neo"', '"Noto Sans KR"', '"Malgun Gothic"', "sans-serif"],
-        serif: ["var(--font-display-latin)", "var(--font-display-ko)", '"Noto Serif KR"', "Georgia", "serif"]
+        // 한글은 --font-body-ko 한 벌(고딕)로 통일 — 변수 안에 시스템 폴백까지 들어 있어
+        // 뒤에 Noto 계열을 더 붙여도 도달하지 않는다(그래서 지웠다). 영문 제목만 Playfair.
+        sans: ["var(--font-body-ko)", "sans-serif"],
+        serif: ["var(--font-display-latin)", "var(--font-display-ko)", "Georgia", "serif"]
       },
       colors: {
         canvas: "rgb(var(--color-canvas) / <alpha-value>)",

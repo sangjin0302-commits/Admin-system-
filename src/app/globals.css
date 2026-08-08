@@ -39,9 +39,13 @@ html {
   /* 한글 폰트 = OS 시스템 폰트(다운로드 0). 예전엔 next/font/google 의 Noto Sans KR·
      Nanum Myeongjo 를 썼는데, 한글은 unicode-range 서브셋이 100+ 조각으로 분할돼
      한 페이지에서 woff2 를 150개+ 받으며 로딩을 느리게 했다. 시스템 폰트로 전환.
-     --font-display-ko = 제목용 명조(Mac AppleMyungjo / Win Batang), --font-body-ko = 본문 고딕. */
-  --font-display-ko: "AppleMyungjo", "Batang", "바탕", "Nanum Myeongjo", serif;
-  --font-body-ko: "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+
+     제목·본문 모두 **같은 고딕 한 벌**로 통일한다. 잠깐 제목에 명조(Win: 바탕)를 썼더니
+     화면에서 획이 얇아 읽기 힘들다는 피드백을 받았다 — 한글은 화면에서 고딕이 훨씬 또렷하다.
+     영문 제목만 Playfair(--font-display-latin)가 담당하고, 한글은 이 한 벌이 전부다. */
+  --font-body-ko: "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", "Pretendard",
+    system-ui, -apple-system, sans-serif;
+  --font-display-ko: var(--font-body-ko);
   /* ETHOS Brand: Deep Navy + Gold + Ivory */
   --color-canvas: 250 246 239;          /* warm ivory */
   --color-surface: 255 253 248;         /* off-white */

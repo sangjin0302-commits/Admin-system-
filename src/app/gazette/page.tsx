@@ -20,6 +20,11 @@ export const metadata: Metadata = {
 
 type Lang = "ko" | "en";
 
+/** ?month=all → 월 필터 해제(전체 기간). 미지정은 "최근 달"이 기본이라 명시값이 필요하다. */
+const ALL_MONTHS = "all";
+/** 전체 기간에서 한 번에 렌더하는 최대 건수 — HTML 폭증(3.7MB) 방지. */
+const ALL_VIEW_LIMIT = 200;
+
 export default async function GazettePage({
   searchParams,
 }: {
@@ -47,7 +52,15 @@ export default async function GazettePage({
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   };
   const months = Array.from(new Set(items.map((i) => monthOf(i.dateMs)).filter(Boolean))).sort().reverse();
-  const activeMonth = sp.month && months.includes(sp.month) ? sp.month : null; // null = 전체
+  // 기본값 = 가장 최근 달(달력의 자연스러운 기본). 예전엔 month 미지정이 "전체 기간"이라
+  // 첫 방문자에게 1500건을 통째로 렌더해 HTML 이 3.7MB, TTFB 5초를 넘었다.
+  // "전체 기간"은 사라지지 않고 ?month=all 로 명시 선택한다(대신 아래 상한을 둔다).
+  const showAll = sp.month === ALL_MONTHS;
+  const activeMonth = showAll
+    ? null
+    : sp.month && months.includes(sp.month)
+      ? sp.month
+      : (months[0] ?? null);
   const monthIdx = activeMonth ? months.indexOf(activeMonth) : -1;
   const prevMonth = monthIdx >= 0 && monthIdx < months.length - 1 ? months[monthIdx + 1] : null; // 더 과거
   const nextMonth = monthIdx > 0 ? months[monthIdx - 1] : null; // 더 최근
@@ -65,7 +78,13 @@ export default async function GazettePage({
   };
 
   let board = items;
-  if (activeMonth) board = board.filter((i) => monthOf(i.dateMs) === activeMonth);
+  if (activeMonth) {
+    board = board.filter((i) => monthOf(i.dateMs) === activeMonth);
+  } else {
+    // "전체 기간"에서도 페이로드가 무한정 커지지 않게 상한. 넘치면 월 칩으로 이동 안내.
+    board = board.slice(0, ALL_VIEW_LIMIT);
+  }
+  const allTruncated = !activeMonth && items.length > ALL_VIEW_LIMIT;
 
   const fmtDate = (ms: number) =>
     ms > 0 ? new Date(ms).toLocaleDateString(lang === "en" ? "en-US" : "ko-KR") : "";
@@ -145,7 +164,7 @@ export default async function GazettePage({
               {months.length > 0 && (
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <Link
-                    href={localePath(`/gazette${qs({ month: null })}`, lang)}
+                    href={localePath(`/gazette${qs({ month: ALL_MONTHS })}`, lang)}
                     className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${!activeMonth ? "bg-primary text-white" : "border border-gold/30 bg-surface text-text-muted hover:bg-gold-soft/30"}`}
                   >
                     {t("전체 기간", "All dates")}
@@ -185,6 +204,12 @@ export default async function GazettePage({
               <p className="mt-4 text-xs text-text-muted">
                 {t(`${board.length}건`, `${board.length} items`)}
                 {activeMonth ? ` · ${fmtMonth(activeMonth)}` : ` · ${t("전체 기간", "all dates")}`}
+                {allTruncated
+                  ? t(
+                      ` (전체 ${items.length}건 중 최신 ${ALL_VIEW_LIMIT}건 · 이전 자료는 월별로 보세요)`,
+                      ` (latest ${ALL_VIEW_LIMIT} of ${items.length} · browse by month for older)`,
+                    )
+                  : ""}
               </p>
 
               {/* 목록 */}

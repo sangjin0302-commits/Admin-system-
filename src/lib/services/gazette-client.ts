@@ -188,7 +188,9 @@ export async function fetchGazetteList(limit = 60): Promise<GazetteOutcome> {
     const response = await fetch(url, {
       method: "GET",
       headers,
-      cache: "no-store",
+      // 관보는 하루 단위로 갱신되는 자료라 매 요청 봇 API 를 때릴 이유가 없다.
+      // no-store 였을 때 /gazette TTFB 가 5초를 넘었다(1500건 왕복). 10분 캐시.
+      next: { revalidate: 600 },
       signal: controller.signal,
     });
 
