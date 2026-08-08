@@ -96,14 +96,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: "/intake", priority: 0.5 },
     { url: "/privacy", priority: 0.3 },
     { url: "/terms", priority: 0.3 },
-    // SS2: 지역 SEO 랜딩
-    ...[
-      "gangnam", "seocho", "songpa", "gangdong", "gwangjin", "seongdong", "dongdaemun",
-      "jungnang", "nowon", "dobong", "gangbuk", "seongbuk", "jongno", "junggu", "yongsan",
-      "mapo", "seodaemun", "eunpyeong", "yangcheon", "gangseo", "guro", "geumcheon",
-      "yeongdeungpo", "dongjak", "gwanak", "suwon", "yongin", "seongnam", "goyang",
-      "bucheon", "incheon",
-    ].map((r) => ({ url: `/local/${r}`, priority: 0.65 })),
+    // SS2 지역 SEO 랜딩(/local/*)은 sitemap 에 넣지 않는다.
+    //
+    // 31개 페이지가 본문 3만2천자 중 구 이름 몇 글자만 다른 사실상 동일 문서이고,
+    // local_landing_grid·footer_local_links 가 꺼져 있어 내부 링크도 하나도 없다.
+    // 그 상태로 sitemap 에만 올라가 있으니 구글이 doorway/중복으로 보고 색인을 거부했다
+    // (GSC "발견됨·크롤링됨 — 현재 색인이 생성되지 않음"). 크롤링 예산만 축내는 셈이라
+    // 광고를 멈추고 실제 콘텐츠에 집중시킨다. 페이지 자체는 그대로 200 으로 살아 있으므로,
+    // 나중에 지역별로 내용을 실제로 다르게 채우고 그리드를 켜면 이 블록만 되살리면 된다.
   ];
 
   const dynamicRoutes = await loadDynamicRoutes();
