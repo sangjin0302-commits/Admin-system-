@@ -48,6 +48,7 @@
     "test:toss-webhook": "tsx scripts/tests/toss-webhook-check.ts",
     "test:public-payload": "tsx scripts/tests/public-payload-guard-check.ts",
     "test:i18n-legacy-lang": "tsx scripts/tests/i18n-legacy-lang-check.ts",
+    "test:csp-guard": "tsx scripts/tests/csp-guard-check.ts",
     "test:unit": "node scripts/run-unit-tests.mjs",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",

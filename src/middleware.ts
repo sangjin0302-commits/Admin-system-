@@ -231,11 +231,33 @@ function getCredentials() {
   return { username, password } satisfies Credentials;
 }
 
-function buildCsp(nonce: string) {
+/**
+ * CSP.
+ *
+ * 🔴 nonce + 'strict-dynamic' 를 쓰지 않는다 — 예전에 그렇게 했다가 **사이트의 모든
+ * JavaScript 가 차단됐다**(프로덕션에서 확인). 이유 두 가지:
+ *
+ *  1) nonce 를 응답 헤더에만 실었다. Next 는 **요청 헤더**의 CSP 에서 nonce 를 읽어
+ *     자신이 렌더하는 <script> 에 붙인다. 요청에 없으니 스크립트엔 nonce 가 없었고,
+ *     'strict-dynamic' 이 있으면 'self' 는 무시되므로 청크·인라인 스크립트가 전부 막혔다.
+ *     → 하이드레이션이 일어나지 않아 페이지가 loading.tsx("Loading...")에 갇히고
+ *       메뉴·폼·검색 등 인터랙션이 전부 죽었다.
+ *
+ *  2) 고쳐서 요청 헤더에 실었어도 이 사이트에선 성립하지 않는다. 홈·about·fees 등
+ *     주요 페이지가 비용 절감을 위해 정적(ISR)이라 HTML 이 생성 시점의 nonce 를 담아
+ *     캐시되는데, 응답 헤더의 nonce 는 요청마다 새로 만들어져 서로 어긋난다.
+ *     (Next 공식 문서도 정적 페이지 + nonce 조합은 지원하지 않는다고 명시한다.)
+ *
+ * 그래서 정적 렌더와 양립하는 'self' + 'unsafe-inline' 을 쓴다. nonce 기반보다 약하지만,
+ * 지금 대안은 "JS 가 아예 안 도는 사이트"다. 브라우저는 nonce/hash 가 있으면
+ * 'unsafe-inline' 을 무시하므로 정책에 nonce 를 남겨두면 안 된다.
+ * 잠금: test:csp-guard.
+ */
+function buildCsp() {
   const isDev = process.env.NODE_ENV !== "production";
   const scriptPolicy = isDev
     ? "'self' 'unsafe-inline' 'unsafe-eval'"
-    : `'self' 'nonce-${nonce}' 'strict-dynamic'`;
+    : "'self' 'unsafe-inline'";
   const stylePolicy = isDev
     ? "'self' 'unsafe-inline'"
     : "'self' 'unsafe-inline'"; // inline styles still needed for Tailwind
@@ -255,15 +277,13 @@ function buildCsp(nonce: string) {
 }
 
 function applySecurityHeaders(request: NextRequest, response: NextResponse) {
-  const nonce = crypto.randomUUID().replace(/-/g, "");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()");
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
-  response.headers.set("Content-Security-Policy", buildCsp(nonce));
-  response.headers.set("x-nonce", nonce);
+  response.headers.set("Content-Security-Policy", buildCsp());
 
   const pathname = request.nextUrl.pathname;
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {

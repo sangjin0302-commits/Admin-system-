@@ -102,6 +102,8 @@ jobs:
       - run: npm run test:public-payload
       # 레거시 ?lang=en → /en 301 잠금(정적화한 페이지가 한국어로 새는 것 방지).
       - run: npm run test:i18n-legacy-lang
+      # CSP 잠금 — nonce+strict-dynamic 로 사이트 JS 가 전면 차단됐던 사고 재발 방지.
+      - run: npm run test:csp-guard
 
   # 코로케이션 유닛테스트(그동안 러너 없어 미실행) — 통과분 71개 하드게이트.
   # 실패 15개는 run-unit-tests.mjs EXCLUDE 에서 트리아지 대상으로 분리.
