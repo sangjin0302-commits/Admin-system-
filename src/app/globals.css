@@ -36,6 +36,12 @@ html {
 
 :root {
   color-scheme: light;
+  /* 한글 폰트 = OS 시스템 폰트(다운로드 0). 예전엔 next/font/google 의 Noto Sans KR·
+     Nanum Myeongjo 를 썼는데, 한글은 unicode-range 서브셋이 100+ 조각으로 분할돼
+     한 페이지에서 woff2 를 150개+ 받으며 로딩을 느리게 했다. 시스템 폰트로 전환.
+     --font-display-ko = 제목용 명조(Mac AppleMyungjo / Win Batang), --font-body-ko = 본문 고딕. */
+  --font-display-ko: "AppleMyungjo", "Batang", "바탕", "Nanum Myeongjo", serif;
+  --font-body-ko: "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
   /* ETHOS Brand: Deep Navy + Gold + Ivory */
   --color-canvas: 250 246 239;          /* warm ivory */
   --color-surface: 255 253 248;         /* off-white */
