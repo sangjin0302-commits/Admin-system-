@@ -133,8 +133,15 @@ jobs:
   e2e:
     name: E2E tests
     runs-on: ubuntu-latest
-    # 안정화 완료(79/79) → push 게이트로 승격. 실패 시 CI 차단.
-    timeout-minutes: 30
+    # 안정화 완료 → push 게이트로 승격. 실패 시 CI 차단.
+    #
+    # timeout 60분: 30분일 때 잡이 항상 취소돼 게이트가 무의미했다(2026-08-08 확인).
+    # 실측 내역 — 셋업(playwright install + db:push + next build)이 5분,
+    # 남은 25분에 "85 tests using 1 worker" 를 다 못 돌리고 잘렸다.
+    # 워커를 늘리는 쪽은 택하지 않았다: admin-features-toggle 이 기능 플래그를 토글하고
+    # public-flag-surfaces 가 그 값을 읽는 등 스펙들이 sqlite·플래그 상태를 공유해서
+    # 병렬로 돌리면 서로 간섭한다(workers:1 은 의도된 설정).
+    timeout-minutes: 60
     # 절대경로 DB — db:push 와 next start(.next-local 런타임)가 상대경로를 서로
     # 다르게 해석해 "Unable to open the database file"(Error 14) 나던 것 고정.
     env:
