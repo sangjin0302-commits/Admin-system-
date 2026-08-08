@@ -56,6 +56,20 @@ check(
   "전체 기간에서도 slice 로 상한을 적용한다",
   /board\.slice\(0,\s*ALL_VIEW_LIMIT\)/.test(gazettePage),
 );
+// 검색·일자 네비게이션도 같은 상한 안에서 동작해야 한다(검색이 1500건을 통째로 렌더하면
+// 관보 페이지가 3.7MB 로 돌아간다).
+check(
+  "검색 결과에도 ALL_VIEW_LIMIT 상한을 적용한다",
+  /filter\(matchesQuery\)\.slice\(0,\s*ALL_VIEW_LIMIT\)/.test(gazettePage),
+);
+check(
+  "검색은 제목·기관·요약·근거법령을 모두 훑는다",
+  /i\.title,\s*i\.agency,\s*i\.summary,\s*i\.legalBasis/.test(gazettePage),
+);
+check(
+  "일자 필터는 자료가 있는 날만 허용한다(빈 날 클릭 방지)",
+  /daysInMonth\.includes\(sp\.date\)/.test(gazettePage),
+);
 
 // ── 3) 블로그 마크다운은 인스턴스당 1회만 읽고 변환한다 ─────────────────────
 const blogPosts = read("src/lib/blog-posts.ts");

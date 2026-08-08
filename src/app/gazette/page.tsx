@@ -28,7 +28,7 @@ const ALL_VIEW_LIMIT = 200;
 export default async function GazettePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ lang?: string; cat?: string; month?: string }>;
+  searchParams?: Promise<{ lang?: string; cat?: string; month?: string; q?: string; date?: string }>;
 }) {
   const sp = (await searchParams) ?? {};
   // 레거시 ?lang=en → 경로기반 /en/gazette 로 301. /en 서빙 중이면 스킵(루프 방지).
@@ -51,7 +51,22 @@ export default async function GazettePage({
     const d = new Date(ms);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   };
+  /** YYYY-MM-DD — 일자 필터/네비게이션 키. */
+  const dayOf = (ms: number) => {
+    if (ms <= 0) return "";
+    const d = new Date(ms);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
   const months = Array.from(new Set(items.map((i) => monthOf(i.dateMs)).filter(Boolean))).sort().reverse();
+
+  // ── 검색 ──────────────────────────────────────────────────────────────
+  // 봇 읽기 API 는 limit 만 받으므로(서버측 검색 없음) 이미 받아 캐시해 둔 목록에서 거른다.
+  // 제목·기관·요약·근거법령을 모두 훑는다 — "국적법" 처럼 근거 법령으로 찾는 경우가 많다.
+  const rawQuery = (sp.q ?? "").trim().slice(0, 60);
+  const query = rawQuery.toLowerCase();
+  const matchesQuery = (i: GazetteItem) =>
+    !query ||
+    [i.title, i.agency, i.summary, i.legalBasis].some((f) => (f ?? "").toLowerCase().includes(query));
   // 기본값 = 가장 최근 달(달력의 자연스러운 기본). 예전엔 month 미지정이 "전체 기간"이라
   // 첫 방문자에게 1500건을 통째로 렌더해 HTML 이 3.7MB, TTFB 5초를 넘었다.
   // "전체 기간"은 사라지지 않고 ?month=all 로 명시 선택한다(대신 아래 상한을 둔다).
@@ -68,23 +83,57 @@ export default async function GazettePage({
     const [y, mo] = m.split("-");
     return lang === "en" ? `${mo}/${y}` : `${y}년 ${Number(mo)}월`;
   };
-  // 로케일은 경로(/en)로 전달되므로 쿼리엔 month 만. href 는 localePath 로 감싼다.
-  const qs = (over: { month?: string | null }) => {
+  // ── 일자(달력) ────────────────────────────────────────────────────────
+  // 월 안에서 하루 단위로 넘겨본다. 관보는 발행일 단위 자료라 "그날 무엇이 났는지"가
+  // 실제로 찾는 단위다. date 는 현재 월에 실제로 자료가 있는 날만 허용한다.
+  const daysInMonth = activeMonth
+    ? Array.from(
+        new Set(items.filter((i) => monthOf(i.dateMs) === activeMonth).map((i) => dayOf(i.dateMs))),
+      )
+        .filter(Boolean)
+        .sort()
+        .reverse()
+    : [];
+  const activeDay = !query && sp.date && daysInMonth.includes(sp.date) ? sp.date : null;
+  const dayIdx = activeDay ? daysInMonth.indexOf(activeDay) : -1;
+  const prevDay = dayIdx >= 0 && dayIdx < daysInMonth.length - 1 ? daysInMonth[dayIdx + 1] : null; // 더 과거
+  const nextDay = dayIdx > 0 ? daysInMonth[dayIdx - 1] : null; // 더 최근
+  const fmtDay = (d: string) => {
+    const [y, mo, da] = d.split("-");
+    const dt = new Date(Number(y), Number(mo) - 1, Number(da));
+    const weekday = dt.toLocaleDateString(lang === "en" ? "en-US" : "ko-KR", { weekday: "short" });
+    return lang === "en" ? `${mo}/${da} (${weekday})` : `${Number(mo)}.${Number(da)} (${weekday})`;
+  };
+
+  // 로케일은 경로(/en)로 전달되므로 쿼리엔 month·date·q 만. href 는 localePath 로 감싼다.
+  const qs = (over: { month?: string | null; date?: string | null; q?: string | null }) => {
     const params = new URLSearchParams();
     const month = over.month === undefined ? activeMonth : over.month;
+    // 월을 바꾸면 그 달에 없는 날짜가 남지 않도록 date 를 자동으로 턴다.
+    const date = over.date === undefined ? (over.month === undefined ? activeDay : null) : over.date;
+    const q = over.q === undefined ? rawQuery : over.q;
+    if (q) params.set("q", q);
     if (month) params.set("month", month);
+    if (date) params.set("date", date);
     const s = params.toString();
     return s ? `?${s}` : "";
   };
 
   let board = items;
-  if (activeMonth) {
+  if (query) {
+    // 검색은 기간에 갇히지 않는다 — 전체에서 찾고 상한만 둔다.
+    board = board.filter(matchesQuery).slice(0, ALL_VIEW_LIMIT);
+  } else if (activeDay) {
+    board = board.filter((i) => dayOf(i.dateMs) === activeDay);
+  } else if (activeMonth) {
     board = board.filter((i) => monthOf(i.dateMs) === activeMonth);
   } else {
     // "전체 기간"에서도 페이로드가 무한정 커지지 않게 상한. 넘치면 월 칩으로 이동 안내.
     board = board.slice(0, ALL_VIEW_LIMIT);
   }
-  const allTruncated = !activeMonth && items.length > ALL_VIEW_LIMIT;
+  const matchedTotal = query ? items.filter(matchesQuery).length : 0;
+  const allTruncated = !query && !activeMonth && !activeDay && items.length > ALL_VIEW_LIMIT;
+  const searchTruncated = !!query && matchedTotal > ALL_VIEW_LIMIT;
 
   const fmtDate = (ms: number) =>
     ms > 0 ? new Date(ms).toLocaleDateString(lang === "en" ? "en-US" : "ko-KR") : "";
@@ -160,8 +209,43 @@ export default async function GazettePage({
             />
           ) : (
             <>
-              {/* 월별(달력식) 네비게이션 — 전체 / 이전·다음 달 / 월 칩 */}
-              {months.length > 0 && (
+              {/* 검색 — JS 없이 동작하는 GET 폼(서버 컴포넌트). 제목·기관·요약·근거법령을 훑는다. */}
+              <form
+                method="get"
+                action={localePath("/gazette", lang)}
+                role="search"
+                className="mb-4 flex flex-wrap items-center gap-2"
+              >
+                <input
+                  type="search"
+                  name="q"
+                  defaultValue={rawQuery}
+                  maxLength={60}
+                  placeholder={t(
+                    "관보 검색 — 제목·기관·근거 법령 (예: 국적법)",
+                    "Search gazettes — title, agency, legal basis",
+                  )}
+                  aria-label={t("관보 검색", "Search gazettes")}
+                  className="min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-2 text-sm text-text-strong placeholder:text-text-muted/70 focus:border-gold focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-white transition hover:bg-text-strong"
+                >
+                  {t("검색", "Search")}
+                </button>
+                {rawQuery && (
+                  <Link
+                    href={localePath(`/gazette${qs({ q: null, date: null })}`, lang)}
+                    className="rounded-full border border-line px-3 py-2 text-xs font-bold text-text-muted transition hover:bg-surface-muted"
+                  >
+                    {t("검색 해제", "Clear")}
+                  </Link>
+                )}
+              </form>
+
+              {/* 월별(달력식) 네비게이션 — 전체 / 이전·다음 달 / 월 칩. 검색 중엔 숨긴다. */}
+              {!query && months.length > 0 && (
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <Link
                     href={localePath(`/gazette${qs({ month: ALL_MONTHS })}`, lang)}
@@ -200,17 +284,92 @@ export default async function GazettePage({
                 </div>
               )}
 
+              {/* 일자(요일) 네비게이션 — 선택한 달 안에서 하루 단위로 넘겨본다.
+                  관보는 발행일 단위 자료라 "그날 무엇이 났는지"가 실제로 찾는 단위다.
+                  자료가 있는 날만 노출하므로 빈 날을 클릭하는 일이 없다. */}
+              {!query && activeMonth && daysInMonth.length > 0 && (
+                <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                  <Link
+                    href={localePath(`/gazette${qs({ date: null })}`, lang)}
+                    className={`rounded-full px-3 py-1 text-[11px] font-bold transition ${!activeDay ? "bg-primary text-white" : "border border-line bg-surface text-text-muted hover:bg-surface-muted"}`}
+                  >
+                    {t("이 달 전체", "Whole month")}
+                  </Link>
+                  {activeDay && (
+                    <span className="inline-flex items-center gap-1">
+                      <Link
+                        href={prevDay ? localePath(`/gazette${qs({ date: prevDay })}`, lang) : "#"}
+                        aria-label={t("이전 날", "Previous day")}
+                        className={`grid h-7 w-7 place-items-center rounded-full border border-line text-xs ${prevDay ? "text-primary hover:bg-surface-muted" : "pointer-events-none opacity-30"}`}
+                      >
+                        ←
+                      </Link>
+                      <span className="px-1 text-[11px] font-bold text-primary">{fmtDay(activeDay)}</span>
+                      <Link
+                        href={nextDay ? localePath(`/gazette${qs({ date: nextDay })}`, lang) : "#"}
+                        aria-label={t("다음 날", "Next day")}
+                        className={`grid h-7 w-7 place-items-center rounded-full border border-line text-xs ${nextDay ? "text-primary hover:bg-surface-muted" : "pointer-events-none opacity-30"}`}
+                      >
+                        →
+                      </Link>
+                    </span>
+                  )}
+                  {daysInMonth.map((d) => (
+                    <Link
+                      key={d}
+                      href={localePath(`/gazette${qs({ date: d })}`, lang)}
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${activeDay === d ? "bg-primary text-white" : "border border-line bg-surface text-text-muted hover:bg-surface-muted"}`}
+                    >
+                      {fmtDay(d)}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
               {/* 건수 표시 */}
               <p className="mt-4 text-xs text-text-muted">
                 {t(`${board.length}건`, `${board.length} items`)}
-                {activeMonth ? ` · ${fmtMonth(activeMonth)}` : ` · ${t("전체 기간", "all dates")}`}
+                {query
+                  ? t(` · "${rawQuery}" 검색 결과(전체 기간)`, ` · results for "${rawQuery}" (all dates)`)
+                  : activeDay
+                    ? ` · ${fmtDay(activeDay)}`
+                    : activeMonth
+                      ? ` · ${fmtMonth(activeMonth)}`
+                      : ` · ${t("전체 기간", "all dates")}`}
                 {allTruncated
                   ? t(
                       ` (전체 ${items.length}건 중 최신 ${ALL_VIEW_LIMIT}건 · 이전 자료는 월별로 보세요)`,
                       ` (latest ${ALL_VIEW_LIMIT} of ${items.length} · browse by month for older)`,
                     )
                   : ""}
+                {searchTruncated
+                  ? t(
+                      ` (${matchedTotal}건 중 ${ALL_VIEW_LIMIT}건 표시 · 검색어를 좁혀 보세요)`,
+                      ` (showing ${ALL_VIEW_LIMIT} of ${matchedTotal} · narrow your search)`,
+                    )
+                  : ""}
               </p>
+
+              {/* 검색 결과 없음 */}
+              {query && board.length === 0 && (
+                <div className="mt-6 rounded-2xl border border-line bg-surface px-5 py-8 text-center">
+                  <p className="text-sm text-text-strong">
+                    {t(`"${rawQuery}"에 해당하는 관보가 없습니다.`, `No gazettes match "${rawQuery}".`)}
+                  </p>
+                  <p className="mt-1 text-xs text-text-muted">
+                    {t(
+                      "기관명이나 근거 법령(예: 국적법)으로도 찾을 수 있습니다.",
+                      "You can also search by agency or legal basis.",
+                    )}
+                  </p>
+                  <Link
+                    href={localePath(`/gazette${qs({ q: null, date: null })}`, lang)}
+                    className="mt-4 inline-flex rounded-full border border-gold/30 bg-gold-soft/20 px-4 py-2 text-xs font-bold text-gold-deep transition hover:bg-gold-soft/40"
+                  >
+                    {t("전체 목록 보기", "Back to all gazettes")}
+                  </Link>
+                </div>
+              )}
 
               {/* 목록 */}
               <ul className="mt-8 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
